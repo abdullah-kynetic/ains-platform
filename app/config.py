@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     anthropic_model: str = "claude-sonnet-4-5"
     openai_model: str = "gpt-5.1"
     document_check_timeout_seconds: int = 300
+    report_template: str = "default.json"
 
     database_url: str = "postgresql+psycopg://ains:ains_dev@localhost:5432/ains"
 

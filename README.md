@@ -97,6 +97,17 @@ review; clients receive only neutral document-handling reasons such as unreadabl
 wrong document, or missing pages. Each check and total processing time is recorded, and a five
 minute timeout is enforced per file.
 
+## Auditor review and draft reports
+
+Auditors use `GET /auditor/queue` to see only their assigned engagements, including evidence,
+check timings, draft findings, and page citations. `PATCH /auditor/findings/{id}` accepts, edits,
+or rejects a finding; accepted and edited findings cannot be saved without a page citation.
+
+`POST /auditor/engagements/{id}/report?format=docx|pdf` generates an unsigned draft containing
+only auditor-approved findings. The swappable layout and required draft language live in
+`templates/report/default.json`. The application never marks a report signed—Quinton reviews and
+signs the final report outside this draft-generation step.
+
 ## Data rules (non-negotiable)
 
 1. **No secrets in git.** `.env` and keys live only locally and in the password manager. Never paste them into chats, issues, or AI tools.
