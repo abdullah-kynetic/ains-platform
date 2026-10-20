@@ -1,0 +1,20 @@
+# Local development database only. Do not use these credentials anywhere else.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ains
+      POSTGRES_PASSWORD: ains_dev
+      POSTGRES_DB: ains
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ains -d ains"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

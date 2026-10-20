@@ -1,0 +1,1 @@
+"""AINS platform application package."""

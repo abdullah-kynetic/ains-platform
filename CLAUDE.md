@@ -1,0 +1,33 @@
+# Project instructions for coding agents
+
+AINS: AI-native financial regulatory audit platform. First service: FINRA Rule 3310 independent AML tests for broker-dealers. A credentialed auditor (Quinton) approves findings and signs every report.
+
+## Stack
+- Python 3.12, FastAPI, Pydantic v2, pydantic-settings, httpx, tenacity
+- uv for packages (`uv sync`, `uv run pytest`, `uv run ruff check .`)
+- Postgres 16 locally via `docker compose up -d`
+- Client documents in Egnyte (Internal API app, OAuth password flow)
+- AI providers approved by counsel: Anthropic (Claude) and OpenAI, via business/API accounts only
+- Later: Next.js (TypeScript) portal under `web/`
+
+## Layout
+```
+app/
+  main.py            FastAPI app (/health)
+  config.py          Settings loaded from environment variables
+  egnyte_client/     Egnyte API client + dev path guard
+  checklist/         Checklist items and client-facing statuses
+tests/               pytest suite (synthetic data only)
+data/synthetic/      Fake documents for tests and demos
+.github/workflows/   CI: ruff + pytest
+```
+
+## Rules
+- **Never read, print, log, or commit `.env` or any secret.** Use `.env.example` for variable names. Load config only through `app/config.py`.
+- **Egnyte: only touch paths under `/Shared/AINS-Dev` (`EGNYTE_DEV_ROOT`) during development.** Always go through the path guard.
+- **Synthetic data only** in tests, fixtures, and `data/synthetic/`. Never add or request real client documents.
+- **SAR or SAR-indicating files are never sent to any AI model.** Detect and route them to the human-only lane before any AI call.
+- **Intake feedback to clients must never reveal audit findings.** Only document-level issues (unreadable, wrong period, wrong document, missing pages).
+- **Every AI-produced finding must cite document and page.** No citation, no finding.
+- **Humans approve findings and sign reports.** Code never marks a finding final or a report signed without an auditor action.
+- Keep changes small, typed, and tested. Run `uv run ruff check .` and `uv run pytest` before committing.
