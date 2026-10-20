@@ -20,6 +20,7 @@ cp .env.example .env             # fill in values locally; never commit .env
 
 # 4. Run
 uv run uvicorn app.main:app --reload    # http://localhost:8000/health
+uv run python -m app.worker             # durable document-check worker
 uv run pytest
 uv run ruff check .
 ```
@@ -83,6 +84,18 @@ body as `application/octet-stream`, as required by that endpoint, with Egnyte's 
 header. Portal ingestion also validates the filename, size, file signature, and the checklist
 item's accepted extensions, computes SHA-256, creates the guarded firm/engagement/item hierarchy,
 and stores the resulting Egnyte path and version in Postgres.
+
+## Automatic document checks
+
+Successful uploads enqueue a durable Postgres `check_job`; API restarts do not lose work. The
+worker runs readability, page-count, review-period, and signature checks before any AI call. Files
+that indicate SAR content are routed to the human-only lane and never sent to an AI provider.
+
+Set `AI_PROVIDER=anthropic` or `AI_PROVIDER=openai`. Both adapters require strict structured JSON,
+and every draft finding must include a page citation. Findings remain internal for Quinton's
+review; clients receive only neutral document-handling reasons such as unreadable, wrong period,
+wrong document, or missing pages. Each check and total processing time is recorded, and a five
+minute timeout is enforced per file.
 
 ## Data rules (non-negotiable)
 

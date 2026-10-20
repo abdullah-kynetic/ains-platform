@@ -68,6 +68,13 @@ class NAReviewState(enum.StrEnum):
     REJECTED = "rejected"
 
 
+class CheckJobStatus(enum.StrEnum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
 class Firm(Base):
     __tablename__ = "firms"
 
@@ -154,6 +161,9 @@ class ChecklistItemInstance(Base):
     title: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(Text, default="")
     accepted_extensions: Mapped[list[str]] = mapped_column(JSON, default=list)
+    review_period_rule: Mapped[str | None] = mapped_column(String(255))
+    min_pages: Mapped[int] = mapped_column(Integer, default=1)
+    requires_signature: Mapped[bool] = mapped_column(Boolean, default=False)
     position: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[ClientStatus] = mapped_column(
         Enum(ClientStatus, native_enum=False), default=ClientStatus.REQUESTED
@@ -205,6 +215,9 @@ class Document(Base):
     check_results: Mapped[list[CheckResult]] = relationship(
         back_populates="document", cascade="all, delete-orphan"
     )
+    check_job: Mapped[CheckJob | None] = relationship(
+        back_populates="document", cascade="all, delete-orphan", uselist=False
+    )
 
 
 class CheckResult(Base):
@@ -246,6 +259,27 @@ class FindingDraft(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
+
+
+class CheckJob(Base):
+    __tablename__ = "check_jobs"
+    __table_args__ = (Index("ix_check_jobs_status_available", "status", "available_at"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"), unique=True, index=True)
+    status: Mapped[CheckJobStatus] = mapped_column(
+        Enum(CheckJobStatus, native_enum=False), default=CheckJobStatus.QUEUED
+    )
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    available_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    duration_ms: Mapped[int | None] = mapped_column(Integer)
+    last_error_code: Mapped[str | None] = mapped_column(String(120))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    document: Mapped[Document] = relationship(back_populates="check_job")
 
 
 class AuditLog(Base):

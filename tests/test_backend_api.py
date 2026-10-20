@@ -16,12 +16,18 @@ from sqlalchemy.pool import StaticPool
 from app.auth.router import get_magic_link_sender
 from app.auth.security import hash_password
 from app.checklist import ClientStatus
+from app.checks.processor import DocumentProcessor
+from app.checks.providers import Citation, FindingCandidate, LLMDocumentCheck
 from app.config import Settings, get_settings
 from app.database.models import (
     Base,
+    CheckJob,
+    CheckJobStatus,
     ChecklistItemInstance,
+    CheckResult,
     Document,
     Engagement,
+    FindingDraft,
     Firm,
     User,
     UserRole,
@@ -29,6 +35,7 @@ from app.database.models import (
 from app.database.session import get_db
 from app.documents import StoredDocument, get_document_ingestor
 from app.main import create_app
+from app.worker import run_once
 
 CLIENT_PASSWORD = "synthetic-client-password"
 AUDITOR_PASSWORD = "synthetic-auditor-password"
@@ -60,6 +67,43 @@ class FakeIngestor:
             size_bytes=len(content),
             version="synthetic-v1",
         )
+
+
+class FakeDownloadClient:
+    def __init__(self, content: bytes) -> None:
+        self.content = content
+        self.paths: list[str] = []
+
+    async def download_file(self, path: str) -> bytes:
+        self.paths.append(path)
+        return self.content
+
+    async def aclose(self) -> None:
+        return None
+
+
+class FakeCheckProvider:
+    name = "synthetic-provider"
+
+    def __init__(self, result: LLMDocumentCheck) -> None:
+        self.result = result
+        self.calls = 0
+
+    async def check(self, **kwargs) -> LLMDocumentCheck:
+        self.calls += 1
+        assert kwargs["pages"]
+        return self.result
+
+    async def aclose(self) -> None:
+        return None
+
+
+def check_settings() -> Settings:
+    return Settings(
+        _env_file=None,
+        session_secret=SecretStr("synthetic-test-session-secret-at-least-32-bytes"),
+        document_check_timeout_seconds=30,
+    )
 
 
 @pytest.fixture
@@ -302,8 +346,10 @@ def test_upload_persists_tenant_owned_document_and_sets_checking(backend) -> Non
     assert ingestor.calls == 1
     with factory() as db:
         document = db.scalar(select(Document))
+        check_job = db.scalar(select(CheckJob))
         item = db.get(ChecklistItemInstance, ids["item_a"])
         assert document and document.firm_id == ids["firm_a"]
+        assert check_job and check_job.document_id == document.id
         assert document.sha256 == hashlib.sha256(b"synthetic content").hexdigest()
         assert item and item.status == ClientStatus.CHECKING
 
@@ -395,3 +441,114 @@ def test_assigned_auditor_can_approve_na(backend) -> None:
     with factory() as db:
         item = db.get(ChecklistItemInstance, ids["item_a"])
         assert item and not item.applicable and item.na_approved_by_id == ids["auditor"]
+
+
+async def test_document_processor_creates_cited_drafts_without_client_findings(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    uploaded = client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic", "text/plain")},
+    )
+    assert uploaded.status_code == 201
+    with factory() as db:
+        document = db.scalar(select(Document))
+        assert document
+        document_id = document.id
+
+    provider = FakeCheckProvider(
+        LLMDocumentCheck(
+            document_usable=True,
+            document_type_matches=True,
+            review_period_supported=True,
+            needs_more_documents=False,
+            client_reason_code="none",
+            findings=[
+                FindingCandidate(
+                    title="Synthetic draft finding",
+                    body="Synthetic evidence requires auditor review.",
+                    severity="moderate",
+                    citations=[Citation(page=1, quote="synthetic policy text")],
+                )
+            ],
+        )
+    )
+    downloader = FakeDownloadClient(b"synthetic policy text dated 2025-06-30")
+    processor = DocumentProcessor(
+        check_settings(), provider=provider, client_factory=lambda _: downloader
+    )
+    with factory() as db:
+        await processor.process(db, document_id)
+        db.commit()
+        finding = db.scalar(select(FindingDraft))
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        assert finding and finding.citations == [{"page": 1, "quote": "synthetic policy text"}]
+        assert item and item.status == ClientStatus.WITH_AUDITOR
+        assert item.client_reason is None
+        assert db.scalar(select(CheckResult).where(CheckResult.check_type == "llm_document_check"))
+    assert provider.calls == 1 and downloader.paths
+
+    client_body = client.get("/engagements/current").json()
+    assert "Synthetic draft finding" not in str(client_body)
+    assert "Synthetic evidence" not in str(client_body)
+
+
+async def test_sar_indicator_never_reaches_ai_provider(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic-sar.txt", b"synthetic", "text/plain")},
+    )
+    with factory() as db:
+        document = db.scalar(select(Document))
+        assert document
+        document_id = document.id
+    provider = FakeCheckProvider(
+        LLMDocumentCheck(
+            document_usable=True,
+            document_type_matches=True,
+            review_period_supported=True,
+            needs_more_documents=False,
+            client_reason_code="none",
+        )
+    )
+    processor = DocumentProcessor(
+        check_settings(),
+        provider=provider,
+        client_factory=lambda _: FakeDownloadClient(
+            b"Synthetic Suspicious Activity Report narrative"
+        ),
+    )
+    with factory() as db:
+        await processor.process(db, document_id)
+        db.commit()
+        restricted_check = db.scalar(
+            select(CheckResult).where(CheckResult.check_type == "restricted_content")
+        )
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        assert restricted_check and restricted_check.details["ai_called"] is False
+        assert item and item.status == ClientStatus.WITH_AUDITOR
+        assert db.scalar(select(FindingDraft)) is None
+    assert provider.calls == 0
+
+
+async def test_worker_marks_durable_job_succeeded(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic", "text/plain")},
+    )
+
+    class StubProcessor:
+        async def process(self, db: Session, document_id: str) -> int:
+            assert db.get(Document, document_id)
+            return 42
+
+    with factory() as db:
+        assert await run_once(db, check_settings(), processor=StubProcessor())
+    with factory() as db:
+        job = db.scalar(select(CheckJob))
+        assert job and job.status == CheckJobStatus.SUCCEEDED
+        assert job.duration_ms == 42 and job.attempts == 1
