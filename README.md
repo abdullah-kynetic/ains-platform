@@ -34,6 +34,11 @@ Tenant-owned database records carry an explicit `firm_id`. API queries scope cli
 and auditors to assigned engagements. Run `uv run alembic check` after model changes to confirm a
 migration is present.
 
+Conditional checklist items are exposed as yes/no questions at
+`GET /engagements/{id}/questionnaire`. A firm answer of “no” hides the item from the client
+checklist and creates a pending N/A review for the assigned auditor. Only that auditor can approve
+or reject it; rejection restores the requested item without exposing an audit finding.
+
 ### Client portal
 
 ```bash

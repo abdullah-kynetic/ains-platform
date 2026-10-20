@@ -130,6 +130,8 @@ def backend() -> Iterator[
             title="Written AML program",
             description="Synthetic current program.",
             position=1,
+            is_conditional=True,
+            condition_question="Does the firm maintain a written AML program?",
         )
         restricted_a = ChecklistItemInstance(
             firm_id=firm_a.id,
@@ -194,6 +196,18 @@ def backend() -> Iterator[
 
 def sign_in_client(client: TestClient, email: str = "alpha-client@example.test") -> None:
     response = client.post("/auth/password", json={"email": email, "password": CLIENT_PASSWORD})
+    assert response.status_code == 200
+
+
+def sign_in_auditor(client: TestClient) -> None:
+    response = client.post(
+        "/auth/password",
+        json={
+            "email": "auditor@example.test",
+            "password": AUDITOR_PASSWORD,
+            "mfa_code": pyotp.TOTP(MFA_SECRET).now(),
+        },
+    )
     assert response.status_code == 200
 
 
@@ -292,3 +306,92 @@ def test_upload_persists_tenant_owned_document_and_sets_checking(backend) -> Non
         assert document and document.firm_id == ids["firm_a"]
         assert document.sha256 == hashlib.sha256(b"synthetic content").hexdigest()
         assert item and item.status == ClientStatus.CHECKING
+
+
+def test_questionnaire_no_answer_hides_item_pending_auditor_review(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    questionnaire = client.get(f"/engagements/{ids['engagement_a']}/questionnaire")
+    assert questionnaire.status_code == 200
+    assert questionnaire.json()["questions"] == [
+        {
+            "itemId": ids["item_a"],
+            "sectionTitle": "AML program and governance",
+            "question": "Does the firm maintain a written AML program?",
+            "answer": None,
+            "naReviewState": None,
+        }
+    ]
+
+    answered = client.post(
+        f"/engagements/{ids['engagement_a']}/questionnaire/answers",
+        json={"answers": [{"itemId": ids["item_a"], "applies": False}]},
+    )
+    assert answered.status_code == 200
+    assert answered.json()["questions"][0]["naReviewState"] == "pending"
+    visible_ids = {
+        item["id"]
+        for section in client.get("/engagements/current").json()["sections"]
+        for item in section["items"]
+    }
+    assert ids["item_a"] not in visible_ids
+    with factory() as db:
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        assert item and not item.applicable and item.na_review_state.value == "pending"
+
+
+def test_only_assigned_auditor_can_reject_na_and_restore_item(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    client.post(
+        f"/engagements/{ids['engagement_a']}/questionnaire/answers",
+        json={"answers": [{"itemId": ids["item_a"], "applies": False}]},
+    )
+    forbidden = client.post(
+        f"/engagements/{ids['engagement_a']}/questionnaire/items/{ids['item_a']}/na-review",
+        json={"decision": "reject"},
+    )
+    assert forbidden.status_code == 403
+
+    client.cookies.clear()
+    sign_in_auditor(client)
+    reviewed = client.post(
+        f"/engagements/{ids['engagement_a']}/questionnaire/items/{ids['item_a']}/na-review",
+        json={"decision": "reject"},
+    )
+    assert reviewed.status_code == 200
+    assert reviewed.json()["naReviewState"] == "rejected"
+    with factory() as db:
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        assert item and item.applicable and item.status == ClientStatus.REQUESTED
+        assert item.na_approved_by_id == ids["auditor"]
+
+
+def test_questionnaire_answers_are_tenant_scoped(backend) -> None:
+    client, _, ids, _, _ = backend
+    sign_in_client(client)
+    response = client.post(
+        f"/engagements/{ids['engagement_b']}/questionnaire/answers",
+        json={"answers": [{"itemId": ids["item_b"], "applies": False}]},
+    )
+    assert response.status_code == 404
+
+
+def test_assigned_auditor_can_approve_na(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    client.post(
+        f"/engagements/{ids['engagement_a']}/questionnaire/answers",
+        json={"answers": [{"itemId": ids["item_a"], "applies": False}]},
+    )
+    client.cookies.clear()
+    sign_in_auditor(client)
+    response = client.post(
+        f"/engagements/{ids['engagement_a']}/questionnaire/items/{ids['item_a']}/na-review",
+        json={"decision": "approve"},
+    )
+    assert response.status_code == 200
+    assert response.json()["naReviewState"] == "approved"
+    with factory() as db:
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        assert item and not item.applicable and item.na_approved_by_id == ids["auditor"]
