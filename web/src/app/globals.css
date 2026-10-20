@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* AINS: dark-first design tokens. */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --color-background: #0a0a0a;
+  --color-surface: #141414;
+  --color-elevated: #1e1e1e;
+  --color-hover: #1a1a1a;
+  --color-foreground: #ffffff;
+  --color-muted: #a0a0a0;
+  --color-subtle: #6b6b6b;
+  --color-border: rgb(255 255 255 / 0.08);
+  --color-border-strong: rgb(255 255 255 / 0.14);
+
+  --color-brand: #2563eb;
+  --color-brand-hover: #3b82f6;
+  --color-brand-violet: #0ea5e9;
+  --color-brand-tint: #132036;
+
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #38bdf8;
+
+  --radius-card: 12px;
+  --animate-fade-in: fade-in 160ms ease-out;
+  --animate-slide-in: slide-in 200ms ease-out;
+  --animate-pop-in: pop-in 160ms ease-out;
+}
+
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slide-in { from { transform: translateX(-100%) } to { transform: translateX(0) } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(4px) scale(0.98) } to { opacity: 1; transform: none } }
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: rgb(37 99 235 / 0.35); }
+
+/* Thin, quiet scrollbars */
+* { scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 0.12) transparent; }
+
+.bg-brand-gradient { background-image: linear-gradient(135deg, #0ea5e9, #2563eb); }
+.bg-glow { background-image: radial-gradient(ellipse at top, rgb(37 99 235 / 0.12) 0%, transparent 60%); }
+.text-brand-gradient {
+  background-image: linear-gradient(135deg, #7dd3fc, #93c5fd);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* Date input icon on dark */
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }

@@ -8,7 +8,7 @@ AINS: AI-native financial regulatory audit platform. First service: FINRA Rule 3
 - Postgres 16 locally via `docker compose up -d`
 - Client documents in Egnyte (Internal API app, OAuth password flow)
 - AI providers approved by counsel: Anthropic (Claude) and OpenAI, via business/API accounts only
-- Later: Next.js (TypeScript) portal under `web/`
+- Next.js 16 (TypeScript, Tailwind v4) client portal in `web/` (npm); talks to the API via `NEXT_PUBLIC_API_URL`
 
 ## Layout
 ```
@@ -18,6 +18,7 @@ app/
   egnyte_client/     Egnyte API client (client.py), path guard (paths.py), CLI (cli.py)
   checklist/         Checklist items and client-facing statuses
 tests/               pytest suite (synthetic data only)
+web/                 Next.js client portal (see web/README.md)
 data/synthetic/      Fake documents for tests and demos
 .github/workflows/   CI: ruff + pytest
 ```
@@ -31,4 +32,5 @@ data/synthetic/      Fake documents for tests and demos
 - **Intake feedback to clients must never reveal audit findings.** Only document-level issues (unreadable, wrong period, wrong document, missing pages).
 - **Every AI-produced finding must cite document and page.** No citation, no finding.
 - **Humans approve findings and sign reports.** Code never marks a finding final or a report signed without an auditor action.
+- **`web/`**: no secrets in `NEXT_PUBLIC_*` vars (they ship to the browser); mock data must be synthetic; status values must match `app/checklist.ClientStatus`; never show audit findings in client UI. Run `npm run lint && npm run build` in `web/` before committing.
 - Keep changes small, typed, and tested. Run `uv run ruff check .` and `uv run pytest` before committing.
