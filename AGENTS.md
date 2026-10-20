@@ -36,6 +36,7 @@ templates/report/    Swappable draft-report layout and required notices
 - **Egnyte: only touch paths under `/Shared/AINS-Dev` (`EGNYTE_DEV_ROOT`) during development.** Always go through `EgnyteClient` (it enforces the path guard).
 - **To use Egnyte, run the CLI**: `uv run python -m app.egnyte_client whoami | ls <path> | mkdir <path> | upload <local> <remote> | download <remote> <dest>`. It loads credentials itself; never read `.env` and never run `get-token` or print tokens.
 - **Synthetic data only** in tests, fixtures, and `data/synthetic/`. Never add or request real client documents.
+- **Synthetic evals**: run `uv run python scripts/evaluate_synthetic.py`; the planted SAR case must keep `ai_called=false`. Live provider modes are optional and may use only the committed synthetic set.
 - **SAR or SAR-indicating files are never sent to any AI model.** Detect and route them to the human-only lane before any AI call.
 - **Intake feedback to clients must never reveal audit findings.** Only document-level issues (unreadable, wrong period, wrong document, missing pages).
 - **Every AI-produced finding must cite document and page.** No citation, no finding.

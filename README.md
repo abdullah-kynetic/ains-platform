@@ -111,6 +111,15 @@ only auditor-approved findings. The swappable layout and required draft language
 `templates/report/default.json`. The application never marks a report signed—Quinton reviews and
 signs the final report outside this draft-generation step.
 
+## Synthetic evaluations
+
+`data/synthetic/manifest.json` covers clean, missing, wrong-period, unreadable-scan, partial,
+planted-SAR, and prompt-injection cases. `uv run python scripts/evaluate_synthetic.py` runs the
+credential-free baseline and scores both the client status and whether an AI call was allowed.
+The SAR case must never call a provider. Optional `--provider anthropic` and `--provider openai`
+modes send only this synthetic set and read credentials from process environment variables, never
+from `.env`.
+
 ## Data rules (non-negotiable)
 
 1. **No secrets in git.** `.env` and keys live only locally and in the password manager. Never paste them into chats, issues, or AI tools.

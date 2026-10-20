@@ -32,6 +32,25 @@ CLIENT_REASONS = {
 }
 
 
+def client_decision(result: LLMDocumentCheck) -> tuple[ClientStatus, str | None]:
+    """Map structured provider output to a neutral client status and reason."""
+    reason_code = result.client_reason_code
+    if not result.document_usable or not result.document_type_matches:
+        status = (
+            ClientStatus.ACTION_NEEDED_MORE
+            if reason_code == "missing_pages"
+            else ClientStatus.ACTION_NEEDED_REUPLOAD
+        )
+        safe_code = reason_code if reason_code != "none" else "wrong_document"
+        return status, CLIENT_REASONS[safe_code]
+    if result.needs_more_documents:
+        safe_code = reason_code if reason_code != "none" else "missing_pages"
+        return ClientStatus.ACTION_NEEDED_MORE, CLIENT_REASONS[safe_code]
+    if result.findings:
+        return ClientStatus.WITH_AUDITOR, None
+    return ClientStatus.ACCEPTED_FOR_TESTING, None
+
+
 class DownloadClient(Protocol):
     async def download_file(self, path: str) -> bytes: ...
 
@@ -196,25 +215,7 @@ class DocumentProcessor:
                 )
             )
 
-        reason_code = result.client_reason_code
-        if not result.document_usable or not result.document_type_matches:
-            item.status = (
-                ClientStatus.ACTION_NEEDED_MORE
-                if reason_code == "missing_pages"
-                else ClientStatus.ACTION_NEEDED_REUPLOAD
-            )
-            safe_code = reason_code if reason_code != "none" else "wrong_document"
-            item.client_reason = CLIENT_REASONS[safe_code]
-        elif result.needs_more_documents:
-            item.status = ClientStatus.ACTION_NEEDED_MORE
-            safe_code = reason_code if reason_code != "none" else "missing_pages"
-            item.client_reason = CLIENT_REASONS[safe_code]
-        elif result.findings:
-            item.status = ClientStatus.WITH_AUDITOR
-            item.client_reason = None
-        else:
-            item.status = ClientStatus.ACCEPTED_FOR_TESTING
-            item.client_reason = None
+        item.status, item.client_reason = client_decision(result)
 
     def _finish(self, db: Session, document: Document, started: float, outcome: str) -> int:
         duration_ms = int((time.monotonic() - started) * 1000)
