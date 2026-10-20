@@ -2,7 +2,8 @@
 
 AINS is an AI-native financial regulatory audit firm. Our software does the legwork; a credentialed auditor (Quinton) makes the calls and signs every report. The first service is the FINRA Rule 3310 independent AML test for broker-dealers; more regulatory audits will follow.
 
-This repo holds the audit engine (Python 3.12, FastAPI, Pydantic) and, later, the client portal (Next.js). Client documents are stored in Egnyte via an Internal API app.
+This repo holds the audit engine (Python 3.12, FastAPI, Pydantic) and the client portal
+(Next.js 16 in `web/`). Client documents are stored in Egnyte via an Internal API app.
 
 ## Setup
 
@@ -21,6 +22,22 @@ uv run uvicorn app.main:app --reload    # http://localhost:8000/health
 uv run pytest
 uv run ruff check .
 ```
+
+### Client portal
+
+```bash
+cd web
+cp .env.example .env.local     # synthetic demo data is enabled by default
+npm ci
+npm run dev                    # http://localhost:3000
+npm run lint
+npm run typecheck
+npm run build
+```
+
+The portal currently uses synthetic mock data when `NEXT_PUBLIC_USE_MOCKS=true`. Browser-visible
+`NEXT_PUBLIC_*` values must never contain secrets. See `web/README.md` for the API contract and
+portal-specific workflow.
 
 ## Connect to Egnyte
 
