@@ -20,7 +20,7 @@ app/
 tests/               pytest suite (synthetic data only)
 web/                 Next.js client portal (see web/README.md)
 data/synthetic/      Fake documents for tests and demos
-.github/workflows/   CI: ruff + pytest
+.github/workflows/   CI: backend ruff + pytest; web lint + typecheck + build
 ```
 
 ## Rules
