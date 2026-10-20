@@ -42,4 +42,5 @@ templates/report/    Swappable draft-report layout and required notices
 - **Humans approve findings and sign reports.** Code never marks a finding final or a report signed without an auditor action.
 - **Tenant isolation is mandatory.** Every tenant-owned query must filter by `firm_id`; client users see only their firm and auditors only assigned engagements. Add a cross-tenant denial test for each new API path.
 - **`web/`**: no secrets in `NEXT_PUBLIC_*` vars (they ship to the browser); mock data must be synthetic; status values must match `app/checklist.ClientStatus`; never show audit findings in client UI. Run `npm run lint && npm run build` in `web/` before committing.
+- **Portal roles**: client routes expose only neutral intake state; `/auditor` contains internal checks and finding drafts and must remain protected by backend auditor authorization as well as the UI role gate.
 - Keep changes small, typed, and tested. Run `uv run ruff check .` and `uv run pytest` before committing.

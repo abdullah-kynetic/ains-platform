@@ -44,7 +44,7 @@ or reject it; rejection restores the requested item without exposing an audit fi
 
 ```bash
 cd web
-cp .env.example .env.local     # synthetic demo data is enabled by default
+cp .env.example .env.local     # calls the local API by default
 npm ci
 npm run dev                    # http://localhost:3000
 npm run lint
@@ -52,9 +52,12 @@ npm run typecheck
 npm run build
 ```
 
-The portal currently uses synthetic mock data when `NEXT_PUBLIC_USE_MOCKS=true`. Browser-visible
-`NEXT_PUBLIC_*` values must never contain secrets. See `web/README.md` for the API contract and
-portal-specific workflow.
+The portal uses real backend sessions and API data by default. Set
+`NEXT_PUBLIC_USE_MOCKS=true` only for the built-in synthetic client demo. Client users get the
+overview, document checklist, and firm questionnaire; auditor accounts are routed to an internal
+review queue where Quinton can inspect evidence, decide N/A requests, review cited findings, and
+generate unsigned DOCX/PDF drafts. Browser-visible `NEXT_PUBLIC_*` values must never contain
+secrets. See `web/README.md` for the portal-specific workflow.
 
 ## Connect to Egnyte
 
