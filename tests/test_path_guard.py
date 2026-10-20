@@ -45,15 +45,14 @@ def test_normalizes() -> None:
 
 
 async def test_client_methods_enforce_guard() -> None:
-    c = EgnyteClient("example", "k", "u", "p", root=ROOT)
+    c = EgnyteClient("example", "k", "s", "u", "p", root=ROOT)
     with pytest.raises(PathNotAllowedError):
         await c.list_folder("/Shared/Clients")
-    with pytest.raises(NotImplementedError):
-        await c.list_folder("/Shared/AINS-Dev/client-001")
+    await c.aclose()
 
 
 def test_repr_hides_secrets() -> None:
-    c = EgnyteClient("example", "secret-key", "u", "secret-pass")
+    c = EgnyteClient("example", "secret-key", "secret-sec", "u", "secret-pass")
     assert "secret" not in repr(c)
 
 

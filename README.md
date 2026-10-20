@@ -22,6 +22,31 @@ uv run pytest
 uv run ruff check .
 ```
 
+## Connect to Egnyte
+
+1. In Egnyte's admin console (Apps & Integrations), create an Internal app and note its **Client ID** and **Client Secret**.
+2. In `.env` set:
+   - `EGNYTE_DOMAIN`: subdomain only, e.g. `quintonsfirm` (for quintonsfirm.egnyte.com)
+   - `EGNYTE_API_KEY`: the **Client ID**
+   - `EGNYTE_CLIENT_SECRET`: the **Client Secret**
+   - `EGNYTE_USERNAME` / `EGNYTE_PASSWORD`: the Egnyte user the app acts as
+   - `EGNYTE_SCOPES`: defaults to `Egnyte.filesystem Egnyte.webhooks`
+   - `EGNYTE_DEV_ROOT`: `/Shared/AINS-Dev` (the client refuses any path outside it)
+3. Test the connection:
+   ```bash
+   uv run python -m app.egnyte_client whoami
+   uv run python -m app.egnyte_client ls /Shared/AINS-Dev
+   ```
+   Other commands: `mkdir <path>`, `upload <local> <remote>`, `download <remote> <dest>`.
+
+**Tokens.** Egnyte access tokens last **30 days** and are revoked if the user changes their password. Internal apps may request only **10 tokens per user per hour**, and API calls are limited to 2/sec and 1,000/day per token, so reuse tokens rather than logging in on every run:
+```bash
+uv run python -m app.egnyte_client get-token /tmp/egnyte-token.env
+```
+This logs in once and writes `EGNYTE_ACCESS_TOKEN` and `EGNYTE_REFRESH_TOKEN` to that file only (mode 600; nothing is printed). Copy the two lines into `.env` and delete the file. With `EGNYTE_ACCESS_TOKEN` set, the password flow is skipped (username/password become optional); on a 401 or expiry the client renews the token with `EGNYTE_REFRESH_TOKEN` (needs `EGNYTE_CLIENT_SECRET`), falling back to the password flow if credentials are set.
+
+Uploads use Egnyte's simple upload endpoint (files up to 100 MB).
+
 ## Data rules (non-negotiable)
 
 1. **No secrets in git.** `.env` and keys live only locally and in the password manager. Never paste them into chats, issues, or AI tools.
