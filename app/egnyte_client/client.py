@@ -518,8 +518,9 @@ class EgnyteClient:
     async def upload_file(self, path: str, data: bytes | os.PathLike[str] | str) -> dict[str, Any]:
         """POST /pubapi/v1/fs-content/{path}: create or overwrite a file (new version).
 
-        ``data`` is bytes or a local file path. Sent as multipart/form-data (field "file")
-        with an X-Sha512-Checksum header for integrity. Simple upload is limited to 100 MB;
+        ``data`` is bytes or a local file path. Egnyte's simple-upload endpoint expects the raw
+        file body (``application/octet-stream``), with an X-Sha512-Checksum header for integrity.
+        Simple upload is limited to 100 MB;
         larger files need the chunked endpoint (/pubapi/v1/fs-content-chunked), which is
         not implemented yet.
         """
@@ -535,12 +536,14 @@ class EgnyteClient:
             content = local.read_bytes()
         if len(content) > SIMPLE_UPLOAD_MAX_BYTES:
             raise ValueError("File exceeds 100 MB; chunked upload is not implemented yet")
-        name = p.rsplit("/", 1)[-1]
         resp = await self._api(
             "POST",
             f"/pubapi/v1/fs-content{encode_path(p)}",
-            files={"file": (name, content)},
-            headers={"X-Sha512-Checksum": hashlib.sha512(content).hexdigest()},
+            content=content,
+            headers={
+                "Content-Type": "application/octet-stream",
+                "X-Sha512-Checksum": hashlib.sha512(content).hexdigest(),
+            },
         )
         try:
             body = resp.json() if resp.content else {}
