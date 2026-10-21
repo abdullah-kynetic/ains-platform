@@ -1,5 +1,11 @@
 # AINS web (client portal)
 
+Cloudflare synthetic demo: set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in the deployment
+environment, then run `npm run deploy:demo` from `web/`. This builds with mock data enabled and
+publishes the `ains-platform-demo` Worker at its account's `workers.dev` address. Credentials stay
+in the deployment environment; the demo needs no backend credentials. This displays client demo
+pages only; live uploads and auditor workflows require the backend.
+
 Next.js 16 (App Router, TypeScript) + Tailwind v4. Talks to the AINS FastAPI backend at `NEXT_PUBLIC_API_URL`.
 
 ```bash
