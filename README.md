@@ -45,6 +45,9 @@ be invited in the database; there is no public sign-up endpoint. Client users ma
 password or magic link, and auditor accounts require TOTP MFA. Set `SESSION_SECRET` to a long,
 random value before using sign-in. Magic-link token delivery is an injectable backend adapter and
 must be connected to an approved email provider before that sign-in method is enabled outside tests.
+See [authentication deployment setup](docs/authentication-setup.md) for the remaining hosting,
+invitation, MFA-enrollment, and live-cookie validation work. The public demo role switch does not
+authenticate real users. Session signing requires at least 32 bytes of secret material.
 
 Tenant-owned database records carry an explicit `firm_id`. API queries scope clients to their firm
 and auditors to assigned engagements. Run `uv run alembic check` after model changes to confirm a

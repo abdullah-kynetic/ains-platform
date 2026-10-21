@@ -47,6 +47,9 @@ templates/report/    Swappable draft-report layout and required notices
   expose drafts to clients, or omit required written representations after a negative answer.
 - Checklist publication and follow-up release require an assigned auditor action and audit log.
   Representation-based N/A approval requires new evidence and explicit auditor review.
+- Demo role switching must remain behind explicit mock mode and never issue real sessions.
+  Authentication secrets require at least 32 bytes; unconfigured email delivery must not claim
+  a magic-link request succeeded. Follow `docs/authentication-setup.md` for live deployment gaps.
 - **`web/`**: no secrets in `NEXT_PUBLIC_*` vars (they ship to the browser); mock data must be synthetic; status values must match `app/checklist.ClientStatus`; never show audit findings in client UI. Run `npm run lint && npm run build` in `web/` before committing.
 - **Portal roles**: client routes expose only neutral intake state; `/auditor` contains internal checks and finding drafts and must remain protected by backend auditor authorization as well as the UI role gate.
 - Keep changes small, typed, and tested. Run `uv run ruff check .` and `uv run pytest` before committing.

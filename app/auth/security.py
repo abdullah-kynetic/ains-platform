@@ -41,8 +41,8 @@ def create_session_token(
     *, user_id: str, session_id: str, settings: Settings, now: datetime | None = None
 ) -> str:
     secret = settings.session_secret.get_secret_value()
-    if not secret:
-        raise RuntimeError("SESSION_SECRET is not configured")
+    if len(secret.encode()) < 32:
+        raise RuntimeError("SESSION_SECRET must contain at least 32 bytes")
     issued = now or datetime.now(UTC)
     expires = issued + timedelta(hours=settings.session_ttl_hours)
     return jwt.encode(
@@ -54,6 +54,6 @@ def create_session_token(
 
 def decode_session_token(token: str, settings: Settings) -> dict[str, object]:
     secret = settings.session_secret.get_secret_value()
-    if not secret:
-        raise RuntimeError("SESSION_SECRET is not configured")
+    if len(secret.encode()) < 32:
+        raise RuntimeError("SESSION_SECRET must contain at least 32 bytes")
     return jwt.decode(token, secret, algorithms=[JWT_ALGORITHM])

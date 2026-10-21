@@ -80,6 +80,15 @@ MagicSender = Annotated[MagicLinkSender, Depends(get_magic_link_sender)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
+@router.get("/capabilities")
+def auth_capabilities(settings: AuthSettings, sender: MagicSender) -> dict[str, bool]:
+    configured = len(settings.session_secret.get_secret_value().encode()) >= 32
+    return {
+        "password_sign_in": configured,
+        "magic_link": configured and not isinstance(sender, UnconfiguredMagicLinkSender),
+    }
+
+
 def _normalize_email(email: str) -> str:
     return email.strip().casefold()
 
@@ -161,6 +170,8 @@ def request_magic_link(
     settings: AuthSettings,
     sender: MagicSender,
 ) -> dict[str, str]:
+    if isinstance(sender, UnconfiguredMagicLinkSender):
+        raise HTTPException(status_code=503, detail="Email sign-in is not configured")
     user = db.scalar(select(User).where(User.email == _normalize_email(payload.email)))
     if user and user.is_active:
         token, token_hash = new_magic_link_token()

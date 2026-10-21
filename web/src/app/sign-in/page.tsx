@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { passwordSignIn, requestMagicLink, verifyMagicLink } from "@/lib/api";
+import { getAuthCapabilities, passwordSignIn, requestMagicLink, verifyMagicLink } from "@/lib/api";
 
 function SignInForm() {
   const router = useRouter();
@@ -21,6 +21,12 @@ function SignInForm() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [magicLinkEnabled, setMagicLinkEnabled] = useState(false);
+
+  useEffect(() => {
+    getAuthCapabilities().then((capabilities) => setMagicLinkEnabled(capabilities.magic_link))
+      .catch(() => setMagicLinkEnabled(false));
+  }, []);
 
   useEffect(() => {
     if (session) router.replace(session.user.role === "auditor" ? "/auditor" : "/");
@@ -94,7 +100,7 @@ function SignInForm() {
                   <Input id="mfa" inputMode="numeric" autoComplete="one-time-code" value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} />
                 </Field>
                 <Button type="submit" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</Button>
-                <Button type="button" variant="outline" disabled={busy || !email} onClick={() => void handleMagicLink()}>Email me a sign-in link</Button>
+                {magicLinkEnabled ? <Button type="button" variant="outline" disabled={busy || !email} onClick={() => void handleMagicLink()}>Email me a sign-in link</Button> : null}
               </form>
             )}
             {message ? <p className="mt-4 text-sm text-green-400" role="status">{message}</p> : null}

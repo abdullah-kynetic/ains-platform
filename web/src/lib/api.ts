@@ -51,6 +51,11 @@ export type SessionUser = {
 
 export type SessionData = { user: SessionUser };
 
+export async function getAuthCapabilities(): Promise<{ password_sign_in: boolean; magic_link: boolean }> {
+  if (USE_MOCKS) return { password_sign_in: false, magic_link: false };
+  return apiRequest("/auth/capabilities");
+}
+
 const mockSession: SessionData = {
   user: {
     id: "synthetic-client",
