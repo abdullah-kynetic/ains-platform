@@ -6,10 +6,12 @@ import { AuthGate, useSession } from "@/components/auth/session";
 import { useRouter } from "next/navigation";
 import { USE_MOCKS, type UserRole } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { ThemeControl } from "@/components/shell/theme-control";
 
 const clientItems: NavItem[] = [
   { href: "/", label: "Overview", icon: "LayoutDashboard", exact: true },
   { href: "/checklist", label: "Document checklist", icon: "ListChecks" },
+  { href: "/progress", label: "Progress", icon: "ChartNoAxesCombined" },
   { href: "/questionnaire", label: "Firm questionnaire", icon: "ClipboardCheck" },
 ];
 
@@ -48,6 +50,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           onSignOut={() => void handleSignOut()}
         />
       }>
+        <ThemeControl />
         {USE_MOCKS ? <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/30 bg-surface p-4">
           <div><p className="text-sm font-semibold">Synthetic demo</p><p className="text-xs text-muted">No real accounts. Uploads and review decisions are simulated. Changes reset on refresh.</p></div>
           <div className="flex gap-2">

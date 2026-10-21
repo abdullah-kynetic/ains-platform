@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthGate } from "@/components/auth/session";
-import { PageHeader } from "@/components/shell/page";
+import { PageHeader, Stat } from "@/components/shell/page";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,10 +14,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   downloadDraftReport,
   getAuditorQueue,
+  listManagedEngagements,
   reviewFinding,
   reviewNotApplicable,
   type AuditorFinding,
   type AuditorQueueItem,
+  type ManagedEngagement,
 } from "@/lib/api";
 
 function FindingEditor({ finding, onUpdated }: { finding: AuditorFinding; onUpdated: (finding: AuditorFinding) => void }) {
@@ -76,7 +78,7 @@ function FindingEditor({ finding, onUpdated }: { finding: AuditorFinding; onUpda
   );
 }
 
-function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () => Promise<void> }) {
+export function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [representationReviewed, setRepresentationReviewed] = useState(false);
@@ -151,12 +153,14 @@ function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () =
 
 export function AuditorWorkspace({ engagementId }: { engagementId?: string }) {
   const [items, setItems] = useState<AuditorQueueItem[] | null>(null);
+  const [managed, setManaged] = useState<ManagedEngagement[]>([]);
   const [error, setError] = useState("");
   const [reportBusy, setReportBusy] = useState(false);
 
   async function load() {
     try {
-      setItems(await getAuditorQueue());
+      const [queue, engagements] = await Promise.all([getAuditorQueue(), listManagedEngagements()]);
+      setItems(queue); setManaged(engagements);
       setError("");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not load the review queue.");
@@ -164,13 +168,15 @@ export function AuditorWorkspace({ engagementId }: { engagementId?: string }) {
   }
 
   useEffect(() => {
-    getAuditorQueue().then(setItems).catch((caught: unknown) => {
+    Promise.all([getAuditorQueue(), listManagedEngagements()]).then(([queue, engagements]) => {
+      setItems(queue); setManaged(engagements);
+    }).catch((caught: unknown) => {
       setError(caught instanceof Error ? caught.message : "Could not load the review queue.");
     });
   }, []);
 
   const visible = (items ?? []).filter((item) => !engagementId || item.engagementId === engagementId);
-  const engagements = Array.from(new Map((items ?? []).map((item) => [item.engagementId, item])).values());
+  const engagements = managed.map((engagement) => ({ ...engagement, engagementId: engagement.id }));
 
   async function report(format: "docx" | "pdf") {
     if (!engagementId) return;
@@ -195,9 +201,15 @@ export function AuditorWorkspace({ engagementId }: { engagementId?: string }) {
             <Button variant="outline" disabled={reportBusy} onClick={() => void report("docx")}>Draft DOCX</Button>
             <Button variant="outline" disabled={reportBusy} onClick={() => void report("pdf")}>Draft PDF</Button>
           </div>
-        ) : undefined}
+        ) : <Link href="/auditor/manage" className={buttonVariants()}>New engagement</Link>}
       />
       {error ? <p className="mb-4 text-sm text-red-400">{error}</p> : null}
+      {!engagementId ? <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat label="Assigned engagements" value={managed.length} />
+        <Stat label="Items in review" value={items?.length ?? 0} />
+        <Stat label="Pending findings" value={items?.flatMap((item) => item.findings).filter((finding) => finding.reviewState === "pending").length ?? 0} />
+        <Stat label="N/A requests" value={items?.filter((item) => item.naReviewState === "pending").length ?? 0} />
+      </div> : null}
       {!items ? <Skeleton className="h-72 w-full" /> : engagementId ? (
         <div className="grid gap-5">
           <Link href="/auditor" className={buttonVariants({ variant: "link" })}>← Back to queue</Link>
@@ -209,7 +221,7 @@ export function AuditorWorkspace({ engagementId }: { engagementId?: string }) {
             const count = (items ?? []).filter((item) => item.engagementId === engagement.engagementId).length;
             return (
               <Card key={engagement.engagementId}>
-                <CardHeader><CardTitle>{engagement.firmName}</CardTitle><CardDescription>{count} item{count === 1 ? "" : "s"} awaiting review</CardDescription></CardHeader>
+                <CardHeader><CardTitle>{engagement.firmName}</CardTitle><CardDescription>{engagement.status} · {engagement.itemCount} requests · {count} item{count === 1 ? "" : "s"} awaiting review</CardDescription></CardHeader>
                 <CardContent><Link className={buttonVariants()} href={`/auditor/engagements/${engagement.engagementId}`}>Open engagement</Link></CardContent>
               </Card>
             );
