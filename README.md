@@ -5,6 +5,13 @@ AINS is an AI-native financial regulatory audit firm. Our software does the legw
 This repo holds the audit engine (Python 3.12, FastAPI, Pydantic) and the client portal
 (Next.js 16 in `web/`). Client documents are stored in Egnyte via an Internal API app.
 
+## Authoritative checklist
+
+The [M&A broker-dealer AML request list](docs/checklist/aml-ma-bd-request-list.md) preserves all
+34 requests from the user-supplied Word document, with stable reference IDs and source issues
+for Quinton to review. Use this reference when implementing the checklist; do not substitute the
+portal's synthetic demo items. SAR filings and decision records require controlled human handling.
+
 ## Setup
 
 ```bash
