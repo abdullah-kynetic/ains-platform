@@ -12,6 +12,7 @@ const records: ManagedEngagement[] = [{
 const followUps = new Set<string>();
 const uploaded = new Map<string, { name: string; size: number; uploadedAt: string }>();
 const answers = new Map<string, boolean>();
+const clientDecisions = new Map<string, { status: ClientStatus; reason?: string }>();
 const naDecisions = new Map<string, "approved" | "rejected">();
 const queue: AuditorQueueItem[] = [{
   firmName, engagementId: demoId, itemId: "AML-BD-003", itemTitle: "AML training records",
@@ -50,14 +51,20 @@ export function demoEngagement(): Engagement {
       .filter((item) => naDecisions.get(item.id) !== "approved")
       .filter((item) => answers.get(item.id) !== false || item.negative_answer_instruction)
       .map((item) => {
-        const file = uploaded.get(item.id);
+        const seed = ["AML-BD-001", "AML-BD-002", "AML-BD-003", "AML-BD-007", "AML-BD-008"].includes(item.id);
+        const file = uploaded.get(item.id) ?? (seed ? { name: `synthetic-${item.id.toLowerCase()}.txt`, size: 2048, uploadedAt: "2026-10-20T12:00:00Z" } : undefined);
         const status: ClientStatus = item.restricted ? "restricted_do_not_upload"
-          : file ? "checking" : item.id === "AML-BD-003" ? "with_auditor" : "requested";
+          : clientDecisions.get(item.id)?.status ?? (uploaded.has(item.id) ? "checking" : item.id === "AML-BD-001" ? "accepted_for_testing"
+          : ["AML-BD-002", "AML-BD-003"].includes(item.id) ? "with_auditor" : file ? "checking" : "requested");
         return { id: item.id, title: item.title, description: item.description, status,
-          reason: answers.get(item.id) === false ? item.negative_answer_instruction ?? undefined : undefined,
+          reason: answers.get(item.id) === false ? item.negative_answer_instruction ?? undefined : clientDecisions.get(item.id)?.reason,
           files: file ? [{ id: `synthetic-${item.id}`, ...file }] : [] };
       }) })),
   };
+}
+
+export function demoSetClientDecision(itemId: string, status: ClientStatus, reason?: string) {
+  clientDecisions.set(itemId, { status, reason });
 }
 
 export function demoUpload(itemId: string, file: File) {

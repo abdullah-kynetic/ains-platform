@@ -39,6 +39,27 @@
   color-scheme: dark;
 }
 
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-background: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-elevated: #edf1f7;
+  --color-hover: #e4eaf3;
+  --color-foreground: #152238;
+  --color-muted: #475569;
+  --color-subtle: #64748b;
+  --color-border: rgb(15 23 42 / 0.12);
+  --color-border-strong: rgb(15 23 42 / 0.2);
+  --color-brand-tint: #e4edff;
+  --color-brand-hover: #1d4ed8;
+}
+
+:root[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
+
+@media (max-width: 640px) {
+  [role="tablist"] { display: flex; flex-wrap: wrap; gap: 4px; }
+}
+
 html, body {
   background: var(--color-background);
   color: var(--color-foreground);

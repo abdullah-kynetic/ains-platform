@@ -42,12 +42,16 @@ export default function OverviewPage() {
       <Card>
         <CardHeader><CardTitle>Next steps</CardTitle></CardHeader>
         <CardContent className="grid gap-2">
-          {actions.length ? actions.map((i) => (
+          {actions.length ? actions.slice(0, 5).map((i) => (
             <div key={i.id} className="flex items-center justify-between gap-3 text-sm">
               <span className="truncate">{i.title}</span>
               <StatusBadge status={i.status} />
             </div>
           )) : <p className="text-sm text-muted">Nothing needed from you right now.</p>}
+          <div className="mt-3 flex flex-wrap gap-4 border-t border-border pt-3">
+            <Link href="/progress" className="text-sm text-brand-hover">View full progress →</Link>
+            <Link href="/questionnaire" className="text-sm text-brand-hover">Review firm questionnaire →</Link>
+          </div>
         </CardContent>
       </Card>
     </>

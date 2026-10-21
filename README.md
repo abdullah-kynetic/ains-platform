@@ -142,6 +142,9 @@ The Cloudflare synthetic demo supports Client view and Auditor view, including t
 request list and engagement setup. Demo actions run in browser memory, reset on refresh, and
 never grant a backend session. `cd web && npm run test:e2e` verifies the role switch and core
 demonstration interactions; install Playwright Chromium first with `npx playwright install chromium`.
+The frontend also includes a separate client progress page and per-engagement auditor tabs for
+dashboard, documents, processing, cited document review, feedback, and report readiness. See
+`web/FRONTEND_SCOPE.md` for the synthetic adapter and deferred MCP integration requirements.
 
 ## Data rules (non-negotiable)
 

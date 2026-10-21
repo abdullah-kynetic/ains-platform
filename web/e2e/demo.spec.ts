@@ -13,10 +13,11 @@ test("client and auditor demonstration uses the real checklist without backend c
   await page.getByRole("button", { name: "Auditor view", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Quinton’s review queue" })).toBeVisible();
   await page.getByRole("link", { name: "Open engagement", exact: true }).click();
+  await page.getByRole("tab", { name: "Auditor review", exact: true }).click();
   await expect(page.getByText("Synthetic training follow-up", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Accept", exact: true }).click();
   await expect(page.getByText("accepted", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Engagement setup" }).click();
+  await page.getByRole("navigation").getByRole("link", { name: "Engagement setup" }).click();
   await page.getByRole("button", { name: "Review requests" }).click();
   await expect(page.locator("summary")).toHaveCount(34);
   await page.getByLabel("Firm name", { exact: true }).fill("Synthetic Demo Firm");

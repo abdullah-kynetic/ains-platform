@@ -1,5 +1,8 @@
 # AINS web (client portal)
 
+See [frontend scope](FRONTEND_SCOPE.md) for the meeting-driven client progress, auditor dashboard,
+processing, summary/review, feedback, report-readiness, and theme screens, plus the MCP boundary.
+
 Cloudflare synthetic demo: set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in the deployment
 environment, then run `npm run deploy:demo` from `web/`. This builds with mock data enabled and
 publishes the `ains-platform-demo` Worker at its account's `workers.dev` address. Credentials stay
