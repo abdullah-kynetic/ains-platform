@@ -91,7 +91,10 @@ def visible_engagements(user: User) -> Select[tuple[Engagement]]:
         return stmt.where(Engagement.auditor_id == user.id)
     if not user.firm_id:
         return stmt.where(Engagement.id.is_(None))
-    return stmt.where(Engagement.firm_id == user.firm_id)
+    return stmt.where(
+        Engagement.firm_id == user.firm_id,
+        Engagement.status != EngagementStatus.DRAFT,
+    )
 
 
 def _serialize_engagement(engagement: Engagement) -> EngagementView:
@@ -172,6 +175,8 @@ async def upload_document(
     engagement = db.scalar(visible_engagements(user).where(Engagement.id == engagement_id))
     if not engagement:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Engagement not found")
+    if engagement.status in {EngagementStatus.DRAFT, EngagementStatus.COMPLETE}:
+        raise HTTPException(status_code=409, detail="This engagement is not accepting uploads")
     item = db.scalar(
         select(ChecklistItemInstance).where(
             ChecklistItemInstance.id == item_id,
@@ -183,6 +188,8 @@ async def upload_document(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Checklist item not found"
         )
+    if not item.applicable:
+        raise HTTPException(status_code=409, detail="This item is not currently requested")
     if item.restricted:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

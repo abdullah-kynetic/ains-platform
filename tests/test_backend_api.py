@@ -29,6 +29,7 @@ from app.database.models import (
     CheckResult,
     Document,
     Engagement,
+    EngagementStatus,
     FindingDraft,
     Firm,
     ReviewState,
@@ -43,6 +44,13 @@ from app.worker import run_once
 CLIENT_PASSWORD = "synthetic-client-password"
 AUDITOR_PASSWORD = "synthetic-auditor-password"
 MFA_SECRET = "JBSWY3DPEHPK3PXP"
+
+NEW_ENGAGEMENT = {
+    "firmName": "Synthetic New Firm",
+    "firmSlug": "synthetic-new-firm",
+    "reviewPeriodStart": "2025-01-01",
+    "reviewPeriodEnd": "2025-12-31",
+}
 
 
 class CaptureMagicLinkSender:
@@ -272,6 +280,64 @@ def test_invite_only_password_session_and_sign_out(backend) -> None:
     assert session.json()["user"]["role"] == "client"
     assert client.post("/auth/sign-out").status_code == 204
     assert client.get("/auth/session").status_code == 401
+
+
+def test_onboarding_creates_frozen_draft_and_denies_clients(backend) -> None:
+    client, factory, ids, ingestor, _ = backend
+    sign_in_client(client)
+    assert client.post("/auditor/engagements", json=NEW_ENGAGEMENT).status_code == 403
+    assert client.get("/auditor/engagements").status_code == 403
+    client.cookies.clear()
+    sign_in_auditor(client)
+    response = client.post("/auditor/engagements", json=NEW_ENGAGEMENT)
+    assert response.status_code == 201
+    body = response.json()
+    assert body["status"] == "draft" and body["itemCount"] == 34
+    assert body["checklistVersion"] == "aml_bd_v1"
+    assert client.post("/auditor/engagements", json=NEW_ENGAGEMENT).status_code == 409
+    with factory() as db:
+        engagement = db.get(Engagement, body["id"])
+        assert engagement.checklist_snapshot["approval_status"] == "pending_quinton_review"
+        item_id = engagement.items[0].id
+        # Even a firm member cannot see an unapproved draft.
+        member = db.get(User, ids["client_a"])
+        member.firm_id = body["firmId"]
+        # Unassigned tenant is excluded from the auditor's management list.
+        other = db.get(Engagement, ids["engagement_b"])
+        other.auditor_id = None
+        db.commit()
+    listing = client.get("/auditor/engagements").json()
+    assert body["id"] in [item["id"] for item in listing]
+    assert ids["engagement_b"] not in [item["id"] for item in listing]
+    blocked = client.post(
+        f"/engagements/{body['id']}/items/{item_id}/documents",
+        files={"file": ("synthetic.txt", b"synthetic", "text/plain")},
+    )
+    assert blocked.status_code == 409 and ingestor.calls == 0
+    client.cookies.clear()
+    sign_in_client(client)
+    assert client.get("/engagements/current").status_code == 404
+    assert client.get(f"/engagements/{body['id']}/questionnaire").status_code == 404
+
+
+def test_hidden_item_upload_and_invalid_period_are_rejected(backend) -> None:
+    client, factory, ids, ingestor, _ = backend
+    sign_in_auditor(client)
+    assert client.post("/auditor/engagements", json={
+        **NEW_ENGAGEMENT, "reviewPeriodEnd": "2024-01-01",
+    }).status_code == 422
+    with factory() as db:
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        item.applicable = False
+        assert db.get(Engagement, ids["engagement_a"]).status != EngagementStatus.DRAFT
+        db.commit()
+    client.cookies.clear()
+    sign_in_client(client)
+    response = client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic", "text/plain")},
+    )
+    assert response.status_code == 409 and ingestor.calls == 0
 
 
 def test_auditor_requires_mfa(backend) -> None:

@@ -12,6 +12,11 @@ The [M&A broker-dealer AML request list](docs/checklist/aml-ma-bd-request-list.m
 for Quinton to review. Use this reference when implementing the checklist; do not substitute the
 portal's synthetic demo items. SAR filings and decision records require controlled human handling.
 
+The versioned catalog is `data/checklist/aml_bd_v1.yaml`; see
+[the implementation review](docs/checklist-summary.md) for all six sections and outstanding
+decisions. Auditor-only `POST /auditor/engagements` creates a new firm and draft with a frozen
+34-item snapshot. Drafts stay hidden from clients until a reviewed publication workflow is ready.
+
 ## Setup
 
 ```bash

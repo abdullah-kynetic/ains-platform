@@ -129,6 +129,8 @@ class Engagement(Base):
     review_period_start: Mapped[date] = mapped_column(Date)
     review_period_end: Mapped[date] = mapped_column(Date)
     due_date: Mapped[date | None] = mapped_column(Date)
+    checklist_version: Mapped[str | None] = mapped_column(String(120))
+    checklist_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
