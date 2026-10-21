@@ -135,6 +135,11 @@ The SAR case must never call a provider. Optional `--provider anthropic` and `--
 modes send only this synthetic set and read credentials from process environment variables, never
 from `.env`.
 
+The Cloudflare synthetic demo supports Client view and Auditor view, including the authoritative
+request list and engagement setup. Demo actions run in browser memory, reset on refresh, and
+never grant a backend session. `cd web && npm run test:e2e` verifies the role switch and core
+demonstration interactions; install Playwright Chromium first with `npx playwright install chromium`.
+
 ## Data rules (non-negotiable)
 
 1. **No secrets in git.** `.env` and keys live only locally and in the password manager. Never paste them into chats, issues, or AI tools.

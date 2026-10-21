@@ -1,5 +1,4 @@
 import type { Engagement } from "./checklist";
-import { cloneMockEngagement } from "./mock-data";
 
 export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(
@@ -25,6 +24,7 @@ async function responseError(response: Response): Promise<Error> {
 }
 
 async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  if (USE_MOCKS) return (await import("./demo")).demoRequest<T>(path, init);
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     credentials: "include",
@@ -62,7 +62,12 @@ const mockSession: SessionData = {
 };
 
 export async function getSession(): Promise<SessionData> {
-  if (USE_MOCKS) return mockSession;
+  if (USE_MOCKS) {
+    const requested = new URLSearchParams(window.location.search).get("demo");
+    if (requested === "client" || requested === "auditor") sessionStorage.setItem("ains-demo-role", requested);
+    const role = sessionStorage.getItem("ains-demo-role") === "auditor" ? "auditor" : "client";
+    return { user: { ...mockSession.user, role, name: role === "auditor" ? "Synthetic Auditor" : "Synthetic Client" } };
+  }
   return apiRequest<SessionData>("/auth/session");
 }
 
@@ -106,25 +111,8 @@ export type Question = {
 };
 export type Questionnaire = { engagementId: string; questions: Question[] };
 
-const mockQuestions: Question[] = [
-  {
-    itemId: "conditional-foreign-accounts",
-    sectionTitle: "Customer activity",
-    question: "Did the firm maintain accounts for foreign financial institutions during the review period?",
-    answer: null,
-    naReviewState: null,
-  },
-  {
-    itemId: "conditional-independent-testing",
-    sectionTitle: "AML program governance",
-    question: "Was a prior independent AML test completed during the review period?",
-    answer: null,
-    naReviewState: null,
-  },
-];
-
 export async function getQuestionnaire(engagementId: string): Promise<Questionnaire> {
-  if (USE_MOCKS) return { engagementId, questions: mockQuestions.map((question) => ({ ...question })) };
+  if (USE_MOCKS) return (await import("./demo")).demoQuestionnaire(engagementId);
   return apiRequest<Questionnaire>(
     `/engagements/${encodeURIComponent(engagementId)}/questionnaire`,
   );
@@ -135,15 +123,7 @@ export async function saveQuestionnaire(
   answers: Array<{ itemId: string; applies: boolean }>,
 ): Promise<Questionnaire> {
   if (USE_MOCKS) {
-    const byId = new Map(answers.map((answer) => [answer.itemId, answer.applies]));
-    return {
-      engagementId,
-      questions: mockQuestions.map((question) => ({
-        ...question,
-        answer: byId.get(question.itemId) ?? question.answer,
-        naReviewState: byId.get(question.itemId) === false ? "pending" : null,
-      })),
-    };
+    return (await import("./demo")).demoAnswers(engagementId, answers);
   }
   return apiRequest<Questionnaire>(
     `/engagements/${encodeURIComponent(engagementId)}/questionnaire/answers`,
@@ -271,6 +251,7 @@ export async function downloadDraftReport(
   engagementId: string,
   format: "docx" | "pdf",
 ): Promise<void> {
+  if (USE_MOCKS) throw new Error("Report downloads require the authenticated backend. Demo finding decisions are simulated.");
   const response = await fetch(
     `${API_URL}/auditor/engagements/${encodeURIComponent(engagementId)}/report?format=${format}`,
     { method: "POST", credentials: "include" },
@@ -289,7 +270,7 @@ export async function downloadDraftReport(
 export async function getEngagement(): Promise<Engagement> {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 150));
-    return cloneMockEngagement();
+    return (await import("./demo")).demoEngagement();
   }
   const response = await fetch(`${API_URL}/engagements/current`, {
     credentials: "include",
@@ -309,6 +290,7 @@ export async function uploadDocument(
     throw new Error(`File is larger than ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)} MB.`);
   }
   if (USE_MOCKS) {
+    (await import("./demo")).demoUpload(itemId, file);
     for (const pct of [20, 45, 70, 100]) {
       await new Promise((resolve) => setTimeout(resolve, 120));
       onProgress(pct);
