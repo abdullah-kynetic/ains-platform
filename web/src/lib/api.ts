@@ -102,6 +102,7 @@ export type Question = {
   question: string;
   answer: boolean | null;
   naReviewState: NAReviewState;
+  negativeAnswerInstruction?: string | null;
 };
 export type Questionnaire = { engagementId: string; questions: Question[] };
 
@@ -173,7 +174,7 @@ export type AuditorFinding = {
   body: string;
   severity: "low" | "moderate" | "high" | "critical";
   citations: Citation[];
-  reviewState: "draft" | "accepted" | "edited" | "rejected";
+  reviewState: "pending" | "accepted" | "edited" | "rejected";
 };
 export type AuditorQueueItem = {
   firmName: string;
@@ -210,11 +211,60 @@ export async function reviewNotApplicable(
   engagementId: string,
   itemId: string,
   decision: "approve" | "reject",
+  representationReviewed = false,
 ): Promise<Question> {
   return apiRequest<Question>(
     `/engagements/${encodeURIComponent(engagementId)}/questionnaire/items/${encodeURIComponent(itemId)}/na-review`,
-    { method: "POST", body: JSON.stringify({ decision }) },
+    { method: "POST", body: JSON.stringify({ decision, representationReviewed }) },
   );
+}
+
+export type ManagedEngagement = {
+  id: string;
+  firmId: string;
+  firmName: string;
+  status: string;
+  checklistVersion: string | null;
+  itemCount: number;
+};
+
+export type ChecklistReview = {
+  engagement: ManagedEngagement;
+  catalog: { items: Array<{
+    id: string; title: string; description: string; restricted: boolean;
+    review_period_rule: string; condition_question: string | null;
+    negative_answer_instruction: string | null;
+  }> };
+  followUps: Array<{ id: string; title: string; released: boolean }>;
+};
+
+export function listManagedEngagements(): Promise<ManagedEngagement[]> {
+  return apiRequest<ManagedEngagement[]>("/auditor/engagements");
+}
+
+export function createDraftEngagement(payload: {
+  firmName: string; firmSlug: string; reviewPeriodStart: string;
+  reviewPeriodEnd: string; dueDate: string | null;
+}): Promise<ManagedEngagement> {
+  return apiRequest<ManagedEngagement>("/auditor/engagements", {
+    method: "POST", body: JSON.stringify(payload),
+  });
+}
+
+export function getChecklistReview(id: string): Promise<ChecklistReview> {
+  return apiRequest<ChecklistReview>(`/auditor/engagements/${encodeURIComponent(id)}/checklist`);
+}
+
+export function publishChecklist(id: string, reviewNotes: string): Promise<ManagedEngagement> {
+  return apiRequest<ManagedEngagement>(`/auditor/engagements/${encodeURIComponent(id)}/publish`, {
+    method: "POST", body: JSON.stringify({ confirmChecklistReviewed: true, reviewNotes }),
+  });
+}
+
+export function releaseFollowUp(id: string, itemId: string, selectionNotes: string): Promise<void> {
+  return apiRequest<void>(`/auditor/engagements/${encodeURIComponent(id)}/items/${encodeURIComponent(itemId)}/release`, {
+    method: "POST", body: JSON.stringify({ selectionNotes }),
+  });
 }
 
 export async function downloadDraftReport(

@@ -47,7 +47,7 @@ function FindingEditor({ finding, onUpdated }: { finding: AuditorFinding; onUpda
     <div className="grid gap-3 rounded-lg border border-border bg-elevated/50 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="font-medium">{finding.title}</div>
-        <Badge variant={finding.reviewState === "rejected" ? "danger" : finding.reviewState === "draft" ? "warning" : "success"}>{finding.reviewState}</Badge>
+        <Badge variant={finding.reviewState === "rejected" ? "danger" : finding.reviewState === "pending" ? "warning" : "success"}>{finding.reviewState}</Badge>
       </div>
       <Field label="Finding draft">
         <Textarea value={body} onChange={(event) => setBody(event.target.value)} />
@@ -79,12 +79,13 @@ function FindingEditor({ finding, onUpdated }: { finding: AuditorFinding; onUpda
 function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [representationReviewed, setRepresentationReviewed] = useState(false);
 
   async function decideNA(decision: "approve" | "reject") {
     setBusy(true);
     setError("");
     try {
-      await reviewNotApplicable(item.engagementId, item.itemId, decision);
+      await reviewNotApplicable(item.engagementId, item.itemId, decision, representationReviewed);
       await onChanged();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not review this N/A answer.");
@@ -106,6 +107,10 @@ function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () =
         {item.naReviewState === "pending" ? (
           <div className="rounded-lg border border-warning/30 bg-warning/5 p-4">
             <p className="text-sm text-foreground">The firm answered that this item does not apply. Quinton must approve or reject that answer.</p>
+            <label className="mt-3 flex gap-2 text-sm text-muted">
+              <input type="checkbox" checked={representationReviewed} onChange={(event) => setRepresentationReviewed(event.target.checked)} />
+              I reviewed the required written representation, where applicable.
+            </label>
             <div className="mt-3 flex gap-2">
               <Button size="sm" disabled={busy} onClick={() => void decideNA("approve")}>Approve N/A</Button>
               <Button size="sm" variant="destructive" disabled={busy} onClick={() => void decideNA("reject")}>Reject N/A</Button>

@@ -71,6 +71,7 @@ export default function QuestionnairePage() {
                 {question.naReviewState === "rejected" ? <Badge variant="danger">Applies — upload required</Badge> : null}
               </div>
               <CardDescription>{question.sectionTitle}</CardDescription>
+              {question.negativeAnswerInstruction ? <p className="text-sm text-muted">If no: {question.negativeAnswerInstruction}</p> : null}
             </CardHeader>
             <CardContent className="flex gap-2">
               <Button variant={answers[question.itemId] === true ? "default" : "outline"} onClick={() => setAnswers((current) => ({ ...current, [question.itemId]: true }))}>Yes, this applies</Button>

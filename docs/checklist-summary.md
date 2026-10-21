@@ -28,6 +28,13 @@ are implementation additions and remain pending Quinton's review.
 - Auditor-only `POST /auditor/engagements` creates a new firm and assigned draft engagement.
   `GET /auditor/engagements` lists only the signed-in auditor's assigned engagements.
 - Drafts are invisible to client APIs and accept no uploads. Hidden items accept no uploads.
+- Assigned auditors explicitly publish reviewed drafts with
+  `POST /auditor/engagements/{id}/publish`, a review confirmation, and review notes.
+  Approval is recorded in the audit log for this engagement; source catalog status stays pending.
+- Written-representation alternatives stay visible after a negative answer. N/A approval requires
+  a document uploaded after the request plus the auditor's explicit representation-review flag.
+- Assigned auditors release request 9 using `POST /auditor/engagements/{id}/items/{itemId}/release`
+  with selection notes. Until release it is hidden and rejects uploads.
 
 ## Still requiring implementation or auditor decisions
 
@@ -38,10 +45,10 @@ are implementation additions and remain pending Quinton's review.
    validate signer authority or all required signers.
 3. Natural-language timing rules are preserved in the snapshot. They are deliberately not wired
    to the existing simplistic any-date deterministic check. Coverage rules need individual tests.
-4. Before activation, finish the audited publication action and representation collection flow:
-   a negative answer must not eliminate a required written representation.
-5. Implement auditor release of request 9 after selecting accounts/engagements. Keep all source
-   requests even if Quinton later approves consolidated presentation of overlapping requests.
+4. Auditor pages now provide engagement setup, full checklist review, explicit publication,
+   representation-review confirmation, and follow-up release. Verify these in a deployed browser
+   session with Quinton before live use; no engagement has been auto-approved.
+5. Keep all source requests even if Quinton later approves consolidated presentation of overlaps.
 6. Existing tenant invitation, renewal engagement, and assignment changes need explicit access
    controls. The new endpoint creates a fresh tenant and never grants access to an existing one
    merely because the caller supplies its slug.

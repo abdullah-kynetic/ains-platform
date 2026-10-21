@@ -13,6 +13,7 @@ const clientItems: NavItem[] = [
 
 const auditorItems: NavItem[] = [
   { href: "/auditor", label: "Review queue", icon: "ShieldCheck", exact: true },
+  { href: "/auditor/manage", label: "Engagement setup", icon: "Building2" },
 ];
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {

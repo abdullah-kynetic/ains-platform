@@ -16,6 +16,7 @@ from app.checklist import ClientStatus
 from app.database.models import (
     AuditLog,
     ChecklistItemInstance,
+    Document,
     Engagement,
     NAReviewState,
     User,
@@ -40,6 +41,7 @@ class QuestionView(APIModel):
     question: str
     answer: bool | None
     na_review_state: NAReviewState | None
+    negative_answer_instruction: str | None = None
 
 
 class QuestionnaireView(APIModel):
@@ -58,6 +60,15 @@ class QuestionnaireAnswers(APIModel):
 
 class NAReviewDecision(APIModel):
     decision: Literal["approve", "reject"]
+    representation_reviewed: bool = False
+
+
+def _representation_instruction(engagement: Engagement, item: ChecklistItemInstance) -> str | None:
+    entries = (engagement.checklist_snapshot or {}).get("items", [])
+    entry = next((entry for entry in entries if entry["id"] == item.item_key), {})
+    if entry.get("negative_answer_requires_representation"):
+        return entry.get("negative_answer_instruction")
+    return None
 
 
 def _get_engagement(db: Session, user: User, engagement_id: str) -> Engagement:
@@ -86,6 +97,7 @@ def _questionnaire(db: Session, engagement: Engagement) -> QuestionnaireView:
                 question=item.condition_question or f"Does {item.title} apply to your firm?",
                 answer=item.applicability_answer,
                 na_review_state=item.na_review_state,
+                negative_answer_instruction=_representation_instruction(engagement, item),
             )
             for item in items
         ],
@@ -142,16 +154,19 @@ def answer_questionnaire(
         item.na_approved_by_id = None
         if answer.applies:
             item.applicable = True
+            item.client_reason = None
             item.na_review_state = None
             item.na_requested_at = None
             item.status = (
                 ClientStatus.RESTRICTED_DO_NOT_UPLOAD if item.restricted else ClientStatus.REQUESTED
             )
         else:
-            item.applicable = False
+            instruction = _representation_instruction(engagement, item)
+            item.applicable = bool(instruction)
             item.na_review_state = NAReviewState.PENDING
             item.na_requested_at = now
-            item.status = ClientStatus.WITH_AUDITOR
+            item.status = ClientStatus.REQUESTED if instruction else ClientStatus.WITH_AUDITOR
+            item.client_reason = instruction
         db.add(
             AuditLog(
                 firm_id=engagement.firm_id,
@@ -196,10 +211,23 @@ def review_not_applicable(
     if not item:
         raise HTTPException(status_code=404, detail="Pending N/A answer not found")
 
+    instruction = _representation_instruction(engagement, item)
+    if payload.decision == "approve" and instruction:
+        document = db.scalar(select(Document).where(
+            Document.firm_id == engagement.firm_id,
+            Document.item_instance_id == item.id,
+            Document.created_at >= item.na_requested_at,
+        ))
+        if not document or not payload.representation_reviewed:
+            raise HTTPException(
+                status_code=409,
+                detail="The required written representation must be uploaded and reviewed",
+            )
     item.na_approved_by_id = user.id
     if payload.decision == "approve":
         item.na_review_state = NAReviewState.APPROVED
         item.applicable = False
+        item.client_reason = None
     else:
         item.na_review_state = NAReviewState.REJECTED
         item.applicable = True

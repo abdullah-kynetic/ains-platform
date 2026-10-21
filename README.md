@@ -15,7 +15,10 @@ portal's synthetic demo items. SAR filings and decision records require controll
 The versioned catalog is `data/checklist/aml_bd_v1.yaml`; see
 [the implementation review](docs/checklist-summary.md) for all six sections and outstanding
 decisions. Auditor-only `POST /auditor/engagements` creates a new firm and draft with a frozen
-34-item snapshot. Drafts stay hidden from clients until a reviewed publication workflow is ready.
+34-item snapshot. At `/auditor/manage`, the assigned auditor reviews the snapshot, records review
+notes, and explicitly approves publication before clients can see it. Required written
+representations remain requested after a negative questionnaire answer; N/A approval requires
+an uploaded representation and auditor confirmation. Follow-up requests are released separately.
 
 ## Setup
 

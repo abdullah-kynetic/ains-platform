@@ -340,6 +340,75 @@ def test_hidden_item_upload_and_invalid_period_are_rejected(backend) -> None:
     assert response.status_code == 409 and ingestor.calls == 0
 
 
+def test_auditor_publication_follow_up_and_representation_workflow(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_auditor(client)
+    created = client.post("/auditor/engagements", json=NEW_ENGAGEMENT).json()
+    engagement_id = created["id"]
+    publish_path = f"/auditor/engagements/{engagement_id}/publish"
+    approval = {"confirmChecklistReviewed": True, "reviewNotes": "Synthetic auditor review notes."}
+    assert client.post(
+        publish_path, json={**approval, "confirmChecklistReviewed": False},
+    ).status_code == 422
+    assert client.post(publish_path, json=approval).status_code == 200
+    checklist = client.get(f"/auditor/engagements/{engagement_id}/checklist")
+    assert checklist.status_code == 200
+    assert len(checklist.json()["catalog"]["items"]) == 34
+    assert client.post(publish_path, json=approval).status_code == 409
+    with factory() as db:
+        engagement = db.get(Engagement, engagement_id)
+        items = {item.item_key: item for item in engagement.items}
+        representation_id = items["AML-BD-016"].id
+        follow_up_id = items["AML-BD-009"].id
+        db.get(User, ids["client_a"]).firm_id = engagement.firm_id
+        db.commit()
+    release_path = f"/auditor/engagements/{engagement_id}/items/{follow_up_id}/release"
+    selection = {"selectionNotes": "Synthetic accounts selected for review."}
+    client.cookies.clear()
+    sign_in_client(client)
+    assert client.post(publish_path, json=approval).status_code == 403
+    assert client.get(f"/auditor/engagements/{engagement_id}/checklist").status_code == 403
+    assert client.post(release_path, json=selection).status_code == 403
+    answers_path = f"/engagements/{engagement_id}/questionnaire/answers"
+    answered = client.post(answers_path, json={
+        "answers": [{"itemId": representation_id, "applies": False}],
+    })
+    assert answered.status_code == 200
+    question = next(q for q in answered.json()["questions"] if q["itemId"] == representation_id)
+    assert "written representation" in question["negativeAnswerInstruction"]
+    visible = client.get("/engagements/current").json()
+    visible_ids = [item["id"] for section in visible["sections"] for item in section["items"]]
+    assert representation_id in visible_ids and follow_up_id not in visible_ids
+    review_path = f"/engagements/{engagement_id}/questionnaire/items/{representation_id}/na-review"
+    client.cookies.clear()
+    sign_in_auditor(client)
+    assert client.post(review_path, json={
+        "decision": "approve", "representationReviewed": True,
+    }).status_code == 409
+    assert client.post(release_path, json=selection).status_code == 200
+    assert client.post(release_path, json=selection).status_code == 409
+    client.cookies.clear()
+    sign_in_client(client)
+    uploaded = client.post(
+        f"/engagements/{engagement_id}/items/{representation_id}/documents",
+        files={"file": ("representation.txt", b"Synthetic representation", "text/plain")},
+    )
+    assert uploaded.status_code == 201
+    client.cookies.clear()
+    sign_in_auditor(client)
+    assert client.post(review_path, json={"decision": "approve"}).status_code == 409
+    assert client.post(review_path, json={
+        "decision": "approve", "representationReviewed": True,
+    }).status_code == 200
+    # Removing the assignment removes access even when the ID is known.
+    with factory() as db:
+        db.get(Engagement, engagement_id).auditor_id = None
+        db.commit()
+    assert client.post(publish_path, json=approval).status_code == 404
+    assert client.get(f"/auditor/engagements/{engagement_id}/checklist").status_code == 404
+    assert client.post(release_path, json=selection).status_code == 404
+
+
 def test_auditor_requires_mfa(backend) -> None:
     client, _, _, _, _ = backend
     without_mfa = client.post(
@@ -435,6 +504,7 @@ def test_questionnaire_no_answer_hides_item_pending_auditor_review(backend) -> N
             "question": "Does the firm maintain a written AML program?",
             "answer": None,
             "naReviewState": None,
+            "negativeAnswerInstruction": None,
         }
     ]
 
