@@ -22,7 +22,12 @@ from app.database.models import (
 from app.egnyte_client import EgnyteClient
 
 from .deterministic import contains_sar_indicator, run_deterministic_checks
-from .providers import DocumentCheckProvider, LLMDocumentCheck, get_check_provider
+from .providers import (
+    DocumentCheckProvider,
+    LLMDocumentCheck,
+    get_check_provider,
+    validate_citations,
+)
 
 CLIENT_REASONS = {
     "unreadable": "The file could not be read clearly. Please upload a clearer copy.",
@@ -35,6 +40,8 @@ CLIENT_REASONS = {
 def client_decision(result: LLMDocumentCheck) -> tuple[ClientStatus, str | None]:
     """Map structured provider output to a neutral client status and reason."""
     reason_code = result.client_reason_code
+    if result.review_period_supported is False:
+        return ClientStatus.ACTION_NEEDED_REUPLOAD, CLIENT_REASONS["wrong_period"]
     if not result.document_usable or not result.document_type_matches:
         status = (
             ClientStatus.ACTION_NEEDED_MORE
@@ -46,7 +53,7 @@ def client_decision(result: LLMDocumentCheck) -> tuple[ClientStatus, str | None]
     if result.needs_more_documents:
         safe_code = reason_code if reason_code != "none" else "missing_pages"
         return ClientStatus.ACTION_NEEDED_MORE, CLIENT_REASONS[safe_code]
-    if result.findings:
+    if result.findings or result.review_period_supported is None:
         return ClientStatus.WITH_AUDITOR, None
     return ClientStatus.ACCEPTED_FOR_TESTING, None
 
@@ -167,6 +174,7 @@ class DocumentProcessor:
             )
         finally:
             await provider.aclose()
+        validate_citations(llm_result, report.extracted.pages)
         llm_ms = int((time.monotonic() - llm_started) * 1000)
         self._record_llm_result(db, document, item, llm_result, provider.name, llm_ms)
         return self._finish(db, document, started, "completed")

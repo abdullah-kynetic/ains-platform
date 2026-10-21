@@ -10,7 +10,7 @@ import json
 from typing import Literal, Protocol
 
 import httpx
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.config import Settings
 
@@ -21,19 +21,23 @@ class ProviderError(RuntimeError):
     """Safe provider failure that never includes a key or document content."""
 
 
-class Citation(BaseModel):
+class StrictOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class Citation(StrictOutput):
     page: int = Field(ge=1)
     quote: str = Field(min_length=1, max_length=1000)
 
 
-class FindingCandidate(BaseModel):
+class FindingCandidate(StrictOutput):
     title: str = Field(min_length=1, max_length=255)
     body: str = Field(min_length=1, max_length=10_000)
     severity: Literal["low", "moderate", "high", "critical"]
     citations: list[Citation] = Field(min_length=1)
 
 
-class LLMDocumentCheck(BaseModel):
+class LLMDocumentCheck(StrictOutput):
     document_usable: bool
     document_type_matches: bool
     review_period_supported: bool | None
@@ -58,6 +62,18 @@ class DocumentCheckProvider(Protocol):
     ) -> LLMDocumentCheck: ...
 
     async def aclose(self) -> None: ...
+
+
+def validate_citations(result: LLMDocumentCheck, pages: list[str]) -> None:
+    """Reject invented pages and quotes before persisting any draft finding."""
+    for finding in result.findings:
+        for citation in finding.citations:
+            if citation.page > len(pages):
+                raise ProviderError("Finding citation references an unavailable page")
+            quote = " ".join(citation.quote.split())
+            page = " ".join(pages[citation.page - 1].split())
+            if not quote or quote not in page:
+                raise ProviderError("Finding citation quote is absent from its page")
 
 
 def _prompt(
