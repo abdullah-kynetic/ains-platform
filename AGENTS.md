@@ -7,7 +7,8 @@ AINS: AI-native financial regulatory audit platform. First service: FINRA Rule 3
 - uv for packages (`uv sync`, `uv run pytest`, `uv run ruff check .`)
 - Postgres 16 locally via `docker compose up -d`
 - Client documents in Egnyte (Internal API app, OAuth password flow)
-- AI providers approved by counsel: Anthropic (Claude) and OpenAI, via business/API accounts only
+- This repository is workflow software only. No direct model calls; a separate pipeline may
+  connect later through an authenticated backend adapter.
 - Next.js 16 (TypeScript, Tailwind v4) client portal in `web/` (npm); talks to the API via `NEXT_PUBLIC_API_URL`
 
 ## Layout
