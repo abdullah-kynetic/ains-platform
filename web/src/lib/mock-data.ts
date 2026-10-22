@@ -20,5 +20,13 @@ export const MOCK_ENGAGEMENT: Engagement = {
 };
 
 export function cloneMockEngagement(): Engagement {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("ains-synthetic-engagement-v1");
+    if (saved) return JSON.parse(saved) as Engagement;
+  }
   return structuredClone(MOCK_ENGAGEMENT);
+}
+
+export function saveMockEngagement(data: Engagement): void {
+  localStorage.setItem("ains-synthetic-engagement-v1", JSON.stringify(data));
 }

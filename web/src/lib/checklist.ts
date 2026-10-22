@@ -61,6 +61,7 @@ export type UploadedFile = {
   name: string;
   size: number;
   uploadedAt: string;
+  sha256?: string;
 };
 
 export type ChecklistItem = {
