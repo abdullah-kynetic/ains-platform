@@ -52,6 +52,15 @@ jobs, and routes files to the auditor. It cannot create findings or decide evide
 Unfinished: worker operational monitoring, stale-version policy, and a future authenticated
 external-pipeline adapter. Direct inference is deliberately out of scope, not a pending feature.
 
-Phases 6 through 8 will be reviewed and appended here in order. Each phase is merged only after
+## Phase 6 — auditor review and unsigned drafts
+
+Delivered assigned-auditor evidence queues, manual finding accept/edit/reject actions, severity,
+citations, audit records, and swappable DOCX/PDF draft-report templates. The citation data model
+is moved to a neutral evidence module; no dependency on removed model providers remains.
+Merge conflicts in tests/dependencies preserve the receipt-verification tests and add only report
+libraries. Unfinished: complete request-level decisions/history, document download/viewing,
+report-readiness gates, citation source naming, and final signing/delivery. Task 5 owns these gaps.
+
+Phases 7 through 8 will be reviewed and appended here in order. Each phase is merged only after
 its own PR checks pass, using a merge commit. Later unmerged feature branches are not silently
 included in this consolidation. Their useful work can be incorporated into the subsequent tasks.

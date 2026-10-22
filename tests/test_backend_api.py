@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import io
+import zipfile
 from collections.abc import Iterator
 from datetime import UTC, date, datetime
 
@@ -26,7 +28,9 @@ from app.database.models import (
     CheckResult,
     Document,
     Engagement,
+    FindingDraft,
     Firm,
+    ReviewState,
     User,
     UserRole,
 )
@@ -482,3 +486,150 @@ async def test_receipt_worker_rejects_changed_storage_bytes(backend) -> None:
         document = db.scalar(select(Document))
         with pytest.raises(ValueError, match="fingerprint_mismatch"):
             await processor.process(db, document.id)
+
+def test_auditor_queue_and_finding_review_are_role_scoped(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic evidence", "text/plain")},
+    )
+    with factory() as db:
+        document = db.scalar(select(Document))
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        assert document and item
+        item.status = ClientStatus.WITH_AUDITOR
+        db.add(
+            CheckResult(
+                firm_id=ids["firm_a"],
+                document_id=document.id,
+                check_type="synthetic_check",
+                status="completed",
+                details={"synthetic": True},
+                citations=[{"page": 1, "quote": "synthetic evidence"}],
+            )
+        )
+        finding = FindingDraft(
+            firm_id=ids["firm_a"],
+            engagement_id=ids["engagement_a"],
+            document_id=document.id,
+            title="Synthetic draft finding",
+            body="Synthetic body for auditor review.",
+            severity="low",
+            citations=[{"page": 1, "quote": "synthetic evidence"}],
+        )
+        db.add(finding)
+        db.commit()
+        finding_id = finding.id
+
+    assert client.get("/auditor/queue").status_code == 403
+    client.cookies.clear()
+    sign_in_auditor(client)
+    queue = client.get("/auditor/queue")
+    assert queue.status_code == 200
+    assert queue.json()[0]["findings"][0]["id"] == finding_id
+    assert queue.json()[0]["evidence"][0]["checks"][0]["checkType"] == "synthetic_check"
+
+    reviewed = client.patch(
+        f"/auditor/findings/{finding_id}",
+        json={
+            "action": "edit",
+            "title": "Auditor-edited synthetic finding",
+            "severity": "high",
+            "citations": [{"page": 1, "quote": "auditor verified synthetic evidence"}],
+        },
+    )
+    assert reviewed.status_code == 200
+    assert reviewed.json()["reviewState"] == "edited"
+    assert reviewed.json()["severity"] == "high"
+    with factory() as db:
+        finding = db.get(FindingDraft, finding_id)
+        assert finding and finding.reviewed_by_id == ids["auditor"]
+
+
+def test_auditor_cannot_accept_finding_without_citation(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic evidence", "text/plain")},
+    )
+    with factory() as db:
+        document = db.scalar(select(Document))
+        assert document
+        finding = FindingDraft(
+            firm_id=ids["firm_a"],
+            engagement_id=ids["engagement_a"],
+            document_id=document.id,
+            title="Synthetic uncited draft",
+            body="Must not be accepted without a citation.",
+            severity="low",
+            citations=[],
+        )
+        db.add(finding)
+        db.commit()
+        finding_id = finding.id
+    client.cookies.clear()
+    sign_in_auditor(client)
+    response = client.patch(f"/auditor/findings/{finding_id}", json={"action": "accept"})
+    assert response.status_code == 422
+
+
+def test_draft_report_includes_only_auditor_approved_findings(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic evidence", "text/plain")},
+    )
+    with factory() as db:
+        document = db.scalar(select(Document))
+        assert document
+        db.add_all(
+            [
+                FindingDraft(
+                    firm_id=ids["firm_a"],
+                    engagement_id=ids["engagement_a"],
+                    document_id=document.id,
+                    title="Approved synthetic finding",
+                    body="Approved synthetic report body.",
+                    severity="moderate",
+                    citations=[{"page": 1, "quote": "approved synthetic evidence"}],
+                    review_state=ReviewState.ACCEPTED,
+                    reviewed_by_id=ids["auditor"],
+                ),
+                FindingDraft(
+                    firm_id=ids["firm_a"],
+                    engagement_id=ids["engagement_a"],
+                    document_id=document.id,
+                    title="Rejected synthetic finding",
+                    body="This must not appear in a report.",
+                    severity="low",
+                    citations=[{"page": 1, "quote": "rejected synthetic evidence"}],
+                    review_state=ReviewState.REJECTED,
+                    reviewed_by_id=ids["auditor"],
+                ),
+            ]
+        )
+        db.commit()
+
+    assert (
+        client.post(f"/auditor/engagements/{ids['engagement_a']}/report?format=pdf").status_code
+        == 403
+    )
+    client.cookies.clear()
+    sign_in_auditor(client)
+    docx = client.post(f"/auditor/engagements/{ids['engagement_a']}/report?format=docx")
+    assert docx.status_code == 200
+    assert docx.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    with zipfile.ZipFile(io.BytesIO(docx.content)) as archive:
+        xml = archive.read("word/document.xml").decode()
+    assert "Approved synthetic finding" in xml
+    assert "Rejected synthetic finding" not in xml
+    assert "DRAFT" in xml and "not signed" in xml
+
+    pdf = client.post(f"/auditor/engagements/{ids['engagement_a']}/report?format=pdf")
+    assert pdf.status_code == 200
+    assert pdf.content.startswith(b"%PDF-")

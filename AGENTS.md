@@ -22,11 +22,13 @@ app/
   database/          SQLAlchemy models and session management
   documents/         Upload validation, hashing, and guarded Egnyte ingestion
   egnyte_client/     Egnyte API client (client.py), path guard (paths.py), CLI (cli.py)
+  reports/           Unsigned DOCX/PDF draft report generation
   worker.py          Durable Postgres-backed async document-check worker
   checklist/         Checklist items and client-facing statuses
 tests/               pytest suite (synthetic data only)
 web/                 Next.js client portal (see web/README.md)
 data/synthetic/      Fake documents for tests and demos
+templates/report/    Swappable draft-report layout and required notices
 .github/workflows/   CI: backend ruff + pytest; web lint + typecheck + build
 ```
 

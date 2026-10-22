@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     egnyte_dev_root: str = "/Shared/AINS-Dev"
 
     document_check_timeout_seconds: int = 300
+    report_template: str = "default.json"
 
     database_url: str = "postgresql+psycopg://ains:ains_dev@localhost:5432/ains"
 

@@ -92,6 +92,17 @@ match the recorded SHA-256 fingerprint and routes the receipt to the auditor. It
 document contents, calls a model, creates findings, or decides sufficiency. Retries and durations
 are recorded. A separate pipeline may connect later through an authenticated backend adapter.
 
+## Auditor review and draft reports
+
+Auditors use `GET /auditor/queue` to see only their assigned engagements, including evidence,
+check timings, draft findings, and page citations. `PATCH /auditor/findings/{id}` accepts, edits,
+or rejects a finding; accepted and edited findings cannot be saved without a page citation.
+
+`POST /auditor/engagements/{id}/report?format=docx|pdf` generates an unsigned draft containing
+only auditor-approved findings. The swappable layout and required draft language live in
+`templates/report/default.json`. The application never marks a report signed—Quinton reviews and
+signs the final report outside this draft-generation step.
+
 ## Data rules (non-negotiable)
 
 1. **No secrets in git.** `.env` and keys live only locally and in the password manager. Never paste them into chats, issues, or AI tools.
