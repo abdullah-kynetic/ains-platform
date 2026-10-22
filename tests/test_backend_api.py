@@ -21,6 +21,7 @@ from app.checklist import ClientStatus
 from app.checks.processor import DocumentProcessor
 from app.config import Settings, get_settings
 from app.database.models import (
+    AuditLog,
     Base,
     CheckJob,
     CheckJobStatus,
@@ -28,6 +29,7 @@ from app.database.models import (
     CheckResult,
     Document,
     Engagement,
+    EngagementStatus,
     FindingDraft,
     Firm,
     ReviewState,
@@ -336,6 +338,60 @@ def test_manual_workspace_is_auditor_only_and_assignment_scoped(backend):
     assert [entry["id"] for entry in client.get("/auditor/engagements").json()] == [
         ids["engagement_a"]
     ]
+
+
+def test_pipeline_is_auditor_only_assignment_scoped_and_audited(backend):
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    assert client.get("/auditor/pipeline").status_code == 403
+    path_a = f"/auditor/engagements/{ids['engagement_a']}/pipeline-stage"
+    assert client.patch(path_a, json={"stage": "auditor_review"}).status_code == 403
+
+    client.cookies.clear()
+    sign_in_auditor(client)
+    with factory() as db:
+        db.get(Engagement, ids["engagement_b"]).auditor_id = None
+        db.commit()
+
+    body = client.get("/auditor/pipeline")
+    assert body.status_code == 200
+    assert [entry["id"] for entry in body.json()] == [ids["engagement_a"]]
+    assert body.json()[0]["reportSigned"] is False
+
+    denied = client.patch(
+        f"/auditor/engagements/{ids['engagement_b']}/pipeline-stage",
+        json={"stage": "report_drafting"},
+    )
+    assert denied.status_code == 404
+
+    moved = client.patch(path_a, json={"stage": "report_drafting"})
+    assert moved.status_code == 200
+    assert moved.json() == {
+        "id": ids["engagement_a"],
+        "stage": "report_drafting",
+        "reportSigned": False,
+    }
+    with factory() as db:
+        engagement = db.get(Engagement, ids["engagement_a"])
+        assert engagement.status == EngagementStatus.REPORT_DRAFTING
+        event = db.scalar(
+            select(AuditLog).where(
+                AuditLog.firm_id == ids["firm_a"],
+                AuditLog.entity_id == ids["engagement_a"],
+                AuditLog.action == "engagement.pipeline_stage_changed",
+            )
+        )
+        assert event is not None
+        assert event.actor_id == ids["auditor"]
+        assert event.details == {
+            "before": {"stage": "document_collection"},
+            "after": {"stage": "report_drafting"},
+        }
+
+    completion = client.patch(path_a, json={"stage": "complete"})
+    assert completion.status_code == 409
+    with factory() as db:
+        assert db.get(Engagement, ids["engagement_a"]).status != EngagementStatus.COMPLETE
 
 
 @pytest.mark.parametrize(

@@ -13,6 +13,7 @@ from app.database.models import (
     AuditLog,
     ChecklistItemInstance,
     Engagement,
+    EngagementStatus,
     FindingDraft,
     NAReviewState,
     User,
@@ -24,6 +25,33 @@ from .intake import intake_item
 from .questionnaire import _get_engagement
 
 router = APIRouter(prefix="/auditor", tags=["manual review"])
+
+PipelineStage = Literal[
+    "intake",
+    "document_collection",
+    "auditor_review",
+    "report_drafting",
+    "awaiting_signature",
+    "complete",
+]
+
+PIPELINE_STATUS_TO_STAGE: dict[EngagementStatus, PipelineStage] = {
+    EngagementStatus.DRAFT: "intake",
+    EngagementStatus.COLLECTING: "document_collection",
+    EngagementStatus.TESTING: "auditor_review",
+    EngagementStatus.AUDITOR_REVIEW: "auditor_review",
+    EngagementStatus.REPORT_DRAFTING: "report_drafting",
+    EngagementStatus.AWAITING_SIGNATURE: "awaiting_signature",
+    EngagementStatus.COMPLETE: "complete",
+}
+PIPELINE_STAGE_TO_STATUS: dict[PipelineStage, EngagementStatus] = {
+    "intake": EngagementStatus.DRAFT,
+    "document_collection": EngagementStatus.COLLECTING,
+    "auditor_review": EngagementStatus.AUDITOR_REVIEW,
+    "report_drafting": EngagementStatus.REPORT_DRAFTING,
+    "awaiting_signature": EngagementStatus.AWAITING_SIGNATURE,
+    "complete": EngagementStatus.COMPLETE,
+}
 
 
 def require_auditor(user):
@@ -49,9 +77,13 @@ class ManualDecision(BaseModel):
         return self
 
 
-def readiness(engagement):
+class PipelineMove(BaseModel):
+    stage: PipelineStage
+
+
+def readiness(engagement, items=None):
     catalog = load_catalog()
-    instances = {item.item_key: item for item in engagement.items}
+    instances = {item.item_key: item for item in (items if items is not None else engagement.items)}
     blockers = []
     reviewed = 0
     for definition in catalog.requests:
@@ -99,6 +131,88 @@ def dashboard(user: CurrentUser, db: DB):
         }
         for entry in engagements
     ]
+
+
+def _pipeline_next_action(stage: PipelineStage, blocker_count: int) -> str:
+    if blocker_count:
+        return f"Resolve {blocker_count} outstanding workflow blocker(s)"
+    return {
+        "intake": "Confirm review period and applicable business lines",
+        "document_collection": "Complete document collection and intake review",
+        "auditor_review": "Complete the credentialed auditor's human assessment",
+        "report_drafting": "Prepare the unsigned draft report for auditor review",
+        "awaiting_signature": "Credentialed auditor reviews and explicitly signs the report",
+        "complete": "No open action",
+    }[stage]
+
+
+@router.get("/pipeline")
+def pipeline(user: CurrentUser, db: DB):
+    require_auditor(user)
+    engagements = db.scalars(
+        visible_engagements(user).options(
+            selectinload(Engagement.firm), selectinload(Engagement.auditor)
+        )
+    ).all()
+    result = []
+    for engagement in engagements:
+        items = db.scalars(
+            select(ChecklistItemInstance).where(
+                ChecklistItemInstance.engagement_id == engagement.id,
+                ChecklistItemInstance.firm_id == engagement.firm_id,
+            )
+        ).all()
+        state = readiness(engagement, items)
+        stage = PIPELINE_STATUS_TO_STAGE[engagement.status]
+        result.append(
+            {
+                "id": engagement.id,
+                "firm": engagement.firm.name,
+                "stage": stage,
+                "due": engagement.due_date,
+                "assignee": engagement.auditor.name if engagement.auditor else "Unassigned",
+                "progress": round(state["reviewed"] / state["total"] * 100),
+                "blockers": len(state["blockers"]),
+                "nextAction": _pipeline_next_action(stage, len(state["blockers"])),
+                "reportSigned": False,
+            }
+        )
+    return result
+
+
+@router.patch("/engagements/{engagement_id}/pipeline-stage")
+def move_pipeline_stage(
+    engagement_id: str, payload: PipelineMove, user: CurrentUser, db: DB
+):
+    require_auditor(user)
+    engagement = db.scalar(
+        visible_engagements(user).where(Engagement.id == engagement_id)
+    )
+    if engagement is None:
+        raise HTTPException(404, "Engagement not found")
+    if payload.stage == "complete":
+        raise HTTPException(
+            409,
+            "Completion requires a separately recorded signed-report action",
+        )
+    before = PIPELINE_STATUS_TO_STAGE[engagement.status]
+    engagement.status = PIPELINE_STAGE_TO_STATUS[payload.stage]
+    db.add(
+        AuditLog(
+            firm_id=engagement.firm_id,
+            actor_id=user.id,
+            action="engagement.pipeline_stage_changed",
+            entity_type="engagement",
+            entity_id=engagement.id,
+            details={"before": {"stage": before}, "after": {"stage": payload.stage}},
+        )
+    )
+    db.commit()
+    return {
+        "id": engagement.id,
+        "stage": payload.stage,
+        "reportSigned": False,
+    }
 
 
 @router.post("/engagements/{engagement_id}/initialize")
