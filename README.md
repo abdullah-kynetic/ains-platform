@@ -100,6 +100,15 @@ and stores the resulting Egnyte path and version in Postgres.
 
 ## Storage receipt verification
 
+### Central upload demo
+
+In the synthetic web demo, open `/upload`, search for a request, choose multiple synthetic
+files, adjust their destinations, then confirm. Each file gets its own receipt/failure and
+SHA-256 fingerprint. Receipt metadata persists in this browser; file bytes are not stored
+or sent to Egnyte in demo mode. The real API stores bytes only under `/Shared/AINS-Dev`.
+Run `cd web && npx playwright install chromium && npm run test:e2e` for the browser test.
+The checklist is a progress view, not a second upload screen.
+
 Successful uploads enqueue a durable Postgres `check_job`. The worker verifies that stored bytes
 match the recorded SHA-256 fingerprint and routes the receipt to the auditor. It never analyzes
 document contents, calls a model, creates findings, or decides sufficiency. Retries and durations

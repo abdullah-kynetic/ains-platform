@@ -1,5 +1,5 @@
 import type { Engagement } from "./checklist";
-import { cloneMockEngagement } from "./mock-data";
+import { cloneMockEngagement, saveMockEngagement } from "./mock-data";
 import catalog from "../../.generated/catalog.json";
 
 export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
@@ -246,25 +246,36 @@ export async function uploadDocument(
   itemId: string,
   file: File,
   onProgress: (pct: number) => void,
-): Promise<void> {
+): Promise<UploadReceipt> {
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error(`File is larger than ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)} MB.`);
   }
   if (USE_MOCKS) {
-    for (const pct of [20, 45, 70, 100]) {
-      await new Promise((resolve) => setTimeout(resolve, 120));
-      onProgress(pct);
-    }
-    return;
+    const data = cloneMockEngagement();
+    const item = data.sections.flatMap((section) => section.items).find((item) => item.id === itemId);
+    if (!item || item.restricted) throw new Error("This request cannot accept portal uploads.");
+    const suffix = `.${file.name.split(".").pop()?.toLowerCase()}`;
+    if (!item.allowedEvidenceTypes.includes(suffix)) throw new Error("Wrong file type for this request.");
+    if (!file.size) throw new Error("File is empty.");
+    const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer())))
+      .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    const receipt = { id: crypto.randomUUID(), name: file.name, size: file.size, sha256, version: "synthetic-1", status: "checking" as const };
+    item.files.push({ ...receipt, uploadedAt: new Date().toISOString() });
+    item.status = "checking";
+    saveMockEngagement(data);
+    onProgress(100);
+    return receipt;
   }
 
-  await new Promise<void>((resolve, reject) => {
+  return await new Promise<UploadReceipt>((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open(
       "POST",
       `${API_URL}/engagements/${encodeURIComponent(engagementId)}/items/${encodeURIComponent(itemId)}/documents`,
     );
     request.withCredentials = true;
+    request.timeout = 120000;
+    request.ontimeout = () => reject(new Error("Upload timed out. Check the checklist before retrying."));
     request.upload.onprogress = (event) => {
       if (event.lengthComputable) onProgress((event.loaded / event.total) * 100);
     };
@@ -272,7 +283,8 @@ export async function uploadDocument(
     request.onload = () => {
       if (request.status >= 200 && request.status < 300) {
         onProgress(100);
-        resolve();
+        try { resolve(JSON.parse(request.responseText) as UploadReceipt); }
+        catch { reject(new Error("The server did not return a valid receipt. Refresh before retrying.")); }
         return;
       }
       let message = `Upload failed (${request.status}).`;
@@ -289,3 +301,5 @@ export async function uploadDocument(
     request.send(form);
   });
 }
+
+export type UploadReceipt = { id: string; name: string; size: number; sha256: string; version: string; status: string };

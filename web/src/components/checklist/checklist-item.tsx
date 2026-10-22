@@ -1,11 +1,10 @@
 "use client";
 import { AlertCircle, FileText, Lock } from "lucide-react";
 import { StatusBadge } from "./status-badge";
-import { UploadDropzone } from "./upload-dropzone";
-import { STATUS_META, UPLOADABLE, type ChecklistItem } from "@/lib/checklist";
+import { STATUS_META, type ChecklistItem } from "@/lib/checklist";
 import { formatBytes, formatDate } from "@/lib/utils";
 
-export function ChecklistItemRow({ item, onUpload }: { item: ChecklistItem; onUpload: (itemId: string, file: File, onProgress: (pct: number) => void) => Promise<void> }) {
+export function ChecklistItemRow({ item }: { item: ChecklistItem }) {
   const restricted = item.status === "restricted_do_not_upload";
   const needsAction = item.status === "action_needed_reupload" || item.status === "action_needed_more";
   return (
@@ -44,9 +43,6 @@ export function ChecklistItemRow({ item, onUpload }: { item: ChecklistItem; onUp
         </ul>
       ) : null}
 
-      {UPLOADABLE.has(item.status) ? (
-        <UploadDropzone compact onUpload={(file, p) => onUpload(item.id, file, p)} />
-      ) : null}
     </div>
   );
 }

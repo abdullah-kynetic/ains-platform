@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 const clientItems: NavItem[] = [
   { href: "/", label: "Overview", icon: "LayoutDashboard", exact: true },
   { href: "/checklist", label: "Document checklist", icon: "ListChecks" },
+  { href: "/upload", label: "Upload center", icon: "Upload" },
   { href: "/questionnaire", label: "Firm questionnaire", icon: "ClipboardCheck" },
 ];
 

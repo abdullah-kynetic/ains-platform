@@ -159,3 +159,15 @@ async def test_ingestor_reports_missing_egnyte_configuration_safely() -> None:
         )
     assert error.value.status_code == 503
     assert error.value.detail == "Egnyte document storage is not configured"
+
+
+async def test_ingestor_refuses_reconfigured_root_before_storage():
+    config = settings()
+    config.egnyte_dev_root = "/Shared/Other"
+    client = FakeEgnyteClient()
+    service = EgnyteDocumentIngestor(config, client_factory=lambda _: client)
+    engagement, item = records()
+    with pytest.raises(HTTPException) as error:
+        await service.ingest(engagement=engagement, item=item, file=upload("test.pdf", b"%PDF-"))
+    assert error.value.status_code == 503
+    assert client.uploads == []

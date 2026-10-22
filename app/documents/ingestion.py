@@ -124,6 +124,8 @@ class EgnyteDocumentIngestor:
     async def ingest(
         self, *, engagement: Engagement, item: ChecklistItemInstance, file: UploadFile
     ) -> StoredDocument:
+        if self.settings.egnyte_dev_root.rstrip("/") != "/Shared/AINS-Dev":
+            raise HTTPException(status_code=503, detail="Development storage root is not allowed")
         safe_name, suffix = _validated_filename(file.filename)
         accepted = {
             extension.casefold() if extension.startswith(".") else f".{extension.casefold()}"

@@ -340,6 +340,20 @@ def test_upload_persists_tenant_owned_document_and_sets_checking(backend) -> Non
         assert item and item.status == ClientStatus.CHECKING
 
 
+def test_upload_rejects_inapplicable_request_without_storage(backend):
+    client, factory, ids, ingestor, _ = backend
+    sign_in_client(client)
+    with factory() as db:
+        db.get(ChecklistItemInstance, ids["item_a"]).applicable = False
+        db.commit()
+    response = client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic")},
+    )
+    assert response.status_code == 404
+    assert ingestor.calls == 0
+
+
 def test_questionnaire_no_answer_hides_item_pending_auditor_review(backend) -> None:
     client, factory, ids, _, _ = backend
     sign_in_client(client)

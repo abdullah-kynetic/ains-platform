@@ -41,6 +41,7 @@ class FileView(APIModel):
     name: str
     size: int
     uploaded_at: datetime
+    sha256: str
 
 
 class ItemView(APIModel):
@@ -125,6 +126,7 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
                         name=document.original_name,
                         size=document.size_bytes,
                         uploaded_at=document.created_at,
+                        sha256=document.sha256,
                     )
                     for document in item.documents
                 ],
@@ -191,12 +193,18 @@ async def upload_document(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Checklist item not found"
         )
-    if item.restricted:
+    definition = load_catalog().get(item.item_key)
+    if definition is None or not item.applicable:
+        raise HTTPException(status_code=404, detail="Active request not found")
+    if engagement.status in {EngagementStatus.DRAFT, EngagementStatus.COMPLETE}:
+        raise HTTPException(status_code=409, detail="Engagement is not accepting uploads")
+    if item.restricted or definition.restricted:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This restricted item must be handled directly with the auditor",
         )
 
+    item.accepted_extensions = definition.allowed_evidence_types
     stored = await ingestor.ingest(engagement=engagement, item=item, file=file)
     document = Document(
         firm_id=engagement.firm_id,
