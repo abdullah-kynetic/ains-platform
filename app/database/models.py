@@ -181,6 +181,9 @@ class ChecklistItemInstance(Base):
     na_approved_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     representation: Mapped[str | None] = mapped_column(String(50))
     follow_up: Mapped[bool] = mapped_column(Boolean, default=False)
+    applicability_decision: Mapped[str | None] = mapped_column(String(30))
+    assessment: Mapped[str | None] = mapped_column(String(30))
+    internal_notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow

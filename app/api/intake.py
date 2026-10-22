@@ -28,7 +28,7 @@ class Representation(BaseModel):
 
 
 class Feedback(BaseModel):
-    code: Literal["unreadable", "wrong_document", "wrong_period", "missing_pages"]
+    code: Literal["unreadable", "wrong_document", "wrong_period", "missing_pages", "usable"]
     document_id: str
 
 
@@ -56,6 +56,8 @@ def represent(engagement_id: str, item_id: str, payload: Representation, user: C
         raise HTTPException(409, "This request requires direct auditor handling")
     before = {"representation": item.representation, "na_review_state": item.na_review_state}
     item.representation = payload.kind
+    item.applicability_decision = None
+    item.assessment = None
     item.applicability_answer = False
     item.applicable = False
     item.na_review_state = NAReviewState.PENDING
@@ -89,6 +91,10 @@ def follow_up(engagement_id: str, item_id: str, user: CurrentUser, db: DB):
     before = {"applicable": item.applicable, "follow_up": item.follow_up}
     item.applicable = True
     item.follow_up = True
+    item.assessment = None
+    item.applicability_decision = None
+    if item.na_review_state == NAReviewState.PENDING:
+        item.na_review_state = NAReviewState.REJECTED
     item.status = ClientStatus.REQUESTED
     item.client_reason = "Your auditor has requested this additional document."
     db.add(
@@ -120,13 +126,18 @@ def feedback(engagement_id: str, item_id: str, payload: Feedback, user: CurrentU
     if not document:
         raise HTTPException(404, "Document not found")
     before = {"feedback_code": document.feedback_code, "status": item.status}
-    document.feedback_code = payload.code
+    document.feedback_code = None if payload.code == "usable" else payload.code
+    item.assessment = None
     item.status = (
-        ClientStatus.ACTION_NEEDED_MORE
-        if payload.code == "missing_pages"
-        else ClientStatus.ACTION_NEEDED_REUPLOAD
+        ClientStatus.WITH_AUDITOR
+        if payload.code == "usable"
+        else (
+            ClientStatus.ACTION_NEEDED_MORE
+            if payload.code == "missing_pages"
+            else ClientStatus.ACTION_NEEDED_REUPLOAD
+        )
     )
-    item.client_reason = FEEDBACK[payload.code]
+    item.client_reason = FEEDBACK.get(payload.code)
     db.add(
         AuditLog(
             firm_id=engagement.firm_id,

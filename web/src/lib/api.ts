@@ -1,5 +1,5 @@
 import type { Engagement } from "./checklist";
-import { cloneMockEngagement, saveMockEngagement } from "./mock-data";
+import { cloneMockEngagement, saveMockEngagement, invalidateMockDecision } from "./mock-data";
 import catalog from "../../.generated/catalog.json";
 
 export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
@@ -25,7 +25,7 @@ async function responseError(response: Response): Promise<Error> {
   return new Error(detail);
 }
 
-async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     credentials: "include",
@@ -63,7 +63,7 @@ const mockSession: SessionData = {
 };
 
 export async function getSession(): Promise<SessionData> {
-  if (USE_MOCKS) return mockSession;
+  if (USE_MOCKS) return { user: { ...mockSession.user, role: localStorage.getItem("ains-synthetic-role") === "auditor" ? "auditor" : "client" } };
   return apiRequest<SessionData>("/auth/session");
 }
 
@@ -139,6 +139,8 @@ export async function saveQuestionnaire(
       const question = current.questions.find((question) => question.itemId === answer.itemId);
       if (!question) throw new Error("Question not found.");
       if (!answer.applies && question.whenNo === "representation_required" && !answer.representation) throw new Error("Confirm the no-activity representation.");
+      if (question.answer === answer.applies && question.representation === (answer.applies ? null : answer.representation ?? null)) continue;
+      invalidateMockDecision(answer.itemId, true);
       question.answer = answer.applies;
       question.naReviewState = answer.applies ? null : "pending";
       question.representation = answer.applies ? null : answer.representation ?? null;
@@ -244,7 +246,9 @@ export async function downloadDraftReport(
 export async function getEngagement(): Promise<Engagement> {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 150));
-    return cloneMockEngagement();
+    const data = cloneMockEngagement();
+    data.sections = data.sections.map((section) => ({ ...section, items: section.items.filter((item) => item.naReviewState !== "approved") }));
+    return data;
   }
   const response = await fetch(`${API_URL}/engagements/current`, {
     credentials: "include",
@@ -275,6 +279,7 @@ export async function uploadDocument(
     const receipt = { id: crypto.randomUUID(), name: file.name, size: file.size, sha256, version: "synthetic-1", status: "checking" as const };
     item.files.push({ ...receipt, uploadedAt: new Date().toISOString() });
     item.status = "checking";
+    invalidateMockDecision(itemId);
     saveMockEngagement(data);
     onProgress(100);
     return receipt;

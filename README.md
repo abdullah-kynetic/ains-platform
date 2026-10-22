@@ -119,6 +119,20 @@ are recorded. A separate pipeline may connect later through an authenticated bac
 
 ## Auditor review and draft reports
 
+`/auditor` lists assigned client engagements; each workspace lists canonical requests,
+document versions/fingerprints, and a chronological actor/change history. Applicability
+(`applicable` / `not_applicable`) is separate from evidence assessment (`supported`, `partial`,
+`conflicting`, `unable_to_determine`). Internal notes and decisions never appear in client APIs.
+New uploads, changed answers and follow-up/feedback invalidate old assessments. Readiness
+requires all 34 workflow instances and human decisions, no pending representations/storage
+receipts or outstanding replacement requests. It means ready for human report drafting,
+not a clean audit opinion, completed rubric, or signed report.
+
+For an assigned, empty engagement, `POST /auditor/engagements/{id}/initialize` creates all
+34 instances from the YAML. Existing legacy instances are rejected rather than remapped.
+The synthetic demo includes an explicitly labeled client/auditor view switch; production
+still requires backend authentication, auditor MFA, and engagement assignment.
+
 Auditors use `GET /auditor/queue` to see only their assigned engagements, including evidence,
 check timings, draft findings, and page citations. `PATCH /auditor/findings/{id}` accepts, edits,
 or rejects a finding; accepted and edited findings cannot be saved without a page citation.

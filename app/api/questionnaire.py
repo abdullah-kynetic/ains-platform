@@ -159,7 +159,12 @@ def answer_questionnaire(
             raise HTTPException(422, "Confirm a representation for each no-activity answer")
     for answer in payload.answers:
         item = items[answer.item_id]
+        representation = answer.representation if not answer.applies else None
+        if item.applicability_answer == answer.applies and item.representation == representation:
+            continue
         before = {"answer": item.applicability_answer, "representation": item.representation}
+        item.applicability_decision = None
+        item.assessment = None
         item.applicability_answer = answer.applies
         item.representation = answer.representation if not answer.applies else None
         item.na_approved_by_id = None
@@ -225,7 +230,12 @@ def review_not_applicable(
     if not definition or not definition.conditions:
         raise HTTPException(status_code=404, detail="Pending N/A answer not found")
 
+    before = {"applicable": item.applicable, "na_review_state": item.na_review_state}
     item.na_approved_by_id = user.id
+    item.applicability_decision = (
+        "not_applicable" if payload.decision == "approve" else "applicable"
+    )
+    item.assessment = None
     if payload.decision == "approve":
         item.na_review_state = NAReviewState.APPROVED
         item.applicable = False
@@ -247,6 +257,10 @@ def review_not_applicable(
             ),
             entity_type="checklist_item_instance",
             entity_id=item.id,
+            details={
+                "before": before,
+                "after": {"applicable": item.applicable, "na_review_state": item.na_review_state},
+            },
         )
     )
     db.commit()

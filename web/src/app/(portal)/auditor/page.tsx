@@ -1,5 +1,5 @@
-import { AuditorWorkspace } from "@/components/auditor/workspace";
+import { ManualWorkspace } from "@/components/auditor/manual-workspace";
 
 export default function AuditorQueuePage() {
-  return <AuditorWorkspace />;
+  return <ManualWorkspace />;
 }
