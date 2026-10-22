@@ -65,6 +65,9 @@ export type UploadedFile = {
 
 export type ChecklistItem = {
   id: string;
+  requestId: string;
+  restricted: boolean;
+  allowedEvidenceTypes: string[];
   title: string;
   description?: string;
   status: ClientStatus;

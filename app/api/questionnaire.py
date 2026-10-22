@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
 from app.checklist import ClientStatus
+from app.checklist.catalog import load_catalog
 from app.database.models import (
     AuditLog,
     ChecklistItemInstance,
@@ -68,12 +69,13 @@ def _get_engagement(db: Session, user: User, engagement_id: str) -> Engagement:
 
 
 def _questionnaire(db: Session, engagement: Engagement) -> QuestionnaireView:
+    catalog = load_catalog()
+    section_titles = {section.id: section.title for section in catalog.sections}
     items = db.scalars(
         select(ChecklistItemInstance)
         .where(
             ChecklistItemInstance.engagement_id == engagement.id,
             ChecklistItemInstance.firm_id == engagement.firm_id,
-            ChecklistItemInstance.is_conditional.is_(True),
         )
         .order_by(ChecklistItemInstance.position)
     )
@@ -82,12 +84,13 @@ def _questionnaire(db: Session, engagement: Engagement) -> QuestionnaireView:
         questions=[
             QuestionView(
                 item_id=item.id,
-                section_title=item.section_title,
-                question=item.condition_question or f"Does {item.title} apply to your firm?",
+                section_title=section_titles[definition.section],
+                question=definition.conditions.question,
                 answer=item.applicability_answer,
                 na_review_state=item.na_review_state,
             )
             for item in items
+            if (definition := catalog.get(item.item_key)) and definition.conditions
         ],
     )
 
@@ -128,11 +131,16 @@ def answer_questionnaire(
                 ChecklistItemInstance.id.in_(answer_ids),
                 ChecklistItemInstance.engagement_id == engagement.id,
                 ChecklistItemInstance.firm_id == engagement.firm_id,
-                ChecklistItemInstance.is_conditional.is_(True),
             )
         )
     }
     if items.keys() != answer_ids:
+        raise HTTPException(status_code=404, detail="Questionnaire item not found")
+    catalog = load_catalog()
+    if any(
+        not (definition := catalog.get(item.item_key)) or not definition.conditions
+        for item in items.values()
+    ):
         raise HTTPException(status_code=404, detail="Questionnaire item not found")
 
     now = datetime.now(UTC)
@@ -189,11 +197,14 @@ def review_not_applicable(
             ChecklistItemInstance.id == item_id,
             ChecklistItemInstance.engagement_id == engagement.id,
             ChecklistItemInstance.firm_id == engagement.firm_id,
-            ChecklistItemInstance.is_conditional.is_(True),
             ChecklistItemInstance.na_review_state == NAReviewState.PENDING,
         )
     )
     if not item:
+        raise HTTPException(status_code=404, detail="Pending N/A answer not found")
+    catalog = load_catalog()
+    definition = catalog.get(item.item_key)
+    if not definition or not definition.conditions:
         raise HTTPException(status_code=404, detail="Pending N/A answer not found")
 
     item.na_approved_by_id = user.id
@@ -223,8 +234,10 @@ def review_not_applicable(
     db.commit()
     return QuestionView(
         item_id=item.id,
-        section_title=item.section_title,
-        question=item.condition_question or f"Does {item.title} apply to your firm?",
+        section_title=next(
+            section.title for section in catalog.sections if section.id == definition.section
+        ),
+        question=definition.conditions.question,
         answer=item.applicability_answer,
         na_review_state=item.na_review_state,
     )

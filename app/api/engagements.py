@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.auth.dependencies import get_current_user
 from app.checklist import ClientStatus
+from app.checklist.catalog import load_catalog
 from app.database.models import (
     AuditLog,
     CheckJob,
@@ -44,11 +45,13 @@ class FileView(APIModel):
 
 class ItemView(APIModel):
     id: str
+    request_id: str
     title: str
     description: str
     status: ClientStatus
     reason: str | None
     restricted: bool
+    allowed_evidence_types: list[str]
     files: list[FileView]
 
 
@@ -96,21 +99,26 @@ def visible_engagements(user: User) -> Select[tuple[Engagement]]:
 
 def _serialize_engagement(engagement: Engagement) -> EngagementView:
     sections: dict[str, SectionView] = {}
+    catalog = load_catalog()
+    section_titles = {section.id: section.title for section in catalog.sections}
     for item in engagement.items:
-        if not item.applicable:
+        definition = catalog.get(item.item_key)
+        if not item.applicable or definition is None:
             continue
         section = sections.setdefault(
-            item.section_key,
-            SectionView(id=item.section_key, title=item.section_title, items=[]),
+            definition.section,
+            SectionView(id=definition.section, title=section_titles[definition.section], items=[]),
         )
         section.items.append(
             ItemView(
                 id=item.id,
-                title=item.title,
-                description=item.description,
+                request_id=definition.id,
+                title=definition.title,
+                description=definition.client_description,
                 status=item.status,
                 reason=item.client_reason,
-                restricted=item.restricted,
+                restricted=definition.restricted,
+                allowed_evidence_types=definition.allowed_evidence_types,
                 files=[
                     FileView(
                         id=document.id,

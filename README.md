@@ -5,6 +5,16 @@ AINS is an AI-native financial regulatory audit firm. Our software does the legw
 This repo holds the audit engine (Python 3.12, FastAPI, Pydantic) and the client portal
 (Next.js 16 in `web/`). Client documents are stored in Egnyte via an Internal API app.
 
+## Canonical checklist
+
+`data/checklist/aml_bd_v1.yaml` is the only maintained request inventory: all 34 stable
+IDs, client descriptions, applicability questions, and allowed file types. Backend views
+read it directly; the web build generates an ignored JSON bundle from it (`npm run catalog`).
+Do not hand-maintain a second request list. Rubric fields are intentionally empty for
+Quinton to complete; file acceptance is not an audit conclusion. Restricted requests
+have no portal evidence types. `initialize_engagement` creates workflow instances from
+the catalog; existing noncanonical instance keys require an explicit migration before use.
+
 ## Setup
 
 ```bash
