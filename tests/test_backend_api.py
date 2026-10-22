@@ -16,10 +16,14 @@ from sqlalchemy.pool import StaticPool
 from app.auth.router import get_magic_link_sender
 from app.auth.security import hash_password
 from app.checklist import ClientStatus
+from app.checks.processor import DocumentProcessor
 from app.config import Settings, get_settings
 from app.database.models import (
     Base,
+    CheckJob,
+    CheckJobStatus,
     ChecklistItemInstance,
+    CheckResult,
     Document,
     Engagement,
     Firm,
@@ -29,6 +33,7 @@ from app.database.models import (
 from app.database.session import get_db
 from app.documents import StoredDocument, get_document_ingestor
 from app.main import create_app
+from app.worker import run_once
 
 CLIENT_PASSWORD = "synthetic-client-password"
 AUDITOR_PASSWORD = "synthetic-auditor-password"
@@ -60,6 +65,27 @@ class FakeIngestor:
             size_bytes=len(content),
             version="synthetic-v1",
         )
+
+
+class FakeDownloadClient:
+    def __init__(self, content: bytes) -> None:
+        self.content = content
+        self.paths: list[str] = []
+
+    async def download_file(self, path: str) -> bytes:
+        self.paths.append(path)
+        return self.content
+
+    async def aclose(self) -> None:
+        return None
+
+
+def check_settings() -> Settings:
+    return Settings(
+        _env_file=None,
+        session_secret=SecretStr("synthetic-test-session-secret-at-least-32-bytes"),
+        document_check_timeout_seconds=30,
+    )
 
 
 @pytest.fixture
@@ -302,8 +328,10 @@ def test_upload_persists_tenant_owned_document_and_sets_checking(backend) -> Non
     assert ingestor.calls == 1
     with factory() as db:
         document = db.scalar(select(Document))
+        check_job = db.scalar(select(CheckJob))
         item = db.get(ChecklistItemInstance, ids["item_a"])
         assert document and document.firm_id == ids["firm_a"]
+        assert check_job and check_job.document_id == document.id
         assert document.sha256 == hashlib.sha256(b"synthetic content").hexdigest()
         assert item and item.status == ClientStatus.CHECKING
 
@@ -395,3 +423,62 @@ def test_assigned_auditor_can_approve_na(backend) -> None:
     with factory() as db:
         item = db.get(ChecklistItemInstance, ids["item_a"])
         assert item and not item.applicable and item.na_approved_by_id == ids["auditor"]
+
+
+async def test_worker_marks_durable_job_succeeded(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic", "text/plain")},
+    )
+
+    class StubProcessor:
+        async def process(self, db: Session, document_id: str) -> int:
+            assert db.get(Document, document_id)
+            return 42
+
+    with factory() as db:
+        assert await run_once(db, check_settings(), processor=StubProcessor())
+    with factory() as db:
+        job = db.scalar(select(CheckJob))
+        assert job and job.status == CheckJobStatus.SUCCEEDED
+        assert job.duration_ms == 42 and job.attempts == 1
+
+async def test_receipt_worker_verifies_fingerprint_without_audit_decision(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    content = b"Synthetic receipt verification fixture"
+    response = client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", content, "text/plain")},
+    )
+    assert response.status_code == 201
+    processor = DocumentProcessor(
+        check_settings(), client_factory=lambda _: FakeDownloadClient(content)
+    )
+    with factory() as db:
+        document = db.scalar(select(Document))
+        await processor.process(db, document.id)
+        db.commit()
+        receipt = db.scalar(select(CheckResult))
+        assert receipt.check_type == "storage_receipt"
+        assert receipt.status == "received"
+        assert receipt.details == {"sha256_verified": True}
+        assert db.get(ChecklistItemInstance, ids["item_a"]).status == ClientStatus.WITH_AUDITOR
+
+
+async def test_receipt_worker_rejects_changed_storage_bytes(backend) -> None:
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"Synthetic original", "text/plain")},
+    )
+    processor = DocumentProcessor(
+        check_settings(), client_factory=lambda _: FakeDownloadClient(b"Synthetic changed")
+    )
+    with factory() as db:
+        document = db.scalar(select(Document))
+        with pytest.raises(ValueError, match="fingerprint_mismatch"):
+            await processor.process(db, document.id)

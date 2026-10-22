@@ -23,8 +23,7 @@ class Settings(BaseSettings):
     egnyte_scopes: str = "Egnyte.filesystem Egnyte.webhooks"
     egnyte_dev_root: str = "/Shared/AINS-Dev"
 
-    anthropic_api_key: SecretStr = SecretStr("")
-    openai_api_key: SecretStr = SecretStr("")
+    document_check_timeout_seconds: int = 300
 
     database_url: str = "postgresql+psycopg://ains:ains_dev@localhost:5432/ains"
 

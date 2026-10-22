@@ -20,6 +20,7 @@ cp .env.example .env             # fill in values locally; never commit .env
 
 # 4. Run
 uv run uvicorn app.main:app --reload    # http://localhost:8000/health
+uv run python -m app.worker             # durable document-check worker
 uv run pytest
 uv run ruff check .
 ```
@@ -83,6 +84,13 @@ body as `application/octet-stream`, as required by that endpoint, with Egnyte's 
 header. Portal ingestion also validates the filename, size, file signature, and the checklist
 item's accepted extensions, computes SHA-256, creates the guarded firm/engagement/item hierarchy,
 and stores the resulting Egnyte path and version in Postgres.
+
+## Storage receipt verification
+
+Successful uploads enqueue a durable Postgres `check_job`. The worker verifies that stored bytes
+match the recorded SHA-256 fingerprint and routes the receipt to the auditor. It never analyzes
+document contents, calls a model, creates findings, or decides sufficiency. Retries and durations
+are recorded. A separate pipeline may connect later through an authenticated backend adapter.
 
 ## Data rules (non-negotiable)
 

@@ -15,6 +15,7 @@ from app.auth.dependencies import get_current_user
 from app.checklist import ClientStatus
 from app.database.models import (
     AuditLog,
+    CheckJob,
     ChecklistItemInstance,
     Document,
     Engagement,
@@ -204,6 +205,7 @@ async def upload_document(
     item.client_reason = None
     db.add(document)
     db.flush()
+    db.add(CheckJob(firm_id=engagement.firm_id, document_id=document.id))
     db.add(
         AuditLog(
             firm_id=engagement.firm_id,
