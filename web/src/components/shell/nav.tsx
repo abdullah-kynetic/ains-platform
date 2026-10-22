@@ -28,7 +28,7 @@ function Items({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => voi
   );
 }
 
-function Panel({ items, sub, who, org, onNavigate }: { items: NavItem[]; sub: string; who: string; org?: string; onNavigate?: () => void }) {
+function Panel({ items, sub, who, org, onNavigate, onSignOut }: { items: NavItem[]; sub: string; who: string; org?: string; onNavigate?: () => void; onSignOut?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-6 p-4">
       <Logo sub={sub} className="px-2 pt-1" />
@@ -36,14 +36,13 @@ function Panel({ items, sub, who, org, onNavigate }: { items: NavItem[]; sub: st
       <div className="mt-auto grid gap-2 border-t border-border pt-4">
         {org ? <div className="px-2 text-xs text-subtle">{org}</div> : null}
         <div className="truncate px-2 text-sm text-muted">{who}</div>
-        {/* Auth is not wired yet; sign-out will call the AINS API once it exists. */}
-        <button type="button" disabled title="Sign-in is not connected yet" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-subtle"><LogOut className="size-4" />Sign out</button>
+        <button type="button" onClick={onSignOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-subtle transition-colors hover:bg-white/[0.04] hover:text-foreground"><LogOut className="size-4" />Sign out</button>
       </div>
     </div>
   );
 }
 
-export function Sidebar(props: { items: NavItem[]; sub: string; who: string; org?: string }) {
+export function Sidebar(props: { items: NavItem[]; sub: string; who: string; org?: string; onSignOut?: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <>
