@@ -38,7 +38,9 @@ Demo mode stores receipt metadata and synthetic review decisions in this browser
 bytes. It never sends credentials or email; sign-in offers an explicit Open synthetic demo button.
 Use a fresh browser profile to reset demo state. Real API mode never permits demo role switching.
 
-This work does not redeploy or verify the previously published Cloudflare URL.
+Cloudflare deployment configuration is documented in [web/README.md](../web/README.md).
+The public Worker is a synthetic browser demo only; the production prerequisites below
+still apply to a deployment connected to real accounts or storage.
 
 ## Validation
 
