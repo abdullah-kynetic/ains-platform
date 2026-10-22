@@ -46,9 +46,12 @@ and auditors to assigned engagements. Run `uv run alembic check` after model cha
 migration is present.
 
 Conditional checklist items are exposed as yes/no questions at
-`GET /engagements/{id}/questionnaire`. A firm answer of “no” hides the item from the client
-checklist and creates a pending N/A review for the assigned auditor. Only that auditor can approve
-or reject it; rejection restores the requested item without exposing an audit finding.
+`GET /engagements/{id}/questionnaire`. A “no” answer stays visible as pending auditor review
+and disables uploads, rather than silently becoming approved N/A. Where the source requests
+a no-activity representation, the client must explicitly confirm it. Auditor approval removes
+the request from the active list; rejection restores it. The overview links questionnaire →
+applicable requests → central upload. Auditor follow-up releases existing catalog requests;
+document feedback accepts only fixed, neutral replacement reasons, never arbitrary findings.
 
 ### Client portal
 

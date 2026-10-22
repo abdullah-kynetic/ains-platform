@@ -23,6 +23,8 @@ export function ChecklistItemRow({ item }: { item: ChecklistItem }) {
           <span>{item.reason}</span>
         </div>
       ) : null}
+      {item.followUp && <p className="text-sm text-amber-300">Follow-up requested by your auditor.</p>}
+      {item.naReviewState === "pending" && <p className="text-sm text-muted">N/A or no-activity confirmation awaiting auditor review. No upload is required while pending.</p>}
 
       {restricted ? (
         <div className="flex items-start gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-muted">
@@ -37,6 +39,7 @@ export function ChecklistItemRow({ item }: { item: ChecklistItem }) {
             <li key={f.id} className="flex items-center gap-2 text-xs text-muted">
               <FileText className="size-3.5" />
               <span className="truncate">{f.name}</span>
+              {f.feedback && <span className="text-amber-300">{f.feedback}</span>}
               <span className="text-subtle">· {formatBytes(f.size)} · {formatDate(f.uploadedAt)}</span>
             </li>
           ))}

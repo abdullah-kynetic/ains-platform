@@ -354,7 +354,60 @@ def test_upload_rejects_inapplicable_request_without_storage(backend):
     assert ingestor.calls == 0
 
 
-def test_questionnaire_no_answer_hides_item_pending_auditor_review(backend) -> None:
+def test_representation_is_tenant_scoped_and_requires_confirmation(backend):
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    path = f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/representations"
+    assert client.post(path, json={"kind": "no_activity", "confirmed": False}).status_code == 422
+    other = f"/engagements/{ids['engagement_b']}/items/{ids['item_b']}/representations"
+    assert client.post(other, json={"kind": "no_activity", "confirmed": True}).status_code == 404
+    assert client.post(path, json={"kind": "no_activity", "confirmed": True}).status_code == 200
+    with factory() as db:
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        assert item.representation == "no_activity" and item.na_review_state.value == "pending"
+
+
+def test_no_activity_question_requires_explicit_representation(backend):
+    client, factory, ids, _, _ = backend
+    with factory() as db:
+        db.get(ChecklistItemInstance, ids["item_a"]).item_key = "AML-BD-012"
+        db.commit()
+    sign_in_client(client)
+    path = f"/engagements/{ids['engagement_a']}/questionnaire/answers"
+    answer = {"itemId": ids["item_a"], "applies": False}
+    assert client.post(path, json={"answers": [answer]}).status_code == 422
+    answer["representation"] = "no_activity"
+    assert client.post(path, json={"answers": [answer]}).status_code == 200
+
+
+def test_auditor_follow_up_and_document_replacement_feedback(backend):
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    uploaded = client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic")},
+    ).json()
+    path = f"/auditor/engagements/{ids['engagement_a']}/items/{ids['item_a']}"
+    assert client.post(path + "/follow-up").status_code == 403
+    client.cookies.clear()
+    sign_in_auditor(client)
+    response = client.post(path + "/feedback", json={
+        "code": "unreadable", "document_id": uploaded["id"]})
+    assert response.status_code == 200
+    assert response.json()["status"] == "action_needed_reupload"
+    assert client.post(path + "/feedback", json={
+        "code": "audit_finding", "document_id": uploaded["id"]}).status_code == 422
+    assert client.post(path + "/follow-up").status_code == 200
+    with factory() as db:
+        db.get(Engagement, ids["engagement_b"]).auditor_id = None
+        db.commit()
+    other = f"/auditor/engagements/{ids['engagement_b']}/items/{ids['item_b']}"
+    assert client.post(other + "/follow-up").status_code == 404
+    assert client.post(other + "/feedback", json={
+        "code": "unreadable", "document_id": uploaded["id"]}).status_code == 404
+
+
+def test_questionnaire_no_answer_remains_visible_pending_auditor_review(backend) -> None:
     client, factory, ids, _, _ = backend
     sign_in_client(client)
     questionnaire = client.get(f"/engagements/{ids['engagement_a']}/questionnaire")
@@ -366,6 +419,8 @@ def test_questionnaire_no_answer_hides_item_pending_auditor_review(backend) -> N
             "question": "Does the firm use clearing-firm AML reports?",
             "answer": None,
             "naReviewState": None,
+            "whenNo": "proposed_not_applicable",
+            "representation": None,
         }
     ]
 
@@ -380,7 +435,7 @@ def test_questionnaire_no_answer_hides_item_pending_auditor_review(backend) -> N
         for section in client.get("/engagements/current").json()["sections"]
         for item in section["items"]
     }
-    assert ids["item_a"] not in visible_ids
+    assert ids["item_a"] in visible_ids
     with factory() as db:
         item = db.get(ChecklistItemInstance, ids["item_a"])
         assert item and not item.applicable and item.na_review_state.value == "pending"
@@ -500,6 +555,26 @@ async def test_receipt_worker_rejects_changed_storage_bytes(backend) -> None:
         document = db.scalar(select(Document))
         with pytest.raises(ValueError, match="fingerprint_mismatch"):
             await processor.process(db, document.id)
+
+
+async def test_late_receipt_verification_preserves_replacement_feedback(backend):
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    content = b"Synthetic late receipt"
+    client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", content, "text/plain")},
+    )
+    processor = DocumentProcessor(
+        check_settings(), client_factory=lambda _: FakeDownloadClient(content)
+    )
+    with factory() as db:
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        item.status = ClientStatus.ACTION_NEEDED_REUPLOAD
+        item.client_reason = "Please replace with a readable copy."
+        await processor.process(db, db.scalar(select(Document)).id)
+        assert item.status == ClientStatus.ACTION_NEEDED_REUPLOAD
+        assert item.client_reason == "Please replace with a readable copy."
 
 def test_auditor_queue_and_finding_review_are_role_scoped(backend) -> None:
     client, factory, ids, _, _ = backend

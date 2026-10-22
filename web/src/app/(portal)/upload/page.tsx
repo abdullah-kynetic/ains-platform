@@ -16,7 +16,7 @@ export default function UploadPage() {
   const [files, setFiles] = useState<Pending[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
-  const items = data?.sections.flatMap((section) => section.items).filter((item) => !item.restricted) ?? [];
+  const items = data?.sections.flatMap((section) => section.items).filter((item) => !item.restricted && item.canUpload !== false) ?? [];
   const filtered = items.filter((item) => `${item.requestId} ${item.title}`.toLowerCase().includes(search.toLowerCase()));
   function patch(id: string, changes: Partial<Pending>) {
     setFiles((current) => current.map((file) => file.id === id ? { ...file, ...changes } : file));
