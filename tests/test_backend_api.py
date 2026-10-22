@@ -556,6 +556,26 @@ async def test_receipt_worker_rejects_changed_storage_bytes(backend) -> None:
         with pytest.raises(ValueError, match="fingerprint_mismatch"):
             await processor.process(db, document.id)
 
+
+async def test_late_receipt_verification_preserves_replacement_feedback(backend):
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    content = b"Synthetic late receipt"
+    client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", content, "text/plain")},
+    )
+    processor = DocumentProcessor(
+        check_settings(), client_factory=lambda _: FakeDownloadClient(content)
+    )
+    with factory() as db:
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        item.status = ClientStatus.ACTION_NEEDED_REUPLOAD
+        item.client_reason = "Please replace with a readable copy."
+        await processor.process(db, db.scalar(select(Document)).id)
+        assert item.status == ClientStatus.ACTION_NEEDED_REUPLOAD
+        assert item.client_reason == "Please replace with a readable copy."
+
 def test_auditor_queue_and_finding_review_are_role_scoped(backend) -> None:
     client, factory, ids, _, _ = backend
     sign_in_client(client)
