@@ -50,8 +50,11 @@ class DocumentProcessor:
             check_type="storage_receipt", status="received",
             details={"sha256_verified": True}, duration_ms=duration_ms,
         ))
-        document.item.status = ClientStatus.WITH_AUDITOR
-        document.item.client_reason = None
+        # Receipt verification must not erase a later auditor replacement request
+        # or a pending client representation.
+        if document.item.status == ClientStatus.CHECKING:
+            document.item.status = ClientStatus.WITH_AUDITOR
+            document.item.client_reason = None
         db.add(AuditLog(
             firm_id=document.firm_id, action="document.receipt_verified",
             entity_type="document", entity_id=document.id,
