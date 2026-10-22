@@ -9,8 +9,11 @@ export type Readiness = { ready: boolean; reviewed: number; total: number; block
 export type History = { id: string; actor: string; action: string; entityId: string; at: string; details: Record<string, unknown> };
 export type Workspace = { id: string; firmName: string; requests: ManualRequest[]; readiness: Readiness; history: History[] };
 export type ClientSummary = { id: string; firmName: string; status: string; readiness: Readiness };
+export type PipelineStage = "intake" | "document_collection" | "auditor_review" | "report_drafting" | "awaiting_signature" | "complete";
+export type PipelineEngagement = { id: string; firm: string; stage: PipelineStage; due: string | null; assignee: string; progress: number; blockers: number; nextAction: string; reportSigned: boolean };
 type MockState = { decisions: Record<string, Decision>; history: History[] };
 const key = "ains-synthetic-auditor-v1";
+const pipelineKey = "ains-synthetic-pipeline-v1";
 function mockState(): MockState { return JSON.parse(localStorage.getItem(key) ?? '{"decisions":{},"history":[]}'); }
 function event(state: MockState, action: string, entityId: string, before: unknown, after: unknown) {
   state.history.push({ id: crypto.randomUUID(), actor: "Synthetic Auditor", action, entityId, at: new Date().toISOString(), details: { before, after } });
@@ -44,6 +47,33 @@ export async function getClients(): Promise<ClientSummary[]> {
   if (!USE_MOCKS) return apiRequest("/auditor/engagements");
   const data = cloneMockEngagement(); const workspace = await getWorkspace(data.id);
   return [{ id: data.id, firmName: data.firmName, status: "collecting", readiness: workspace.readiness }];
+}
+
+const syntheticPipeline: PipelineEngagement[] = [
+  { id: "eng-synthetic-002", firm: "Northstar Brokerage Inc. (synthetic)", stage: "intake", due: "2026-12-18", assignee: "Quinton", progress: 8, blockers: 0, nextAction: "Confirm review period and applicable business lines", reportSigned: false },
+  { id: "eng-synthetic-001", firm: "Example Securities LLC (synthetic)", stage: "document_collection", due: "2026-12-15", assignee: "Quinton", progress: 41, blockers: 2, nextAction: "Receive two replacement documents", reportSigned: false },
+  { id: "eng-synthetic-003", firm: "Meridian Capital Markets (synthetic)", stage: "document_collection", due: "2026-12-22", assignee: "Quinton", progress: 56, blockers: 1, nextAction: "Complete remaining questionnaire representations", reportSigned: false },
+  { id: "eng-synthetic-004", firm: "Harborview Securities (synthetic)", stage: "auditor_review", due: "2026-11-26", assignee: "Quinton", progress: 74, blockers: 3, nextAction: "Resolve three evidence assessments", reportSigned: false },
+  { id: "eng-synthetic-005", firm: "Summit BD Partners (synthetic)", stage: "report_drafting", due: "2026-11-14", assignee: "Quinton", progress: 88, blockers: 0, nextAction: "Prepare draft for credentialed auditor review", reportSigned: false },
+  { id: "eng-synthetic-006", firm: "Cedar Ridge Financial (synthetic)", stage: "awaiting_signature", due: "2026-11-08", assignee: "Quinton", progress: 97, blockers: 0, nextAction: "Quinton reviews and explicitly signs the report", reportSigned: false },
+  { id: "eng-synthetic-007", firm: "Bluewater Securities Group (synthetic)", stage: "complete", due: "2026-10-17", assignee: "Quinton", progress: 100, blockers: 0, nextAction: "No open action", reportSigned: true },
+];
+
+export async function getPipeline(): Promise<PipelineEngagement[]> {
+  if (!USE_MOCKS) return apiRequest("/auditor/pipeline");
+  const stages = JSON.parse(localStorage.getItem(pipelineKey) ?? "{}") as Record<string, PipelineStage>;
+  return syntheticPipeline.map((entry) => ({ ...entry, stage: stages[entry.id] ?? entry.stage }));
+}
+
+export async function movePipelineStage(id: string, stage: PipelineStage): Promise<void> {
+  if (stage === "complete") throw new Error("Completion requires a separately recorded signed-report action.");
+  if (!USE_MOCKS) {
+    await apiRequest(`/auditor/engagements/${encodeURIComponent(id)}/pipeline-stage`, { method: "PATCH", body: JSON.stringify({ stage }) });
+    return;
+  }
+  const stages = JSON.parse(localStorage.getItem(pipelineKey) ?? "{}") as Record<string, PipelineStage>;
+  stages[id] = stage;
+  localStorage.setItem(pipelineKey, JSON.stringify(stages));
 }
 
 export async function saveDecision(id: string, itemId: string, decision: Decision): Promise<void> {

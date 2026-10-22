@@ -52,6 +52,8 @@ class EngagementStatus(enum.StrEnum):
     COLLECTING = "collecting"
     TESTING = "testing"
     AUDITOR_REVIEW = "auditor_review"
+    REPORT_DRAFTING = "report_drafting"
+    AWAITING_SIGNATURE = "awaiting_signature"
     COMPLETE = "complete"
 
 

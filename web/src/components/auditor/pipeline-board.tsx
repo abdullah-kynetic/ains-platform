@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   CalendarDays,
@@ -13,118 +13,27 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Select } from "@/components/ui/select";
 import { PageHeader, Stat } from "@/components/shell/page";
-
-type PipelineStage =
-  | "intake"
-  | "collection"
-  | "review"
-  | "drafting"
-  | "signature"
-  | "complete";
-
-type PipelineEngagement = {
-  id: string;
-  firm: string;
-  stage: PipelineStage;
-  due: string;
-  assignee: string;
-  progress: number;
-  blockers: number;
-  nextAction: string;
-};
+import { getPipeline, movePipelineStage, type PipelineEngagement, type PipelineStage } from "@/lib/workflow-api";
 
 const stages: { id: PipelineStage; label: string; description: string }[] = [
   { id: "intake", label: "Intake", description: "Scoping and setup" },
   {
-    id: "collection",
+    id: "document_collection",
     label: "Document collection",
     description: "Client evidence gathering",
   },
-  { id: "review", label: "Auditor review", description: "Human assessment" },
+  { id: "auditor_review", label: "Auditor review", description: "Human assessment" },
   {
-    id: "drafting",
+    id: "report_drafting",
     label: "Report drafting",
     description: "Prepare auditor draft",
   },
   {
-    id: "signature",
+    id: "awaiting_signature",
     label: "Awaiting signature",
     description: "Explicit auditor action",
   },
   { id: "complete", label: "Complete", description: "Closed engagements" },
-];
-
-const initialEngagements: PipelineEngagement[] = [
-  {
-    id: "eng-synthetic-002",
-    firm: "Northstar Brokerage Inc. (synthetic)",
-    stage: "intake",
-    due: "Dec 18",
-    assignee: "Quinton",
-    progress: 8,
-    blockers: 0,
-    nextAction: "Confirm review period and applicable business lines",
-  },
-  {
-    id: "eng-synthetic-001",
-    firm: "Example Securities LLC (synthetic)",
-    stage: "collection",
-    due: "Dec 15",
-    assignee: "Quinton",
-    progress: 41,
-    blockers: 2,
-    nextAction: "Receive two replacement documents",
-  },
-  {
-    id: "eng-synthetic-003",
-    firm: "Meridian Capital Markets (synthetic)",
-    stage: "collection",
-    due: "Dec 22",
-    assignee: "Quinton",
-    progress: 56,
-    blockers: 1,
-    nextAction: "Complete remaining questionnaire representations",
-  },
-  {
-    id: "eng-synthetic-004",
-    firm: "Harborview Securities (synthetic)",
-    stage: "review",
-    due: "Nov 26",
-    assignee: "Quinton",
-    progress: 74,
-    blockers: 3,
-    nextAction: "Resolve three evidence assessments",
-  },
-  {
-    id: "eng-synthetic-005",
-    firm: "Summit BD Partners (synthetic)",
-    stage: "drafting",
-    due: "Nov 14",
-    assignee: "Quinton",
-    progress: 88,
-    blockers: 0,
-    nextAction: "Prepare draft for credentialed auditor review",
-  },
-  {
-    id: "eng-synthetic-006",
-    firm: "Cedar Ridge Financial (synthetic)",
-    stage: "signature",
-    due: "Nov 8",
-    assignee: "Quinton",
-    progress: 97,
-    blockers: 0,
-    nextAction: "Quinton reviews and explicitly signs the report",
-  },
-  {
-    id: "eng-synthetic-007",
-    firm: "Bluewater Securities Group (synthetic)",
-    stage: "complete",
-    due: "Oct 17",
-    assignee: "Quinton",
-    progress: 100,
-    blockers: 0,
-    nextAction: "No open action",
-  },
 ];
 
 function stageLabel(stage: PipelineStage) {
@@ -132,15 +41,29 @@ function stageLabel(stage: PipelineStage) {
 }
 
 export function AuditorPipelineBoard() {
-  const [engagements, setEngagements] =
-    useState<PipelineEngagement[]>(initialEngagements);
+  const [engagements, setEngagements] = useState<PipelineEngagement[]>([]);
   const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    getPipeline()
+      .then(setEngagements)
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Unable to load the pipeline."))
+      .finally(() => setLoading(false));
+  }, []);
   const active = engagements.filter((item) => item.stage !== "complete");
   const blocked = active.filter((item) => item.blockers > 0).length;
 
-  function moveEngagement(engagementId: string, stage: PipelineStage) {
+  async function moveEngagement(engagementId: string, stage: PipelineStage) {
     const engagement = engagements.find((item) => item.id === engagementId);
     if (!engagement || engagement.stage === stage) return;
+    setError("");
+    try {
+      await movePipelineStage(engagementId, stage);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Unable to move this engagement.");
+      return;
+    }
     setEngagements((current) =>
       current.map((item) =>
         item.id === engagementId ? { ...item, stage } : item,
@@ -180,7 +103,7 @@ export function AuditorPipelineBoard() {
         />
         <Stat
           label="Awaiting signature"
-          value={engagements.filter((item) => item.stage === "signature").length}
+          value={engagements.filter((item) => item.stage === "awaiting_signature").length}
           hint="Requires explicit auditor action"
           icon={<Clock3 className="size-4" />}
         />
@@ -195,7 +118,10 @@ export function AuditorPipelineBoard() {
         </p>
       ) : null}
 
-      <div
+      {error ? <p role="alert" className="mb-4 rounded-lg border border-danger/20 bg-danger/5 px-4 py-3 text-sm text-danger">{error}</p> : null}
+      {loading ? <p role="status" className="py-12 text-center text-sm text-subtle">Loading audit pipeline…</p> : null}
+
+      {!loading ? <div
         aria-label="Audit pipeline stages"
         className="-mx-4 overflow-x-auto px-4 pb-5 sm:-mx-8 sm:px-8 xl:-mx-10 xl:px-10"
       >
@@ -250,7 +176,7 @@ export function AuditorPipelineBoard() {
 
                       <div className="mt-4 flex items-center justify-between text-[11px] text-subtle">
                         <span>{engagement.progress}% reviewed</span>
-                        <span>{engagement.due}</span>
+                        <span>{engagement.due ? new Date(`${engagement.due}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "No due date"}</span>
                       </div>
                       <Progress
                         value={engagement.progress}
@@ -300,7 +226,7 @@ export function AuditorPipelineBoard() {
                           }
                         >
                           {stages.map((candidate) => (
-                            <option key={candidate.id} value={candidate.id}>
+                            <option key={candidate.id} value={candidate.id} disabled={candidate.id === "complete" && engagement.stage !== "complete"}>
                               {candidate.label}
                             </option>
                           ))}
@@ -318,7 +244,7 @@ export function AuditorPipelineBoard() {
             );
           })}
         </div>
-      </div>
+      </div> : null}
     </>
   );
 }

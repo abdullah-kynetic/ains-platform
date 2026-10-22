@@ -7,7 +7,7 @@ test("auditor can move a synthetic engagement without finalizing a report", asyn
   await page.goto("/");
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
   await page.getByRole("button", { name: /AINS Operations/ }).click();
-  await page.getByRole("link", { name: "Audit pipeline" }).click();
+  await page.goto("/auditor/pipeline");
 
   await expect(
     page.getByRole("heading", { name: "Audit pipeline", level: 1 }),
@@ -17,7 +17,7 @@ test("auditor can move a synthetic engagement without finalizing a report", asyn
   const stageSelect = page.getByLabel(
     "Move Example Securities LLC (synthetic) to stage",
   );
-  await stageSelect.selectOption("review");
+  await stageSelect.selectOption("auditor_review");
   await expect(
     page.getByRole("region", { name: "Auditor review" }).getByText(
       "Example Securities LLC (synthetic)",
