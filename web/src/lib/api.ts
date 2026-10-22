@@ -173,7 +173,7 @@ export type AuditorFinding = {
   body: string;
   severity: "low" | "moderate" | "high" | "critical";
   citations: Citation[];
-  reviewState: "draft" | "accepted" | "edited" | "rejected";
+  reviewState: "pending" | "accepted" | "edited" | "rejected";
 };
 export type AuditorQueueItem = {
   firmName: string;

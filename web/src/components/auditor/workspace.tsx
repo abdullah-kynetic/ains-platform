@@ -47,7 +47,7 @@ function FindingEditor({ finding, onUpdated }: { finding: AuditorFinding; onUpda
     <div className="grid gap-3 rounded-lg border border-border bg-elevated/50 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="font-medium">{finding.title}</div>
-        <Badge variant={finding.reviewState === "rejected" ? "danger" : finding.reviewState === "draft" ? "warning" : "success"}>{finding.reviewState}</Badge>
+        <Badge variant={finding.reviewState === "rejected" ? "danger" : finding.reviewState === "pending" ? "warning" : "success"}>{finding.reviewState}</Badge>
       </div>
       <Field label="Finding draft">
         <Textarea value={body} onChange={(event) => setBody(event.target.value)} />

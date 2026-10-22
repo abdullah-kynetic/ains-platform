@@ -61,6 +61,16 @@ Merge conflicts in tests/dependencies preserve the receipt-verification tests an
 libraries. Unfinished: complete request-level decisions/history, document download/viewing,
 report-readiness gates, citation source naming, and final signing/delivery. Task 5 owns these gaps.
 
-Phases 7 through 8 will be reviewed and appended here in order. Each phase is merged only after
+## Phase 7 — portal API wiring
+
+Delivered backend-owned sign-in/session UI, client questionnaire, uploads, auditor evidence and
+finding review pages, report downloads, and PATCH CORS support. Fixed the finding-state contract
+from the nonexistent `draft` enum value to the backend's `pending` value.
+Unfinished: the demo's handwritten request data, central upload flow, onboarding/admin screens,
+stronger loading/error/empty states, and document/request-level manual review. Tasks 2–6 replace
+these progressively. Magic-link delivery remains unconfigured; live deployment is not implied.
+No model calls are introduced by this frontend phase.
+
+Phase 8 will be reviewed and appended here in order. Each phase is merged only after
 its own PR checks pass, using a merge commit. Later unmerged feature branches are not silently
 included in this consolidation. Their useful work can be incorporated into the subsequent tasks.
