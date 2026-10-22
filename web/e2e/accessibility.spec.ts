@@ -51,6 +51,14 @@ test("client and auditor screens meet automated accessibility basics", async ({
     page.getByRole("heading", { name: "Latest activity" }),
   ).toBeVisible();
   await expect(page.getByText("Internal only", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Upcoming tasks" }),
+  ).toBeVisible();
+  const firstTask = page.getByRole("checkbox", {
+    name: "Mark Review newly uploaded program evidence complete",
+  });
+  await firstTask.check();
+  await expect(firstTask).toBeChecked();
   expect(
     (
       await new AxeBuilder({ page })
