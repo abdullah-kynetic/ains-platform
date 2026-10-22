@@ -13,7 +13,6 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.api.engagements import StoredDocument, get_document_ingestor
 from app.auth.router import get_magic_link_sender
 from app.auth.security import hash_password
 from app.checklist import ClientStatus
@@ -28,6 +27,7 @@ from app.database.models import (
     UserRole,
 )
 from app.database.session import get_db
+from app.documents import StoredDocument, get_document_ingestor
 from app.main import create_app
 
 CLIENT_PASSWORD = "synthetic-client-password"

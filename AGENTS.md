@@ -19,6 +19,7 @@ app/
   auth/              Backend sessions, invite-only password/magic-link sign-in, auditor MFA
   api/               Tenant-scoped engagement and document endpoints
   database/          SQLAlchemy models and session management
+  documents/         Upload validation, hashing, and guarded Egnyte ingestion
   egnyte_client/     Egnyte API client (client.py), path guard (paths.py), CLI (cli.py)
   checklist/         Checklist items and client-facing statuses
 tests/               pytest suite (synthetic data only)

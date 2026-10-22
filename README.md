@@ -78,7 +78,11 @@ uv run python -m app.egnyte_client get-token /tmp/egnyte-token.env
 ```
 This logs in once and writes `EGNYTE_ACCESS_TOKEN` and `EGNYTE_REFRESH_TOKEN` to that file only (mode 600; nothing is printed). Copy the two lines into `.env` and delete the file. With `EGNYTE_ACCESS_TOKEN` set, the password flow is skipped (username/password become optional); on a 401 or expiry the client renews the token with `EGNYTE_REFRESH_TOKEN` (needs `EGNYTE_CLIENT_SECRET`), falling back to the password flow if credentials are set.
 
-Uploads use Egnyte's simple upload endpoint (files up to 100 MB).
+Uploads use Egnyte's simple upload endpoint (files up to 100 MB). The client sends the raw file
+body as `application/octet-stream`, as required by that endpoint, with Egnyte's SHA-512 integrity
+header. Portal ingestion also validates the filename, size, file signature, and the checklist
+item's accepted extensions, computes SHA-256, creates the guarded firm/engagement/item hierarchy,
+and stores the resulting Egnyte path and version in Postgres.
 
 ## Data rules (non-negotiable)
 

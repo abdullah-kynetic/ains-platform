@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
-from typing import Annotated, Protocol
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel, ConfigDict
@@ -24,6 +23,7 @@ from app.database.models import (
     UserRole,
 )
 from app.database.session import get_db
+from app.documents import DocumentIngestor, get_document_ingestor
 
 router = APIRouter(tags=["engagements"])
 DB = Annotated[Session, Depends(get_db)]
@@ -78,35 +78,6 @@ class DocumentView(APIModel):
     sha256: str
     version: str
     status: ClientStatus
-
-
-@dataclass(frozen=True)
-class StoredDocument:
-    egnyte_path: str
-    sha256: str
-    size_bytes: int
-    version: str = "1"
-
-
-class DocumentIngestor(Protocol):
-    async def ingest(
-        self, *, engagement: Engagement, item: ChecklistItemInstance, file: UploadFile
-    ) -> StoredDocument: ...
-
-
-class UnconfiguredDocumentIngestor:
-    async def ingest(
-        self, *, engagement: Engagement, item: ChecklistItemInstance, file: UploadFile
-    ) -> StoredDocument:
-        del engagement, item, file
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Document storage is not configured",
-        )
-
-
-def get_document_ingestor() -> DocumentIngestor:
-    return UnconfiguredDocumentIngestor()
 
 
 Ingestor = Annotated[DocumentIngestor, Depends(get_document_ingestor)]

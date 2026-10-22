@@ -153,6 +153,7 @@ class ChecklistItemInstance(Base):
     section_title: Mapped[str] = mapped_column(String(255))
     title: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(Text, default="")
+    accepted_extensions: Mapped[list[str]] = mapped_column(JSON, default=list)
     position: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[ClientStatus] = mapped_column(
         Enum(ClientStatus, native_enum=False), default=ClientStatus.REQUESTED
