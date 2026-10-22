@@ -26,7 +26,21 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr = SecretStr("")
     openai_api_key: SecretStr = SecretStr("")
 
-    database_url: str = ""
+    database_url: str = "postgresql+psycopg://ains:ains_dev@localhost:5432/ains"
+
+    # Backend-owned sessions. SESSION_SECRET must be set before sign-in can be used.
+    session_secret: SecretStr = SecretStr("")
+    session_cookie_secure: bool = False
+    session_ttl_hours: int = 12
+    magic_link_ttl_minutes: int = 15
+
+    # Comma-separated browser origins; wildcard origins are deliberately unsupported.
+    cors_origins: str = "http://localhost:3000"
+
+    def parsed_cors_origins(self) -> list[str]:
+        return [
+            origin.strip().rstrip("/") for origin in self.cors_origins.split(",") if origin.strip()
+        ]
 
 
 @lru_cache

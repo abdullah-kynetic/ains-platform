@@ -1,11 +1,32 @@
-"""FastAPI entrypoint."""
+"""FastAPI application factory and entrypoint."""
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="AINS Platform", version="0.1.0")
+from app.api import router as engagement_router
+from app.auth import router as auth_router
+from app.config import get_settings
 
 
-@app.get("/health")
-def health() -> dict[str, str]:
-    """Liveness check."""
-    return {"status": "ok"}
+def create_app() -> FastAPI:
+    settings = get_settings()
+    application = FastAPI(title="AINS Platform", version="0.1.0")
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.parsed_cors_origins(),
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
+    application.include_router(auth_router)
+    application.include_router(engagement_router)
+
+    @application.get("/health")
+    def health() -> dict[str, str]:
+        """Liveness check; deliberately does not expose configuration details."""
+        return {"status": "ok"}
+
+    return application
+
+
+app = create_app()

@@ -7,7 +7,8 @@ AINS: AI-native financial regulatory audit platform. First service: FINRA Rule 3
 - uv for packages (`uv sync`, `uv run pytest`, `uv run ruff check .`)
 - Postgres 16 locally via `docker compose up -d`
 - Client documents in Egnyte (Internal API app, OAuth password flow)
-- AI providers approved by counsel: Anthropic (Claude) and OpenAI, via business/API accounts only
+- This repository is workflow software only. No direct model calls; a separate pipeline may
+  connect later through an authenticated backend adapter.
 - Next.js 16 (TypeScript, Tailwind v4) client portal in `web/` (npm); talks to the API via `NEXT_PUBLIC_API_URL`
 
 ## Layout
@@ -15,6 +16,9 @@ AINS: AI-native financial regulatory audit platform. First service: FINRA Rule 3
 app/
   main.py            FastAPI app (/health)
   config.py          Settings loaded from environment variables
+  auth/              Backend sessions, invite-only password/magic-link sign-in, auditor MFA
+  api/               Tenant-scoped engagement and document endpoints
+  database/          SQLAlchemy models and session management
   egnyte_client/     Egnyte API client (client.py), path guard (paths.py), CLI (cli.py)
   checklist/         Checklist items and client-facing statuses
 tests/               pytest suite (synthetic data only)
@@ -32,5 +36,6 @@ data/synthetic/      Fake documents for tests and demos
 - **Intake feedback to clients must never reveal audit findings.** Only document-level issues (unreadable, wrong period, wrong document, missing pages).
 - **Every AI-produced finding must cite document and page.** No citation, no finding.
 - **Humans approve findings and sign reports.** Code never marks a finding final or a report signed without an auditor action.
+- **Tenant isolation is mandatory.** Every tenant-owned query must filter by `firm_id`; client users see only their firm and auditors only assigned engagements. Add a cross-tenant denial test for each new API path.
 - **`web/`**: no secrets in `NEXT_PUBLIC_*` vars (they ship to the browser); mock data must be synthetic; status values must match `app/checklist.ClientStatus`; never show audit findings in client UI. Run `npm run lint && npm run build` in `web/` before committing.
 - Keep changes small, typed, and tested. Run `uv run ruff check .` and `uv run pytest` before committing.

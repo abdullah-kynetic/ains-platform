@@ -12,7 +12,8 @@ This repo holds the audit engine (Python 3.12, FastAPI, Pydantic) and the client
 uv sync                          # creates .venv and installs deps (incl. dev)
 
 # 2. Local Postgres
-docker compose up -d
+docker compose up -d --wait
+uv run alembic upgrade head
 
 # 3. Environment
 cp .env.example .env             # fill in values locally; never commit .env
@@ -22,6 +23,16 @@ uv run uvicorn app.main:app --reload    # http://localhost:8000/health
 uv run pytest
 uv run ruff check .
 ```
+
+The backend owns authentication and uses an HTTP-only `ains_session` cookie. Users must already
+be invited in the database; there is no public sign-up endpoint. Client users may sign in with a
+password or magic link, and auditor accounts require TOTP MFA. Set `SESSION_SECRET` to a long,
+random value before using sign-in. Magic-link token delivery is an injectable backend adapter and
+must be connected to an approved email provider before that sign-in method is enabled outside tests.
+
+Tenant-owned database records carry an explicit `firm_id`. API queries scope clients to their firm
+and auditors to assigned engagements. Run `uv run alembic check` after model changes to confirm a
+migration is present.
 
 ### Client portal
 
