@@ -47,6 +47,10 @@ test("client and auditor screens meet automated accessibility basics", async ({
   await expect(
     page.getByRole("heading", { name: "Client audits" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Latest activity" }),
+  ).toBeVisible();
+  await expect(page.getByText("Internal only", { exact: true })).toBeVisible();
   expect(
     (
       await new AxeBuilder({ page })

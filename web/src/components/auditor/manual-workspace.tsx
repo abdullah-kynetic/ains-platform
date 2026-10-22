@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadState } from "@/components/ui/load-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FolderOpen } from "lucide-react";
+import { AuditorActivityFeed } from "@/components/auditor/activity-feed";
 import {
   getClients,
   getWorkspace,
@@ -49,31 +50,42 @@ function Dashboard() {
           description="Assigned client engagements will appear here. Contact the administrator if you expected an assignment."
         />
       )}
-      <div className="grid gap-4 md:grid-cols-2">
-        {clients?.map((client) => (
-          <Card key={client.id}>
-            <CardHeader>
-              <CardTitle>{client.firmName}</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              <p>
-                {client.readiness.reviewed}/{client.readiness.total} requests
-                reviewed
-              </p>
-              <p>
-                {client.readiness.ready
-                  ? "Ready for report drafting"
-                  : "Review incomplete"}
-              </p>
-              <Link
-                className="underline"
-                href={`/auditor/engagements/${client.id}`}
-              >
-                Open audit workspace
-              </Link>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <section aria-labelledby="assigned-audits-title">
+          <h2
+            id="assigned-audits-title"
+            className="mb-3 text-sm font-semibold text-foreground"
+          >
+            Assigned engagements
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+            {clients?.map((client) => (
+              <Card key={client.id}>
+                <CardHeader>
+                  <CardTitle>{client.firmName}</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3">
+                  <p>
+                    {client.readiness.reviewed}/{client.readiness.total} requests
+                    reviewed
+                  </p>
+                  <p>
+                    {client.readiness.ready
+                      ? "Ready for report drafting"
+                      : "Review incomplete"}
+                  </p>
+                  <Link
+                    className="font-medium text-brand-hover underline underline-offset-4"
+                    href={`/auditor/engagements/${client.id}`}
+                  >
+                    Open audit workspace
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+        <AuditorActivityFeed />
       </div>
     </>
   );
