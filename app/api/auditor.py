@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.auth.dependencies import get_current_user
 from app.checklist import ClientStatus
-from app.checks.providers import Citation
 from app.config import Settings, get_settings
 from app.database.models import (
     AuditLog,
@@ -27,6 +26,7 @@ from app.database.models import (
     UserRole,
 )
 from app.database.session import get_db
+from app.evidence import Citation
 from app.reports import ReportGenerator
 
 router = APIRouter(prefix="/auditor", tags=["auditor"])
