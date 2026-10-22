@@ -22,3 +22,27 @@ The default `.env.example` has `NEXT_PUBLIC_USE_MOCKS=false`. The FastAPI backen
 at `NEXT_PUBLIC_API_URL`, with an invited user in Postgres and `SESSION_SECRET` configured.
 Magic-link delivery still requires an approved backend email adapter; password sign-in works
 without that adapter. Never place credentials in a `NEXT_PUBLIC_*` variable.
+
+## Cloudflare synthetic demo
+
+The `ains-platform-demo` Worker serves the client and auditor workflow demo at
+https://ains-platform-demo.ains-web.workers.dev. This deployment always builds with
+`NEXT_PUBLIC_USE_MOCKS=true`; it does not deploy FastAPI, Postgres, real sign-in or
+Egnyte ingestion. Demo receipts and decisions stay in browser storage. Use synthetic
+files only and use the labeled demo role switch to inspect the auditor workspace.
+
+```bash
+npm ci
+npm run build:cloudflare
+# With CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID supplied by the environment:
+npm run deploy:demo
+```
+
+`deploy:demo` rebuilds before publishing, so stale API-mode output cannot be deployed
+by that command. Cloudflare runs the OpenNext adapter with Node compatibility; generated
+`.open-next` and `.wrangler` artifacts are ignored. Never add deployment tokens to files.
+
+To test the packaged Worker locally, run `npx wrangler dev --port 8787`, then in another
+terminal run `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8787 npm run test:e2e`.
+`PLAYWRIGHT_BASE_URL` skips Playwright's development server and targets the supplied
+synthetic demo instead. CI also builds the Cloudflare bundle to catch adapter regressions.

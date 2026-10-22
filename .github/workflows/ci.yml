@@ -44,7 +44,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm run build
+      - run: npm run build:cloudflare
         env:
           NEXT_PUBLIC_USE_MOCKS: "true"
       - run: npx playwright install --with-deps chromium

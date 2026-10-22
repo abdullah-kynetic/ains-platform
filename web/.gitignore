@@ -3,6 +3,8 @@
 /test-results/
 /playwright-report/
 /.next/
+/.open-next/
+/.wrangler/
 /out/
 /build
 /coverage
