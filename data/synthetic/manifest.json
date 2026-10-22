@@ -1,0 +1,34 @@
+{
+  "cases": [
+    {
+      "item_id": "clean",
+      "filename": "clean.txt",
+      "expected_status": "received"
+    },
+    {
+      "item_id": "missing",
+      "filename": null,
+      "expected_status": "missing"
+    },
+    {
+      "item_id": "wrong-period",
+      "filename": "wrong-period.txt",
+      "expected_status": "received"
+    },
+    {
+      "item_id": "bad-scan",
+      "filename": "bad-scan.png",
+      "expected_status": "rejected"
+    },
+    {
+      "item_id": "partial",
+      "filename": "partial.txt",
+      "expected_status": "received"
+    },
+    {
+      "item_id": "untrusted-text",
+      "filename": "prompt-injection.txt",
+      "expected_status": "received"
+    }
+  ]
+}

@@ -106,6 +106,13 @@ only auditor-approved findings. The swappable layout and required draft language
 `templates/report/default.json`. The application never marks a report signed—Quinton reviews and
 signs the final report outside this draft-generation step.
 
+## Synthetic evaluations
+
+`uv run python scripts/evaluate_synthetic.py` checks six synthetic upload cases without network
+calls or credentials. It validates file receipt, type signatures, and fingerprints only. Timing,
+completeness, and audit sufficiency remain manual auditor decisions. No model runner or model
+credential is part of this application.
+
 ## Data rules (non-negotiable)
 
 1. **No secrets in git.** `.env` and keys live only locally and in the password manager. Never paste them into chats, issues, or AI tools.

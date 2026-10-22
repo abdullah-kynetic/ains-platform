@@ -22,8 +22,6 @@ production session/cookie configuration, login throttling, and administrative UI
 delivery currently uses an unconfigured no-op adapter and must not be enabled for production.
 There are no model calls in this phase. Models for findings/check results are data containers.
 
-## Review sequence
-
 ## Phase 3 — questionnaire
 
 Delivered conditional yes/no questions, client answers, pending/approved/rejected N/A review,
@@ -71,6 +69,22 @@ stronger loading/error/empty states, and document/request-level manual review. T
 these progressively. Magic-link delivery remains unconfigured; live deployment is not implied.
 No model calls are introduced by this frontend phase.
 
-Phase 8 will be reviewed and appended here in order. Each phase is merged only after
-its own PR checks pass, using a merge commit. Later unmerged feature branches are not silently
-included in this consolidation. Their useful work can be incorporated into the subsequent tasks.
+## Phase 8 — synthetic upload validation (provider evals removed)
+
+Retained six synthetic upload cases and an offline validation command. Removed the model-based
+evaluation runner, provider flags, automated audit-status scoring, and restricted-content fixture.
+Added a regression check against reintroducing direct model endpoints, SDK imports, or settings.
+Wrong-period and partial documents are received, not automatically judged by the application.
+
+## Consolidation outcome
+
+Phases 2–8 are consolidated through separate PRs and merge commits, with CI required before
+each merge. Phase 0 and the portal repair were already ancestors of main. Later feature branches
+remain unmerged because they contain superseded model-related code and duplicate catalogs;
+their useful workflow/UI work must be adapted in Tasks 2–6, not merged wholesale.
+
+This is a reviewed foundation, not a finished app. The canonical 34-item catalog with empty
+auditor rubrics is Task 2; central uploads Task 3; representations/client flows Task 4; full
+manual request decisions/history/readiness Task 5; complete screen polish/accessibility Task 6.
+Live storage, identity provisioning/email/MFA recovery, hosting, and operational hardening remain
+deployment prerequisites. No real client data or model inference is needed for the requested demos.
