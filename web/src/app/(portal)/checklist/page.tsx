@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
 import { ListChecks } from "lucide-react";
@@ -15,7 +16,9 @@ import { progressOf } from "@/lib/checklist";
 export default function ChecklistPage() {
   const { data, error, reload } = useEngagement();
   const [search, setSearch] = useState("");
+
   if (error || !data) return <LoadState error={error} retry={reload} />;
+
   const progress = progressOf(data);
   const sections = data.sections
     .map((section) => ({
@@ -27,6 +30,7 @@ export default function ChecklistPage() {
       ),
     }))
     .filter((section) => section.items.length);
+
   return (
     <>
       <PageHeader
@@ -38,16 +42,18 @@ export default function ChecklistPage() {
           </Link>
         }
       />
-      <div className="mb-6 grid gap-3 rounded-xl border border-border bg-surface p-5">
+
+      <div className="mb-6 grid gap-3 rounded-[10px] border border-border bg-surface p-5 shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
         <div className="flex flex-wrap justify-between gap-2 text-sm">
-          <span>Document collection</span>
-          <span>
+          <span className="font-medium">Document collection</span>
+          <span className="text-muted">
             {progress.done} of {progress.total} requests have receipts
           </span>
         </div>
         <Progress value={progress.pct} />
       </div>
-      <label className="mb-5 grid max-w-xl gap-2 text-sm">
+
+      <label className="mb-5 grid max-w-xl gap-2 text-sm font-medium">
         Search document requests
         <Input
           placeholder="Request ID or title"
@@ -55,7 +61,8 @@ export default function ChecklistPage() {
           onChange={(event) => setSearch(event.target.value)}
         />
       </label>
-      {!sections.length && (
+
+      {!sections.length ? (
         <EmptyState
           icon={ListChecks}
           title={
@@ -72,13 +79,14 @@ export default function ChecklistPage() {
             </Link>
           }
         />
-      )}
+      ) : null}
+
       <div className="grid gap-4">
         {sections.map((section) => (
           <details
             open
             key={section.id}
-            className="rounded-xl border border-border bg-surface p-5"
+            className="rounded-[10px] border border-border bg-surface p-5 shadow-[0_1px_2px_rgba(16,24,40,0.03)]"
           >
             <summary className="cursor-pointer text-base font-semibold">
               {section.title}

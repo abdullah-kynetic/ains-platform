@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* AINS: dark-first design tokens. */
+/* AINS: quiet, high-trust dashboard foundations. */
 @theme {
   --font-sans:
     -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
@@ -8,27 +8,32 @@
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
-  --color-background: #0c111b;
-  --color-surface: #141c29;
-  --color-elevated: #1e293b;
-  --color-hover: #1a1a1a;
-  --color-foreground: #ffffff;
-  --color-muted: #a0a0a0;
-  --color-subtle: #98a5b8;
-  --color-border: rgb(185 205 235 / 0.16);
-  --color-border-strong: rgb(255 255 255 / 0.14);
+  --color-background: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-sidebar: #fbfbfc;
+  --color-elevated: #f1f3f6;
+  --color-hover: #f4f5f7;
+  --color-foreground: #17191c;
+  --color-muted: #626873;
+  --color-subtle: #667085;
+  --color-border: #e5e7eb;
+  --color-border-strong: #d4d7dc;
 
-  --color-brand: #2563eb;
-  --color-brand-hover: #3b82f6;
-  --color-brand-violet: #0ea5e9;
-  --color-brand-tint: #132036;
+  --color-brand: #4f46e5;
+  --color-brand-hover: #4338ca;
+  --color-brand-violet: #7c3aed;
+  --color-brand-tint: #eef2ff;
 
   --color-success: #22c55e;
+  --color-success-foreground: #15803d;
   --color-warning: #f59e0b;
+  --color-warning-foreground: #b45309;
   --color-danger: #ef4444;
+  --color-danger-foreground: #b91c1c;
   --color-info: #38bdf8;
+  --color-info-foreground: #0369a1;
 
-  --radius-card: 12px;
+  --radius-card: 10px;
   --animate-fade-in: fade-in 160ms ease-out;
   --animate-slide-in: slide-in 200ms ease-out;
   --animate-pop-in: pop-in 160ms ease-out;
@@ -62,7 +67,33 @@
 }
 
 :root {
+  color-scheme: light;
+}
+
+.dark {
   color-scheme: dark;
+  --color-background: #0d0f12;
+  --color-surface: #14171c;
+  --color-sidebar: #111419;
+  --color-elevated: #1d2128;
+  --color-hover: #20252d;
+  --color-foreground: #f5f7fa;
+  --color-muted: #a6adba;
+  --color-subtle: #8b95a5;
+  --color-border: #292f39;
+  --color-border-strong: #39414d;
+  --color-brand: #818cf8;
+  --color-brand-hover: #a5b4fc;
+  --color-brand-violet: #a78bfa;
+  --color-brand-tint: #20233b;
+  --color-success: #4ade80;
+  --color-success-foreground: #86efac;
+  --color-warning: #fbbf24;
+  --color-warning-foreground: #fcd34d;
+  --color-danger: #f87171;
+  --color-danger-foreground: #fca5a5;
+  --color-info: #38bdf8;
+  --color-info-foreground: #7dd3fc;
 }
 
 html,
@@ -119,7 +150,7 @@ dialog::backdrop {
 }
 
 ::selection {
-  background: rgb(37 99 235 / 0.35);
+  background: rgb(79 70 229 / 0.2);
 }
 
 label,
@@ -136,27 +167,35 @@ input[type="file"] {
 /* Thin, quiet scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+  scrollbar-color: rgb(23 25 28 / 0.16) transparent;
 }
 
 .bg-brand-gradient {
-  background-image: linear-gradient(135deg, #0ea5e9, #2563eb);
+  background-image: linear-gradient(135deg, #6366f1, #4f46e5);
 }
 .bg-glow {
   background-image: radial-gradient(
     ellipse at top,
-    rgb(37 99 235 / 0.12) 0%,
-    transparent 60%
+    rgb(79 70 229 / 0.055) 0%,
+    transparent 55%
   );
 }
 .text-brand-gradient {
-  background-image: linear-gradient(135deg, #7dd3fc, #93c5fd);
+  background-image: linear-gradient(135deg, #6366f1, #4338ca);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* Date input icon on dark */
-input[type="date"]::-webkit-calendar-picker-indicator {
+.theme-icon-sun {
+  display: none;
+}
+.dark .theme-icon-moon {
+  display: none;
+}
+.dark .theme-icon-sun {
+  display: inline-flex;
+}
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0.7);
 }

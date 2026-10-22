@@ -15,7 +15,7 @@ export function TBody({ className, ...props }: React.HTMLAttributes<HTMLTableSec
   return <tbody className={cn("[&_tr:last-child]:border-0", className)} {...props} />;
 }
 export function TR({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("border-b border-border transition-colors hover:bg-white/[0.02]", className)} {...props} />;
+  return <tr className={cn("border-b border-border transition-colors hover:bg-hover", className)} {...props} />;
 }
 export function TH({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return <th className={cn("h-10 px-4 text-left align-middle text-[11px] font-medium uppercase tracking-[0.08em] text-subtle whitespace-nowrap", className)} {...props} />;

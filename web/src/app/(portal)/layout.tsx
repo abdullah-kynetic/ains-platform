@@ -30,16 +30,42 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   return (
     <AuthGate>
-      <Shell sidebar={
-        <Sidebar
-          items={isAuditor ? auditorItems : clientItems}
-          sub={isAuditor ? "Auditor workspace" : "Client portal"}
-          who={user?.name ?? user?.email ?? "Signed-in user"}
-          org={isAuditor ? "AINS independent review" : undefined}
-          onSignOut={() => void handleSignOut()}
-        />
-      }>
-        {USE_MOCKS && <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3 text-sm"><span>Synthetic demo — {isAuditor ? "auditor" : "client"} view. No real documents.</span><button className="underline" onClick={() => { localStorage.setItem("ains-synthetic-role", isAuditor ? "client" : "auditor"); window.location.assign(isAuditor ? "/" : "/auditor"); }}>Switch to {isAuditor ? "client" : "auditor"} demo</button></div>}
+      <Shell
+        sidebar={
+          <Sidebar
+            items={isAuditor ? auditorItems : clientItems}
+            sub={isAuditor ? "Auditor workspace" : "Client portal"}
+            who={user?.name ?? user?.email ?? "Signed-in user"}
+            org={
+              isAuditor
+                ? "AINS independent review"
+                : "Example Securities LLC (synthetic)"
+            }
+            onSignOut={() => void handleSignOut()}
+          />
+        }
+      >
+        {USE_MOCKS ? (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 text-sm shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
+            <span>
+              Synthetic demo — {isAuditor ? "auditor" : "client"} view. No
+              real documents.
+            </span>
+            <button
+              type="button"
+              className="font-medium text-brand-hover underline underline-offset-4"
+              onClick={() => {
+                localStorage.setItem(
+                  "ains-synthetic-role",
+                  isAuditor ? "client" : "auditor",
+                );
+                window.location.assign(isAuditor ? "/" : "/auditor");
+              }}
+            >
+              Switch to {isAuditor ? "client" : "auditor"} demo
+            </button>
+          </div>
+        ) : null}
         {children}
       </Shell>
     </AuthGate>

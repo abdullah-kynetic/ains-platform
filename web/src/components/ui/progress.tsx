@@ -19,10 +19,7 @@ export function Progress({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(v)}
-      className={cn(
-        "h-2 w-full overflow-hidden rounded-full bg-white/[0.06]",
-        className,
-      )}
+      className={cn("h-2 w-full overflow-hidden rounded-full bg-elevated", className)}
     >
       <div
         className={cn(
