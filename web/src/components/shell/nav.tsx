@@ -25,16 +25,37 @@ export type NavItem = {
   exact?: boolean;
 };
 
-const workspaces = [
-  { name: "AINS Operations", type: "Internal workspace", mark: "AI" },
+type Workspace = {
+  name: string;
+  type: string;
+  mark: string;
+  role: "auditor" | "client";
+};
+
+const workspaces: Workspace[] = [
+  {
+    name: "AINS Operations",
+    type: "Internal workspace",
+    mark: "AI",
+    role: "auditor",
+  },
   {
     name: "Example Securities LLC",
     type: "Client workspace · Synthetic",
     mark: "ES",
+    role: "client",
   },
 ];
 
-function WorkspaceSwitcher({ auditor }: { auditor: boolean }) {
+function WorkspaceSwitcher({
+  auditor,
+  onWorkspaceChange,
+  onNavigate,
+}: {
+  auditor: boolean;
+  onWorkspaceChange?: (workspace: "auditor" | "client") => void;
+  onNavigate?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const active = workspaces[auditor ? 0 : 1];
 
@@ -67,17 +88,22 @@ function WorkspaceSwitcher({ auditor }: { auditor: boolean }) {
           </p>
           {workspaces.map((workspace) => {
             const current = active.name === workspace.name;
+            const available = current || Boolean(onWorkspaceChange);
             return (
               <button
                 key={workspace.name}
                 type="button"
-                disabled={!current}
+                disabled={!available}
                 title={
-                  current
+                  available
                     ? undefined
-                    : "Workspace routing is coming in a later checkpoint"
+                    : "This workspace is not available to the signed-in user"
                 }
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setOpen(false);
+                  onNavigate?.();
+                  if (!current) onWorkspaceChange?.(workspace.role);
+                }}
                 className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left hover:bg-hover disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <span className="grid size-7 place-items-center rounded-md border border-border bg-elevated text-[10px] font-semibold">
@@ -93,11 +119,11 @@ function WorkspaceSwitcher({ auditor }: { auditor: boolean }) {
                 </span>
                 {current ? (
                   <Check className="size-3.5 text-brand" />
-                ) : (
+                ) : !available ? (
                   <span className="text-[9px] font-medium uppercase tracking-wide text-subtle">
-                    Soon
+                    Restricted
                   </span>
-                )}
+                ) : null}
               </button>
             );
           })}
@@ -179,6 +205,7 @@ function Panel({
   org,
   onNavigate,
   onSignOut,
+  onWorkspaceChange,
 }: {
   items: NavItem[];
   sub: string;
@@ -186,13 +213,18 @@ function Panel({
   org?: string;
   onNavigate?: () => void;
   onSignOut?: () => void;
+  onWorkspaceChange?: (workspace: "auditor" | "client") => void;
 }) {
   const auditor = sub.toLowerCase().includes("auditor");
 
   return (
     <div className="flex h-full flex-col p-3">
       <Logo sub={sub} className="px-2 pt-2 pb-5" />
-      <WorkspaceSwitcher auditor={auditor} />
+      <WorkspaceSwitcher
+        auditor={auditor}
+        onWorkspaceChange={onWorkspaceChange}
+        onNavigate={onNavigate}
+      />
       <p className="mt-7 mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.13em] text-subtle">
         {auditor ? "Review" : "Engagement"}
       </p>
@@ -235,6 +267,7 @@ export function Sidebar(props: {
   who: string;
   org?: string;
   onSignOut?: () => void;
+  onWorkspaceChange?: (workspace: "auditor" | "client") => void;
 }) {
   const [open, setOpen] = useState(false);
 
