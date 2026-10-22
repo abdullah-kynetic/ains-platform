@@ -154,7 +154,7 @@ def backend() -> Iterator[
         item_a = ChecklistItemInstance(
             firm_id=firm_a.id,
             engagement_id=engagement_a.id,
-            item_key="aml-program",
+            item_key="AML-BD-004",
             section_key="governance",
             section_title="AML program and governance",
             title="Written AML program",
@@ -166,7 +166,7 @@ def backend() -> Iterator[
         restricted_a = ChecklistItemInstance(
             firm_id=firm_a.id,
             engagement_id=engagement_a.id,
-            item_key="sar-material",
+            item_key="AML-BD-017",
             section_key="restricted",
             section_title="Restricted materials",
             title="SAR-related material",
@@ -178,7 +178,7 @@ def backend() -> Iterator[
         item_b = ChecklistItemInstance(
             firm_id=firm_b.id,
             engagement_id=engagement_b.id,
-            item_key="aml-program",
+            item_key="AML-BD-004",
             section_key="governance",
             section_title="AML program and governance",
             title="Written AML program",
@@ -348,8 +348,8 @@ def test_questionnaire_no_answer_hides_item_pending_auditor_review(backend) -> N
     assert questionnaire.json()["questions"] == [
         {
             "itemId": ids["item_a"],
-            "sectionTitle": "AML program and governance",
-            "question": "Does the firm maintain a written AML program?",
+            "sectionTitle": "Transactions and payments",
+            "question": "Does the firm use clearing-firm AML reports?",
             "answer": None,
             "naReviewState": None,
         }

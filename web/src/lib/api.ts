@@ -1,5 +1,6 @@
 import type { Engagement } from "./checklist";
 import { cloneMockEngagement } from "./mock-data";
+import catalog from "../../.generated/catalog.json";
 
 export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(
@@ -105,22 +106,13 @@ export type Question = {
 };
 export type Questionnaire = { engagementId: string; questions: Question[] };
 
-const mockQuestions: Question[] = [
-  {
-    itemId: "conditional-foreign-accounts",
-    sectionTitle: "Customer activity",
-    question: "Did the firm maintain accounts for foreign financial institutions during the review period?",
-    answer: null,
-    naReviewState: null,
-  },
-  {
-    itemId: "conditional-independent-testing",
-    sectionTitle: "AML program governance",
-    question: "Was a prior independent AML test completed during the review period?",
-    answer: null,
-    naReviewState: null,
-  },
-];
+const mockQuestions: Question[] = catalog.requests.filter((request) => request.conditions).map((request) => ({
+  itemId: request.id,
+  sectionTitle: catalog.sections.find((section) => section.id === request.section)!.title,
+  question: request.conditions!.question,
+  answer: null,
+  naReviewState: null,
+}));
 
 export async function getQuestionnaire(engagementId: string): Promise<Questionnaire> {
   if (USE_MOCKS) return { engagementId, questions: mockQuestions.map((question) => ({ ...question })) };
