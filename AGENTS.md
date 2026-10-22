@@ -7,7 +7,8 @@ AINS: AI-native financial regulatory audit platform. First service: FINRA Rule 3
 - uv for packages (`uv sync`, `uv run pytest`, `uv run ruff check .`)
 - Postgres 16 locally via `docker compose up -d`
 - Client documents in Egnyte (Internal API app, OAuth password flow)
-- AI providers approved by counsel: Anthropic (Claude) and OpenAI, via business/API accounts only
+- This repository is workflow software only. No direct model calls; a separate pipeline may
+  connect later through an authenticated backend adapter.
 - Next.js 16 (TypeScript, Tailwind v4) client portal in `web/` (npm); talks to the API via `NEXT_PUBLIC_API_URL`
 
 ## Layout
@@ -17,7 +18,7 @@ app/
   config.py          Settings loaded from environment variables
   auth/              Backend sessions, invite-only password/magic-link sign-in, auditor MFA
   api/               Tenant-scoped engagement and document endpoints
-  checks/            Deterministic checks, cited LLM providers, and processing pipeline
+  checks/            Storage receipt verification only; no model inference
   database/          SQLAlchemy models and session management
   documents/         Upload validation, hashing, and guarded Egnyte ingestion
   egnyte_client/     Egnyte API client (client.py), path guard (paths.py), CLI (cli.py)
@@ -36,7 +37,8 @@ templates/report/    Swappable draft-report layout and required notices
 - **Egnyte: only touch paths under `/Shared/AINS-Dev` (`EGNYTE_DEV_ROOT`) during development.** Always go through `EgnyteClient` (it enforces the path guard).
 - **To use Egnyte, run the CLI**: `uv run python -m app.egnyte_client whoami | ls <path> | mkdir <path> | upload <local> <remote> | download <remote> <dest>`. It loads credentials itself; never read `.env` and never run `get-token` or print tokens.
 - **Synthetic data only** in tests, fixtures, and `data/synthetic/`. Never add or request real client documents.
-- **Synthetic evals**: run `uv run python scripts/evaluate_synthetic.py`; the planted SAR case must keep `ai_called=false`. Live provider modes are optional and may use only the committed synthetic set.
+- **Synthetic upload checks**: run `uv run python scripts/evaluate_synthetic.py`. This command
+  validates receipt/type/fingerprints only, with no network access or model integration.
 - **SAR or SAR-indicating files are never sent to any AI model.** Detect and route them to the human-only lane before any AI call.
 - **Intake feedback to clients must never reveal audit findings.** Only document-level issues (unreadable, wrong period, wrong document, missing pages).
 - **Every AI-produced finding must cite document and page.** No citation, no finding.

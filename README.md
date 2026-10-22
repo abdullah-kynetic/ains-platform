@@ -88,17 +88,12 @@ header. Portal ingestion also validates the filename, size, file signature, and 
 item's accepted extensions, computes SHA-256, creates the guarded firm/engagement/item hierarchy,
 and stores the resulting Egnyte path and version in Postgres.
 
-## Automatic document checks
+## Storage receipt verification
 
-Successful uploads enqueue a durable Postgres `check_job`; API restarts do not lose work. The
-worker runs readability, page-count, review-period, and signature checks before any AI call. Files
-that indicate SAR content are routed to the human-only lane and never sent to an AI provider.
-
-Set `AI_PROVIDER=anthropic` or `AI_PROVIDER=openai`. Both adapters require strict structured JSON,
-and every draft finding must include a page citation. Findings remain internal for Quinton's
-review; clients receive only neutral document-handling reasons such as unreadable, wrong period,
-wrong document, or missing pages. Each check and total processing time is recorded, and a five
-minute timeout is enforced per file.
+Successful uploads enqueue a durable Postgres `check_job`. The worker verifies that stored bytes
+match the recorded SHA-256 fingerprint and routes the receipt to the auditor. It never analyzes
+document contents, calls a model, creates findings, or decides sufficiency. Retries and durations
+are recorded. A separate pipeline may connect later through an authenticated backend adapter.
 
 ## Auditor review and draft reports
 
@@ -113,12 +108,10 @@ signs the final report outside this draft-generation step.
 
 ## Synthetic evaluations
 
-`data/synthetic/manifest.json` covers clean, missing, wrong-period, unreadable-scan, partial,
-planted-SAR, and prompt-injection cases. `uv run python scripts/evaluate_synthetic.py` runs the
-credential-free baseline and scores both the client status and whether an AI call was allowed.
-The SAR case must never call a provider. Optional `--provider anthropic` and `--provider openai`
-modes send only this synthetic set and read credentials from process environment variables, never
-from `.env`.
+`uv run python scripts/evaluate_synthetic.py` checks six synthetic upload cases without network
+calls or credentials. It validates file receipt, type signatures, and fingerprints only. Timing,
+completeness, and audit sufficiency remain manual auditor decisions. No model runner or model
+credential is part of this application.
 
 ## Data rules (non-negotiable)
 
