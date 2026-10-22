@@ -179,6 +179,8 @@ class ChecklistItemInstance(Base):
     )
     na_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     na_approved_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    representation: Mapped[str | None] = mapped_column(String(50))
+    follow_up: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
@@ -209,6 +211,7 @@ class Document(Base):
     egnyte_path: Mapped[str] = mapped_column(String(1024))
     sha256: Mapped[str] = mapped_column(String(64), index=True)
     version: Mapped[str] = mapped_column(String(255), default="1")
+    feedback_code: Mapped[str | None] = mapped_column(String(50))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     item: Mapped[ChecklistItemInstance] = relationship(back_populates="documents")

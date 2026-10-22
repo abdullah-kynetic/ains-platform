@@ -103,6 +103,8 @@ export type Question = {
   question: string;
   answer: boolean | null;
   naReviewState: NAReviewState;
+  whenNo: string;
+  representation: string | null;
 };
 export type Questionnaire = { engagementId: string; questions: Question[] };
 
@@ -112,10 +114,15 @@ const mockQuestions: Question[] = catalog.requests.filter((request) => request.c
   question: request.conditions!.question,
   answer: null,
   naReviewState: null,
+  whenNo: request.conditions!.when_no,
+  representation: null,
 }));
 
 export async function getQuestionnaire(engagementId: string): Promise<Questionnaire> {
-  if (USE_MOCKS) return { engagementId, questions: mockQuestions.map((question) => ({ ...question })) };
+  if (USE_MOCKS) {
+    const saved = localStorage.getItem("ains-synthetic-questionnaire-v1");
+    return { engagementId, questions: saved ? JSON.parse(saved) : structuredClone(mockQuestions) };
+  }
   return apiRequest<Questionnaire>(
     `/engagements/${encodeURIComponent(engagementId)}/questionnaire`,
   );
@@ -123,18 +130,24 @@ export async function getQuestionnaire(engagementId: string): Promise<Questionna
 
 export async function saveQuestionnaire(
   engagementId: string,
-  answers: Array<{ itemId: string; applies: boolean }>,
+  answers: Array<{ itemId: string; applies: boolean; representation?: string }>,
 ): Promise<Questionnaire> {
   if (USE_MOCKS) {
-    const byId = new Map(answers.map((answer) => [answer.itemId, answer.applies]));
-    return {
-      engagementId,
-      questions: mockQuestions.map((question) => ({
-        ...question,
-        answer: byId.get(question.itemId) ?? question.answer,
-        naReviewState: byId.get(question.itemId) === false ? "pending" : null,
-      })),
-    };
+    const current = await getQuestionnaire(engagementId);
+    const data = cloneMockEngagement();
+    for (const answer of answers) {
+      const question = current.questions.find((question) => question.itemId === answer.itemId);
+      if (!question) throw new Error("Question not found.");
+      if (!answer.applies && question.whenNo === "representation_required" && !answer.representation) throw new Error("Confirm the no-activity representation.");
+      question.answer = answer.applies;
+      question.naReviewState = answer.applies ? null : "pending";
+      question.representation = answer.applies ? null : answer.representation ?? null;
+      const item = data.sections.flatMap((section) => section.items).find((item) => item.id === answer.itemId);
+      if (item) { item.canUpload = answer.applies; item.naReviewState = question.naReviewState; item.representation = question.representation; item.status = answer.applies ? "requested" : "with_auditor"; }
+    }
+    localStorage.setItem("ains-synthetic-questionnaire-v1", JSON.stringify(current.questions));
+    saveMockEngagement(data);
+    return current;
   }
   return apiRequest<Questionnaire>(
     `/engagements/${encodeURIComponent(engagementId)}/questionnaire/answers`,
@@ -253,7 +266,7 @@ export async function uploadDocument(
   if (USE_MOCKS) {
     const data = cloneMockEngagement();
     const item = data.sections.flatMap((section) => section.items).find((item) => item.id === itemId);
-    if (!item || item.restricted) throw new Error("This request cannot accept portal uploads.");
+    if (!item || item.restricted || item.canUpload === false) throw new Error("This request cannot accept portal uploads.");
     const suffix = `.${file.name.split(".").pop()?.toLowerCase()}`;
     if (!item.allowedEvidenceTypes.includes(suffix)) throw new Error("Wrong file type for this request.");
     if (!file.size) throw new Error("File is empty.");

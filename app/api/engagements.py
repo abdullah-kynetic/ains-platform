@@ -21,6 +21,7 @@ from app.database.models import (
     Document,
     Engagement,
     EngagementStatus,
+    NAReviewState,
     User,
     UserRole,
 )
@@ -42,6 +43,7 @@ class FileView(APIModel):
     size: int
     uploaded_at: datetime
     sha256: str
+    feedback: str | None
 
 
 class ItemView(APIModel):
@@ -53,6 +55,10 @@ class ItemView(APIModel):
     reason: str | None
     restricted: bool
     allowed_evidence_types: list[str]
+    can_upload: bool
+    na_review_state: NAReviewState | None
+    representation: str | None
+    follow_up: bool
     files: list[FileView]
 
 
@@ -104,7 +110,9 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
     section_titles = {section.id: section.title for section in catalog.sections}
     for item in engagement.items:
         definition = catalog.get(item.item_key)
-        if not item.applicable or definition is None:
+        if definition is None or (
+            not item.applicable and item.na_review_state != NAReviewState.PENDING
+        ):
             continue
         section = sections.setdefault(
             definition.section,
@@ -120,6 +128,10 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
                 reason=item.client_reason,
                 restricted=definition.restricted,
                 allowed_evidence_types=definition.allowed_evidence_types,
+                can_upload=item.applicable and not definition.restricted,
+                na_review_state=item.na_review_state,
+                representation=item.representation,
+                follow_up=item.follow_up,
                 files=[
                     FileView(
                         id=document.id,
@@ -127,6 +139,14 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
                         size=document.size_bytes,
                         uploaded_at=document.created_at,
                         sha256=document.sha256,
+                        feedback=(
+                            {
+                                "unreadable": "Please replace with a readable copy.",
+                                "wrong_document": "Please provide the requested document.",
+                                "wrong_period": "Please provide the review-period document.",
+                                "missing_pages": "Please provide a complete copy.",
+                            }.get(document.feedback_code)
+                        ),
                     )
                     for document in item.documents
                 ],

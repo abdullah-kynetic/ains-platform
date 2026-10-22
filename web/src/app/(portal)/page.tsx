@@ -30,7 +30,10 @@ export default function OverviewPage() {
         <CardHeader><CardTitle>Document progress</CardTitle></CardHeader>
         <CardContent className="grid gap-2">
           <Progress value={p.pct} />
-          <p className="text-sm text-muted">{p.done} of {p.total} items received for testing · due {formatDate(data.dueDate)}</p>
+          <p className="text-sm text-muted">{p.done} of {p.total} requests have file receipts · due {formatDate(data.dueDate)}</p>
+          <Link href="/questionnaire" className="text-sm underline">1. Complete questionnaire</Link>
+          <Link href="/checklist" className="text-sm underline">2. Review applicable requests and pending N/A answers</Link>
+          <Link href="/upload" className="text-sm underline">3. Upload documents or replacements</Link>
         </CardContent>
       </Card>
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">

@@ -41,6 +41,8 @@ class QuestionView(APIModel):
     question: str
     answer: bool | None
     na_review_state: NAReviewState | None
+    when_no: str
+    representation: str | None
 
 
 class QuestionnaireView(APIModel):
@@ -51,6 +53,7 @@ class QuestionnaireView(APIModel):
 class QuestionAnswer(APIModel):
     item_id: str
     applies: bool
+    representation: Literal["no_activity", "not_applicable"] | None = None
 
 
 class QuestionnaireAnswers(APIModel):
@@ -88,6 +91,8 @@ def _questionnaire(db: Session, engagement: Engagement) -> QuestionnaireView:
                 question=definition.conditions.question,
                 answer=item.applicability_answer,
                 na_review_state=item.na_review_state,
+                when_no=definition.conditions.when_no,
+                representation=item.representation,
             )
             for item in items
             if (definition := catalog.get(item.item_key)) and definition.conditions
@@ -145,8 +150,18 @@ def answer_questionnaire(
 
     now = datetime.now(UTC)
     for answer in payload.answers:
+        definition = catalog.get(items[answer.item_id].item_key)
+        if (
+            not answer.applies
+            and definition.conditions.when_no == "representation_required"
+            and not answer.representation
+        ):
+            raise HTTPException(422, "Confirm a representation for each no-activity answer")
+    for answer in payload.answers:
         item = items[answer.item_id]
+        before = {"answer": item.applicability_answer, "representation": item.representation}
         item.applicability_answer = answer.applies
+        item.representation = answer.representation if not answer.applies else None
         item.na_approved_by_id = None
         if answer.applies:
             item.applicable = True
@@ -167,7 +182,10 @@ def answer_questionnaire(
                 action="questionnaire.answered",
                 entity_type="checklist_item_instance",
                 entity_id=item.id,
-                details={"applies": answer.applies},
+                details={
+                    "before": before,
+                    "after": {"answer": answer.applies, "representation": item.representation},
+                },
             )
         )
     db.commit()
@@ -240,4 +258,6 @@ def review_not_applicable(
         question=definition.conditions.question,
         answer=item.applicability_answer,
         na_review_state=item.na_review_state,
+        when_no=definition.conditions.when_no,
+        representation=item.representation,
     )
