@@ -18,7 +18,7 @@ app/
   config.py          Settings loaded from environment variables
   auth/              Backend sessions, invite-only password/magic-link sign-in, auditor MFA
   api/               Tenant-scoped engagement and document endpoints
-  checks/            Deterministic checks, cited LLM providers, and processing pipeline
+  checks/            Storage receipt verification only; no model inference
   database/          SQLAlchemy models and session management
   documents/         Upload validation, hashing, and guarded Egnyte ingestion
   egnyte_client/     Egnyte API client (client.py), path guard (paths.py), CLI (cli.py)

@@ -42,6 +42,16 @@ file-level receipt/error handling, and rejecting inactive/hidden requests. Task 
 upload flow; antivirus/quarantine and production storage policy remain deployment work.
 No model calls are present.
 
-Phases 5 through 8 will be reviewed and appended here in order. Each phase is merged only after
+## Phase 5 — durable storage receipts (model code removed)
+
+The original branch included direct Anthropic/OpenAI HTTP calls, automatic sufficiency mapping,
+document extraction, and synthetic restricted-content fixtures. These are removed before merge,
+along with model credentials/configuration and provider-specific tests and dependencies.
+The retained worker verifies stored SHA-256 fingerprints, records receipt/timing, retries failed
+jobs, and routes files to the auditor. It cannot create findings or decide evidence sufficiency.
+Unfinished: worker operational monitoring, stale-version policy, and a future authenticated
+external-pipeline adapter. Direct inference is deliberately out of scope, not a pending feature.
+
+Phases 6 through 8 will be reviewed and appended here in order. Each phase is merged only after
 its own PR checks pass, using a merge commit. Later unmerged feature branches are not silently
 included in this consolidation. Their useful work can be incorporated into the subsequent tasks.
