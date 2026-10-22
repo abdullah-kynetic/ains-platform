@@ -9,16 +9,19 @@ import { progressOf } from "@/lib/checklist";
 
 export default function ChecklistPage() {
   const { data, error, upload } = useEngagement();
-  if (error) return <p className="text-sm text-red-400">Couldn&apos;t load the checklist: {error}</p>;
+  if (error) return <p className="text-sm text-danger-foreground">Couldn&apos;t load the checklist: {error}</p>;
   if (!data) return <Skeleton className="h-96 w-full" />;
   const p = progressOf(data);
   return (
     <>
-      <PageHeader title="Document checklist" description="Upload each requested document. We check every file and tell you if anything needs fixing." />
-      <div className="mb-5 grid gap-2">
-        <Progress value={p.pct} />
-        <p className="text-xs text-muted">{p.done} of {p.total} items received</p>
-      </div>
+      <PageHeader title="Documents" description="Upload each requested document. We check every file and tell you if anything needs fixing." />
+      <Card className="mb-5">
+        <CardContent className="grid gap-3 pt-5">
+          <div className="flex items-center justify-between gap-3"><span className="text-xs font-medium text-muted">Overall readiness</span><span className="text-xs font-semibold tabular-nums">{Math.round(p.pct)}%</span></div>
+          <Progress value={p.pct} />
+          <p className="text-[11px] text-subtle">{p.done} of {p.total} items received</p>
+        </CardContent>
+      </Card>
       <div className="grid gap-5">
         {data.sections.map((s) => {
           const sp = progressOf({ ...data, sections: [s] });

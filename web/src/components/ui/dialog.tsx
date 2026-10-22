@@ -50,7 +50,7 @@ export function Dialog({ open, onOpenChange, title, description, children, class
             {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
           </div>
           {dismissible ? (
-            <button data-close type="button" onClick={close} className="rounded-md p-1 text-subtle hover:bg-white/5 hover:text-foreground cursor-pointer" aria-label="Close">
+            <button data-close type="button" onClick={close} className="cursor-pointer rounded-md p-1 text-subtle hover:bg-hover hover:text-foreground" aria-label="Close">
               <X className="size-4" />
             </button>
           ) : null}

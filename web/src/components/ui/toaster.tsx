@@ -4,11 +4,11 @@ import { Toaster as Sonner } from "sonner";
 export function Toaster() {
   return (
     <Sonner
-      theme="dark"
+      theme="light"
       position="bottom-right"
       toastOptions={{
         classNames: {
-          toast: "!bg-elevated !border !border-white/10 !text-foreground !rounded-xl",
+          toast: "!rounded-lg !border !border-border !bg-surface !text-foreground !shadow-xl",
           description: "!text-muted",
         },
       }}

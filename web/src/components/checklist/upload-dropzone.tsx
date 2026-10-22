@@ -37,7 +37,7 @@ export function UploadDropzone({ onUpload, compact }: { onUpload: (file: File, o
       className={cn(
         "flex flex-col items-center gap-2 rounded-xl border border-dashed text-center transition-colors",
         compact ? "p-4" : "p-6",
-        drag ? "border-brand bg-brand-tint" : "border-white/15",
+        drag ? "border-brand bg-brand-tint" : "border-border-strong",
       )}
     >
       {busy ? (

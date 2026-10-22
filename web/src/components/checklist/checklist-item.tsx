@@ -19,14 +19,14 @@ export function ChecklistItemRow({ item, onUpload }: { item: ChecklistItem; onUp
       </div>
 
       {needsAction && item.reason ? (
-        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-amber-300">
+        <div className="flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/10 px-3 py-2 text-sm text-warning-foreground">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
           <span>{item.reason}</span>
         </div>
       ) : null}
 
       {restricted ? (
-        <div className="flex items-start gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-muted">
+        <div className="flex items-start gap-2 rounded-lg border border-border bg-elevated px-3 py-2 text-sm text-muted">
           <Lock className="mt-0.5 size-4 shrink-0" />
           <span>{STATUS_META.restricted_do_not_upload.help}</span>
         </div>
