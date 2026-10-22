@@ -113,7 +113,7 @@ Ingestor = Annotated[DocumentIngestor, Depends(get_document_ingestor)]
 UploadedFile = Annotated[UploadFile, File()]
 
 
-def _visible_engagements(user: User) -> Select[tuple[Engagement]]:
+def visible_engagements(user: User) -> Select[tuple[Engagement]]:
     stmt = select(Engagement)
     if user.role == UserRole.AUDITOR:
         return stmt.where(Engagement.auditor_id == user.id)
@@ -170,7 +170,7 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
 )
 def current_engagement(user: CurrentUser, db: DB) -> EngagementView:
     engagement = db.scalar(
-        _visible_engagements(user)
+        visible_engagements(user)
         .where(Engagement.status != EngagementStatus.COMPLETE)
         .options(
             selectinload(Engagement.firm),
@@ -197,7 +197,7 @@ async def upload_document(
     db: DB,
     ingestor: Ingestor,
 ) -> DocumentView:
-    engagement = db.scalar(_visible_engagements(user).where(Engagement.id == engagement_id))
+    engagement = db.scalar(visible_engagements(user).where(Engagement.id == engagement_id))
     if not engagement:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Engagement not found")
     item = db.scalar(

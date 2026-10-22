@@ -62,6 +62,12 @@ class ReviewState(enum.StrEnum):
     REJECTED = "rejected"
 
 
+class NAReviewState(enum.StrEnum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
 class Firm(Base):
     __tablename__ = "firms"
 
@@ -153,8 +159,14 @@ class ChecklistItemInstance(Base):
     )
     client_reason: Mapped[str | None] = mapped_column(Text)
     restricted: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_conditional: Mapped[bool] = mapped_column(Boolean, default=False)
+    condition_question: Mapped[str | None] = mapped_column(Text)
     applicable: Mapped[bool] = mapped_column(Boolean, default=True)
     applicability_answer: Mapped[bool | None] = mapped_column(Boolean)
+    na_review_state: Mapped[NAReviewState | None] = mapped_column(
+        Enum(NAReviewState, native_enum=False)
+    )
+    na_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     na_approved_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(

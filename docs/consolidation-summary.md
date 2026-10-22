@@ -24,6 +24,14 @@ There are no model calls in this phase. Models for findings/check results are da
 
 ## Review sequence
 
+## Phase 3 — questionnaire
+
+Delivered conditional yes/no questions, client answers, pending/approved/rejected N/A review,
+and auditor-scoped decisions with audit logging. Cross-tenant and client-role denial tests exist.
+Unfinished: no free-text representation collection; negative answers hide requests before auditor
+approval, and changed answers can reset a previous review. Task 4 must preserve required
+representations and distinguish proposed applicability from approved applicability. No model calls.
+
 Phases 3 through 8 will be reviewed and appended here in order. Each phase is merged only after
 its own PR checks pass, using a merge commit. Later unmerged feature branches are not silently
 included in this consolidation. Their useful work can be incorporated into the subsequent tasks.
