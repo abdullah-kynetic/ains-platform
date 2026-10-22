@@ -367,6 +367,19 @@ def test_representation_is_tenant_scoped_and_requires_confirmation(backend):
         assert item.representation == "no_activity" and item.na_review_state.value == "pending"
 
 
+def test_no_activity_question_requires_explicit_representation(backend):
+    client, factory, ids, _, _ = backend
+    with factory() as db:
+        db.get(ChecklistItemInstance, ids["item_a"]).item_key = "AML-BD-012"
+        db.commit()
+    sign_in_client(client)
+    path = f"/engagements/{ids['engagement_a']}/questionnaire/answers"
+    answer = {"itemId": ids["item_a"], "applies": False}
+    assert client.post(path, json={"answers": [answer]}).status_code == 422
+    answer["representation"] = "no_activity"
+    assert client.post(path, json={"answers": [answer]}).status_code == 200
+
+
 def test_auditor_follow_up_and_document_replacement_feedback(backend):
     client, factory, ids, _, _ = backend
     sign_in_client(client)
