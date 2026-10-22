@@ -1,6 +1,26 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
+test("theme toggle persists light and dark mode", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("ains-theme", "light");
+    document.documentElement.classList.remove("dark");
+  });
+
+  await page.getByRole("button", { name: "Toggle color theme" }).click();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  expect(await page.evaluate(() => localStorage.getItem("ains-theme"))).toBe(
+    "dark",
+  );
+
+  await page.getByRole("button", { name: "Toggle color theme" }).click();
+  await expect(page.locator("html")).not.toHaveClass(/dark/);
+  expect(await page.evaluate(() => localStorage.getItem("ains-theme"))).toBe(
+    "light",
+  );
+});
+
 test("client and auditor screens meet automated accessibility basics", async ({
   page,
 }) => {
@@ -22,7 +42,8 @@ test("client and auditor screens meet automated accessibility basics", async ({
         fullPage: true,
       });
   }
-  await page.getByRole("button", { name: "Switch to auditor demo" }).click();
+  await page.getByRole("button", { name: /Example Securities LLC/ }).click();
+  await page.getByRole("button", { name: /AINS Operations/ }).click();
   await expect(
     page.getByRole("heading", { name: "Client audits" }),
   ).toBeVisible();
@@ -109,7 +130,9 @@ test("mobile navigation traps focus, closes with Escape and avoids horizontal ov
       path,
     ).toBe(true);
   }
-  await page.getByRole("button", { name: "Switch to auditor demo" }).click();
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await page.getByRole("button", { name: /Example Securities LLC/ }).click();
+  await page.getByRole("button", { name: /AINS Operations/ }).click();
   await page.getByRole("link", { name: "Open audit workspace" }).click();
   await page.locator("summary").filter({ hasText: "AML-BD-001 —" }).click();
   expect(

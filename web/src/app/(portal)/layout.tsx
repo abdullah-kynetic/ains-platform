@@ -18,7 +18,7 @@ const auditorItems: NavItem[] = [
 ];
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
-  const { session, logOut } = useSession();
+  const { session, logOut, refresh } = useSession();
   const router = useRouter();
   const user = session?.user;
   const isAuditor = user?.role === "auditor";
@@ -26,6 +26,13 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   async function handleSignOut() {
     await logOut();
     router.replace("/sign-in");
+  }
+
+  async function handleWorkspaceChange(workspace: "auditor" | "client") {
+    if (!USE_MOCKS || workspace === user?.role) return;
+    localStorage.setItem("ains-synthetic-role", workspace);
+    await refresh();
+    router.push(workspace === "auditor" ? "/auditor" : "/");
   }
 
   return (
@@ -42,30 +49,14 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                 : "Example Securities LLC (synthetic)"
             }
             onSignOut={() => void handleSignOut()}
+            onWorkspaceChange={
+              USE_MOCKS
+                ? (workspace) => void handleWorkspaceChange(workspace)
+                : undefined
+            }
           />
         }
       >
-        {USE_MOCKS ? (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 text-sm shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
-            <span>
-              Synthetic demo — {isAuditor ? "auditor" : "client"} view. No
-              real documents.
-            </span>
-            <button
-              type="button"
-              className="font-medium text-brand-hover underline underline-offset-4"
-              onClick={() => {
-                localStorage.setItem(
-                  "ains-synthetic-role",
-                  isAuditor ? "client" : "auditor",
-                );
-                window.location.assign(isAuditor ? "/" : "/auditor");
-              }}
-            >
-              Switch to {isAuditor ? "client" : "auditor"} demo
-            </button>
-          </div>
-        ) : null}
         {children}
       </Shell>
     </AuthGate>
