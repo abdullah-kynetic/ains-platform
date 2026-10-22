@@ -1,16 +1,21 @@
 import type { Engagement } from "./checklist";
-import { cloneMockEngagement, saveMockEngagement, invalidateMockDecision } from "./mock-data";
+import {
+  cloneMockEngagement,
+  saveMockEngagement,
+  invalidateMockDecision,
+} from "./mock-data";
 import catalog from "../../.generated/catalog.json";
 
 export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(
-  /\/$/,
-  "",
-);
+export const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+).replace(/\/$/, "");
 
 const configuredMaxMb = Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB ?? "100");
 export const MAX_UPLOAD_BYTES =
-  (Number.isFinite(configuredMaxMb) && configuredMaxMb > 0 ? configuredMaxMb : 100) *
+  (Number.isFinite(configuredMaxMb) && configuredMaxMb > 0
+    ? configuredMaxMb
+    : 100) *
   1024 *
   1024;
 
@@ -25,7 +30,10 @@ async function responseError(response: Response): Promise<Error> {
   return new Error(detail);
 }
 
-export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     credentials: "include",
@@ -63,7 +71,18 @@ const mockSession: SessionData = {
 };
 
 export async function getSession(): Promise<SessionData> {
-  if (USE_MOCKS) return { user: { ...mockSession.user, role: localStorage.getItem("ains-synthetic-role") === "auditor" ? "auditor" : "client" } };
+  if (USE_MOCKS && localStorage.getItem("ains-synthetic-signed-out") === "true")
+    throw new Error("Demo signed out");
+  if (USE_MOCKS)
+    return {
+      user: {
+        ...mockSession.user,
+        role:
+          localStorage.getItem("ains-synthetic-role") === "auditor"
+            ? "auditor"
+            : "client",
+      },
+    };
   return apiRequest<SessionData>("/auth/session");
 }
 
@@ -72,6 +91,10 @@ export async function passwordSignIn(
   password: string,
   mfaCode?: string,
 ): Promise<SessionData> {
+  if (USE_MOCKS)
+    throw new Error(
+      "Demo mode does not accept credentials. Use Open synthetic demo.",
+    );
   return apiRequest<SessionData>("/auth/password", {
     method: "POST",
     body: JSON.stringify({ email, password, mfa_code: mfaCode || null }),
@@ -79,13 +102,22 @@ export async function passwordSignIn(
 }
 
 export async function requestMagicLink(email: string): Promise<void> {
+  if (USE_MOCKS)
+    throw new Error("Demo mode does not send email. Use Open synthetic demo.");
   await apiRequest<{ status: string }>("/auth/magic-link", {
     method: "POST",
     body: JSON.stringify({ email }),
   });
 }
 
-export async function verifyMagicLink(token: string, mfaCode?: string): Promise<SessionData> {
+export async function verifyMagicLink(
+  token: string,
+  mfaCode?: string,
+): Promise<SessionData> {
+  if (USE_MOCKS)
+    throw new Error(
+      "Demo mode does not accept sign-in tokens. Use Open synthetic demo.",
+    );
   return apiRequest<SessionData>("/auth/magic-link/verify", {
     method: "POST",
     body: JSON.stringify({ token, mfa_code: mfaCode || null }),
@@ -93,6 +125,7 @@ export async function verifyMagicLink(token: string, mfaCode?: string): Promise<
 }
 
 export async function signOut(): Promise<void> {
+  if (USE_MOCKS) localStorage.setItem("ains-synthetic-signed-out", "true");
   if (!USE_MOCKS) await apiRequest<void>("/auth/sign-out", { method: "POST" });
 }
 
@@ -108,20 +141,29 @@ export type Question = {
 };
 export type Questionnaire = { engagementId: string; questions: Question[] };
 
-const mockQuestions: Question[] = catalog.requests.filter((request) => request.conditions).map((request) => ({
-  itemId: request.id,
-  sectionTitle: catalog.sections.find((section) => section.id === request.section)!.title,
-  question: request.conditions!.question,
-  answer: null,
-  naReviewState: null,
-  whenNo: request.conditions!.when_no,
-  representation: null,
-}));
+const mockQuestions: Question[] = catalog.requests
+  .filter((request) => request.conditions)
+  .map((request) => ({
+    itemId: request.id,
+    sectionTitle: catalog.sections.find(
+      (section) => section.id === request.section,
+    )!.title,
+    question: request.conditions!.question,
+    answer: null,
+    naReviewState: null,
+    whenNo: request.conditions!.when_no,
+    representation: null,
+  }));
 
-export async function getQuestionnaire(engagementId: string): Promise<Questionnaire> {
+export async function getQuestionnaire(
+  engagementId: string,
+): Promise<Questionnaire> {
   if (USE_MOCKS) {
     const saved = localStorage.getItem("ains-synthetic-questionnaire-v1");
-    return { engagementId, questions: saved ? JSON.parse(saved) : structuredClone(mockQuestions) };
+    return {
+      engagementId,
+      questions: saved ? JSON.parse(saved) : structuredClone(mockQuestions),
+    };
   }
   return apiRequest<Questionnaire>(
     `/engagements/${encodeURIComponent(engagementId)}/questionnaire`,
@@ -136,18 +178,42 @@ export async function saveQuestionnaire(
     const current = await getQuestionnaire(engagementId);
     const data = cloneMockEngagement();
     for (const answer of answers) {
-      const question = current.questions.find((question) => question.itemId === answer.itemId);
+      const question = current.questions.find(
+        (question) => question.itemId === answer.itemId,
+      );
       if (!question) throw new Error("Question not found.");
-      if (!answer.applies && question.whenNo === "representation_required" && !answer.representation) throw new Error("Confirm the no-activity representation.");
-      if (question.answer === answer.applies && question.representation === (answer.applies ? null : answer.representation ?? null)) continue;
+      if (
+        !answer.applies &&
+        question.whenNo === "representation_required" &&
+        !answer.representation
+      )
+        throw new Error("Confirm the no-activity representation.");
+      if (
+        question.answer === answer.applies &&
+        question.representation ===
+          (answer.applies ? null : (answer.representation ?? null))
+      )
+        continue;
       invalidateMockDecision(answer.itemId, true);
       question.answer = answer.applies;
       question.naReviewState = answer.applies ? null : "pending";
-      question.representation = answer.applies ? null : answer.representation ?? null;
-      const item = data.sections.flatMap((section) => section.items).find((item) => item.id === answer.itemId);
-      if (item) { item.canUpload = answer.applies; item.naReviewState = question.naReviewState; item.representation = question.representation; item.status = answer.applies ? "requested" : "with_auditor"; }
+      question.representation = answer.applies
+        ? null
+        : (answer.representation ?? null);
+      const item = data.sections
+        .flatMap((section) => section.items)
+        .find((item) => item.id === answer.itemId);
+      if (item) {
+        item.canUpload = answer.applies;
+        item.naReviewState = question.naReviewState;
+        item.representation = question.representation;
+        item.status = answer.applies ? "requested" : "with_auditor";
+      }
     }
-    localStorage.setItem("ains-synthetic-questionnaire-v1", JSON.stringify(current.questions));
+    localStorage.setItem(
+      "ains-synthetic-questionnaire-v1",
+      JSON.stringify(current.questions),
+    );
     saveMockEngagement(data);
     return current;
   }
@@ -157,7 +223,11 @@ export async function saveQuestionnaire(
   );
 }
 
-export type Citation = { document?: string; page: number; quote?: string | null };
+export type Citation = {
+  document?: string;
+  page: number;
+  quote?: string | null;
+};
 export type AuditorCheck = {
   id: string;
   checkType: string;
@@ -207,10 +277,13 @@ export async function reviewFinding(
     citations?: Citation[];
   },
 ): Promise<AuditorFinding> {
-  return apiRequest<AuditorFinding>(`/auditor/findings/${encodeURIComponent(findingId)}`, {
-    method: "PATCH",
-    body: JSON.stringify(decision),
-  });
+  return apiRequest<AuditorFinding>(
+    `/auditor/findings/${encodeURIComponent(findingId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(decision),
+    },
+  );
 }
 
 export async function reviewNotApplicable(
@@ -247,7 +320,10 @@ export async function getEngagement(): Promise<Engagement> {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 150));
     const data = cloneMockEngagement();
-    data.sections = data.sections.map((section) => ({ ...section, items: section.items.filter((item) => item.naReviewState !== "approved") }));
+    data.sections = data.sections.map((section) => ({
+      ...section,
+      items: section.items.filter((item) => item.naReviewState !== "approved"),
+    }));
     return data;
   }
   const response = await fetch(`${API_URL}/engagements/current`, {
@@ -265,18 +341,36 @@ export async function uploadDocument(
   onProgress: (pct: number) => void,
 ): Promise<UploadReceipt> {
   if (file.size > MAX_UPLOAD_BYTES) {
-    throw new Error(`File is larger than ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)} MB.`);
+    throw new Error(
+      `File is larger than ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)} MB.`,
+    );
   }
   if (USE_MOCKS) {
     const data = cloneMockEngagement();
-    const item = data.sections.flatMap((section) => section.items).find((item) => item.id === itemId);
-    if (!item || item.restricted || item.canUpload === false) throw new Error("This request cannot accept portal uploads.");
+    const item = data.sections
+      .flatMap((section) => section.items)
+      .find((item) => item.id === itemId);
+    if (!item || item.restricted || item.canUpload === false)
+      throw new Error("This request cannot accept portal uploads.");
     const suffix = `.${file.name.split(".").pop()?.toLowerCase()}`;
-    if (!item.allowedEvidenceTypes.includes(suffix)) throw new Error("Wrong file type for this request.");
+    if (!item.allowedEvidenceTypes.includes(suffix))
+      throw new Error("Wrong file type for this request.");
     if (!file.size) throw new Error("File is empty.");
-    const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer())))
-      .map((byte) => byte.toString(16).padStart(2, "0")).join("");
-    const receipt = { id: crypto.randomUUID(), name: file.name, size: file.size, sha256, version: "synthetic-1", status: "checking" as const };
+    const sha256 = Array.from(
+      new Uint8Array(
+        await crypto.subtle.digest("SHA-256", await file.arrayBuffer()),
+      ),
+    )
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
+    const receipt = {
+      id: crypto.randomUUID(),
+      name: file.name,
+      size: file.size,
+      sha256,
+      version: "synthetic-1",
+      status: "checking" as const,
+    };
     item.files.push({ ...receipt, uploadedAt: new Date().toISOString() });
     item.status = "checking";
     invalidateMockDecision(itemId);
@@ -293,16 +387,28 @@ export async function uploadDocument(
     );
     request.withCredentials = true;
     request.timeout = 120000;
-    request.ontimeout = () => reject(new Error("Upload timed out. Check the checklist before retrying."));
+    request.ontimeout = () =>
+      reject(
+        new Error("Upload timed out. Check the checklist before retrying."),
+      );
     request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress((event.loaded / event.total) * 100);
+      if (event.lengthComputable)
+        onProgress((event.loaded / event.total) * 100);
     };
-    request.onerror = () => reject(new Error("Upload failed because the API could not be reached."));
+    request.onerror = () =>
+      reject(new Error("Upload failed because the API could not be reached."));
     request.onload = () => {
       if (request.status >= 200 && request.status < 300) {
         onProgress(100);
-        try { resolve(JSON.parse(request.responseText) as UploadReceipt); }
-        catch { reject(new Error("The server did not return a valid receipt. Refresh before retrying.")); }
+        try {
+          resolve(JSON.parse(request.responseText) as UploadReceipt);
+        } catch {
+          reject(
+            new Error(
+              "The server did not return a valid receipt. Refresh before retrying.",
+            ),
+          );
+        }
         return;
       }
       let message = `Upload failed (${request.status}).`;
@@ -320,4 +426,11 @@ export async function uploadDocument(
   });
 }
 
-export type UploadReceipt = { id: string; name: string; size: number; sha256: string; version: string; status: string };
+export type UploadReceipt = {
+  id: string;
+  name: string;
+  size: number;
+  sha256: string;
+  version: string;
+  status: string;
+};

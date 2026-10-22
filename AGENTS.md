@@ -39,9 +39,9 @@ templates/report/    Swappable draft-report layout and required notices
 - **Synthetic data only** in tests, fixtures, and `data/synthetic/`. Never add or request real client documents.
 - **Synthetic upload checks**: run `uv run python scripts/evaluate_synthetic.py`. This command
   validates receipt/type/fingerprints only, with no network access or model integration.
-- **SAR or SAR-indicating files are never sent to any AI model.** Detect and route them to the human-only lane before any AI call.
+- **No restricted document contents in this app or its fixtures.** Restricted catalog requests reject uploads; do not paste restricted contents into notes. Catalog metadata is retained only to route human handling.
 - **Intake feedback to clients must never reveal audit findings.** Only document-level issues (unreadable, wrong period, wrong document, missing pages).
-- **Every AI-produced finding must cite document and page.** No citation, no finding.
+- **No model calls, model SDKs, inference, or model credentials in this repository.** Any future external pipeline connection requires a separately approved authenticated backend adapter.
 - **Humans approve findings and sign reports.** Code never marks a finding final or a report signed without an auditor action.
 - **Tenant isolation is mandatory.** Every tenant-owned query must filter by `firm_id`; client users see only their firm and auditors only assigned engagements. Add a cross-tenant denial test for each new API path.
 - **`web/`**: no secrets in `NEXT_PUBLIC_*` vars (they ship to the browser); mock data must be synthetic; status values must match `app/checklist.ClientStatus`; never show audit findings in client UI. Run `npm run lint && npm run build` in `web/` before committing.
@@ -50,3 +50,6 @@ templates/report/    Swappable draft-report layout and required notices
 - Request definitions live only in `data/checklist/aml_bd_v1.yaml` (34 stable IDs).
   Backend rendering and generated web demo data use this catalog. Leave rubric placeholders
   empty for Quinton; never infer audit criteria from file acceptance rules.
+- UI changes need web lint/typecheck/build plus Playwright browser tests. Automated accessibility
+  checks cover client and auditor screens; keep mobile focus management, retry states and
+  synthetic-only demo labels intact. Demo role switching must never affect real authorization.

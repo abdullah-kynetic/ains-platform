@@ -8,12 +8,25 @@ export const metadata: Metadata = {
   description: "Upload your audit documents and track their status.",
   robots: { index: false, follow: false },
 };
-export const viewport: Viewport = { themeColor: "#0a0a0a", colorScheme: "dark" };
+export const viewport: Viewport = {
+  themeColor: "#0c111b",
+  colorScheme: "dark",
+};
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className="h-full">
       <body className="min-h-full bg-background text-foreground">
+        <a
+          href="#main-content"
+          className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-brand px-4 py-3 text-white focus:translate-y-0"
+        >
+          Skip to main content
+        </a>
         <SessionProvider>
           {children}
           <Toaster />
