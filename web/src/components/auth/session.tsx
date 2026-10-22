@@ -1,9 +1,21 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { getSession, signOut, type SessionData, type UserRole } from "@/lib/api";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  getSession,
+  signOut,
+  type SessionData,
+  type UserRole,
+} from "@/lib/api";
+import { LoadState } from "@/components/ui/load-state";
 
 type SessionContextValue = {
   session: SessionData | null;
@@ -30,7 +42,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    getSession().then(setSession).catch(() => setSession(null)).finally(() => setLoading(false));
+    getSession()
+      .then(setSession)
+      .catch(() => setSession(null))
+      .finally(() => setLoading(false));
   }, []);
 
   const logOut = useCallback(async () => {
@@ -48,16 +63,25 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     [session, loading, refresh, logOut],
   );
 
-  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+  return (
+    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+  );
 }
 
 export function useSession() {
   const context = useContext(SessionContext);
-  if (!context) throw new Error("useSession must be used inside SessionProvider");
+  if (!context)
+    throw new Error("useSession must be used inside SessionProvider");
   return context;
 }
 
-export function AuthGate({ children, role }: { children: React.ReactNode; role?: UserRole }) {
+export function AuthGate({
+  children,
+  role,
+}: {
+  children: React.ReactNode;
+  role?: UserRole;
+}) {
   const { session, loading } = useSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -74,7 +98,7 @@ export function AuthGate({ children, role }: { children: React.ReactNode; role?:
   if (loading || !session || (role && session.user.role !== role)) {
     return (
       <div className="mx-auto mt-24 w-full max-w-xl px-4">
-        <Skeleton className="h-36 w-full" />
+        <LoadState label="Checking your session…" />
       </div>
     );
   }

@@ -2,7 +2,7 @@
 
 AINS is an AI-native financial regulatory audit firm. Our software does the legwork; a credentialed auditor (Quinton) makes the calls and signs every report. The first service is the FINRA Rule 3310 independent AML test for broker-dealers; more regulatory audits will follow.
 
-This repo holds the audit engine (Python 3.12, FastAPI, Pydantic) and the client portal
+This repo holds the audit workflow backend (Python 3.12, FastAPI, Pydantic) and the portal
 (Next.js 16 in `web/`). Client documents are stored in Egnyte via an Internal API app.
 
 ## Canonical checklist
@@ -154,7 +154,13 @@ credential is part of this application.
 1. **No secrets in git.** `.env` and keys live only locally and in the password manager. Never paste them into chats, issues, or AI tools.
 2. **Development touches Egnyte only under `/Shared/AINS-Dev`.** The client enforces this with a path guard.
 3. **Synthetic data only** in tests, fixtures, and `data/synthetic/`. Real client documents never go in this repo.
-4. **SAR material never goes to any AI model.** SAR or SAR-indicating files are routed to a human-only lane.
+4. **Restricted material stays outside the portal.** Catalog metadata routes human handling; no restricted document contents belong in uploads, notes, fixtures, or repository artifacts.
 5. **Intake feedback never reveals audit findings.** Clients may hear "unreadable" or "wrong period", never "your manual is missing X".
-6. **Every AI-produced finding cites its source** (document and page).
+6. **No model inference in this repository.** Any future external pipeline needs its own approved authenticated adapter; evidence citations remain required for findings.
 7. **Humans decide.** Quinton approves, edits, or rejects every finding and signs the report.
+
+## Build handoff
+
+See `docs/build-handoff.md` for the six-task delivery summary, synthetic demo instructions,
+validation and remaining production prerequisites. CI includes browser/accessibility tests and
+short-lived synthetic screenshots. Automated accessibility checks are not a compliance certification.
