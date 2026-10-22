@@ -304,6 +304,137 @@ def test_current_engagement_is_tenant_scoped_and_client_safe(backend) -> None:
     }
 
 
+def test_manual_workspace_is_auditor_only_and_assignment_scoped(backend):
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    base = f"/auditor/engagements/{ids['engagement_a']}"
+    assert client.get("/auditor/engagements").status_code == 403
+    assert client.get(base + "/workspace").status_code == 403
+    assert client.post(base + "/initialize").status_code == 403
+    assert (
+        client.patch(
+            base + f"/items/{ids['item_a']}/decision",
+            json={"applicability": "applicable", "assessment": "supported", "notes": ""},
+        ).status_code
+        == 403
+    )
+    client.cookies.clear()
+    sign_in_auditor(client)
+    with factory() as db:
+        db.get(Engagement, ids["engagement_b"]).auditor_id = None
+        db.commit()
+    other = f"/auditor/engagements/{ids['engagement_b']}"
+    assert client.get(other + "/workspace").status_code == 404
+    assert client.post(other + "/initialize").status_code == 404
+    assert (
+        client.patch(
+            other + f"/items/{ids['item_b']}/decision",
+            json={"applicability": "applicable", "assessment": "supported", "notes": ""},
+        ).status_code
+        == 404
+    )
+    assert [entry["id"] for entry in client.get("/auditor/engagements").json()] == [
+        ids["engagement_a"]
+    ]
+
+
+@pytest.mark.parametrize(
+    "assessment", ["supported", "partial", "conflicting", "unable_to_determine"]
+)
+def test_manual_decision_history_and_client_privacy(backend, assessment):
+    client, _, ids, _, _ = backend
+    sign_in_auditor(client)
+    base = f"/auditor/engagements/{ids['engagement_a']}"
+    decision = {
+        "applicability": "applicable",
+        "assessment": assessment,
+        "notes": "Synthetic internal auditor reasoning",
+    }
+    response = client.patch(base + f"/items/{ids['item_a']}/decision", json=decision)
+    assert response.status_code == 200
+    workspace = client.get(base + "/workspace").json()
+    item = next(item for item in workspace["requests"] if item["id"] == ids["item_a"])
+    assert item["assessment"] == assessment and item["applicability"] == "applicable"
+    event = workspace["history"][-1]
+    assert event["actorId"] == ids["auditor"]
+    assert event["details"]["before"]["assessment"] is None
+    assert event["details"]["after"] == decision
+    assert not workspace["readiness"]["ready"]
+    client.cookies.clear()
+    sign_in_client(client)
+    text = client.get("/engagements/current").text
+    assert "Synthetic internal auditor reasoning" not in text
+    assert '"assessment"' not in text
+
+
+def test_manual_na_cannot_have_assessment_and_needs_notes(backend):
+    client, _, ids, _, _ = backend
+    sign_in_auditor(client)
+    path = f"/auditor/engagements/{ids['engagement_a']}/items/{ids['item_a']}/decision"
+    assert (
+        client.patch(
+            path,
+            json={
+                "applicability": "not_applicable",
+                "assessment": "supported",
+                "notes": "Synthetic rationale",
+            },
+        ).status_code
+        == 422
+    )
+    assert (
+        client.patch(
+            path, json={"applicability": "not_applicable", "assessment": None, "notes": ""}
+        ).status_code
+        == 422
+    )
+
+
+def test_initialize_from_catalog_and_complete_readiness(backend):
+    client, factory, ids, _, _ = backend
+    with factory() as db:
+        engagement = Engagement(
+            firm_id=ids["firm_a"],
+            auditor_id=ids["auditor"],
+            review_period_start=date(2025, 1, 1),
+            review_period_end=date(2025, 12, 31),
+        )
+        db.add(engagement)
+        db.commit()
+        engagement_id = engagement.id
+    sign_in_auditor(client)
+    base = f"/auditor/engagements/{engagement_id}"
+    assert client.post(base + "/initialize").json() == {"requests": 34}
+    assert client.post(base + "/initialize").status_code == 409
+    workspace = client.get(base + "/workspace").json()
+    assert len(workspace["requests"]) == 34 and not workspace["readiness"]["ready"]
+    with factory() as db:
+        for item in db.scalars(
+            select(ChecklistItemInstance).where(
+                ChecklistItemInstance.engagement_id == engagement_id
+            )
+        ):
+            item.applicability_decision = "not_applicable"
+            item.internal_notes = "Synthetic test only"
+        db.commit()
+    assert client.get(base + "/workspace").json()["readiness"]["ready"]
+
+
+def test_new_upload_invalidates_previous_evidence_assessment(backend):
+    client, factory, ids, _, _ = backend
+    with factory() as db:
+        db.get(ChecklistItemInstance, ids["item_a"]).assessment = "supported"
+        db.commit()
+    sign_in_client(client)
+    response = client.post(
+        f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic replacement")},
+    )
+    assert response.status_code == 201
+    with factory() as db:
+        assert db.get(ChecklistItemInstance, ids["item_a"]).assessment is None
+
+
 def test_upload_rejects_cross_tenant_and_restricted_items(backend) -> None:
     client, _, ids, ingestor, _ = backend
     sign_in_client(client)
@@ -391,20 +522,29 @@ def test_auditor_follow_up_and_document_replacement_feedback(backend):
     assert client.post(path + "/follow-up").status_code == 403
     client.cookies.clear()
     sign_in_auditor(client)
-    response = client.post(path + "/feedback", json={
-        "code": "unreadable", "document_id": uploaded["id"]})
+    response = client.post(
+        path + "/feedback", json={"code": "unreadable", "document_id": uploaded["id"]}
+    )
     assert response.status_code == 200
     assert response.json()["status"] == "action_needed_reupload"
-    assert client.post(path + "/feedback", json={
-        "code": "audit_finding", "document_id": uploaded["id"]}).status_code == 422
+    assert (
+        client.post(
+            path + "/feedback", json={"code": "audit_finding", "document_id": uploaded["id"]}
+        ).status_code
+        == 422
+    )
     assert client.post(path + "/follow-up").status_code == 200
     with factory() as db:
         db.get(Engagement, ids["engagement_b"]).auditor_id = None
         db.commit()
     other = f"/auditor/engagements/{ids['engagement_b']}/items/{ids['item_b']}"
     assert client.post(other + "/follow-up").status_code == 404
-    assert client.post(other + "/feedback", json={
-        "code": "unreadable", "document_id": uploaded["id"]}).status_code == 404
+    assert (
+        client.post(
+            other + "/feedback", json={"code": "unreadable", "document_id": uploaded["id"]}
+        ).status_code
+        == 404
+    )
 
 
 def test_questionnaire_no_answer_remains_visible_pending_auditor_review(backend) -> None:
@@ -518,6 +658,7 @@ async def test_worker_marks_durable_job_succeeded(backend) -> None:
         assert job and job.status == CheckJobStatus.SUCCEEDED
         assert job.duration_ms == 42 and job.attempts == 1
 
+
 async def test_receipt_worker_verifies_fingerprint_without_audit_decision(backend) -> None:
     client, factory, ids, _, _ = backend
     sign_in_client(client)
@@ -575,6 +716,7 @@ async def test_late_receipt_verification_preserves_replacement_feedback(backend)
         await processor.process(db, db.scalar(select(Document)).id)
         assert item.status == ClientStatus.ACTION_NEEDED_REUPLOAD
         assert item.client_reason == "Please replace with a readable copy."
+
 
 def test_auditor_queue_and_finding_review_are_role_scoped(backend) -> None:
     client, factory, ids, _, _ = backend

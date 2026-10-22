@@ -30,3 +30,14 @@ export function cloneMockEngagement(): Engagement {
 export function saveMockEngagement(data: Engagement): void {
   localStorage.setItem("ains-synthetic-engagement-v1", JSON.stringify(data));
 }
+
+export function invalidateMockDecision(itemId: string, applicability = false): void {
+  const stored = localStorage.getItem("ains-synthetic-auditor-v1");
+  if (!stored) return;
+  const state = JSON.parse(stored);
+  if (state.decisions[itemId]) {
+    state.decisions[itemId].assessment = null;
+    if (applicability) state.decisions[itemId].applicability = null;
+    localStorage.setItem("ains-synthetic-auditor-v1", JSON.stringify(state));
+  }
+}

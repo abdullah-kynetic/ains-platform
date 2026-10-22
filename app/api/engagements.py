@@ -237,7 +237,9 @@ async def upload_document(
         sha256=stored.sha256,
         version=stored.version,
     )
+    before = {"status": item.status, "assessment": item.assessment}
     item.status = ClientStatus.CHECKING
+    item.assessment = None
     item.client_reason = None
     db.add(document)
     db.flush()
@@ -249,7 +251,11 @@ async def upload_document(
             action="document.created",
             entity_type="checklist_item_instance",
             entity_id=item.id,
-            details={"document_id": document.id},
+            details={
+                "document_id": document.id,
+                "before": before,
+                "after": {"status": item.status, "assessment": None, "sha256": document.sha256},
+            },
         )
     )
     db.commit()

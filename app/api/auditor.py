@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.auth.dependencies import get_current_user
 from app.checklist import ClientStatus
+from app.checklist.catalog import load_catalog
 from app.config import Settings, get_settings
 from app.database.models import (
     AuditLog,
@@ -111,7 +112,11 @@ def auditor_queue(user: CurrentUser, db: DB) -> list[QueueItemView]:
         .order_by(ChecklistItemInstance.updated_at)
     ).all()
     queue: list[QueueItemView] = []
+    catalog = load_catalog()
     for item in items:
+        definition = catalog.get(item.item_key)
+        if not definition:
+            continue
         document_ids = [document.id for document in item.documents]
         findings = (
             db.scalars(
@@ -127,7 +132,7 @@ def auditor_queue(user: CurrentUser, db: DB) -> list[QueueItemView]:
                 firm_name=item.engagement.firm.name,
                 engagement_id=item.engagement_id,
                 item_id=item.id,
-                item_title=item.title,
+                item_title=definition.title,
                 client_status=item.status.value,
                 na_review_state=item.na_review_state,
                 evidence=[
@@ -184,6 +189,13 @@ def review_finding(
     )
     if not finding:
         raise HTTPException(status_code=404, detail="Finding draft not found")
+    before = {
+        "title": finding.title,
+        "body": finding.body,
+        "severity": finding.severity,
+        "citations": finding.citations,
+        "review_state": finding.review_state,
+    }
     if payload.action == "edit":
         if payload.title is not None:
             finding.title = payload.title
@@ -214,7 +226,16 @@ def review_finding(
             action=f"finding.{payload.action}ed",
             entity_type="finding_draft",
             entity_id=finding.id,
-            details={"severity": finding.severity},
+            details={
+                "before": before,
+                "after": {
+                    "title": finding.title,
+                    "body": finding.body,
+                    "severity": finding.severity,
+                    "citations": finding.citations,
+                    "review_state": finding.review_state,
+                },
+            },
         )
     )
     db.commit()
