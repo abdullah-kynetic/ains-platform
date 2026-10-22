@@ -1,24 +1,43 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Check, ChevronsUpDown, LogOut, Menu, Plus, ShieldCheck, type LucideIcon } from "lucide-react";
-import { Logo } from "@/components/brand/logo";
-import { Sheet } from "@/components/ui/dialog";
-import { ThemeToggle } from "@/components/shell/theme-toggle";
-import { cn } from "@/lib/utils";
+import {
+  Check,
+  ChevronsUpDown,
+  LogOut,
+  Menu,
+  Plus,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
 import * as Icons from "lucide-react";
+import { Logo } from "@/components/brand/logo";
+import { ThemeToggle } from "@/components/shell/theme-toggle";
+import { Sheet } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
-export type NavItem = { href: string; label: string; icon: keyof typeof Icons; exact?: boolean };
+export type NavItem = {
+  href: string;
+  label: string;
+  icon: keyof typeof Icons;
+  exact?: boolean;
+};
 
 const workspaces = [
   { name: "AINS Operations", type: "Internal workspace", mark: "AI" },
-  { name: "Example Securities LLC", type: "Client workspace · Synthetic", mark: "ES" },
+  {
+    name: "Example Securities LLC",
+    type: "Client workspace · Synthetic",
+    mark: "ES",
+  },
 ];
 
-function WorkspaceSwitcher() {
+function WorkspaceSwitcher({ auditor }: { auditor: boolean }) {
   const [open, setOpen] = useState(false);
-  const active = workspaces[1];
+  const active = workspaces[auditor ? 0 : 1];
+
   return (
     <div className="relative">
       <button
@@ -27,35 +46,70 @@ function WorkspaceSwitcher() {
         onClick={() => setOpen((value) => !value)}
         className="flex w-full items-center gap-3 rounded-lg border border-border bg-surface p-2.5 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-hover"
       >
-        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-[11px] font-semibold tracking-wide text-background">{active.mark}</span>
+        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-[11px] font-semibold tracking-wide text-background">
+          {active.mark}
+        </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-semibold text-foreground">{active.name}</span>
-          <span className="block truncate text-[10px] text-subtle">{active.type}</span>
+          <span className="block truncate text-[13px] font-semibold text-foreground">
+            {active.name}
+          </span>
+          <span className="block truncate text-[10px] text-subtle">
+            {active.type}
+          </span>
         </span>
         <ChevronsUpDown className="size-3.5 text-subtle" />
       </button>
+
       {open ? (
         <div className="absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-lg border border-border bg-surface p-1.5 shadow-[0_16px_40px_rgba(16,24,40,0.14)]">
-          <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-subtle">Workspaces</p>
-          {workspaces.map((workspace) => (
-            <button
-              key={workspace.name}
-              type="button"
-              disabled={active.name !== workspace.name}
-              title={active.name !== workspace.name ? "Internal workspace routing is coming in the next checkpoint" : undefined}
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left hover:bg-hover disabled:cursor-not-allowed disabled:opacity-55"
-            >
-              <span className="grid size-7 place-items-center rounded-md border border-border bg-elevated text-[10px] font-semibold">{workspace.mark}</span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-xs font-medium">{workspace.name}</span>
-                <span className="block truncate text-[10px] text-subtle">{workspace.type}</span>
-              </span>
-              {active.name === workspace.name ? <Check className="size-3.5 text-brand" /> : <span className="text-[9px] font-medium uppercase tracking-wide text-subtle">Soon</span>}
-            </button>
-          ))}
-          <button type="button" disabled title="Client creation will be added with workspace administration" className="mt-1 flex w-full items-center gap-2.5 border-t border-border px-2 pt-2.5 pb-1 text-xs text-subtle">
-            <span className="grid size-7 place-items-center rounded-md border border-dashed border-border-strong"><Plus className="size-3.5" /></span>
+          <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-subtle">
+            Workspaces
+          </p>
+          {workspaces.map((workspace) => {
+            const current = active.name === workspace.name;
+            return (
+              <button
+                key={workspace.name}
+                type="button"
+                disabled={!current}
+                title={
+                  current
+                    ? undefined
+                    : "Workspace routing is coming in a later checkpoint"
+                }
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left hover:bg-hover disabled:cursor-not-allowed disabled:opacity-55"
+              >
+                <span className="grid size-7 place-items-center rounded-md border border-border bg-elevated text-[10px] font-semibold">
+                  {workspace.mark}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-medium">
+                    {workspace.name}
+                  </span>
+                  <span className="block truncate text-[10px] text-subtle">
+                    {workspace.type}
+                  </span>
+                </span>
+                {current ? (
+                  <Check className="size-3.5 text-brand" />
+                ) : (
+                  <span className="text-[9px] font-medium uppercase tracking-wide text-subtle">
+                    Soon
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            disabled
+            title="Client creation will be added with workspace administration"
+            className="mt-1 flex w-full items-center gap-2.5 border-t border-border px-2 pt-2.5 pb-1 text-xs text-subtle"
+          >
+            <span className="grid size-7 place-items-center rounded-md border border-dashed border-border-strong">
+              <Plus className="size-3.5" />
+            </span>
             Add client workspace
           </button>
         </div>
@@ -64,17 +118,43 @@ function WorkspaceSwitcher() {
   );
 }
 
-function Items({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
+function Items({
+  items,
+  onNavigate,
+}: {
+  items: NavItem[];
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
+
   return (
-    <nav className="grid gap-1">
-      {items.map((i) => {
-        const Icon = Icons[i.icon] as LucideIcon;
-        const active = i.exact ? pathname === i.href : pathname === i.href || pathname.startsWith(`${i.href}/`);
+    <nav aria-label="Main navigation" className="grid gap-1">
+      {items.map((item) => {
+        const Icon = Icons[item.icon] as LucideIcon;
+        const active = item.exact
+          ? pathname === item.href
+          : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
         return (
-          <Link key={i.href} href={i.href} onClick={onNavigate} aria-current={active ? "page" : undefined}
-            className={cn("flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors", active ? "bg-brand-tint text-brand" : "text-muted hover:bg-hover hover:text-foreground")}>
-            <Icon className={cn("size-4", active ? "text-brand" : "text-subtle")} />{i.label}
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
+              active
+                ? "bg-brand-tint text-brand"
+                : "text-muted hover:bg-hover hover:text-foreground",
+            )}
+          >
+            <Icon
+              className={cn(
+                "size-4",
+                active ? "text-brand" : "text-subtle",
+              )}
+            />
+            {item.label}
           </Link>
         );
       })}
@@ -82,39 +162,104 @@ function Items({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => voi
   );
 }
 
-function Panel({ items, sub, who, org, onNavigate }: { items: NavItem[]; sub: string; who: string; org?: string; onNavigate?: () => void }) {
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function Panel({
+  items,
+  sub,
+  who,
+  org,
+  onNavigate,
+  onSignOut,
+}: {
+  items: NavItem[];
+  sub: string;
+  who: string;
+  org?: string;
+  onNavigate?: () => void;
+  onSignOut?: () => void;
+}) {
+  const auditor = sub.toLowerCase().includes("auditor");
+
   return (
     <div className="flex h-full flex-col p-3">
       <Logo sub={sub} className="px-2 pt-2 pb-5" />
-      <WorkspaceSwitcher />
-      <p className="mt-7 mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.13em] text-subtle">Engagement</p>
+      <WorkspaceSwitcher auditor={auditor} />
+      <p className="mt-7 mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.13em] text-subtle">
+        {auditor ? "Review" : "Engagement"}
+      </p>
       <Items items={items} onNavigate={onNavigate} />
       <div className="mt-auto grid gap-3 border-t border-border px-1 pt-4">
-        {org ? <div className="flex items-center gap-2 px-2 text-[11px] text-subtle"><ShieldCheck className="size-3.5 text-success" />Workspace access enforced</div> : null}
+        {org ? (
+          <div className="flex items-center gap-2 px-2 text-[11px] text-subtle">
+            <ShieldCheck className="size-3.5 text-success" />
+            Workspace access enforced
+          </div>
+        ) : null}
         <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-[11px] font-semibold text-muted">QU</span>
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-[11px] font-semibold text-muted">
+            {initials(who)}
+          </span>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-xs font-medium text-foreground">{who}</div>
-            <div className="truncate text-[10px] text-subtle">Credentialed auditor</div>
+            <div className="truncate text-xs font-medium text-foreground">
+              {who}
+            </div>
+            <div className="truncate text-[10px] text-subtle">{org}</div>
           </div>
         </div>
-        {/* Auth is not wired yet; sign-out will call the AINS API once it exists. */}
-        <button type="button" disabled title="Sign-in is not connected yet" className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-subtle"><LogOut className="size-3.5" />Sign out</button>
+        <button
+          type="button"
+          onClick={onSignOut}
+          disabled={!onSignOut}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-subtle transition-colors hover:bg-hover hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <LogOut className="size-3.5" />
+          Sign out
+        </button>
       </div>
     </div>
   );
 }
 
-export function Sidebar(props: { items: NavItem[]; sub: string; who: string; org?: string }) {
+export function Sidebar(props: {
+  items: NavItem[];
+  sub: string;
+  who: string;
+  org?: string;
+  onSignOut?: () => void;
+}) {
   const [open, setOpen] = useState(false);
+
   return (
     <>
-      <aside className="sticky top-0 hidden h-screen w-68 shrink-0 border-r border-border bg-sidebar lg:block"><Panel {...props} /></aside>
+      <aside className="sticky top-0 hidden h-screen w-68 shrink-0 border-r border-border bg-sidebar lg:block">
+        <Panel {...props} />
+      </aside>
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-surface/90 px-4 py-3 backdrop-blur lg:hidden">
         <Logo sub={props.sub} />
-        <div className="flex items-center gap-1"><ThemeToggle /><button aria-label="Open menu" onClick={() => setOpen(true)} className="rounded-lg p-2 text-muted hover:bg-hover"><Menu className="size-5" /></button></div>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <button
+            type="button"
+            aria-label="Open menu"
+            onClick={() => setOpen(true)}
+            className="rounded-lg p-2 text-muted hover:bg-hover"
+          >
+            <Menu className="size-5" />
+          </button>
+        </div>
       </header>
-      <Sheet open={open} onOpenChange={setOpen} label="Navigation"><Panel {...props} onNavigate={() => setOpen(false)} /></Sheet>
+      <Sheet open={open} onOpenChange={setOpen} label="Navigation">
+        <Panel {...props} onNavigate={() => setOpen(false)} />
+      </Sheet>
     </>
   );
 }

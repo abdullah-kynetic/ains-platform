@@ -366,9 +366,9 @@ async def test_upload(make_client, tmp_path) -> None:
     local.write_bytes(b"%PDF-fake")
     res = await make_client(access_token=ACCESS).upload_file("/Shared/AINS-Dev/c1/doc.pdf", local)
     req = route.calls.last.request
-    assert req.headers["content-type"].startswith("multipart/form-data")
+    assert req.headers["content-type"] == "application/octet-stream"
     assert req.headers["x-sha512-checksum"] == hashlib.sha512(b"%PDF-fake").hexdigest()
-    assert b'name="file"' in req.content and b"%PDF-fake" in req.content
+    assert req.content == b"%PDF-fake"
     assert res["group_id"] == "g9" and res["path"] == "/Shared/AINS-Dev/c1/doc.pdf"
 
 

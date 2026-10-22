@@ -2,8 +2,11 @@
 
 /* AINS: quiet, high-trust dashboard foundations. */
 @theme {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   --color-background: #f6f7f9;
   --color-surface: #ffffff;
@@ -12,7 +15,7 @@
   --color-hover: #f4f5f7;
   --color-foreground: #17191c;
   --color-muted: #626873;
-  --color-subtle: #9298a3;
+  --color-subtle: #667085;
   --color-border: #e5e7eb;
   --color-border-strong: #d4d7dc;
 
@@ -36,9 +39,32 @@
   --animate-pop-in: pop-in 160ms ease-out;
 }
 
-@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
-@keyframes slide-in { from { transform: translateX(-100%) } to { transform: translateX(0) } }
-@keyframes pop-in { from { opacity: 0; transform: translateY(4px) scale(0.98) } to { opacity: 1; transform: none } }
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 
 :root {
   color-scheme: light;
@@ -53,7 +79,7 @@
   --color-hover: #20252d;
   --color-foreground: #f5f7fa;
   --color-muted: #a6adba;
-  --color-subtle: #737c8c;
+  --color-subtle: #8b95a5;
   --color-border: #292f39;
   --color-border-strong: #39414d;
   --color-brand: #818cf8;
@@ -70,25 +96,106 @@
   --color-info-foreground: #7dd3fc;
 }
 
-html, body {
+html,
+body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
 }
 
-::selection { background: rgb(79 70 229 / 0.2); }
+* {
+  box-sizing: border-box;
+}
+:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 4px;
+}
+button,
+select,
+summary,
+input[type="file"] {
+  min-height: 44px;
+}
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+select {
+  text-overflow: ellipsis;
+}
+input::file-selector-button {
+  margin-right: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-elevated);
+  color: var(--color-foreground);
+  cursor: pointer;
+}
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.7);
+  backdrop-filter: blur(4px);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+::selection {
+  background: rgb(79 70 229 / 0.2);
+}
+
+label,
+.grid,
+.grid > * {
+  min-width: 0;
+}
+select,
+input[type="file"] {
+  width: 100%;
+  min-width: 0;
+}
 
 /* Thin, quiet scrollbars */
-* { scrollbar-width: thin; scrollbar-color: rgb(23 25 28 / 0.16) transparent; }
-
-.bg-brand-gradient { background-image: linear-gradient(135deg, #6366f1, #4f46e5); }
-.bg-glow { background-image: radial-gradient(ellipse at top, rgb(79 70 229 / 0.055) 0%, transparent 55%); }
-.text-brand-gradient {
-  background-image: linear-gradient(135deg, #6366f1, #4338ca);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(23 25 28 / 0.16) transparent;
 }
 
-.theme-icon-sun { display: none; }
-.dark .theme-icon-moon { display: none; }
-.dark .theme-icon-sun { display: inline-flex; }
+.bg-brand-gradient {
+  background-image: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+.bg-glow {
+  background-image: radial-gradient(
+    ellipse at top,
+    rgb(79 70 229 / 0.055) 0%,
+    transparent 55%
+  );
+}
+.text-brand-gradient {
+  background-image: linear-gradient(135deg, #6366f1, #4338ca);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.theme-icon-sun {
+  display: none;
+}
+.dark .theme-icon-moon {
+  display: none;
+}
+.dark .theme-icon-sun {
+  display: inline-flex;
+}
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}

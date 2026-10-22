@@ -15,7 +15,7 @@ concurrency:
 jobs:
   backend:
     name: Python lint and tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -30,7 +30,7 @@ jobs:
 
   web:
     name: Web lint, typecheck, and build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: web
@@ -44,6 +44,15 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm run build
+      - run: npm run build:cloudflare
         env:
           NEXT_PUBLIC_USE_MOCKS: "true"
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-browser-results
+          path: web/test-results/
+          if-no-files-found: ignore
+          retention-days: 7

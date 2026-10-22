@@ -4,6 +4,24 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+function useModal(open: boolean) {
+  const panel = React.useRef<HTMLDialogElement>(null);
+  React.useEffect(() => {
+    const dialog = panel.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    if (!open && dialog.open) dialog.close();
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+      if (dialog.open) dialog.close();
+    };
+  }, [open]);
+  return panel;
+}
+
 type DialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -11,70 +29,112 @@ type DialogProps = {
   description?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
-  /** Prevent closing via overlay/Escape (e.g. copy-once secret). */
   dismissible?: boolean;
 };
 
-function useOverlay(open: boolean, close: () => void, dismissible: boolean) {
-  React.useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && dismissible) close(); };
-    window.addEventListener("keydown", onKey);
-    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
-  }, [open, close, dismissible]);
+function trapFocus(event: React.KeyboardEvent<HTMLDialogElement>) {
+  if (event.key !== "Tab") return;
+  const controls = event.currentTarget.querySelectorAll<HTMLElement>(
+    'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
+  );
+  const first = controls[0];
+  const last = controls[controls.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last?.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first?.focus();
+  }
 }
 
-export function Dialog({ open, onOpenChange, title, description, children, className, dismissible = true }: DialogProps) {
-  const close = React.useCallback(() => onOpenChange(false), [onOpenChange]);
-  useOverlay(open, close, dismissible);
-  const panel = React.useRef<HTMLDivElement>(null);
-  React.useEffect(() => {
-    if (open) panel.current?.querySelector<HTMLElement>("input,textarea,select,button:not([data-close])")?.focus();
-  }, [open]);
-  if (!open || typeof document === "undefined") return null;
+export function Dialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  className,
+  dismissible = true,
+}: DialogProps) {
+  const panel = useModal(open);
+  if (typeof document === "undefined") return null;
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
-      <div className="absolute inset-0 animate-fade-in bg-black/70 backdrop-blur-sm" onClick={dismissible ? close : undefined} />
-      <div
-        ref={panel}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={cn("relative z-10 max-h-[90dvh] w-full overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 shadow-2xl animate-pop-in sm:max-w-lg sm:rounded-2xl", className)}
-      >
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-base font-semibold">{title}</h2>
-            {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
-          </div>
-          {dismissible ? (
-            <button data-close type="button" onClick={close} className="cursor-pointer rounded-md p-1 text-subtle hover:bg-hover hover:text-foreground" aria-label="Close">
-              <X className="size-4" />
-            </button>
-          ) : null}
+    <dialog
+      ref={panel}
+      onKeyDown={trapFocus}
+      aria-label={title}
+      onCancel={(event) => {
+        event.preventDefault();
+        if (dismissible) onOpenChange(false);
+      }}
+      className={cn(
+        "fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-5 text-foreground shadow-2xl",
+        className,
+      )}
+    >
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">{title}</h2>
+          {description && (
+            <p className="mt-1 text-sm text-muted">{description}</p>
+          )}
         </div>
-        {children}
+        {dismissible && (
+          <button
+            aria-label="Close"
+            onClick={() => onOpenChange(false)}
+            className="rounded-lg p-2"
+          >
+            <X aria-hidden className="size-5" />
+          </button>
+        )}
       </div>
-    </div>,
+      {children}
+    </dialog>,
     document.body,
   );
 }
 
-/** Side sheet (used for the mobile nav). */
-export function Sheet({ open, onOpenChange, children, side = "left", label }: { open: boolean; onOpenChange: (o: boolean) => void; children: React.ReactNode; side?: "left" | "right"; label: string }) {
-  const close = React.useCallback(() => onOpenChange(false), [onOpenChange]);
-  useOverlay(open, close, true);
-  if (!open || typeof document === "undefined") return null;
+/** Native modal supplies focus trapping, background inertness and focus return. */
+export function Sheet({
+  open,
+  onOpenChange,
+  children,
+  side = "left",
+  label,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: React.ReactNode;
+  side?: "left" | "right";
+  label: string;
+}) {
+  const panel = useModal(open);
+  if (typeof document === "undefined") return null;
   return createPortal(
-    <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 animate-fade-in bg-black/70 backdrop-blur-sm" onClick={close} />
-      <div role="dialog" aria-modal="true" aria-label={label}
-        className={cn("absolute inset-y-0 w-72 max-w-[85vw] border-border bg-background shadow-2xl animate-slide-in", side === "left" ? "left-0 border-r" : "right-0 border-l")}>
-        {children}
-      </div>
-    </div>,
+    <dialog
+      ref={panel}
+      onKeyDown={trapFocus}
+      aria-label={label}
+      onCancel={(event) => {
+        event.preventDefault();
+        onOpenChange(false);
+      }}
+      className={cn(
+        "fixed inset-y-0 m-0 h-dvh max-h-none w-72 max-w-[85vw] overflow-y-auto border border-border bg-background pt-10 text-foreground shadow-2xl",
+        side === "left" ? "left-0 right-auto" : "left-auto right-0",
+      )}
+    >
+      <button
+        aria-label="Close navigation"
+        onClick={() => onOpenChange(false)}
+        className="absolute right-3 top-2 rounded-lg p-2"
+      >
+        <X aria-hidden className="size-5" />
+      </button>
+      {children}
+    </dialog>,
     document.body,
   );
 }

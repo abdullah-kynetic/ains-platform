@@ -61,10 +61,19 @@ export type UploadedFile = {
   name: string;
   size: number;
   uploadedAt: string;
+  sha256?: string;
+  feedback?: string | null;
 };
 
 export type ChecklistItem = {
   id: string;
+  requestId: string;
+  restricted: boolean;
+  allowedEvidenceTypes: string[];
+  canUpload?: boolean;
+  naReviewState?: "pending" | "approved" | "rejected" | null;
+  representation?: string | null;
+  followUp?: boolean;
   title: string;
   description?: string;
   status: ClientStatus;
@@ -103,7 +112,7 @@ export function progressOf(engagement: Engagement): { done: number; total: numbe
     .flatMap((section) => section.items)
     .filter((item) => item.status !== "restricted_do_not_upload");
   const done = items.filter((item) =>
-    ["checking", "with_auditor", "accepted_for_testing"].includes(item.status),
+    item.naReviewState !== "pending" && ["checking", "with_auditor", "accepted_for_testing"].includes(item.status),
   ).length;
   return { done, total: items.length, pct: items.length ? (done / items.length) * 100 : 0 };
 }
