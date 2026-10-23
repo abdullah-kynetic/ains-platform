@@ -28,6 +28,11 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://ains:ains_dev@localhost:5432/ains"
 
+    # Isolated hosted-Postgres evaluation only. The application never selects this URL
+    # automatically; scripts/supabase_poc.py requires an explicit synthetic-only acknowledgement.
+    supabase_poc_database_url: SecretStr = SecretStr("")
+    supabase_poc_synthetic_only: bool = False
+
     # Backend-owned sessions. SESSION_SECRET must be set before sign-in can be used.
     session_secret: SecretStr = SecretStr("")
     session_cookie_secure: bool = False

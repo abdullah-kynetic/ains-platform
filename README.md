@@ -48,6 +48,11 @@ Tenant-owned database records carry an explicit `firm_id`. API queries scope cli
 and auditors to assigned engagements. Run `uv run alembic check` after model changes to confirm a
 migration is present.
 
+For an isolated hosted-PostgreSQL evaluation, follow
+[`docs/supabase-postgres-poc.md`](docs/supabase-postgres-poc.md). The guarded command accepts only a
+TLS Supabase database URL, uses synthetic rows, verifies tenant and auditor scopes, and rolls the
+probe back. It does not enable Supabase Auth or move production data.
+
 Conditional checklist items are exposed as yes/no questions at
 `GET /engagements/{id}/questionnaire`. A “no” answer stays visible as pending auditor review
 and disables uploads, rather than silently becoming approved N/A. Where the source requests
