@@ -460,6 +460,48 @@ def test_auditor_tasks_are_assignment_scoped_and_completion_is_audited(backend):
         }
 
 
+def test_auditor_activity_is_assignment_scoped_and_omits_internal_details(backend):
+    client, factory, ids, _, _ = backend
+    with factory() as db:
+        db.add_all(
+            [
+                AuditLog(
+                    firm_id=ids["firm_a"],
+                    actor_id=ids["auditor"],
+                    action="request.manual_decision",
+                    entity_type="checklist_item_instance",
+                    entity_id=ids["item_a"],
+                    details={"notes": "Sensitive synthetic internal reasoning"},
+                ),
+                AuditLog(
+                    firm_id=ids["firm_b"],
+                    actor_id=ids["auditor"],
+                    action="request.manual_decision",
+                    entity_type="checklist_item_instance",
+                    entity_id=ids["item_b"],
+                    details={"notes": "Other tenant internal reasoning"},
+                ),
+            ]
+        )
+        db.get(Engagement, ids["engagement_b"]).auditor_id = None
+        db.commit()
+
+    sign_in_client(client)
+    assert client.get("/auditor/activity").status_code == 403
+    client.cookies.clear()
+    sign_in_auditor(client)
+
+    response = client.get("/auditor/activity")
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    event = response.json()[0]
+    assert event["subject"] == "AML-BD-004"
+    assert event["engagementId"] == ids["engagement_a"]
+    assert event["kind"] == "review"
+    assert "Sensitive synthetic internal reasoning" not in response.text
+    assert "Other tenant" not in response.text
+
+
 @pytest.mark.parametrize(
     "assessment", ["supported", "partial", "conflicting", "unable_to_determine"]
 )

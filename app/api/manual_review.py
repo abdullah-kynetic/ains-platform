@@ -13,6 +13,7 @@ from app.database.models import (
     AuditLog,
     AuditorTask,
     ChecklistItemInstance,
+    Document,
     Engagement,
     EngagementStatus,
     FindingDraft,
@@ -85,6 +86,70 @@ class PipelineMove(BaseModel):
 
 class TaskCompletion(BaseModel):
     completed: bool
+
+
+ACTIVITY_COPY: dict[str, tuple[str, str, str]] = {
+    "document.created": (
+        "upload",
+        "uploaded new evidence for",
+        "Evidence received for storage verification",
+    ),
+    "document.receipt_verified": (
+        "upload",
+        "completed receipt verification for",
+        "File type and storage receipt verified",
+    ),
+    "request.manual_decision": (
+        "review",
+        "recorded a human assessment for",
+        "Internal auditor decision recorded",
+    ),
+    "document.feedback": (
+        "feedback",
+        "sent document-level feedback for",
+        "Client feedback contains intake issues only",
+    ),
+    "request.follow_up": (
+        "feedback",
+        "requested follow-up evidence for",
+        "Additional document requested by the auditor",
+    ),
+    "questionnaire.answered": (
+        "questionnaire",
+        "updated a representation for",
+        "Response is waiting for human review",
+    ),
+    "representation.submitted": (
+        "questionnaire",
+        "submitted a representation for",
+        "Response is waiting for human review",
+    ),
+    "questionnaire.na_approved": (
+        "questionnaire",
+        "approved a representation for",
+        "Human applicability review recorded",
+    ),
+    "questionnaire.na_rejected": (
+        "questionnaire",
+        "rejected a representation for",
+        "Human applicability review recorded",
+    ),
+    "engagement.pipeline_stage_changed": (
+        "review",
+        "moved the workflow stage for",
+        "Pipeline coordination only; no report was signed",
+    ),
+    "auditor_task.completion_changed": (
+        "review",
+        "updated an internal task for",
+        "Task status changed; no finding was finalized",
+    ),
+    "report.draft_generated": (
+        "review",
+        "generated an unsigned draft for",
+        "Draft output requires human review and signature",
+    ),
+}
 
 
 def readiness(engagement, items=None):
@@ -299,6 +364,95 @@ def complete_task(task_id: str, payload: TaskCompletion, user: CurrentUser, db: 
         "findingFinalized": False,
         "reportSigned": False,
     }
+
+
+@router.get("/activity")
+def activity(user: CurrentUser, db: DB):
+    require_auditor(user)
+    engagements = db.scalars(
+        visible_engagements(user).options(selectinload(Engagement.firm))
+    ).all()
+    if not engagements:
+        return []
+    engagement_ids = [engagement.id for engagement in engagements]
+    firm_ids = [engagement.firm_id for engagement in engagements]
+    context: dict[str, tuple[str, str]] = {
+        engagement.id: (engagement.id, engagement.firm.name) for engagement in engagements
+    }
+
+    items = db.scalars(
+        select(ChecklistItemInstance).where(
+            ChecklistItemInstance.engagement_id.in_(engagement_ids),
+            ChecklistItemInstance.firm_id.in_(firm_ids),
+        )
+    ).all()
+    for item in items:
+        context[item.id] = (item.engagement_id, item.item_key)
+
+    item_ids = [item.id for item in items]
+    if item_ids:
+        documents = db.scalars(
+            select(Document).where(
+                Document.item_instance_id.in_(item_ids), Document.firm_id.in_(firm_ids)
+            )
+        ).all()
+        item_context = {item.id: item for item in items}
+        for document in documents:
+            item = item_context[document.item_instance_id]
+            context[document.id] = (item.engagement_id, item.item_key)
+
+    tasks = db.scalars(
+        select(AuditorTask).where(
+            AuditorTask.engagement_id.in_(engagement_ids),
+            AuditorTask.firm_id.in_(firm_ids),
+            AuditorTask.assignee_id == user.id,
+        )
+    ).all()
+    for task in tasks:
+        context[task.id] = (task.engagement_id, task.request_id or task.title)
+
+    findings = db.scalars(
+        select(FindingDraft).where(
+            FindingDraft.engagement_id.in_(engagement_ids),
+            FindingDraft.firm_id.in_(firm_ids),
+        )
+    ).all()
+    for finding in findings:
+        context[finding.id] = (finding.engagement_id, "Finding draft")
+
+    entity_ids = list(context)
+    events = db.execute(
+        select(AuditLog, User.name)
+        .outerjoin(User, User.id == AuditLog.actor_id)
+        .where(
+            AuditLog.firm_id.in_(firm_ids),
+            AuditLog.entity_id.in_(entity_ids),
+            AuditLog.action.in_(ACTIVITY_COPY),
+        )
+        .order_by(AuditLog.created_at.desc(), AuditLog.id.desc())
+        .limit(20)
+    ).all()
+    result = []
+    for event, actor_name in events:
+        copy = ACTIVITY_COPY.get(event.action)
+        entity = context.get(event.entity_id or "")
+        if copy is None or entity is None:
+            continue
+        engagement_id, subject = entity
+        kind, action, safe_context = copy
+        result.append(
+            {
+                "id": event.id,
+                "kind": kind,
+                "actor": actor_name or "Storage worker",
+                "action": action,
+                "subject": subject,
+                "context": safe_context,
+                "occurredAt": event.created_at,
+                "engagementId": engagement_id,
+            }
+        )
+    return result
 
 
 @router.post("/engagements/{engagement_id}/initialize")
