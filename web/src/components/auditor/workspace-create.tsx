@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Building2, CheckCircle2 } from "lucide-react";
 import { AuthGate } from "@/components/auth/session";
+import { ClientInvitations } from "@/components/auditor/client-invitations";
 import { PageHeader } from "@/components/shell/page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,7 +48,8 @@ export function WorkspaceCreate() {
             </CardHeader>
             <CardContent className="grid gap-4 text-sm text-muted">
               <p>The isolated workspace and all {created.requestCount} canonical requests were created and assigned to you.</p>
-              <p className="rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-xs">No client login or invitation was created. Access remains internal until a separate invitation workflow is completed.</p>
+              <p className="rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-xs">No client login exists yet. Create a single-use invitation below when the workspace is ready for client access.</p>
+              <ClientInvitations engagementId={created.id} firmId={created.firmId} firmName={created.firmName} />
               <div><Button onClick={() => setCreated(null)} variant="outline">Add another workspace</Button> <Link href="/auditor" className="ml-3 text-sm font-medium text-brand-hover hover:underline">Return to review queue</Link></div>
             </CardContent>
           </Card>

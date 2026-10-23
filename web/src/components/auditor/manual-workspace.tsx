@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FolderOpen } from "lucide-react";
 import { AuditorActivityFeed } from "@/components/auditor/activity-feed";
 import { AuditorUpcomingTasks } from "@/components/auditor/upcoming-tasks";
+import { ClientInvitations } from "@/components/auditor/client-invitations";
 import {
   getClients,
   getWorkspace,
@@ -182,6 +183,9 @@ function EngagementWorkspace({ id }: { id: string }) {
           </details>
         </CardContent>
       </Card>
+      <div className="mb-5">
+        <ClientInvitations engagementId={id} firmName={data.firmName} />
+      </div>
       {error && (
         <p role="alert" className="mb-4 text-red-300">
           {error}

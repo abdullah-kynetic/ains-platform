@@ -60,6 +60,58 @@ export type SessionUser = {
 
 export type SessionData = { user: SessionUser };
 
+export type ClientInvitationStatus =
+  | "pending"
+  | "expired"
+  | "revoked"
+  | "accepted";
+
+export type ClientInvitation = {
+  id: string;
+  firmId: string;
+  engagementId: string;
+  firmName: string;
+  email: string;
+  name: string;
+  status: ClientInvitationStatus;
+  expiresAt: string;
+  acceptedAt: string | null;
+  previewPath: string | null;
+};
+
+export type InvitationDetails = {
+  firmName: string;
+  email: string;
+  name: string;
+  expiresAt: string;
+};
+
+type MockInvitation = ClientInvitation;
+const mockInvitationsKey = "ains-synthetic-invitations-v1";
+
+function readMockInvitations(): MockInvitation[] {
+  return JSON.parse(
+    localStorage.getItem(mockInvitationsKey) ?? "[]",
+  ) as MockInvitation[];
+}
+
+function writeMockInvitations(invitations: MockInvitation[]) {
+  localStorage.setItem(mockInvitationsKey, JSON.stringify(invitations));
+}
+
+function syntheticInvitationToken() {
+  return `synthetic-invitation-${crypto.randomUUID()}`;
+}
+
+function expiresIn72Hours() {
+  return new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+}
+
+function tokenFromPreview(path: string | null): string | null {
+  if (!path) return null;
+  return new URL(path, window.location.origin).searchParams.get("token");
+}
+
 const mockSession: SessionData = {
   user: {
     id: "synthetic-client",
@@ -127,6 +179,156 @@ export async function verifyMagicLink(
 export async function signOut(): Promise<void> {
   if (USE_MOCKS) localStorage.setItem("ains-synthetic-signed-out", "true");
   if (!USE_MOCKS) await apiRequest<void>("/auth/sign-out", { method: "POST" });
+}
+
+export async function getClientInvitations(
+  engagementId: string,
+): Promise<ClientInvitation[]> {
+  if (!USE_MOCKS)
+    return apiRequest<ClientInvitation[]>(
+      `/auditor/engagements/${encodeURIComponent(engagementId)}/invitations`,
+    );
+  return readMockInvitations()
+    .filter((invitation) => invitation.engagementId === engagementId)
+    .map((invitation) => ({ ...invitation, previewPath: null }));
+}
+
+export async function createClientInvitation(
+  engagementId: string,
+  firmId: string,
+  firmName: string,
+  input: { email: string; name: string },
+): Promise<ClientInvitation> {
+  if (!USE_MOCKS)
+    return apiRequest<ClientInvitation>(
+      `/auditor/engagements/${encodeURIComponent(engagementId)}/invitations`,
+      {
+        method: "POST",
+        body: JSON.stringify(input),
+      },
+    );
+  const invitations = readMockInvitations();
+  if (
+    invitations.some(
+      (invitation) => invitation.email === input.email.trim().toLowerCase(),
+    )
+  )
+    throw new Error(
+      "This synthetic email already has an invitation. Use resend instead.",
+    );
+  const token = syntheticInvitationToken();
+  const invitation: MockInvitation = {
+    id: crypto.randomUUID(),
+    firmId,
+    engagementId,
+    firmName,
+    email: input.email.trim().toLowerCase(),
+    name: input.name.trim(),
+    status: "pending",
+    expiresAt: expiresIn72Hours(),
+    acceptedAt: null,
+    previewPath: `/accept-invitation?token=${encodeURIComponent(token)}`,
+  };
+  writeMockInvitations([...invitations, invitation]);
+  return invitation;
+}
+
+export async function resendClientInvitation(
+  invitationId: string,
+): Promise<ClientInvitation> {
+  if (!USE_MOCKS)
+    return apiRequest<ClientInvitation>(
+      `/auditor/invitations/${encodeURIComponent(invitationId)}/resend`,
+      { method: "POST" },
+    );
+  const invitations = readMockInvitations();
+  const invitation = invitations.find((entry) => entry.id === invitationId);
+  if (!invitation) throw new Error("Synthetic invitation not found.");
+  if (invitation.status === "accepted")
+    throw new Error("Accepted invitations cannot be resent.");
+  const token = syntheticInvitationToken();
+  Object.assign(invitation, {
+    status: "pending",
+    expiresAt: expiresIn72Hours(),
+    previewPath: `/accept-invitation?token=${encodeURIComponent(token)}`,
+  });
+  writeMockInvitations(invitations);
+  return invitation;
+}
+
+export async function revokeClientInvitation(
+  invitationId: string,
+): Promise<ClientInvitation> {
+  if (!USE_MOCKS)
+    return apiRequest<ClientInvitation>(
+      `/auditor/invitations/${encodeURIComponent(invitationId)}/revoke`,
+      { method: "POST" },
+    );
+  const invitations = readMockInvitations();
+  const invitation = invitations.find((entry) => entry.id === invitationId);
+  if (!invitation) throw new Error("Synthetic invitation not found.");
+  if (invitation.status === "accepted")
+    throw new Error("Accepted invitations cannot be revoked.");
+  invitation.status = "revoked";
+  invitation.previewPath = null;
+  writeMockInvitations(invitations);
+  return invitation;
+}
+
+export async function getInvitationDetails(
+  token: string,
+): Promise<InvitationDetails> {
+  if (!USE_MOCKS)
+    return apiRequest<InvitationDetails>(
+      `/auth/invitations/${encodeURIComponent(token)}`,
+    );
+  const invitation = readMockInvitations().find(
+    (entry) => tokenFromPreview(entry.previewPath) === token,
+  );
+  if (!invitation || invitation.status !== "pending")
+    throw new Error("This synthetic invitation is invalid, expired, or unavailable.");
+  if (new Date(invitation.expiresAt).getTime() <= Date.now())
+    throw new Error("This synthetic invitation has expired.");
+  return {
+    firmName: invitation.firmName,
+    email: invitation.email,
+    name: invitation.name,
+    expiresAt: invitation.expiresAt,
+  };
+}
+
+export async function acceptClientInvitation(
+  token: string,
+  password: string,
+): Promise<SessionData> {
+  if (!USE_MOCKS)
+    return apiRequest<SessionData>("/auth/invitations/accept", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    });
+  const invitations = readMockInvitations();
+  const invitation = invitations.find(
+    (entry) => tokenFromPreview(entry.previewPath) === token,
+  );
+  if (!invitation || invitation.status !== "pending")
+    throw new Error("This synthetic invitation is invalid, expired, or unavailable.");
+  if (password.length < 12)
+    throw new Error("Use at least 12 characters for the synthetic password.");
+  invitation.status = "accepted";
+  invitation.acceptedAt = new Date().toISOString();
+  invitation.previewPath = null;
+  writeMockInvitations(invitations);
+  localStorage.setItem("ains-synthetic-role", "client");
+  localStorage.removeItem("ains-synthetic-signed-out");
+  return {
+    user: {
+      id: `synthetic-client-${invitation.id}`,
+      email: invitation.email,
+      name: invitation.name,
+      role: "client",
+      firm_id: invitation.firmId,
+    },
+  };
 }
 
 export type NAReviewState = "pending" | "approved" | "rejected" | null;

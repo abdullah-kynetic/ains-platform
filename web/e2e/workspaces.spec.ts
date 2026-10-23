@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
-test("auditor creates an isolated synthetic client workspace without granting access", async ({ page }) => {
+test("auditor creates a workspace and manages a single-use synthetic client invitation", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
   await page.getByRole("button", { name: /AINS Operations/ }).click();
@@ -16,7 +17,35 @@ test("auditor creates an isolated synthetic client workspace without granting ac
   await page.getByRole("button", { name: "Create workspace" }).click();
 
   await expect(page.getByRole("heading", { name: "Synthetic Gamma Securities is ready" })).toBeVisible();
-  await expect(page.getByText("No client login or invitation was created.")).toBeVisible();
-  await page.getByRole("link", { name: "Return to review queue" }).click();
-  await expect(page.getByRole("heading", { name: "Synthetic Gamma Securities" })).toBeVisible();
+  await expect(page.getByText("No client login exists yet.")).toBeVisible();
+  await page.getByLabel("Client name").fill("Synthetic Gamma Client");
+  await page.getByLabel("Client email").fill("gamma-client@example.test");
+  await page.getByRole("button", { name: "Create invitation" }).click();
+
+  const preview = page.getByRole("link", { name: "Open invitation preview" });
+  await expect(preview).toBeVisible();
+  const firstHref = await preview.getAttribute("href");
+  await expect(page.getByText("gamma-client@example.test")).toBeVisible();
+  await page.getByRole("button", { name: "Revoke invitation" }).click();
+  await expect(page.getByText("revoked", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Resend invitation" }).click();
+  await expect(page.getByText("pending", { exact: true })).toBeVisible();
+  const reissuedHref = await preview.getAttribute("href");
+  expect(reissuedHref).not.toBe(firstHref);
+
+  await page.goto(reissuedHref!);
+  await expect(page.getByRole("heading", { name: "Accept client invitation" })).toBeVisible();
+  await expect(page.getByText("Synthetic demo only.")).toBeVisible();
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .exclude("nextjs-portal")
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  await page.getByLabel("Create password").fill("synthetic-password-123");
+  await page.getByLabel("Confirm password").fill("synthetic-password-123");
+  await page.getByRole("button", { name: "Set password and activate account" }).click();
+  await expect(page.getByRole("heading", { name: "Example Securities LLC" })).toBeVisible();
 });
