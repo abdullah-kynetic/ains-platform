@@ -35,11 +35,14 @@ uv run pytest
 uv run ruff check .
 ```
 
-The backend owns authentication and uses an HTTP-only `ains_session` cookie. Users must already
-be invited in the database; there is no public sign-up endpoint. Client users may sign in with a
-password or magic link, and auditor accounts require TOTP MFA. Set `SESSION_SECRET` to a long,
-random value before using sign-in. Magic-link token delivery is an injectable backend adapter and
-must be connected to an approved email provider before that sign-in method is enabled outside tests.
+The backend owns authentication and uses an HTTP-only `ains_session` cookie. There is no public
+sign-up endpoint. Assigned auditors create firm-bound client invitations, and clients set a
+password while accepting the single-use, expiring token. Invitations can be rotated or revoked;
+an email cannot be invited into more than one firm. Client users may later sign in with a password
+or magic link, and auditor accounts require TOTP MFA. Set `SESSION_SECRET` to a long, random value
+before using sign-in. Magic-link and invitation email delivery are intentionally not configured in
+this checkpoint. For synthetic local testing only, set `INVITATION_PREVIEW_ENABLED=true` to return
+an acceptance link to the auditor UI; never enable token previews in a shared or production system.
 
 Tenant-owned database records carry an explicit `firm_id`. API queries scope clients to their firm
 and auditors to assigned engagements. Run `uv run alembic check` after model changes to confirm a

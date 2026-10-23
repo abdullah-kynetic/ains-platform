@@ -4,7 +4,8 @@ import hashlib
 import io
 import zipfile
 from collections.abc import Iterator
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
+from urllib.parse import parse_qs, urlparse
 
 import pyotp
 import pytest
@@ -28,6 +29,7 @@ from app.database.models import (
     CheckJobStatus,
     ChecklistItemInstance,
     CheckResult,
+    ClientInvitation,
     Document,
     Engagement,
     EngagementStatus,
@@ -209,6 +211,7 @@ def backend() -> Iterator[
         database_url="sqlite+pysqlite:///:memory:",
         session_secret=SecretStr("synthetic-test-session-secret-at-least-32-bytes"),
         session_cookie_secure=False,
+        invitation_preview_enabled=True,
         cors_origins="http://localhost:3000",
     )
     fake_ingestor = FakeIngestor()
@@ -243,6 +246,12 @@ def sign_in_auditor(client: TestClient) -> None:
         },
     )
     assert response.status_code == 200
+
+
+def invitation_token(response_body: dict[str, object]) -> str:
+    preview_path = response_body["previewPath"]
+    assert isinstance(preview_path, str)
+    return parse_qs(urlparse(preview_path).query)["token"][0]
 
 
 def test_invite_only_password_session_and_sign_out(backend) -> None:
@@ -506,6 +515,141 @@ def test_auditor_creates_isolated_client_workspace_without_provisioning_access(b
         )
         assert event is not None
         assert event.actor_id == ids["auditor"]
+
+
+def test_client_invitation_is_assignment_scoped_rotated_revocable_and_single_use(backend):
+    client, factory, ids, _, _ = backend
+    path = f"/auditor/engagements/{ids['engagement_a']}/invitations"
+    payload = {"email": "new-client@example.test", "name": "Synthetic New Client"}
+
+    sign_in_client(client)
+    assert client.post(path, json=payload).status_code == 403
+
+    client.cookies.clear()
+    sign_in_auditor(client)
+    created = client.post(path, json=payload)
+    assert created.status_code == 201
+    body = created.json()
+    assert body["firmId"] == ids["firm_a"]
+    assert body["engagementId"] == ids["engagement_a"]
+    assert body["status"] == "pending"
+    first_token = invitation_token(body)
+
+    listed = client.get(path)
+    assert listed.status_code == 200
+    assert listed.json()[0]["previewPath"] is None
+    assert listed.json()[0]["email"] == payload["email"]
+
+    resent = client.post(f"/auditor/invitations/{body['id']}/resend")
+    assert resent.status_code == 200
+    second_token = invitation_token(resent.json())
+    assert second_token != first_token
+    assert client.get(f"/auth/invitations/{first_token}").status_code == 404
+
+    revoked = client.post(f"/auditor/invitations/{body['id']}/revoke")
+    assert revoked.status_code == 200
+    assert revoked.json()["status"] == "revoked"
+    assert client.get(f"/auth/invitations/{second_token}").status_code == 410
+    assert (
+        client.post(
+            "/auth/invitations/accept",
+            json={"token": second_token, "password": "synthetic-password-123"},
+        ).status_code
+        == 410
+    )
+
+    reissued = client.post(f"/auditor/invitations/{body['id']}/resend")
+    assert reissued.status_code == 200
+    final_token = invitation_token(reissued.json())
+    details = client.get(f"/auth/invitations/{final_token}")
+    assert details.status_code == 200
+    assert details.json()["firmName"] == "Synthetic Alpha Securities"
+    assert details.json()["email"] == payload["email"]
+
+    client.cookies.clear()
+    accepted = client.post(
+        "/auth/invitations/accept",
+        json={"token": final_token, "password": "synthetic-password-123"},
+    )
+    assert accepted.status_code == 200
+    assert accepted.json()["user"]["role"] == "client"
+    assert accepted.json()["user"]["firm_id"] == ids["firm_a"]
+    assert client.get("/engagements/current").json()["id"] == ids["engagement_a"]
+    assert (
+        client.get(f"/engagements/{ids['engagement_b']}/questionnaire").status_code == 404
+    )
+    assert (
+        client.post(
+            "/auth/invitations/accept",
+            json={"token": final_token, "password": "synthetic-password-123"},
+        ).status_code
+        == 410
+    )
+
+    with factory() as db:
+        invitation = db.get(ClientInvitation, body["id"])
+        provisioned = db.get(User, invitation.accepted_user_id)
+        assert invitation.token_hash != final_token
+        assert invitation.accepted_at is not None
+        assert provisioned.email == payload["email"]
+        assert provisioned.firm_id == ids["firm_a"]
+        assert provisioned.role == UserRole.CLIENT
+        assert db.scalar(
+            select(AuditLog).where(
+                AuditLog.firm_id == ids["firm_a"],
+                AuditLog.entity_id == invitation.id,
+                AuditLog.action == "client_invitation.accepted",
+            )
+        ) is not None
+
+    client.cookies.clear()
+    sign_in_auditor(client)
+    assert client.post(f"/auditor/invitations/{body['id']}/resend").status_code == 409
+    assert client.post(f"/auditor/invitations/{body['id']}/revoke").status_code == 409
+
+
+def test_client_invitation_expires_and_email_cannot_cross_firms(backend):
+    client, factory, ids, _, _ = backend
+    sign_in_auditor(client)
+    path_a = f"/auditor/engagements/{ids['engagement_a']}/invitations"
+    path_b = f"/auditor/engagements/{ids['engagement_b']}/invitations"
+    payload = {"email": "exclusive-client@example.test", "name": "Synthetic Exclusive Client"}
+    created = client.post(path_a, json=payload)
+    assert created.status_code == 201
+    token = invitation_token(created.json())
+    assert client.post(path_b, json=payload).status_code == 409
+
+    with factory() as db:
+        invitation = db.get(ClientInvitation, created.json()["id"])
+        invitation.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+        db.commit()
+    assert client.get(f"/auth/invitations/{token}").status_code == 410
+
+    with factory() as db:
+        db.get(Engagement, ids["engagement_b"]).auditor_id = None
+        db.commit()
+    denied = client.post(
+        path_b,
+        json={"email": "unassigned-client@example.test", "name": "Synthetic Other Client"},
+    )
+    assert denied.status_code == 404
+
+
+def test_client_invitation_preview_is_hidden_unless_explicitly_enabled(backend):
+    client, _, ids, _, _ = backend
+    enabled_settings = client.app.dependency_overrides[get_settings]()
+    client.app.dependency_overrides[get_settings] = lambda: enabled_settings.model_copy(
+        update={"invitation_preview_enabled": False}
+    )
+    sign_in_auditor(client)
+
+    created = client.post(
+        f"/auditor/engagements/{ids['engagement_a']}/invitations",
+        json={"email": "no-preview@example.test", "name": "Synthetic No Preview"},
+    )
+
+    assert created.status_code == 201
+    assert created.json()["previewPath"] is None
 
 
 def test_auditor_can_create_and_edit_assigned_tasks(backend):

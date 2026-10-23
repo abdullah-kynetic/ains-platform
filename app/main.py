@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import router as engagement_router
 from app.auth import router as auth_router
+from app.auth.invitations import auditor_router as invitation_auditor_router
+from app.auth.invitations import public_router as invitation_public_router
 from app.config import get_settings
 
 
@@ -19,6 +21,8 @@ def create_app() -> FastAPI:
         allow_headers=["Authorization", "Content-Type"],
     )
     application.include_router(auth_router)
+    application.include_router(invitation_public_router)
+    application.include_router(invitation_auditor_router)
     application.include_router(engagement_router)
 
     @application.get("/health")

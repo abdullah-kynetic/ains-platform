@@ -118,6 +118,30 @@ class User(Base):
     )
 
 
+class ClientInvitation(Base):
+    __tablename__ = "client_invitations"
+    __table_args__ = (
+        UniqueConstraint("email", name="uq_client_invitations_email"),
+        Index("ix_client_invitations_firm_engagement", "firm_id", "engagement_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    email: Mapped[str] = mapped_column(String(320), index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    accepted_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), unique=True)
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
 class Engagement(Base):
     __tablename__ = "engagements"
     __table_args__ = (
