@@ -13,6 +13,8 @@ export type PipelineStage = "intake" | "document_collection" | "auditor_review" 
 export type PipelineEngagement = { id: string; firm: string; stage: PipelineStage; due: string | null; assignee: string; progress: number; blockers: number; nextAction: string; reportSigned: boolean };
 export type TaskPriority = "high" | "normal" | "low";
 export type AuditorTask = { id: string; engagementId: string; title: string; requestId: string | null; due: string | null; priority: TaskPriority; assignee: string; completed: boolean };
+export type ActivityKind = "upload" | "review" | "feedback" | "questionnaire";
+export type AuditorActivity = { id: string; kind: ActivityKind; actor: string; action: string; subject: string; context: string; occurredAt: string; engagementId: string };
 type MockState = { decisions: Record<string, Decision>; history: History[] };
 const key = "ains-synthetic-auditor-v1";
 const pipelineKey = "ains-synthetic-pipeline-v1";
@@ -100,6 +102,17 @@ export async function setAuditorTaskCompletion(id: string, completed: boolean): 
   const completion = JSON.parse(localStorage.getItem(tasksKey) ?? "{}") as Record<string, boolean>;
   completion[id] = completed;
   localStorage.setItem(tasksKey, JSON.stringify(completion));
+}
+
+export async function getAuditorActivity(): Promise<AuditorActivity[]> {
+  if (!USE_MOCKS) return apiRequest("/auditor/activity");
+  const ago = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+  return [
+    { id: "activity-upload-001", kind: "upload", actor: "Example Securities LLC", action: "uploaded new evidence for", subject: "AML-BD-001", context: "Evidence received for storage verification · Synthetic file", occurredAt: ago(12), engagementId: "eng-synthetic-001" },
+    { id: "activity-review-001", kind: "review", actor: "Synthetic Auditor", action: "recorded a human assessment for", subject: "AML-BD-018", context: "Internal auditor decision recorded", occurredAt: ago(38), engagementId: "eng-synthetic-001" },
+    { id: "activity-feedback-001", kind: "feedback", actor: "Synthetic Auditor", action: "sent document-level feedback for", subject: "AML-BD-009", context: "Client feedback contains intake issues only", occurredAt: ago(60), engagementId: "eng-synthetic-001" },
+    { id: "activity-questionnaire-001", kind: "questionnaire", actor: "Example Securities LLC", action: "updated a representation for", subject: "AML-BD-026", context: "Response is waiting for human review", occurredAt: ago(24 * 60), engagementId: "eng-synthetic-001" },
+  ];
 }
 
 export async function saveDecision(id: string, itemId: string, decision: Decision): Promise<void> {

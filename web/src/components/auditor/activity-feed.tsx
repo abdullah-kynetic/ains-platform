@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Activity,
   ClipboardCheck,
@@ -10,19 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-type ActivityKind = "upload" | "review" | "feedback" | "questionnaire";
-
-type AuditorActivity = {
-  id: string;
-  kind: ActivityKind;
-  actor: string;
-  action: string;
-  subject: string;
-  context: string;
-  occurredAt: string;
-  href: string;
-};
+import { getAuditorActivity, type ActivityKind, type AuditorActivity } from "@/lib/workflow-api";
 
 const activityVisuals: Record<
   ActivityKind,
@@ -43,50 +34,27 @@ const activityVisuals: Record<
   },
 };
 
-const syntheticActivity: AuditorActivity[] = [
-  {
-    id: "activity-upload-001",
-    kind: "upload",
-    actor: "Example Securities LLC",
-    action: "uploaded new evidence for",
-    subject: "AML-BD-001",
-    context: "Board-approved AML compliance program · Synthetic PDF",
-    occurredAt: "12 minutes ago",
-    href: "/auditor/engagements/eng-synthetic-001",
-  },
-  {
-    id: "activity-review-001",
-    kind: "review",
-    actor: "Synthetic Auditor",
-    action: "recorded a human assessment for",
-    subject: "AML-BD-018",
-    context: "Customer Identification Program documentation",
-    occurredAt: "38 minutes ago",
-    href: "/auditor/engagements/eng-synthetic-001",
-  },
-  {
-    id: "activity-feedback-001",
-    kind: "feedback",
-    actor: "Synthetic Auditor",
-    action: "requested a replacement document for",
-    subject: "AML-BD-009",
-    context: "Client received document-level feedback only",
-    occurredAt: "1 hour ago",
-    href: "/auditor/engagements/eng-synthetic-001",
-  },
-  {
-    id: "activity-questionnaire-001",
-    kind: "questionnaire",
-    actor: "Example Securities LLC",
-    action: "updated its representation for",
-    subject: "AML-BD-026",
-    context: "Response is waiting for human review",
-    occurredAt: "Yesterday",
-    href: "/auditor/engagements/eng-synthetic-001",
-  },
-];
+function relativeTime(value: string) {
+  const seconds = Math.round((new Date(value).getTime() - Date.now()) / 1000);
+  const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  if (Math.abs(seconds) < 60) return formatter.format(seconds, "second");
+  const minutes = Math.round(seconds / 60);
+  if (Math.abs(minutes) < 60) return formatter.format(minutes, "minute");
+  const hours = Math.round(minutes / 60);
+  if (Math.abs(hours) < 24) return formatter.format(hours, "hour");
+  return formatter.format(Math.round(hours / 24), "day");
+}
 
 export function AuditorActivityFeed() {
+  const [activity, setActivity] = useState<AuditorActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    getAuditorActivity()
+      .then(setActivity)
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Unable to load activity."))
+      .finally(() => setLoading(false));
+  }, []);
   return (
     <section aria-labelledby="auditor-activity-title">
       <div className="mb-3 flex items-center gap-2.5">
@@ -103,13 +71,15 @@ export function AuditorActivityFeed() {
       </div>
       <Card>
         <CardContent className="pt-5">
+          {loading ? <p role="status" className="py-8 text-center text-xs text-subtle">Loading recent activity…</p> : null}
+          {error ? <p role="alert" className="mb-3 rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-xs text-danger">{error}</p> : null}
           <ol className="grid gap-0">
-            {syntheticActivity.map((item, index) => {
+            {activity.map((item, index) => {
               const visual = activityVisuals[item.kind];
               const Icon = visual.icon;
               return (
                 <li key={item.id} className="relative flex gap-3 pb-5 last:pb-0">
-                  {index < syntheticActivity.length - 1 ? (
+                  {index < activity.length - 1 ? (
                     <span
                       aria-hidden="true"
                       className="absolute top-8 bottom-0 left-[15px] w-px bg-border"
@@ -130,7 +100,7 @@ export function AuditorActivityFeed() {
                       </span>{" "}
                       {item.action}{" "}
                       <Link
-                        href={item.href}
+                        href={`/auditor/engagements/${item.engagementId}`}
                         className="font-medium text-brand-hover hover:underline"
                       >
                         {item.subject}
@@ -140,17 +110,18 @@ export function AuditorActivityFeed() {
                       {item.context}
                     </p>
                     <p className="mt-1 text-[11px] text-subtle">
-                      {item.occurredAt}
+                      {relativeTime(item.occurredAt)}
                     </p>
                   </div>
                 </li>
               );
             })}
           </ol>
+          {!loading && !activity.length ? <p className="py-8 text-center text-xs text-subtle">No recent activity for assigned engagements.</p> : null}
         </CardContent>
       </Card>
       <p className="mt-2 text-[11px] text-subtle">
-        Synthetic preview activity. No client data is shown.
+        Internal activity for assigned engagements. Audit details remain in the protected workspace.
       </p>
     </section>
   );
