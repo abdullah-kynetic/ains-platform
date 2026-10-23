@@ -436,12 +436,10 @@ def test_auditor_tasks_are_assignment_scoped_and_completion_is_audited(backend):
 
     completed = client.patch(f"/auditor/tasks/{task_a_id}", json={"completed": True})
     assert completed.status_code == 200
-    assert completed.json() == {
-        "id": task_a_id,
-        "completed": True,
-        "findingFinalized": False,
-        "reportSigned": False,
-    }
+    assert completed.json()["id"] == task_a_id
+    assert completed.json()["completed"] is True
+    assert completed.json()["findingFinalized"] is False
+    assert completed.json()["reportSigned"] is False
     with factory() as db:
         task = db.get(AuditorTask, task_a_id)
         assert task.completed_at is not None
@@ -454,10 +452,99 @@ def test_auditor_tasks_are_assignment_scoped_and_completion_is_audited(backend):
             )
         )
         assert event is not None
-        assert event.details == {
-            "before": {"completed": False},
-            "after": {"completed": True},
-        }
+        assert event.details["before"]["completed"] is False
+        assert event.details["after"]["completed"] is True
+
+
+def test_auditor_can_create_and_edit_assigned_tasks(backend):
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    assert (
+        client.post(
+            f"/auditor/engagements/{ids['engagement_a']}/tasks",
+            json={"title": "Client must not create this"},
+        ).status_code
+        == 403
+    )
+
+    client.cookies.clear()
+    sign_in_auditor(client)
+    with factory() as db:
+        db.get(Engagement, ids["engagement_b"]).auditor_id = None
+        db.commit()
+
+    denied = client.post(
+        f"/auditor/engagements/{ids['engagement_b']}/tasks",
+        json={"title": "Other tenant task"},
+    )
+    assert denied.status_code == 404
+
+    created = client.post(
+        f"/auditor/engagements/{ids['engagement_a']}/tasks",
+        json={
+            "title": " Draft synthetic status update ",
+            "request_id": "AML-BD-004",
+            "due_date": "2026-03-01",
+            "priority": "high",
+        },
+    )
+    assert created.status_code == 201
+    task_id = created.json()["id"]
+    assert created.json() == {
+        "id": task_id,
+        "engagementId": ids["engagement_a"],
+        "title": "Draft synthetic status update",
+        "requestId": "AML-BD-004",
+        "due": "2026-03-01",
+        "priority": "high",
+        "assignee": "Synthetic Auditor",
+        "completed": False,
+    }
+
+    updated = client.patch(
+        f"/auditor/tasks/{task_id}",
+        json={
+            "title": "Finalize synthetic status update",
+            "request_id": None,
+            "due_date": None,
+            "priority": "low",
+        },
+    )
+    assert updated.status_code == 200
+    assert updated.json()["title"] == "Finalize synthetic status update"
+    assert updated.json()["requestId"] is None
+    assert updated.json()["due"] is None
+    assert updated.json()["priority"] == "low"
+    assert updated.json()["findingFinalized"] is False
+    assert updated.json()["reportSigned"] is False
+    assert client.patch(f"/auditor/tasks/{task_id}", json={}).status_code == 422
+    assert (
+        client.patch(f"/auditor/tasks/{task_id}", json={"title": "  "}).status_code
+        == 422
+    )
+
+    with factory() as db:
+        task = db.get(AuditorTask, task_id)
+        assert task.firm_id == ids["firm_a"]
+        assert task.engagement_id == ids["engagement_a"]
+        assert task.assignee_id == ids["auditor"]
+        assert task.title == "Finalize synthetic status update"
+        assert task.request_id is None
+        assert task.due_date is None
+        assert task.priority == TaskPriority.LOW
+        events = db.scalars(
+            select(AuditLog)
+            .where(
+                AuditLog.firm_id == ids["firm_a"],
+                AuditLog.entity_id == task_id,
+                AuditLog.action.in_(["auditor_task.created", "auditor_task.updated"]),
+            )
+            .order_by(AuditLog.created_at)
+        ).all()
+        assert [event.action for event in events] == [
+            "auditor_task.created",
+            "auditor_task.updated",
+        ]
 
 
 def test_auditor_activity_is_assignment_scoped_and_omits_internal_details(backend):

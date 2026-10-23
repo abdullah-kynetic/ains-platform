@@ -93,7 +93,7 @@ function Dashboard() {
           <AuditorActivityFeed />
         </div>
         <div className="xl:col-span-3">
-          <AuditorUpcomingTasks />
+          <AuditorUpcomingTasks engagements={clients ?? []} />
         </div>
       </div>
     </>
