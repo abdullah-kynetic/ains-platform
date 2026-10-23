@@ -1,5 +1,6 @@
 """Assigned-auditor manual workflow. No inference or client-facing conclusions."""
 
+from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException
@@ -18,6 +19,7 @@ from app.database.models import (
     EngagementStatus,
     FindingDraft,
     NAReviewState,
+    TaskPriority,
     User,
     UserRole,
     utcnow,
@@ -84,8 +86,36 @@ class PipelineMove(BaseModel):
     stage: PipelineStage
 
 
-class TaskCompletion(BaseModel):
-    completed: bool
+class TaskCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    request_id: str | None = Field(default=None, max_length=120)
+    due_date: date | None = None
+    priority: TaskPriority = TaskPriority.NORMAL
+
+    @model_validator(mode="after")
+    def clean_title(self):
+        self.title = self.title.strip()
+        if not self.title:
+            raise ValueError("Task title is required")
+        return self
+
+
+class TaskUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    request_id: str | None = Field(default=None, max_length=120)
+    due_date: date | None = None
+    priority: TaskPriority | None = None
+    completed: bool | None = None
+
+    @model_validator(mode="after")
+    def has_change(self):
+        if not self.model_fields_set:
+            raise ValueError("Provide at least one task change")
+        if "title" in self.model_fields_set:
+            if self.title is None or not self.title.strip():
+                raise ValueError("Task title is required")
+            self.title = self.title.strip()
+        return self
 
 
 ACTIVITY_COPY: dict[str, tuple[str, str, str]] = {
@@ -143,6 +173,16 @@ ACTIVITY_COPY: dict[str, tuple[str, str, str]] = {
         "review",
         "updated an internal task for",
         "Task status changed; no finding was finalized",
+    ),
+    "auditor_task.created": (
+        "review",
+        "created an internal task for",
+        "Internal task created for assigned audit work",
+    ),
+    "auditor_task.updated": (
+        "review",
+        "updated an internal task for",
+        "Internal task details updated",
     ),
     "report.draft_generated": (
         "review",
@@ -337,30 +377,98 @@ def tasks(user: CurrentUser, db: DB):
     ]
 
 
-@router.patch("/tasks/{task_id}")
-def complete_task(task_id: str, payload: TaskCompletion, user: CurrentUser, db: DB):
+@router.post("/engagements/{engagement_id}/tasks", status_code=201)
+def create_task(
+    engagement_id: str, payload: TaskCreate, user: CurrentUser, db: DB
+):
     require_auditor(user)
-    task = _visible_task(db, user, task_id)
-    before = task.completed_at is not None
-    task.completed_at = utcnow() if payload.completed else None
-    task.completed_by_id = user.id if payload.completed else None
+    engagement = _get_engagement(db, user, engagement_id)
+    task = AuditorTask(
+        firm_id=engagement.firm_id,
+        engagement_id=engagement.id,
+        assignee_id=user.id,
+        title=payload.title,
+        request_id=payload.request_id,
+        due_date=payload.due_date,
+        priority=payload.priority,
+    )
+    db.add(task)
+    db.flush()
     db.add(
         AuditLog(
-            firm_id=task.firm_id,
+            firm_id=engagement.firm_id,
             actor_id=user.id,
-            action="auditor_task.completion_changed",
+            action="auditor_task.created",
             entity_type="auditor_task",
             entity_id=task.id,
-            details={
-                "before": {"completed": before},
-                "after": {"completed": payload.completed},
-            },
+            details={"title": task.title, "request_id": task.request_id},
         )
     )
     db.commit()
     return {
         "id": task.id,
-        "completed": payload.completed,
+        "engagementId": task.engagement_id,
+        "title": task.title,
+        "requestId": task.request_id,
+        "due": task.due_date,
+        "priority": task.priority,
+        "assignee": user.name,
+        "completed": False,
+    }
+
+
+@router.patch("/tasks/{task_id}")
+def update_task(task_id: str, payload: TaskUpdate, user: CurrentUser, db: DB):
+    require_auditor(user)
+    task = _visible_task(db, user, task_id)
+    before = {
+        "title": task.title,
+        "request_id": task.request_id,
+        "due_date": task.due_date.isoformat() if task.due_date else None,
+        "priority": task.priority,
+        "completed": task.completed_at is not None,
+    }
+    if "title" in payload.model_fields_set:
+        task.title = payload.title or task.title
+    if "request_id" in payload.model_fields_set:
+        task.request_id = payload.request_id
+    if "due_date" in payload.model_fields_set:
+        task.due_date = payload.due_date
+    if "priority" in payload.model_fields_set and payload.priority is not None:
+        task.priority = payload.priority
+    if "completed" in payload.model_fields_set and payload.completed is not None:
+        task.completed_at = utcnow() if payload.completed else None
+        task.completed_by_id = user.id if payload.completed else None
+    after = {
+        "title": task.title,
+        "request_id": task.request_id,
+        "due_date": task.due_date.isoformat() if task.due_date else None,
+        "priority": task.priority,
+        "completed": task.completed_at is not None,
+    }
+    only_completion = payload.model_fields_set == {"completed"}
+    db.add(
+        AuditLog(
+            firm_id=task.firm_id,
+            actor_id=user.id,
+            action=(
+                "auditor_task.completion_changed" if only_completion else "auditor_task.updated"
+            ),
+            entity_type="auditor_task",
+            entity_id=task.id,
+            details={"before": before, "after": after},
+        )
+    )
+    db.commit()
+    return {
+        "id": task.id,
+        "engagementId": task.engagement_id,
+        "title": task.title,
+        "requestId": task.request_id,
+        "due": task.due_date,
+        "priority": task.priority,
+        "assignee": user.name,
+        "completed": task.completed_at is not None,
         "findingFinalized": False,
         "reportSigned": False,
     }

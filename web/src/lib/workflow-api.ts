@@ -13,12 +13,13 @@ export type PipelineStage = "intake" | "document_collection" | "auditor_review" 
 export type PipelineEngagement = { id: string; firm: string; stage: PipelineStage; due: string | null; assignee: string; progress: number; blockers: number; nextAction: string; reportSigned: boolean };
 export type TaskPriority = "high" | "normal" | "low";
 export type AuditorTask = { id: string; engagementId: string; title: string; requestId: string | null; due: string | null; priority: TaskPriority; assignee: string; completed: boolean };
+export type TaskInput = { title: string; requestId: string | null; due: string | null; priority: TaskPriority };
 export type ActivityKind = "upload" | "review" | "feedback" | "questionnaire";
 export type AuditorActivity = { id: string; kind: ActivityKind; actor: string; action: string; subject: string; context: string; occurredAt: string; engagementId: string };
 type MockState = { decisions: Record<string, Decision>; history: History[] };
 const key = "ains-synthetic-auditor-v1";
 const pipelineKey = "ains-synthetic-pipeline-v1";
-const tasksKey = "ains-synthetic-tasks-v1";
+const tasksKey = "ains-synthetic-tasks-v2";
 function mockState(): MockState { return JSON.parse(localStorage.getItem(key) ?? '{"decisions":{},"history":[]}'); }
 function event(state: MockState, action: string, entityId: string, before: unknown, after: unknown) {
   state.history.push({ id: crypto.randomUUID(), actor: "Synthetic Auditor", action, entityId, at: new Date().toISOString(), details: { before, after } });
@@ -90,18 +91,48 @@ const syntheticTasks: AuditorTask[] = [
 
 export async function getAuditorTasks(): Promise<AuditorTask[]> {
   if (!USE_MOCKS) return apiRequest("/auditor/tasks");
-  const completion = JSON.parse(localStorage.getItem(tasksKey) ?? "{}") as Record<string, boolean>;
-  return syntheticTasks.map((task) => ({ ...task, completed: completion[task.id] ?? task.completed }));
+  return JSON.parse(localStorage.getItem(tasksKey) ?? JSON.stringify(syntheticTasks)) as AuditorTask[];
+}
+
+function saveSyntheticTasks(tasks: AuditorTask[]) {
+  localStorage.setItem(tasksKey, JSON.stringify(tasks));
+}
+
+export async function createAuditorTask(engagementId: string, input: TaskInput): Promise<AuditorTask> {
+  if (!USE_MOCKS) {
+    return apiRequest(`/auditor/engagements/${encodeURIComponent(engagementId)}/tasks`, {
+      method: "POST",
+      body: JSON.stringify({ title: input.title, request_id: input.requestId, due_date: input.due, priority: input.priority }),
+    });
+  }
+  const task: AuditorTask = { id: crypto.randomUUID(), engagementId, ...input, assignee: "Quinton", completed: false };
+  saveSyntheticTasks([...(await getAuditorTasks()), task]);
+  return task;
+}
+
+export async function updateAuditorTask(id: string, changes: Partial<TaskInput> & { completed?: boolean }): Promise<AuditorTask> {
+  if (!USE_MOCKS) {
+    return apiRequest(`/auditor/tasks/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        ...(changes.title !== undefined ? { title: changes.title } : {}),
+        ...(changes.requestId !== undefined ? { request_id: changes.requestId } : {}),
+        ...(changes.due !== undefined ? { due_date: changes.due } : {}),
+        ...(changes.priority !== undefined ? { priority: changes.priority } : {}),
+        ...(changes.completed !== undefined ? { completed: changes.completed } : {}),
+      }),
+    });
+  }
+  const tasks = await getAuditorTasks();
+  const current = tasks.find((task) => task.id === id);
+  if (!current) throw new Error("Task not found.");
+  const updated = { ...current, ...changes };
+  saveSyntheticTasks(tasks.map((task) => task.id === id ? updated : task));
+  return updated;
 }
 
 export async function setAuditorTaskCompletion(id: string, completed: boolean): Promise<void> {
-  if (!USE_MOCKS) {
-    await apiRequest(`/auditor/tasks/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ completed }) });
-    return;
-  }
-  const completion = JSON.parse(localStorage.getItem(tasksKey) ?? "{}") as Record<string, boolean>;
-  completion[id] = completed;
-  localStorage.setItem(tasksKey, JSON.stringify(completion));
+  await updateAuditorTask(id, { completed });
 }
 
 export async function getAuditorActivity(): Promise<AuditorActivity[]> {
