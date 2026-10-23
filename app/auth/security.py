@@ -33,6 +33,15 @@ def new_magic_link_token() -> tuple[str, str]:
     return token, hashlib.sha256(token.encode()).hexdigest()
 
 
+def new_invitation_token() -> tuple[str, str]:
+    token = secrets.token_urlsafe(32)
+    return token, hash_invitation_token(token)
+
+
+def hash_invitation_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 def hash_magic_link_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 

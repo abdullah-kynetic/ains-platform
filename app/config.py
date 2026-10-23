@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = False
     session_ttl_hours: int = 12
     magic_link_ttl_minutes: int = 15
+    client_invitation_ttl_hours: int = 72
+    invitation_preview_enabled: bool = False
 
     # Comma-separated browser origins; wildcard origins are deliberately unsupported.
     cors_origins: str = "http://localhost:3000"
