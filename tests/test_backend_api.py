@@ -456,6 +456,58 @@ def test_auditor_tasks_are_assignment_scoped_and_completion_is_audited(backend):
         assert event.details["after"]["completed"] is True
 
 
+def test_auditor_creates_isolated_client_workspace_without_provisioning_access(backend):
+    client, factory, ids, _, _ = backend
+    payload = {
+        "firm_name": " Synthetic Gamma Securities ",
+        "review_period_start": "2026-01-01",
+        "review_period_end": "2026-12-31",
+        "due_date": "2027-02-15",
+    }
+    sign_in_client(client)
+    assert client.post("/auditor/workspaces", json=payload).status_code == 403
+
+    client.cookies.clear()
+    sign_in_auditor(client)
+    response = client.post("/auditor/workspaces", json=payload)
+    assert response.status_code == 201
+    body = response.json()
+    assert body["firmName"] == "Synthetic Gamma Securities"
+    assert body["slug"] == "synthetic-gamma-securities"
+    assert body["status"] == "draft"
+    assert body["requestCount"] == 34
+    assert body["clientAccessProvisioned"] is False
+
+    duplicate = client.post("/auditor/workspaces", json=payload)
+    assert duplicate.status_code == 201
+    assert duplicate.json()["slug"] == "synthetic-gamma-securities-2"
+    assert (
+        client.post(
+            "/auditor/workspaces",
+            json={**payload, "review_period_end": "2025-12-31"},
+        ).status_code
+        == 422
+    )
+
+    with factory() as db:
+        engagement = db.get(Engagement, body["id"])
+        assert engagement.firm_id == body["firmId"]
+        assert engagement.auditor_id == ids["auditor"]
+        assert len(engagement.items) == 34
+        assert db.scalar(
+            select(User).where(User.firm_id == body["firmId"])
+        ) is None
+        event = db.scalar(
+            select(AuditLog).where(
+                AuditLog.firm_id == body["firmId"],
+                AuditLog.entity_id == body["id"],
+                AuditLog.action == "workspace.created",
+            )
+        )
+        assert event is not None
+        assert event.actor_id == ids["auditor"]
+
+
 def test_auditor_can_create_and_edit_assigned_tasks(backend):
     client, factory, ids, _, _ = backend
     sign_in_client(client)

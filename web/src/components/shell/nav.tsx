@@ -127,17 +127,21 @@ function WorkspaceSwitcher({
               </button>
             );
           })}
-          <button
-            type="button"
-            disabled
-            title="Client creation will be added with workspace administration"
-            className="mt-1 flex w-full items-center gap-2.5 border-t border-border px-2 pt-2.5 pb-1 text-xs text-subtle"
+          <Link
+            href={auditor ? "/auditor/workspaces/new" : "#"}
+            aria-disabled={!auditor}
+            onClick={(event) => {
+              if (!auditor) event.preventDefault();
+              else onNavigate?.();
+              setOpen(false);
+            }}
+            className="mt-1 flex w-full items-center gap-2.5 border-t border-border px-2 pt-2.5 pb-1 text-xs text-subtle hover:text-foreground aria-disabled:cursor-not-allowed aria-disabled:opacity-55"
           >
             <span className="grid size-7 place-items-center rounded-md border border-dashed border-border-strong">
               <Plus className="size-3.5" />
             </span>
             Add client workspace
-          </button>
+          </Link>
         </div>
       ) : null}
     </div>

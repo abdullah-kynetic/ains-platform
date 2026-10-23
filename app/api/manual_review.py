@@ -1,5 +1,6 @@
 """Assigned-auditor manual workflow. No inference or client-facing conclusions."""
 
+import re
 from datetime import date
 from typing import Literal
 
@@ -18,6 +19,7 @@ from app.database.models import (
     Engagement,
     EngagementStatus,
     FindingDraft,
+    Firm,
     NAReviewState,
     TaskPriority,
     User,
@@ -86,6 +88,22 @@ class PipelineMove(BaseModel):
     stage: PipelineStage
 
 
+class WorkspaceCreate(BaseModel):
+    firm_name: str = Field(min_length=2, max_length=255)
+    review_period_start: date
+    review_period_end: date
+    due_date: date | None = None
+
+    @model_validator(mode="after")
+    def valid_workspace(self):
+        self.firm_name = self.firm_name.strip()
+        if len(self.firm_name) < 2:
+            raise ValueError("Firm name is required")
+        if self.review_period_end < self.review_period_start:
+            raise ValueError("Review period end must be on or after its start")
+        return self
+
+
 class TaskCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     request_id: str | None = Field(default=None, max_length=120)
@@ -119,6 +137,11 @@ class TaskUpdate(BaseModel):
 
 
 ACTIVITY_COPY: dict[str, tuple[str, str, str]] = {
+    "workspace.created": (
+        "review",
+        "created a client workspace for",
+        "Internal workspace created; client access not yet provisioned",
+    ),
     "document.created": (
         "upload",
         "uploaded new evidence for",
@@ -222,6 +245,59 @@ def readiness(engagement, items=None):
         "total": 34,
         "blockers": blockers,
         "meaning": "Ready for human report drafting, not a clean opinion or signed report.",
+    }
+
+
+def _available_firm_slug(db: DB, name: str) -> str:
+    base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:80] or "client"
+    slug = base
+    suffix = 2
+    while db.scalar(select(Firm.id).where(Firm.slug == slug)) is not None:
+        slug = f"{base}-{suffix}"
+        suffix += 1
+    return slug
+
+
+@router.post("/workspaces", status_code=201)
+def create_workspace(payload: WorkspaceCreate, user: CurrentUser, db: DB):
+    require_auditor(user)
+    firm = Firm(name=payload.firm_name, slug=_available_firm_slug(db, payload.firm_name))
+    db.add(firm)
+    db.flush()
+    engagement = Engagement(
+        firm_id=firm.id,
+        auditor_id=user.id,
+        status=EngagementStatus.DRAFT,
+        review_period_start=payload.review_period_start,
+        review_period_end=payload.review_period_end,
+        due_date=payload.due_date,
+    )
+    db.add(engagement)
+    db.flush()
+    initialize_engagement(engagement)
+    db.add(
+        AuditLog(
+            firm_id=firm.id,
+            actor_id=user.id,
+            action="workspace.created",
+            entity_type="engagement",
+            entity_id=engagement.id,
+            details={
+                "firm_name": firm.name,
+                "review_period_start": payload.review_period_start.isoformat(),
+                "review_period_end": payload.review_period_end.isoformat(),
+            },
+        )
+    )
+    db.commit()
+    return {
+        "id": engagement.id,
+        "firmId": firm.id,
+        "firmName": firm.name,
+        "slug": firm.slug,
+        "status": engagement.status,
+        "requestCount": len(engagement.items),
+        "clientAccessProvisioned": False,
     }
 
 
