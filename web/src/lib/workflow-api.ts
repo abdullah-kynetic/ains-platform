@@ -9,6 +9,8 @@ export type Readiness = { ready: boolean; reviewed: number; total: number; block
 export type History = { id: string; actor: string; action: string; entityId: string; at: string; details: Record<string, unknown> };
 export type Workspace = { id: string; firmName: string; requests: ManualRequest[]; readiness: Readiness; history: History[] };
 export type ClientSummary = { id: string; firmName: string; status: string; readiness: Readiness };
+export type WorkspaceInput = { firmName: string; reviewPeriodStart: string; reviewPeriodEnd: string; dueDate: string | null };
+export type CreatedWorkspace = { id: string; firmId: string; firmName: string; slug: string; status: string; requestCount: number; clientAccessProvisioned: boolean };
 export type PipelineStage = "intake" | "document_collection" | "auditor_review" | "report_drafting" | "awaiting_signature" | "complete";
 export type PipelineEngagement = { id: string; firm: string; stage: PipelineStage; due: string | null; assignee: string; progress: number; blockers: number; nextAction: string; reportSigned: boolean };
 export type TaskPriority = "high" | "normal" | "low";
@@ -20,6 +22,7 @@ type MockState = { decisions: Record<string, Decision>; history: History[] };
 const key = "ains-synthetic-auditor-v1";
 const pipelineKey = "ains-synthetic-pipeline-v1";
 const tasksKey = "ains-synthetic-tasks-v2";
+const workspacesKey = "ains-synthetic-workspaces-v1";
 function mockState(): MockState { return JSON.parse(localStorage.getItem(key) ?? '{"decisions":{},"history":[]}'); }
 function event(state: MockState, action: string, entityId: string, before: unknown, after: unknown) {
   state.history.push({ id: crypto.randomUUID(), actor: "Synthetic Auditor", action, entityId, at: new Date().toISOString(), details: { before, after } });
@@ -52,7 +55,27 @@ export async function getWorkspace(id: string): Promise<Workspace> {
 export async function getClients(): Promise<ClientSummary[]> {
   if (!USE_MOCKS) return apiRequest("/auditor/engagements");
   const data = cloneMockEngagement(); const workspace = await getWorkspace(data.id);
-  return [{ id: data.id, firmName: data.firmName, status: "collecting", readiness: workspace.readiness }];
+  const created = JSON.parse(localStorage.getItem(workspacesKey) ?? "[]") as CreatedWorkspace[];
+  return [
+    { id: data.id, firmName: data.firmName, status: "collecting", readiness: workspace.readiness },
+    ...created.map((entry) => ({ id: entry.id, firmName: entry.firmName, status: entry.status, readiness: { ready: false, reviewed: 0, total: 34, blockers: ["Initial engagement setup required"], meaning: "Ready for human report drafting, not a clean opinion or signed report." } })),
+  ];
+}
+
+export async function createClientWorkspace(input: WorkspaceInput): Promise<CreatedWorkspace> {
+  if (!USE_MOCKS) {
+    return apiRequest("/auditor/workspaces", {
+      method: "POST",
+      body: JSON.stringify({ firm_name: input.firmName, review_period_start: input.reviewPeriodStart, review_period_end: input.reviewPeriodEnd, due_date: input.dueDate }),
+    });
+  }
+  const existing = JSON.parse(localStorage.getItem(workspacesKey) ?? "[]") as CreatedWorkspace[];
+  const base = input.firmName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "client";
+  let slug = base; let suffix = 2;
+  while (existing.some((entry) => entry.slug === slug)) slug = `${base}-${suffix++}`;
+  const created: CreatedWorkspace = { id: crypto.randomUUID(), firmId: crypto.randomUUID(), firmName: input.firmName.trim(), slug, status: "draft", requestCount: 34, clientAccessProvisioned: false };
+  localStorage.setItem(workspacesKey, JSON.stringify([...existing, created]));
+  return created;
 }
 
 const syntheticPipeline: PipelineEngagement[] = [
