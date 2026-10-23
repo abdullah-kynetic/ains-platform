@@ -1,62 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarDays, CheckSquare2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-type TaskPriority = "high" | "normal" | "low";
-
-type AuditorTask = {
-  id: string;
-  title: string;
-  requestId: string;
-  due: string;
-  priority: TaskPriority;
-  assignee: string;
-  href: string;
-};
-
-const syntheticTasks: AuditorTask[] = [
-  {
-    id: "task-review-program",
-    title: "Review newly uploaded program evidence",
-    requestId: "AML-BD-001",
-    due: "Today",
-    priority: "high",
-    assignee: "Quinton",
-    href: "/auditor/engagements/eng-synthetic-001",
-  },
-  {
-    id: "task-missing-pages",
-    title: "Check replacement for missing pages",
-    requestId: "AML-BD-009",
-    due: "Tomorrow",
-    priority: "high",
-    assignee: "Quinton",
-    href: "/auditor/engagements/eng-synthetic-001",
-  },
-  {
-    id: "task-applicability",
-    title: "Resolve applicability representation",
-    requestId: "AML-BD-026",
-    due: "Nov 5",
-    priority: "normal",
-    assignee: "Quinton",
-    href: "/auditor/engagements/eng-synthetic-001",
-  },
-  {
-    id: "task-status-update",
-    title: "Prepare engagement status update",
-    requestId: "Example Securities LLC",
-    due: "Nov 7",
-    priority: "low",
-    assignee: "Quinton",
-    href: "/auditor/engagements/eng-synthetic-001",
-  },
-];
+import { getAuditorTasks, setAuditorTaskCompletion, type AuditorTask, type TaskPriority } from "@/lib/workflow-api";
 
 const priorityStyles: Record<TaskPriority, string> = {
   high: "bg-danger",
@@ -65,15 +15,25 @@ const priorityStyles: Record<TaskPriority, string> = {
 };
 
 export function AuditorUpcomingTasks() {
-  const [completed, setCompleted] = useState<string[]>([]);
-  const openCount = syntheticTasks.length - completed.length;
+  const [tasks, setTasks] = useState<AuditorTask[]>([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    getAuditorTasks()
+      .then(setTasks)
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Unable to load auditor tasks."))
+      .finally(() => setLoading(false));
+  }, []);
+  const openCount = tasks.filter((task) => !task.completed).length;
 
-  function toggleTask(taskId: string) {
-    setCompleted((current) =>
-      current.includes(taskId)
-        ? current.filter((id) => id !== taskId)
-        : [...current, taskId],
-    );
+  async function toggleTask(task: AuditorTask) {
+    setError("");
+    try {
+      await setAuditorTaskCompletion(task.id, !task.completed);
+      setTasks((current) => current.map((item) => item.id === task.id ? { ...item, completed: !item.completed } : item));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Unable to update this task.");
+    }
   }
 
   return (
@@ -90,15 +50,17 @@ export function AuditorUpcomingTasks() {
       </div>
       <Card>
         <CardContent className="px-0 pt-1 pb-1">
+          {loading ? <p role="status" className="px-4 py-8 text-center text-xs text-subtle">Loading upcoming tasks…</p> : null}
+          {error ? <p role="alert" className="mx-4 my-3 rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-xs text-danger">{error}</p> : null}
           <ul className="divide-y divide-border">
-            {syntheticTasks.map((task) => {
-              const isComplete = completed.includes(task.id);
+            {tasks.map((task) => {
+              const isComplete = task.completed;
               return (
                 <li key={task.id} className="flex gap-3 px-4 py-4">
                   <input
                     type="checkbox"
                     checked={isComplete}
-                    onChange={() => toggleTask(task.id)}
+                    onChange={() => toggleTask(task)}
                     aria-label={`Mark ${task.title} complete`}
                     className="mt-0.5 size-4 shrink-0 accent-[var(--color-brand)]"
                   />
@@ -112,15 +74,15 @@ export function AuditorUpcomingTasks() {
                       {task.title}
                     </p>
                     <Link
-                      href={task.href}
+                      href={`/auditor/engagements/${task.engagementId}`}
                       className="mt-1 block truncate text-xs font-medium text-brand-hover hover:underline"
                     >
-                      {task.requestId}
+                      {task.requestId ?? "Engagement task"}
                     </Link>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-subtle">
                       <span className="inline-flex items-center gap-1">
                         <CalendarDays className="size-3" aria-hidden="true" />
-                        {task.due}
+                        {task.due ? new Date(`${task.due}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "No due date"}
                       </span>
                       <span className="inline-flex items-center gap-1.5">
                         <span
@@ -141,6 +103,7 @@ export function AuditorUpcomingTasks() {
               );
             })}
           </ul>
+          {!loading && !tasks.length ? <p className="px-4 py-8 text-center text-xs text-subtle">No upcoming tasks assigned.</p> : null}
         </CardContent>
       </Card>
       <p className="mt-2 text-[11px] text-subtle">

@@ -11,9 +11,12 @@ export type Workspace = { id: string; firmName: string; requests: ManualRequest[
 export type ClientSummary = { id: string; firmName: string; status: string; readiness: Readiness };
 export type PipelineStage = "intake" | "document_collection" | "auditor_review" | "report_drafting" | "awaiting_signature" | "complete";
 export type PipelineEngagement = { id: string; firm: string; stage: PipelineStage; due: string | null; assignee: string; progress: number; blockers: number; nextAction: string; reportSigned: boolean };
+export type TaskPriority = "high" | "normal" | "low";
+export type AuditorTask = { id: string; engagementId: string; title: string; requestId: string | null; due: string | null; priority: TaskPriority; assignee: string; completed: boolean };
 type MockState = { decisions: Record<string, Decision>; history: History[] };
 const key = "ains-synthetic-auditor-v1";
 const pipelineKey = "ains-synthetic-pipeline-v1";
+const tasksKey = "ains-synthetic-tasks-v1";
 function mockState(): MockState { return JSON.parse(localStorage.getItem(key) ?? '{"decisions":{},"history":[]}'); }
 function event(state: MockState, action: string, entityId: string, before: unknown, after: unknown) {
   state.history.push({ id: crypto.randomUUID(), actor: "Synthetic Auditor", action, entityId, at: new Date().toISOString(), details: { before, after } });
@@ -74,6 +77,29 @@ export async function movePipelineStage(id: string, stage: PipelineStage): Promi
   const stages = JSON.parse(localStorage.getItem(pipelineKey) ?? "{}") as Record<string, PipelineStage>;
   stages[id] = stage;
   localStorage.setItem(pipelineKey, JSON.stringify(stages));
+}
+
+const syntheticTasks: AuditorTask[] = [
+  { id: "task-review-program", engagementId: "eng-synthetic-001", title: "Review newly uploaded program evidence", requestId: "AML-BD-001", due: "2026-10-22", priority: "high", assignee: "Quinton", completed: false },
+  { id: "task-missing-pages", engagementId: "eng-synthetic-001", title: "Check replacement for missing pages", requestId: "AML-BD-009", due: "2026-10-23", priority: "high", assignee: "Quinton", completed: false },
+  { id: "task-applicability", engagementId: "eng-synthetic-001", title: "Resolve applicability representation", requestId: "AML-BD-026", due: "2026-11-05", priority: "normal", assignee: "Quinton", completed: false },
+  { id: "task-status-update", engagementId: "eng-synthetic-001", title: "Prepare engagement status update", requestId: "Example Securities LLC", due: "2026-11-07", priority: "low", assignee: "Quinton", completed: false },
+];
+
+export async function getAuditorTasks(): Promise<AuditorTask[]> {
+  if (!USE_MOCKS) return apiRequest("/auditor/tasks");
+  const completion = JSON.parse(localStorage.getItem(tasksKey) ?? "{}") as Record<string, boolean>;
+  return syntheticTasks.map((task) => ({ ...task, completed: completion[task.id] ?? task.completed }));
+}
+
+export async function setAuditorTaskCompletion(id: string, completed: boolean): Promise<void> {
+  if (!USE_MOCKS) {
+    await apiRequest(`/auditor/tasks/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ completed }) });
+    return;
+  }
+  const completion = JSON.parse(localStorage.getItem(tasksKey) ?? "{}") as Record<string, boolean>;
+  completion[id] = completed;
+  localStorage.setItem(tasksKey, JSON.stringify(completion));
 }
 
 export async function saveDecision(id: string, itemId: string, decision: Decision): Promise<void> {
