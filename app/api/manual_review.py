@@ -11,6 +11,7 @@ from app.checklist import ClientStatus
 from app.checklist.catalog import initialize_engagement, load_catalog
 from app.database.models import (
     AuditLog,
+    AuditorTask,
     ChecklistItemInstance,
     Engagement,
     EngagementStatus,
@@ -18,6 +19,7 @@ from app.database.models import (
     NAReviewState,
     User,
     UserRole,
+    utcnow,
 )
 
 from .engagements import DB, CurrentUser, visible_engagements
@@ -79,6 +81,10 @@ class ManualDecision(BaseModel):
 
 class PipelineMove(BaseModel):
     stage: PipelineStage
+
+
+class TaskCompletion(BaseModel):
+    completed: bool
 
 
 def readiness(engagement, items=None):
@@ -211,6 +217,86 @@ def move_pipeline_stage(
     return {
         "id": engagement.id,
         "stage": payload.stage,
+        "reportSigned": False,
+    }
+
+
+def _visible_task(db: DB, user: CurrentUser, task_id: str) -> AuditorTask:
+    task = db.scalar(
+        select(AuditorTask)
+        .join(
+            Engagement,
+            (Engagement.id == AuditorTask.engagement_id)
+            & (Engagement.firm_id == AuditorTask.firm_id),
+        )
+        .where(
+            AuditorTask.id == task_id,
+            AuditorTask.assignee_id == user.id,
+            Engagement.auditor_id == user.id,
+        )
+    )
+    if task is None:
+        raise HTTPException(404, "Task not found")
+    return task
+
+
+@router.get("/tasks")
+def tasks(user: CurrentUser, db: DB):
+    require_auditor(user)
+    entries = db.scalars(
+        select(AuditorTask)
+        .join(
+            Engagement,
+            (Engagement.id == AuditorTask.engagement_id)
+            & (Engagement.firm_id == AuditorTask.firm_id),
+        )
+        .where(
+            AuditorTask.assignee_id == user.id,
+            Engagement.auditor_id == user.id,
+        )
+        .options(selectinload(AuditorTask.assignee))
+        .order_by(AuditorTask.completed_at, AuditorTask.due_date, AuditorTask.created_at)
+    ).all()
+    return [
+        {
+            "id": task.id,
+            "engagementId": task.engagement_id,
+            "title": task.title,
+            "requestId": task.request_id,
+            "due": task.due_date,
+            "priority": task.priority,
+            "assignee": task.assignee.name,
+            "completed": task.completed_at is not None,
+        }
+        for task in entries
+    ]
+
+
+@router.patch("/tasks/{task_id}")
+def complete_task(task_id: str, payload: TaskCompletion, user: CurrentUser, db: DB):
+    require_auditor(user)
+    task = _visible_task(db, user, task_id)
+    before = task.completed_at is not None
+    task.completed_at = utcnow() if payload.completed else None
+    task.completed_by_id = user.id if payload.completed else None
+    db.add(
+        AuditLog(
+            firm_id=task.firm_id,
+            actor_id=user.id,
+            action="auditor_task.completion_changed",
+            entity_type="auditor_task",
+            entity_id=task.id,
+            details={
+                "before": {"completed": before},
+                "after": {"completed": payload.completed},
+            },
+        )
+    )
+    db.commit()
+    return {
+        "id": task.id,
+        "completed": payload.completed,
+        "findingFinalized": False,
         "reportSigned": False,
     }
 

@@ -77,6 +77,12 @@ class CheckJobStatus(enum.StrEnum):
     FAILED = "failed"
 
 
+class TaskPriority(enum.StrEnum):
+    HIGH = "high"
+    NORMAL = "normal"
+    LOW = "low"
+
+
 class Firm(Base):
     __tablename__ = "firms"
 
@@ -145,6 +151,34 @@ class Engagement(Base):
         cascade="all, delete-orphan",
         order_by="ChecklistItemInstance.position",
     )
+
+
+class AuditorTask(Base):
+    __tablename__ = "auditor_tasks"
+    __table_args__ = (
+        Index("ix_auditor_tasks_firm_engagement", "firm_id", "engagement_id"),
+        Index("ix_auditor_tasks_assignee_completed", "assignee_id", "completed_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    assignee_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    title: Mapped[str] = mapped_column(String(255))
+    request_id: Mapped[str | None] = mapped_column(String(120))
+    due_date: Mapped[date | None] = mapped_column(Date)
+    priority: Mapped[TaskPriority] = mapped_column(
+        Enum(TaskPriority, native_enum=False), default=TaskPriority.NORMAL
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+    engagement: Mapped[Engagement] = relationship()
+    assignee: Mapped[User] = relationship(foreign_keys=[assignee_id])
 
 
 class ChecklistItemInstance(Base):

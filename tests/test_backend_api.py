@@ -22,6 +22,7 @@ from app.checks.processor import DocumentProcessor
 from app.config import Settings, get_settings
 from app.database.models import (
     AuditLog,
+    AuditorTask,
     Base,
     CheckJob,
     CheckJobStatus,
@@ -33,6 +34,7 @@ from app.database.models import (
     FindingDraft,
     Firm,
     ReviewState,
+    TaskPriority,
     User,
     UserRole,
 )
@@ -392,6 +394,70 @@ def test_pipeline_is_auditor_only_assignment_scoped_and_audited(backend):
     assert completion.status_code == 409
     with factory() as db:
         assert db.get(Engagement, ids["engagement_a"]).status != EngagementStatus.COMPLETE
+
+
+def test_auditor_tasks_are_assignment_scoped_and_completion_is_audited(backend):
+    client, factory, ids, _, _ = backend
+    with factory() as db:
+        task_a = AuditorTask(
+            firm_id=ids["firm_a"],
+            engagement_id=ids["engagement_a"],
+            assignee_id=ids["auditor"],
+            title="Review synthetic replacement",
+            request_id="AML-BD-004",
+            due_date=date(2026, 2, 1),
+            priority=TaskPriority.HIGH,
+        )
+        task_b = AuditorTask(
+            firm_id=ids["firm_b"],
+            engagement_id=ids["engagement_b"],
+            assignee_id=ids["auditor"],
+            title="Other tenant synthetic task",
+            priority=TaskPriority.NORMAL,
+        )
+        db.add_all([task_a, task_b])
+        db.commit()
+        task_a_id, task_b_id = task_a.id, task_b.id
+
+    sign_in_client(client)
+    assert client.get("/auditor/tasks").status_code == 403
+    assert client.patch(f"/auditor/tasks/{task_a_id}", json={"completed": True}).status_code == 403
+
+    client.cookies.clear()
+    sign_in_auditor(client)
+    with factory() as db:
+        db.get(Engagement, ids["engagement_b"]).auditor_id = None
+        db.commit()
+
+    tasks = client.get("/auditor/tasks")
+    assert tasks.status_code == 200
+    assert [task["id"] for task in tasks.json()] == [task_a_id]
+    assert client.patch(f"/auditor/tasks/{task_b_id}", json={"completed": True}).status_code == 404
+
+    completed = client.patch(f"/auditor/tasks/{task_a_id}", json={"completed": True})
+    assert completed.status_code == 200
+    assert completed.json() == {
+        "id": task_a_id,
+        "completed": True,
+        "findingFinalized": False,
+        "reportSigned": False,
+    }
+    with factory() as db:
+        task = db.get(AuditorTask, task_a_id)
+        assert task.completed_at is not None
+        assert task.completed_by_id == ids["auditor"]
+        event = db.scalar(
+            select(AuditLog).where(
+                AuditLog.firm_id == ids["firm_a"],
+                AuditLog.entity_id == task_a_id,
+                AuditLog.action == "auditor_task.completion_changed",
+            )
+        )
+        assert event is not None
+        assert event.details == {
+            "before": {"completed": False},
+            "after": {"completed": True},
+        }
 
 
 @pytest.mark.parametrize(
