@@ -20,6 +20,9 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type"],
     )
+    from app.auth.reset import router as reset_router
+
+    application.include_router(reset_router)
     application.include_router(auth_router)
     application.include_router(invitation_public_router)
     application.include_router(invitation_auditor_router)

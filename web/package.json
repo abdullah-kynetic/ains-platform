@@ -11,6 +11,7 @@
     "dev": "next dev",
     "build": "next build",
     "build:cloudflare": "NEXT_PUBLIC_USE_MOCKS=true opennextjs-cloudflare build",
+    "build:cloudflare:production": "NEXT_PUBLIC_USE_MOCKS=false opennextjs-cloudflare build",
     "deploy:demo": "npm run build:cloudflare && opennextjs-cloudflare deploy",
     "start": "next start",
     "lint": "eslint",

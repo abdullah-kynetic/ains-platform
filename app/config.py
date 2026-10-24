@@ -4,14 +4,16 @@ Secrets are typed as SecretStr so they are never shown in reprs or logs.
 """
 
 from functools import lru_cache
+from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
+    # Optional Egnyte connector (off by default; select STORAGE_BACKEND=egnyte).
     # Egnyte (Internal app). EGNYTE_API_KEY is the app's Client ID.
     egnyte_domain: str = ""  # subdomain only, e.g. "quintonsfirm"
     egnyte_api_key: SecretStr = SecretStr("")  # Client ID
@@ -22,6 +24,18 @@ class Settings(BaseSettings):
     egnyte_refresh_token: SecretStr = SecretStr("")  # optional: renews expired tokens
     egnyte_scopes: str = "Egnyte.filesystem Egnyte.webhooks"
     egnyte_dev_root: str = "/Shared/AINS-Dev"
+
+    storage_backend: Literal["s3", "egnyte"] = "s3"
+    aws_region: str = "us-east-1"
+    s3_bucket: str = ""
+    s3_sse: Literal["AES256", "aws:kms"] = "AES256"
+    s3_kms_key_id: str = ""
+    s3_retention_days: int = Field(default=0, ge=0)
+    s3_retention_mode: Literal["COMPLIANCE", "GOVERNANCE"] = "GOVERNANCE"
+    resend_api_key: SecretStr = SecretStr("")
+    email_from: str = ""
+    portal_url: str = "http://localhost:3000"
+    password_reset_ttl_minutes: int = Field(default=15, ge=1, le=60)
 
     document_check_timeout_seconds: int = 300
     report_template: str = "default.json"

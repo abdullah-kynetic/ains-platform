@@ -1,0 +1,75 @@
+#!/bin/bash
+set -euo pipefail
+dnf update -y
+dnf install -y docker python3-pip
+systemctl enable --now docker
+python3 -m pip install boto3
+install -d -m 700 /etc/ains
+cat > /etc/ains/load-environment.py <<'PY'
+import json
+import os
+import boto3
+client = boto3.client('secretsmanager', region_name=${jsonencode(region)})
+values = json.loads(${jsonencode(environment)})
+for key, arn in json.loads(${jsonencode(secret_arns)}).items():
+    values[key] = client.get_secret_value(SecretId=arn)['SecretString']
+for value in values.values():
+    if '\n' in value or '\r' in value:
+        raise ValueError('Environment values must be single-line')
+fd = os.open('/etc/ains/runtime.env', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+with os.fdopen(fd, 'w') as target:
+    target.write(''.join(f'{key}={value}\n' for key, value in values.items()))
+PY
+chmod 600 /etc/ains/load-environment.py
+cat > /etc/systemd/system/ains.service <<'UNIT'
+[Unit]
+After=docker.service network-online.target
+Requires=docker.service
+[Service]
+ExecStartPre=/usr/bin/python3 /etc/ains/load-environment.py
+ExecStartPre=/usr/bin/docker pull ${image}
+ExecStartPre=-/usr/bin/docker rm -f ains-api
+ExecStart=/usr/bin/docker run --name ains-api --env-file /etc/ains/runtime.env -p 127.0.0.1:8000:8000 --log-opt max-size=10m --log-opt max-file=3 ${image} uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
+ExecStop=/usr/bin/docker stop ains-api
+Restart=always
+RestartSec=10
+[Install]
+WantedBy=multi-user.target
+UNIT
+cat > /etc/systemd/system/ains-worker.service <<'UNIT'
+[Unit]
+After=ains.service
+Requires=ains.service
+[Service]
+ExecStartPre=/usr/bin/sleep 15
+ExecStartPre=-/usr/bin/docker rm -f ains-worker
+ExecStart=/usr/bin/docker run --name ains-worker --entrypoint python --env-file /etc/ains/runtime.env --log-opt max-size=10m --log-opt max-file=3 ${image} -m app.worker
+ExecStop=/usr/bin/docker stop ains-worker
+Restart=always
+RestartSec=10
+[Install]
+WantedBy=multi-user.target
+UNIT
+cat > /etc/ains/Caddyfile <<'CADDY'
+${domain} {
+    request_body {
+        max_size 101MB
+    }
+    reverse_proxy 127.0.0.1:8000
+}
+CADDY
+cat > /etc/systemd/system/ains-proxy.service <<'UNIT'
+[Unit]
+After=docker.service
+Requires=docker.service
+[Service]
+ExecStartPre=-/usr/bin/docker rm -f ains-proxy
+ExecStart=/usr/bin/docker run --name ains-proxy --network host -v /etc/ains/Caddyfile:/etc/caddy/Caddyfile:ro -v ains-caddy:/data --log-opt max-size=10m --log-opt max-file=3 caddy:2
+ExecStop=/usr/bin/docker stop ains-proxy
+Restart=always
+RestartSec=10
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now ains ains-worker ains-proxy

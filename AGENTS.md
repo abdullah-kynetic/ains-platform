@@ -6,7 +6,8 @@ AINS: AI-native financial regulatory audit platform. First service: FINRA Rule 3
 - Python 3.12, FastAPI, Pydantic v2, pydantic-settings, httpx, tenacity
 - uv for packages (`uv sync`, `uv run pytest`, `uv run ruff check .`)
 - Postgres 16 locally via `docker compose up -d`
-- Client documents in Egnyte (Internal API app, OAuth password flow)
+- Client documents in S3 by default (`STORAGE_BACKEND=s3`); Egnyte is an optional,
+  off-by-default connector (Internal API app, OAuth password flow)
 - This repository is workflow software only. No direct model calls; a separate pipeline may
   connect later through an authenticated backend adapter.
 - Next.js 16 (TypeScript, Tailwind v4) client portal in `web/` (npm); talks to the API via `NEXT_PUBLIC_API_URL`
@@ -20,7 +21,7 @@ app/
   api/               Tenant-scoped engagement and document endpoints
   checks/            Storage receipt verification only; no model inference
   database/          SQLAlchemy models and session management
-  documents/         Upload validation, hashing, and guarded Egnyte ingestion
+  documents/         Upload validation, hashing, and selected storage ingestion
   egnyte_client/     Egnyte API client (client.py), path guard (paths.py), CLI (cli.py)
   reports/           Unsigned DOCX/PDF draft report generation
   worker.py          Durable Postgres-backed async document-check worker

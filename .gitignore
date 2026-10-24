@@ -225,3 +225,10 @@ __marimo__/
 !.env.example
 data/real/
 *.pem
+
+# Terraform state, plans, credentials and local deployment inputs
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+infra/aws/terraform.tfvars

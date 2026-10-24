@@ -180,4 +180,47 @@ IngestSettings = Annotated[Settings, Depends(get_settings)]
 
 
 def get_document_ingestor(settings: IngestSettings) -> DocumentIngestor:
+    if settings.storage_backend == "s3":
+        return S3DocumentIngestor(settings)
     return EgnyteDocumentIngestor(settings)
+
+
+class S3DocumentIngestor:
+    def __init__(self, settings: Settings) -> None:
+        self.settings = settings
+
+    async def ingest(
+        self, *, engagement: Engagement, item: ChecklistItemInstance, file: UploadFile
+    ) -> StoredDocument:
+        import asyncio
+
+        from botocore.exceptions import BotoCoreError, ClientError
+
+        from app.storage.s3 import S3Storage
+
+        if item.firm_id != engagement.firm_id or item.engagement_id != engagement.id:
+            raise HTTPException(status_code=404, detail="Checklist item not found")
+        if item.restricted:
+            raise HTTPException(status_code=422, detail="Restricted uploads are not accepted")
+        name, suffix = _validated_filename(file.filename)
+        accepted = {f".{ext.lstrip('.').casefold()}" for ext in item.accepted_extensions}
+        if accepted and suffix not in accepted:
+            raise HTTPException(status_code=415, detail="File type is not accepted")
+        content, digest = await _read_validated(file, suffix)
+        path = f"{engagement.id}/{item.item_key}/{uuid.uuid4().hex}-{name}"
+        storage = None
+        try:
+            storage = S3Storage(self.settings)
+            result = await asyncio.to_thread(storage.put, engagement.firm_id, path, content)
+            key = storage.key(engagement.firm_id, path)
+        except (ValueError, BotoCoreError, ClientError):
+            raise HTTPException(status_code=503, detail="Document storage unavailable") from None
+        finally:
+            if storage:
+                await storage.aclose()
+        return StoredDocument(
+            egnyte_path=f"s3://{self.settings.s3_bucket}/{key}",
+            sha256=digest,
+            size_bytes=len(content),
+            version=result["VersionId"],
+        )

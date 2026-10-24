@@ -282,6 +282,7 @@ function SignInForm() {
                 >
                   Set up auditor MFA
                 </Button>
+                <a href="/reset-password" className="text-sm underline">Forgot your password?</a>
               </form>
             )}
             {message ? (

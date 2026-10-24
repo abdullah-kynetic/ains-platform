@@ -164,9 +164,7 @@ def _view(
     )
 
 
-@auditor_router.get(
-    "/engagements/{engagement_id}/invitations", response_model=list[InvitationView]
-)
+@auditor_router.get("/engagements/{engagement_id}/invitations", response_model=list[InvitationView])
 def list_invitations(
     engagement_id: str,
     user: CurrentUser,
@@ -236,6 +234,12 @@ def create_invitation(
                 details={"email": invitation.email, "engagement_id": engagement.id},
             )
         )
+        if not settings.invitation_preview_enabled:
+            from .email import ResendSender
+
+            ResendSender(settings, "invitation").send(
+                email=invitation.email, token=token, expires_at=invitation.expires_at
+            )
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -273,6 +277,12 @@ def resend_invitation(
             details={"email": invitation.email, "engagement_id": invitation.engagement_id},
         )
     )
+    if not settings.invitation_preview_enabled:
+        from .email import ResendSender
+
+        ResendSender(settings, "invitation").send(
+            email=invitation.email, token=token, expires_at=invitation.expires_at
+        )
     db.commit()
     return _view(db, invitation, settings, token=token)
 
