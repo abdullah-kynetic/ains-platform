@@ -1,0 +1,13 @@
+{
+  "$schema": "../web/node_modules/wrangler/config-schema.json",
+  "name": "kien-solutions",
+  "compatibility_date": "2026-10-20",
+  "workers_dev": true,
+  // No routes and no custom_domain entries. Deploy publishes this Worker only.
+  // Attaching kiensolutions.com or www is a separate dashboard step: see README.md.
+  "assets": {
+    "directory": "./public",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}
