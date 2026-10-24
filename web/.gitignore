@@ -2,6 +2,7 @@
 /.generated/
 /test-results/
 /playwright-report/
+/screenshots/
 /.next/
 /.open-next/
 /.wrangler/

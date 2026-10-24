@@ -1,6 +1,9 @@
+"use client";
+
+import { useTenant } from "@/components/tenant/tenant-provider";
 import { cn } from "@/lib/utils";
 
-/** Placeholder wordmark until the brand name is chosen. */
+/** Placeholder wordmark until a firm logo URL is available. */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={cn("size-7", className)} aria-hidden>
@@ -11,11 +14,18 @@ export function LogoMark({ className }: { className?: string }) {
 }
 
 export function Logo({ className, sub }: { className?: string; sub?: string }) {
+  const { slug, branding } = useTenant();
   return (
-    <div className={cn("flex items-center gap-2.5", className)}>
-      <LogoMark />
+    <div className={cn("flex items-center gap-2.5", className)} data-firm-slug={slug}>
+      {branding.logoUrl ? (
+        // Firm logos are host-specific URLs, including ones the API will supply later.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={branding.logoUrl} alt="" className="size-7 rounded-md" />
+      ) : (
+        <LogoMark />
+      )}
       <div className="leading-tight">
-        <div className="text-[15px] font-semibold tracking-[-0.02em]">AINS</div>
+        <div className="text-[15px] font-semibold tracking-[-0.02em]">{branding.name}</div>
         {sub ? <div className="text-[10px] uppercase tracking-[0.14em] text-subtle">{sub}</div> : null}
       </div>
     </div>

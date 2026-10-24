@@ -1,7 +1,10 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import type { NavItem } from "./nav";
 import { CommandPalette } from "./command-palette";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
+import { useTenant } from "@/components/tenant/tenant-provider";
 
 export function Shell({
   sidebar,
@@ -14,13 +17,14 @@ export function Shell({
   auditor: boolean;
   children: React.ReactNode;
 }) {
+  const { branding } = useTenant();
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       {sidebar}
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between border-b border-border bg-surface/90 px-8 backdrop-blur">
           <div className="flex items-center gap-2 text-xs text-subtle">
-            <span>AINS</span>
+            <span>{branding.name}</span>
             <span>/</span>
             <span className="font-medium text-muted">{auditor ? "Audit operations" : "Your engagement"}</span>
           </div>

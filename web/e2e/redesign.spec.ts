@@ -25,7 +25,7 @@ test("auditor overview, sidebar rail and desktop screenshot", async ({
   await expect(page.getByRole("img", { name: /% reviewed/ })).toBeVisible();
   await axe(page);
   await page.screenshot({
-    path: "/workspace/screenshots/auditor-overview.png",
+    path: "screenshots/auditor-overview.png",
     style: "nextjs-portal { display: none; }",
   });
   await page.getByRole("button", { name: "Collapse sidebar" }).click();
@@ -127,7 +127,7 @@ test("client home has four actions, messages and desktop screenshot; auditor rou
     page.getByRole("region", { name: "Quick actions" }).getByRole("link"),
   ).toHaveCount(4);
   await axe(page);
-  await page.screenshot({ path: "/workspace/screenshots/client-home.png" });
+  await page.screenshot({ path: "screenshots/client-home.png" });
   await page.getByRole("link", { name: /^Messages/ }).click();
   await expect(page.getByRole("heading", { name: "Messages" })).toBeVisible();
   await axe(page);

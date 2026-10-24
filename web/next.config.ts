@@ -12,6 +12,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  // Dev already allows *.localhost. These let Playwright open production-style hosts.
+  allowedDevOrigins: ["kiensolutions.com", "*.kiensolutions.com"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
