@@ -9,9 +9,9 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-card border bg-surface shadow-[0_1px_2px_rgba(16,24,40,0.03)]",
+        "rounded-card border bg-surface shadow-card",
         featured
-          ? "border-brand/30 shadow-[0_10px_30px_-18px_rgba(79,70,229,0.35)]"
+          ? "border-brand/30 shadow-featured"
           : "border-border",
         className,
       )}

@@ -67,7 +67,7 @@ function WorkspaceSwitcher({
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="flex min-h-[var(--control-height)] w-full items-center gap-[var(--space-3)] rounded-lg border border-border bg-surface p-[var(--space-2)] text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-hover"
+        className="flex min-h-[var(--control-height)] w-full items-center gap-[var(--space-3)] rounded-lg border border-border bg-surface p-[var(--space-2)] text-left shadow-card transition-colors hover:bg-hover"
       >
         <span className="grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-xs font-semibold tracking-wide text-background">
           {active.mark}
@@ -84,7 +84,7 @@ function WorkspaceSwitcher({
       </button>
 
       {open ? (
-        <div className="absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-lg border border-border bg-surface p-1.5 shadow-[0_16px_40px_rgba(16,24,40,0.14)]">
+        <div className="absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-lg border border-border bg-surface p-1.5 shadow-pop">
           <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-subtle">
             Workspaces
           </p>

@@ -135,6 +135,7 @@ export function CommandPalette({ items }: { items: NavItem[] }) {
                       "dark",
                       theme === "dark",
                     );
+                    document.documentElement.dataset.theme = theme;
                     localStorage.setItem("ains-theme", theme);
                     setOpen(false);
                   }}
