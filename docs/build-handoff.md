@@ -56,23 +56,46 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Postgres migrations through `a105_manual_review` were applied to a separate synthetic
+Postgres migrations through `a108_auditor_mfa_recovery` were applied to a separate synthetic
 verification database; `alembic check` found no missing operations. CI is pinned to Ubuntu
 24.04 so the rolling runner-image migration does not change browser system dependencies.
 
-## Before real deployment—not implied complete by these task merges
+## Active remaining work
 
 - Quinton must review the request wording, applicability conditions and allowed evidence types,
   then supply the rubric. Empty rubric fields are intentional, not invented audit standards.
-- Provision invited users, auditor MFA and engagement assignments; configure the approved
-  magic-link email sender, session secret, HTTPS cookie settings, CORS and recovery process.
+- Add controlled first-auditor account creation, auditor/client deactivation, engagement
+  reassignment and an administrative audit view. Client invitations and auditor MFA enrollment
+  are complete; public sign-up must remain disabled.
+- Complete the app-owned authentication lifecycle: password reset, account recovery and verified
+  email delivery for invitations and magic links. Use a deliberately configured mail service or
+  self-hosted relay; synthetic preview links must remain local-development-only.
 - Existing legacy request keys need an explicit reviewed migration. Initialization only accepts
   empty assigned engagements and does not guess mappings or overwrite records.
 - Validate live Egnyte access with synthetic files only. This build's storage verification used
-  a fake Egnyte client, not a live account. Storage-only worker receipts are not content review.
-- Review production operations: tenant authorization, backups, retention, malware scanning,
-  monitoring, deployment and recovery. Application change history is not tamper-proof external storage.
+  a fake Egnyte client, not a live account. Add malware/quarantine policy and stronger Office
+  container validation. Storage-only worker receipts are not content review.
+- Add worker operations: health and queue-depth monitoring, stale-version policy, retry/dead-letter
+  visibility and safe recovery procedures.
+- Operate a production PostgreSQL deployment: restricted network access, connection pooling,
+  encrypted backups and restore drills, point-in-time recovery, credential rotation, migrations,
+  monitoring and capacity planning. FastAPI remains the only application data boundary.
+- Harden the deployed application boundary: self-hosted backend deployment, HTTPS-only cookies,
+  strict CORS, rate limits/account lockout, secret rotation, application monitoring, retention and
+  incident recovery. Application change history is not tamper-proof external storage.
 - Review report content/templates and signing procedures. Readiness means workflow review
-  completeness, not a clean opinion or signed report; existing draft exports remain unsigned.
+  completeness, not a clean opinion or signed report; add controlled final signing and delivery.
 - The external automation pipeline is intentionally unconnected. Any future adapter needs its
   own security/data contract, and must not process restricted material through this app.
+
+## Supabase decision
+
+Supabase is not planned for AINS. Do not create a Supabase project or schedule work for Supabase
+Auth, Storage, Realtime, Edge Functions, browser keys, direct browser database access or an RLS-led
+authorization redesign. Do not remove working application services in anticipation of such a
+migration.
+
+FastAPI owns the user directory, password and session flows, auditor MFA, firm binding, auditor
+assignment and workflow authorization. AINS operates PostgreSQL and its production safeguards.
+Egnyte remains the document system of record. The browser calls FastAPI exclusively. The existing
+synthetic Supabase PostgreSQL PoC is an archived decision record and requires no follow-up.
