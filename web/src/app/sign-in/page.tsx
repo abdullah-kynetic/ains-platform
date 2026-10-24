@@ -3,6 +3,8 @@
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/brand/logo";
+import { SiteFooter } from "@/components/brand/site-footer";
+import { productName } from "@/lib/brand";
 import { LoadState } from "@/components/ui/load-state";
 import { useSession } from "@/components/auth/session";
 import { Button } from "@/components/ui/button";
@@ -128,13 +130,14 @@ function SignInForm() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen bg-glow px-4 py-12">
+    <div className="flex min-h-screen flex-col bg-glow">
+    <main id="main-content" className="flex-1 px-4 py-12">
       <div className="mx-auto grid w-full max-w-md gap-7">
         <Logo sub="Secure portal" className="justify-self-center" />
         <Card featured>
           <CardHeader>
             <h1 className="text-xl font-semibold">
-              {token ? "Complete sign in" : "Sign in to Kien Solutions"}
+              {token ? "Complete sign in" : `Sign in to ${productName}`}
             </h1>
             <CardDescription>
               Invite-only access. Auditors must also enter their MFA code.
@@ -298,10 +301,12 @@ function SignInForm() {
           </CardContent>
         </Card>
         <p className="text-center text-xs text-subtle">
-          Only invited firm users and Kien Solutions auditors can sign in.
+          Only invited firm users and {productName} auditors can sign in.
         </p>
       </div>
     </main>
+    <SiteFooter />
+    </div>
   );
 }
 

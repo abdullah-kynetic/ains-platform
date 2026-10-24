@@ -137,7 +137,8 @@ def test_resend_magic_and_invitation_links(reset_backend):
         )
         payload = json.loads(send.calls[-1].request.content)
         assert f"/{path}?token=synthetic" in payload["text"]
-        assert "Kien Solutions" in payload["subject"]
+        assert payload["subject"] in {"Sign in to Kien", "You're invited to Kien"}
+        assert "Kien by Kien Solutions" in payload["text"]
         assert "https://kiensolutions.com" in payload["text"]
         assert "AINS" not in payload["subject"]
         assert "AINS" not in payload["text"]

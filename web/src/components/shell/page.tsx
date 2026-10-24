@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
 import type { NavItem } from "./nav";
 import { CommandPalette } from "./command-palette";
+import { SiteFooter } from "@/components/brand/site-footer";
+import { productName } from "@/lib/brand";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 
 export function Shell({
@@ -17,10 +19,10 @@ export function Shell({
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       {sidebar}
-      <div className="min-w-0 flex-1">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between border-b border-border bg-surface/90 px-8 backdrop-blur">
           <div className="flex items-center gap-2 text-xs text-subtle">
-            <span>Kien</span>
+            <span>{productName}</span>
             <span>/</span>
             <span className="font-medium text-muted">{auditor ? "Audit operations" : "Your engagement"}</span>
           </div>
@@ -32,12 +34,13 @@ export function Shell({
         <main
           id="main-content"
           tabIndex={-1}
-          className="min-h-[calc(100vh-4rem)] bg-background"
+          className="flex-1 bg-background"
         >
           <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-8 sm:py-8 xl:px-10">
             {children}
           </div>
         </main>
+        <SiteFooter />
       </div>
     </div>
   );
