@@ -16,20 +16,67 @@
   font-display: swap;
 }
 
+/*
+  Palette: Ink Blue #33405C and Ochre #B8924A only.
+  Other values are shades or tints of those two. Neutrals are desaturated ink tints.
+*/
 :root {
   color-scheme: light;
-  --paper: #f4f0e6;
-  --paper-raised: #fbf9f4;
-  --ink: #1b1915;
-  --muted: #4e4942;
-  --line: #ddd4c4;
-  --pine: #1a3c34;
-  --pine-deep: #102822;
-  --cream: #f7f3ea;
-  --cream-soft: #d5e0da;
+  --ink: #33405c;
+  --ochre: #b8924a;
+  --bg: #f6f2e9;
+  --surface: #fbf9f5;
+  --text: var(--ink);
+  --heading: var(--ink);
+  --muted: #4e5669;
+  --line: #c0c3c8;
+  --link: var(--ink);
+  --link-hover: #283248;
+  --button-bg: var(--ink);
+  --button-text: #f6f2e9;
+  --button-hover: #283248;
+  --accent: var(--ink);
+  --contact-bg: var(--ink);
+  --contact-text: #f6f2e9;
+  --contact-muted: #d7d9dd;
+  --contact-link: #f6f2e9;
+  --contact-link-hover: #fbf9f5;
+  --mark-bg: var(--ink);
+  --mark-stroke: #f6f2e9;
+  --focus: var(--ink);
+  --selection: #dfceae;
+  --selection-text: var(--ink);
   --serif: "Newsreader", "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
   --sans: "Public Sans", "Segoe UI", "Liberation Sans", sans-serif;
   --wrap: min(1080px, calc(100% - 40px));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: var(--ink);
+    --surface: #232c3f;
+    --text: #e4e5e7;
+    --heading: #e4e5e7;
+    --muted: #b4b7bd;
+    --line: #6c758a;
+    --link: #c6a86e;
+    --link-hover: #cfb584;
+    --button-bg: var(--ochre);
+    --button-text: #232c3f;
+    --button-hover: #c3a265;
+    --accent: #c6a86e;
+    --contact-bg: #232c3f;
+    --contact-text: #e4e5e7;
+    --contact-muted: #b4b7bd;
+    --contact-link: var(--ochre);
+    --contact-link-hover: #c6a86e;
+    --mark-bg: var(--ochre);
+    --mark-stroke: #232c3f;
+    --focus: #c6a86e;
+    --selection: #283248;
+    --selection-text: #e4e5e7;
+  }
 }
 
 *,
@@ -44,8 +91,8 @@ html {
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--sans);
   font-size: 1.0625rem;
   font-weight: 400;
@@ -61,17 +108,22 @@ svg {
 }
 
 a {
-  color: var(--pine);
+  color: var(--link);
   text-underline-offset: 0.18em;
 }
 
 a:hover {
-  color: var(--pine-deep);
+  color: var(--link-hover);
 }
 
 :focus-visible {
-  outline: 2px solid var(--pine);
+  outline: 2px solid var(--focus);
   outline-offset: 3px;
+}
+
+::selection {
+  background: var(--selection);
+  color: var(--selection-text);
 }
 
 .skip {
@@ -79,8 +131,8 @@ a:hover {
   left: 16px;
   top: -48px;
   z-index: 5;
-  background: var(--paper-raised);
-  color: var(--ink);
+  background: var(--surface);
+  color: var(--text);
   padding: 10px 14px;
 }
 
@@ -151,13 +203,14 @@ a:hover {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: var(--ink);
+  color: var(--link);
   font-size: 0.95rem;
   font-weight: 560;
   text-decoration: none;
 }
 
 .nav a:hover {
+  color: var(--link-hover);
   text-decoration: underline;
 }
 
@@ -174,11 +227,19 @@ a:hover {
 
 .eyebrow {
   margin: 0 0 14px;
-  color: var(--pine);
+  color: var(--accent);
   font-size: 0.78rem;
   font-weight: 650;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+.docket-title,
+.brand-name {
+  color: var(--heading);
 }
 
 h1,
@@ -213,8 +274,8 @@ h1 {
   justify-content: center;
   min-height: 48px;
   padding: 12px 18px;
-  background: var(--pine);
-  color: var(--cream);
+  background: var(--button-bg);
+  color: var(--button-text);
   font-weight: 650;
   text-align: center;
   text-decoration: none;
@@ -222,16 +283,16 @@ h1 {
 }
 
 .button:hover {
-  background: var(--pine-deep);
-  color: var(--cream);
+  background: var(--button-hover);
+  color: var(--button-text);
 }
 
 .docket {
   margin: 0;
   padding: 26px 26px 22px;
-  background: var(--paper-raised);
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-top: 4px solid var(--pine);
+  border-top: 4px solid var(--accent);
 }
 
 .docket-kicker {
@@ -323,7 +384,7 @@ h3 {
   font-family: var(--serif);
   font-size: 1.7rem;
   font-weight: 520;
-  color: var(--pine);
+  color: var(--accent);
   line-height: 1.2;
 }
 
@@ -346,33 +407,38 @@ h3 {
 
 .benefits li {
   padding: 26px 26px 30px;
-  background: var(--paper-raised);
+  background: var(--surface);
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 
 .contact {
-  background: var(--pine);
-  color: var(--cream);
+  background: var(--contact-bg);
+  color: var(--contact-text);
   padding: 72px 0;
 }
 
 .contact .eyebrow {
-  color: var(--cream-soft);
+  color: var(--contact-muted);
+}
+
+.contact :focus-visible {
+  outline-color: var(--contact-link);
 }
 
 .contact h2 {
   max-width: 16ch;
+  color: var(--contact-text);
 }
 
 .contact .section-lead {
-  color: var(--cream-soft);
+  color: var(--contact-muted);
 }
 
 .email {
   display: inline-block;
   margin-top: 22px;
-  color: var(--cream);
+  color: var(--contact-link);
   font-family: var(--serif);
   font-size: clamp(1.4rem, 3.2vw, 2.5rem);
   font-weight: 520;
@@ -382,7 +448,7 @@ h3 {
 }
 
 .email:hover {
-  color: white;
+  color: var(--contact-link-hover);
 }
 
 .site-footer {
@@ -402,7 +468,7 @@ h3 {
 
 .footer-name {
   margin: 0 0 4px;
-  color: var(--ink);
+  color: var(--heading);
   font-weight: 650;
 }
 
