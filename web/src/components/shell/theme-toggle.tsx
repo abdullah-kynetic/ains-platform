@@ -57,7 +57,7 @@ export function ThemeToggle() {
             : event.clientY,
         });
       }}
-      className="grid size-9 place-items-center rounded-md border border-border bg-surface text-muted shadow-[0_1px_2px_rgba(16,24,40,0.03)] transition-colors hover:bg-hover hover:text-foreground"
+      className="grid size-[var(--control-height)] place-items-center rounded-[var(--control-radius)] border border-border bg-surface text-muted shadow-[0_1px_2px_rgba(16,24,40,0.03)] transition-colors hover:bg-hover hover:text-foreground"
     >
       <span className="theme-icon-moon">
         <Moon className="size-4" />

@@ -101,7 +101,7 @@ export default function UploadPage() {
       />
       <ol
         aria-label="Upload steps"
-        className="mb-6 grid grid-cols-3 gap-2 text-xs sm:text-sm"
+        className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-3)] text-sm leading-snug sm:grid-cols-3"
       >
         {["Choose request", "Confirm files", "Keep receipts"].map(
           (step, index) => (
@@ -248,7 +248,7 @@ export default function UploadPage() {
                           : "Ready to upload"}
                   </p>
                   {pending.error && (
-                    <p role="alert" className="text-red-300">
+                    <p role="alert" className="status-note" data-tone="danger">
                       {pending.error}
                     </p>
                   )}

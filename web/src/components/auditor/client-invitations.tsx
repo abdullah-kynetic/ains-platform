@@ -160,12 +160,12 @@ export function ClientInvitations({
       ) : null}
 
       {notice ? (
-        <p role="status" className="text-sm text-green-300">
+        <p role="status" className="status-note" data-tone="success">
           {notice}
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-300">
+        <p role="alert" className="status-note" data-tone="danger">
           {error}
         </p>
       ) : null}

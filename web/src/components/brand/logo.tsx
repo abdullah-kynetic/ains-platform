@@ -12,11 +12,11 @@ export function LogoMark({ className }: { className?: string }) {
 
 export function Logo({ className, sub }: { className?: string; sub?: string }) {
   return (
-    <div className={cn("flex items-center gap-2.5", className)}>
+    <div className={cn("flex items-center gap-[var(--space-3)]", className)}>
       <LogoMark />
       <div className="leading-tight">
-        <div className="text-[15px] font-semibold tracking-[-0.02em]">AINS</div>
-        {sub ? <div className="text-[10px] uppercase tracking-[0.14em] text-subtle">{sub}</div> : null}
+        <div className="text-base font-semibold tracking-[-0.02em]">AINS</div>
+        {sub ? <div className="text-xs font-medium uppercase tracking-[0.08em] text-muted">{sub}</div> : null}
       </div>
     </div>
   );

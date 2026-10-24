@@ -72,7 +72,7 @@ export function AuditorActivityFeed() {
       <Card>
         <CardContent className="pt-5">
           {loading ? <p role="status" className="py-8 text-center text-xs text-subtle">Loading recent activity…</p> : null}
-          {error ? <p role="alert" className="mb-3 rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-xs text-danger">{error}</p> : null}
+          {error ? <p role="alert" className="status-note mb-[var(--space-3)]" data-tone="danger">{error}</p> : null}
           <ol className="grid gap-0">
             {activity.map((item, index) => {
               const visual = activityVisuals[item.kind];
@@ -94,7 +94,7 @@ export function AuditorActivityFeed() {
                     <Icon className="size-3.5" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 pt-0.5">
-                    <p className="text-[13px] leading-5 text-muted">
+                    <p className="text-sm leading-5 text-muted">
                       <span className="font-medium text-foreground">
                         {item.actor}
                       </span>{" "}
@@ -109,7 +109,7 @@ export function AuditorActivityFeed() {
                     <p className="mt-1 text-xs leading-5 text-subtle">
                       {item.context}
                     </p>
-                    <p className="mt-1 text-[11px] text-subtle">
+                    <p className="mt-1 text-xs text-subtle">
                       {relativeTime(item.occurredAt)}
                     </p>
                   </div>
@@ -120,7 +120,7 @@ export function AuditorActivityFeed() {
           {!loading && !activity.length ? <p className="py-8 text-center text-xs text-subtle">No recent activity for assigned engagements.</p> : null}
         </CardContent>
       </Card>
-      <p className="mt-2 text-[11px] text-subtle">
+      <p className="mt-2 text-xs text-subtle">
         Internal activity for assigned engagements. Audit details remain in the protected workspace.
       </p>
     </section>
