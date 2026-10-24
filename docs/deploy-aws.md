@@ -1,146 +1,68 @@
-# AWS deployment runbook
+# AWS deployment runbook (lean single-host profile)
 
-This is a low-volume, single-region deployment baseline, not a certification or a
-high-availability service. No AWS resources were created while preparing it.
-Quinton must approve the control evidence, retention policy and release before client use.
-Use synthetic documents for every deployment smoke test.
+Low-volume, single-region production for Kien Solutions (AINS). Not a certification
+or high-availability service. Quinton must approve control evidence, retention policy
+and release before client use. Use synthetic documents for every smoke test.
 
 ## Design and tradeoffs
 
-`infra/aws` deploys an ARM64 EC2 t4g.micro running the API, receipt worker and Caddy
-HTTPS proxy, plus encrypted **private** single-AZ RDS PostgreSQL db.t4g.micro. Two
-private database subnets have no internet route. Only the app security group can
-connect on 5432. RDS forces TLS, backs up automatically for seven days, and has
-snapshot/deletion protection. The app instance has encrypted EBS, IMDSv2, no SSH
-port and SSM administration. There is no NAT gateway or load balancer charge.
+`infra/aws` runs everything on **one ARM64 EC2 t4g.micro** (1 GB RAM, 2 GB swap,
+20 GB encrypted gp3): Caddy (HTTPS), the API, the receipt worker and **PostgreSQL 16
+on localhost** (tuned for 1 GB: 128 MB shared_buffers, 30 connections). There is no
+RDS, NAT gateway, load balancer, Secrets Manager or customer KMS key. The security
+group opens only 80/443; Postgres and the API bind loopback; administration is via
+SSM Session Manager (no SSH). Burst credits use `standard` mode so CPU can never bill
+surplus credits.
 
-Lightsail nano/micro containers are attractive at roughly $7/$10 per month with
-simple managed HTTPS and predictable pricing. They cannot directly reach this
-private RDS VPC. Lightsail instance VPC peering does not make a Lightsail container
-service a VPC-attached workload. Making RDS public is unacceptable here. A Lightsail
-managed database changes the requested RDS service and backup/networking controls.
-Therefore the runnable Terraform deliberately selects EC2 instead of provisioning an
-unusable Lightsail container service. App Runner with a VPC connector is workable,
-but outbound Resend access needs an egress design, typically a NAT gateway
-whose hourly cost exceeds this application's compute cost. EC2 needs OS patching
-and more operator work; managed services become preferable as usage grows.
+- **Secrets**: SSM Parameter Store SecureStrings under `/ains-prod/` (free standard
+  tier, AWS-managed key). The instance generates `SESSION_SECRET` and `DB_PASSWORD`
+  on first boot, so no secret value is in Terraform state or user-data. Add
+  `/ains-prod/RESEND_API_KEY` yourself to enable email, then
+  `sudo systemctl restart ains ains-worker`. Without it email endpoints return 503.
+- **Storage**: documents bucket (AES256, versioning, Object Lock enabled with no
+  default retention; noncurrent versions expire after 365 days) and one `-ops`
+  bucket for S3 access logs (`logs/`, 90 days), CloudTrail (`AWSLogs/`, 90 days),
+  daily DB dumps (`backups/`, 14 days) and release bundles (`releases/`, 90 days).
+- **Audit**: one multi-region management-events CloudTrail trail (the first one is
+  free). Billed S3 data events are off (`trail_document_data_events`).
+- **Backups**: `ains-backup.timer` runs `pg_dump -Fc` daily at 09:30 UTC to
+  `s3://<ops>/backups/`. There is no point-in-time recovery; worst-case data loss is
+  one day. Test a restore with `pg_restore` into a scratch database.
+- **Image**: with `app_image` empty, Terraform uploads a `git archive` bundle to the
+  ops bucket and the host builds the image locally (no registry). A new bundle
+  replaces the instance (user-data changes), so **dump the DB first**; the EIP and
+  SSM secrets survive, but the root volume and local Postgres do not.
 
-There is one API/worker host and no automatic failover. A host replacement or
-migration interrupts service. Monitor it and test restores; move to redundant
-compute and multi-AZ RDS when the availability requirement justifies the expense.
-AWS resources alone do not prove due-diligence acceptance.
+Tradeoffs: one host, no failover; a host loss means restoring the last daily dump.
+Move Postgres to RDS and add redundancy once client volume justifies ~$15+/month more.
 
-## What Abdullah must provide
+## Provision
 
-- AWS account with billing enabled, root MFA, recovery contacts, target region
-  (default `us-east-1`), and a budget notification address. Confirm credit eligibility
-  and expiry in Billing; production should use a paid account plan.
-- A deployment IAM identity (prefer short-lived SSO/role credentials). If a deploy
-  IAM user/access key is required, supply it through your local AWS profile, never
-  Terraform inputs, source code or chat. Its reviewed policy needs this deployment's
-  VPC/subnet/routes/security groups, EC2/EIP/EBS, RDS/subnet/parameter groups, S3,
-  CloudTrail and IAM lifecycle permissions, `iam:PassRole` restricted to this EC2
-  role, plus provider read/list/tag permissions. A deploy identity is separate from
-  the app storage user; do not attach app credentials to Terraform administration.
-- Domain and DNS access: `api.example.com` for AWS and `portal.example.com` for
-  Cloudflare, under the same registrable domain for SameSite session cookies.
-- Cloudflare account/zone and a deployment token restricted to the target Worker/zone.
-- Resend account, a sending-only API key restricted to the verified domain, sender
-  address, and DNS access for Resend's exact SPF and DKIM records. Add DMARC at
-  `_dmarc` (begin with monitored `p=none`, then enforce after validating alignment).
-  Do not publish multiple SPF records for one hostname; merge as needed.
-- ARM64 backend image in a public registry, pinned by SHA256 digest. The image
-  contains code/catalog/templates only, never environment files or documents.
-- Three existing Secrets Manager secret ARNs: SESSION_SECRET (random, at least
-  32 bytes), RESEND_API_KEY, DATABASE_URL. Create values using the console's secure
-  editor. DATABASE_URL can initially be a placeholder until RDS exists.
-  No Egnyte account or credentials are needed for the primary S3 deployment.
-  Use the default Secrets Manager encryption key; a customer key requires an
-  additional narrowly scoped `kms:Decrypt` policy for the instance role.
-- Quinton's choice of final-report retention days and GOVERNANCE/COMPLIANCE mode.
-  COMPLIANCE retention cannot be shortened even by the account root. No application
-  action automatically finalizes a finding or signs a report.
-
-## Local release checks and image
-
-```sh
-uv sync --frozen
-uv run ruff check .
-uv run pytest
-uv run python scripts/evaluate_synthetic.py
-export PATH="$HOME/.local/node22/bin:$PATH"
-(cd web && npm ci && npm run lint && npm run build && npm run typecheck)
-(cd web && npx playwright test)
-docker buildx build --platform linux/arm64 -t ghcr.io/YOUR_ORG/ains-platform:RELEASE --push .
-```
-
-Record the resulting digest in `app_image`. The Python 3.12 slim image runs as a
-non-root user; its entrypoint runs `alembic upgrade head` and starts uvicorn only
-if migrations succeed. The worker overrides the entrypoint to avoid simultaneous
-migration runs. Apply migrations with a single API instance; take a DB snapshot
-before schema changes. The RDS trust bundle is installed in the image for TLS
-certificate verification. Rebuild regularly for base-image and trust-store updates.
-
-## Provision (operator executes, not the coding agent)
-
-1. Install Terraform >=1.7 and AWS CLI v2. Authenticate your deployment profile.
-   Set a monthly budget around $60 with warnings at 50/80/100 percent. Budget alerts
-   are notifications, not spending caps. Create the three Secrets Manager entries
-   above; put only their ARNs into `secret_arns`.
-2. Copy `infra/aws/terraform.tfvars.example` to `infra/aws/terraform.tfvars`. Fill
-   in your unique bucket name, domains, sender, image digest and secret ARNs.
-   Terraform never fetches secret values. RDS manages its master password in a
-   separate Secrets Manager secret. Default SSE is AES256; choosing `aws:kms`
-   creates a rotating customer key and grants only data-key/decrypt operations.
-3. Secure Terraform state before applying: use an access-controlled encrypted S3
-   remote backend with locking (`use_lockfile = true`), or encrypted local storage
-   for the initial bootstrap. The state backend must exist separately from this
-   stack. Keep state, plans, tfvars and AWS credentials out of git. If enabling
-   `create_app_access_key`, its secret **will be in Terraform state**.
+1. AWS CLI v2 + Terraform >= 1.7, authenticated to the target account. Keep the
+   monthly budget alarm (currently `kien-monthly-15`, $15) in place.
+2. Use a fresh per-account local state path; never reuse another account's state:
 
    ```sh
+   D=$HOME/ains-state/<account-id>
+   git archive --format=tar.gz -o $D/ains-source.tar.gz HEAD
    cd infra/aws
-   terraform init
-   terraform fmt -check
-   terraform validate
-   terraform plan -out=release.tfplan
-   terraform apply release.tfplan
+   terraform init -backend-config=path=$D/terraform.tfstate
+   terraform plan -var-file=$D/terraform.tfvars -out=$D/tfplan
+   terraform apply $D/tfplan
    terraform output
    ```
 
-4. Create the API DNS A record pointing at `api_ip` (DNS-only while Caddy obtains
-   its certificate). Ports 80/443 serve redirects/HTTPS; port 8000 is published
-   only on host loopback. No SSH access is opened. Bootstrap may retry while the
-   DATABASE_URL placeholder is present; this is expected and not a ready service.
-5. Connect to the instance using SSM Session Manager (`instance_id` output).
-   Use an operator-controlled session to initialize a separate database login
-   `ains_app`, own the `ains` database/schema and grant it the privileges needed by
-   Alembic. Retrieve the RDS-managed master credential only in your secure operator
-   session, never into Terraform or logs. The app role deliberately cannot read
-   that administrator secret. Keep the master identity for administration only.
-6. Replace the DATABASE_URL secret value with the application login URL:
-   `postgresql+psycopg://ains_app:URL_ENCODED_PASSWORD@RDS_HOST:5432/ains?sslmode=verify-full&sslrootcert=/usr/local/share/rds-ca.pem`.
-   Percent-encode special characters in the password. Use the RDS hostname rather
-   than an IP so certificate hostname validation succeeds. Do not print the URL.
-   On the instance, run `sudo systemctl restart ains` then
-   `sudo systemctl restart ains-worker`. Boot/restart fetches secret values into
-   a root-only `/etc/ains/runtime.env` file; no secret appears in user-data or
-   Terraform. Restart both services after any secret rotation.
-7. Verify `https://api.example.com/health`; liveness alone does not verify the DB,
-   worker or email. Review service state through SSM (`systemctl status ains
-   ains-worker ains-proxy`) without dumping environment files. Use the existing
-   synthetic seed/bootstrap procedure only in an isolated staging database;
-   provision production auditor identities through a controlled operator process,
-   then complete mandatory auditor MFA. Do not load demo users into production.
-8. Check Resend DNS verification, then send invitations, magic links and resets to
-   controlled synthetic test accounts. Invitation preview stays disabled. Verify
-   the password-reset generic response for unknown addresses and token replay
-   denial. Reset requests are limited to 3/email/hour and 20/IP/hour in Postgres;
-   the proxy forwards trusted client IPs and the backend port is not public.
-9. Upload a synthetic accepted document and confirm its receipt worker finishes.
-   Check S3 encryption, version ID, server-access-log delivery (delayed), and
-   CloudTrail management and document object events. Test cross-firm denial.
-   Confirm RDS backup retention and perform a restore into a separate isolated DB.
+   See `terraform.tfvars.example`. Empty `api_domain` uses `<ip>.sslip.io` so Caddy
+   gets a certificate before real DNS exists.
+3. Bootstrap takes ~10–15 minutes (dnf, Postgres init, image build). Follow it with
+   SSM: `sudo tail -f /var/log/ains-bootstrap.log`. The API container runs
+   `alembic upgrade head` on start.
+4. Synthetic demo data only (never in a database holding real client records):
+   `sudo docker exec ains-api python -m app.demo_seed`.
+5. DNS: add `A api.<domain> -> api_ip` (DNS only / grey cloud), set
+   `api_domain = "api.<domain>"`, and re-apply (replaces the host; dump DB first), or
+   edit `/etc/ains/Caddyfile` on the host and `sudo systemctl restart ains-proxy`.
+6. Verify `https://<api_domain>/health`.
 
 ## Storage and retention behavior
 
@@ -203,49 +125,27 @@ Do not use `deploy:demo` for production: it intentionally builds synthetic mocks
 Reset links lead to `/reset-password`; magic links lead to `/sign-in?token=...`.
 Disable query-string logging/analytics on all authentication pages at the edge.
 
-## Monthly budget (USD, planning estimate)
-
-Illustrative `us-east-1`, 730 hours, on-demand, low traffic, 10 GB documents. Confirm
-live AWS Calculator prices for the account/region before deployment. This estimates
-about **$46/month including a roughly $12 reserve**; the lean resource bill is closer
-to $34. It excludes tax, domain registration, paid support, heavy egress, extra DB
-snapshots and burst CPU credits. Single-AZ savings trade away availability.
+## Monthly budget (USD, us-east-2 on-demand, low traffic)
 
 | Item | Approx/month |
 | --- | ---: |
-| EC2 t4g.micro (~$0.0084/hour) | $6.13 |
-| One public IPv4 (~$0.005/hour) | $3.65 |
-| 12 GB gp3 EBS (~$0.08/GB) | $0.96 |
-| RDS PostgreSQL db.t4g.micro (~$0.016/hour) | $11.68 |
-| RDS 20 GB gp3 (~$0.115/GB); 7-day backups within included allowance | $2.30 |
-| Secrets Manager: 3 app secrets + RDS master, low API volume | $1.65 |
-| S3 documents/versions, logs, CloudTrail storage and light requests | $1.00 |
-| CloudTrail first management trail + light S3 data events | $0.10 |
-| CloudWatch logs/monitoring allowance | $1.50 |
-| Cloudflare Workers paid base (or $0 if free limits suffice) | $5.00 |
-| Resend within free tier; DNS on existing zone | $0.00 |
-| Usage reserve | $12.00 |
-| **Budget total** | **$46.97** |
+| EC2 t4g.micro ($0.0084/hour) | $6.13 |
+| One public IPv4 / Elastic IP ($0.005/hour) | $3.65 |
+| 20 GB gp3 EBS ($0.08/GB) | $1.60 |
+| S3 documents, logs, trail, dumps (a few GB) + requests | $0.10–0.50 |
+| CloudTrail first management trail | $0.00 |
+| SSM Parameter Store standard SecureStrings | $0.00 |
+| Data transfer out (first 100 GB/month free) | $0.00 |
+| **Total** | **~$11.50–12.00** |
 
-This budget assumes S3 only: $0 for Egnyte subscriptions, credentials or secret
-storage. Optional customer KMS encryption adds roughly $1/key/month plus API calls.
-There is no NAT, ALB or Route 53 hosted zone in this template. S3 versions/logs accumulate: review storage monthly, and
-approve lifecycle/archival rules consistent with retention before enabling them.
-
-New eligible AWS accounts currently receive $100 immediately and can earn another
-$100. That can cover most AWS costs for the initial months, not a perpetual free
-production environment; credits do not cover Cloudflare or domain fees. Check service
-eligibility/expiry and upgrade account plan before using the free-plan expiry as an
-availability risk. Sources: [AWS Free Tier](https://aws.amazon.com/free/),
-[EC2 pricing](https://aws.amazon.com/ec2/pricing/on-demand/),
-[RDS PostgreSQL pricing](https://aws.amazon.com/rds/postgresql/pricing/),
-[S3 Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html),
-[Resend HTTP API](https://resend.com/docs/api-reference/emails/send-email).
+Excludes tax, domain and Cloudflare. If 1 GB is too tight, `instance_type =
+"t4g.small"` adds ~$6. A 1-year Savings Plan roughly halves the instance line.
+Budget alerts are notifications, not caps.
 
 ## Operations, recovery and remaining release gates
 
 - Set external HTTPS uptime checks and alert ownership; alert on worker queue age,
-  failed jobs, RDS CPU/storage/connections, EC2 disk/memory and backup failures.
+  failed jobs, Postgres disk/connections, EC2 disk/memory and backup failures.
   Basic EC2 metrics do not include memory/disk; add a CloudWatch agent or equivalent.
   Log rotation is configured for containers; approve retention for DB/CloudTrail logs.
 - Patch/rebuild images and the host regularly. Pin the Caddy container to a reviewed
@@ -258,8 +158,8 @@ availability risk. Sources: [AWS Free Tier](https://aws.amazon.com/free/),
 - Test credential rotation, synthetic tenant denial, auditor MFA and session
   revocation. Retire expired auth throttle rows/tokens periodically using a reviewed
   maintenance procedure; do not retain auth records indefinitely without a policy.
-- RDS deletion protection and S3 `prevent_destroy` deliberately block casual
-  teardown. Never remove retention or delete state to force a destroy. Retain
+- `prevent_destroy` is currently off for the lean profile. Never remove retention
+  or delete state to force a destroy; dump the DB before any destroy/replace. Retain
   required report versions, backup evidence and trail logs under the approved policy.
 
 ## Optional Sentry error monitoring
