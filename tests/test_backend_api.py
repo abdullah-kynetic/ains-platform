@@ -1495,7 +1495,11 @@ def test_draft_report_includes_only_auditor_approved_findings(backend) -> None:
     assert pdf.content.startswith(b"%PDF-")
 
 
-def test_unconfigured_invitation_delivery_does_not_persist_invite(backend):
+def test_unconfigured_invitation_delivery_persists_without_sending(backend, monkeypatch):
+    def fail(*args: object, **kwargs: object) -> None:
+        raise AssertionError("Resend client must not be called")
+
+    monkeypatch.setattr("app.auth.email.httpx.post", fail)
     client, factory, ids, _, _ = backend
     settings = client.app.dependency_overrides[get_settings]()
     client.app.dependency_overrides[get_settings] = lambda: settings.model_copy(
@@ -1506,7 +1510,7 @@ def test_unconfigured_invitation_delivery_does_not_persist_invite(backend):
         f"/auditor/engagements/{ids['engagement_a']}/invitations",
         json={"email": "delivery-unconfigured@example.test", "name": "Synthetic"},
     )
-    assert response.status_code == 503
+    assert response.status_code == 201
     with factory() as db:
         assert (
             db.scalar(
@@ -1514,5 +1518,5 @@ def test_unconfigured_invitation_delivery_does_not_persist_invite(backend):
                     ClientInvitation.email == "delivery-unconfigured@example.test"
                 )
             )
-            is None
+            is not None
         )

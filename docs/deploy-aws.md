@@ -18,7 +18,10 @@ surplus credits.
   tier, AWS-managed key). The instance generates `SESSION_SECRET` and `DB_PASSWORD`
   on first boot, so no secret value is in Terraform state or user-data. Add
   `/ains-prod/RESEND_API_KEY` yourself to enable email, then
-  `sudo systemctl restart ains ains-worker`. Without it email endpoints return 503.
+  `sudo systemctl restart ains ains-worker`. The app only reads that environment
+  variable. Without it, invite, password-reset, and report-ready sends are logged
+  and skipped. Magic-link sign-in stays unavailable until the key is present.
+  Mail is sent as `Kien Solutions <no-reply@kiensolutions.com>`.
 - **Storage**: documents bucket (AES256, versioning, Object Lock enabled with no
   default retention; noncurrent versions expire after 365 days) and one `-ops`
   bucket for S3 access logs (`logs/`, 90 days), CloudTrail (`AWSLogs/`, 90 days),

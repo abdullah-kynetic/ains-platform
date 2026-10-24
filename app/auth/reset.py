@@ -55,8 +55,6 @@ def throttle(db: Session, identities: list[tuple[str, int]], now: datetime) -> b
 def request_reset(
     payload: ResetRequest, request: Request, db: DB, settings: Config
 ) -> dict[str, str]:
-    if not settings.resend_api_key.get_secret_value() or not settings.email_from:
-        raise HTTPException(status_code=503, detail="Email delivery is not configured")
     now = datetime.now(UTC)
     email = payload.email.strip().casefold()
     accepted = {"status": "accepted"}

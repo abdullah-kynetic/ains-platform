@@ -41,8 +41,11 @@ password while accepting the single-use, expiring token. Invitations can be rota
 an email cannot be invited into more than one firm. Client users may later sign in with a password
 or magic link. Auditors enroll TOTP MFA with their existing password and receive ten single-use,
 hashed recovery codes; replacing recovery codes requires a current authenticator code. Set
-`SESSION_SECRET` to a long, random value before using sign-in. Set `RESEND_API_KEY`, `EMAIL_FROM` and `PORTAL_URL` to enable Resend delivery for
-magic links, invitations and password reset; unconfigured email returns 503. For synthetic local testing only,
+`SESSION_SECRET` to a long, random value before using sign-in. Set `RESEND_API_KEY` and `PORTAL_URL`
+to send invitations, password resets, report-ready notices, and magic links as
+`Kien Solutions <no-reply@kiensolutions.com>`. A blank key logs and skips those deliveries.
+Magic-link sign-in stays unavailable until the key is set, so it never claims a message was sent.
+For synthetic local testing only,
 set `INVITATION_PREVIEW_ENABLED=true` to return an acceptance link to the auditor UI; never enable
 token previews in a shared or production system.
 
