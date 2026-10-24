@@ -47,7 +47,7 @@ test("client dashboard presents simple action cards and neutral intake state", a
   await page.goto("/");
   await expect(page.getByText("Synthetic demonstration workspace")).toBeVisible();
   const actions = page.getByRole("region", { name: "Quick actions" });
-  await expect(actions.getByRole("link")).toHaveCount(3);
+  await expect(actions.getByRole("link")).toHaveCount(4);
   await expect(page.getByRole("table")).toHaveCount(0);
   await expect(page.getByText("Internal finding drafts")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "View engagement details" })).toHaveCount(0);

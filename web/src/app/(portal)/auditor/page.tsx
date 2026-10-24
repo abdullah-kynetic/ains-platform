@@ -1,5 +1,2 @@
-import { ManualWorkspace } from "@/components/auditor/manual-workspace";
-
-export default function AuditorQueuePage() {
-  return <ManualWorkspace />;
-}
+import { AuditorPortfolio } from "@/components/auditor/portfolio";
+export default function AuditorOverviewPage() { return <AuditorPortfolio />; }
