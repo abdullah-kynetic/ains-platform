@@ -67,16 +67,16 @@ function WorkspaceSwitcher({
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-3 rounded-lg border border-border bg-surface p-2.5 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-hover"
+        className="flex min-h-[var(--control-height)] w-full items-center gap-[var(--space-3)] rounded-lg border border-border bg-surface p-[var(--space-2)] text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-hover"
       >
-        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-[11px] font-semibold tracking-wide text-background">
+        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-xs font-semibold tracking-wide text-background">
           {active.mark}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-semibold text-foreground">
+          <span className="block truncate text-sm font-semibold text-foreground">
             {active.name}
           </span>
-          <span className="block truncate text-[10px] text-subtle">
+          <span className="block truncate text-xs text-subtle">
             {active.type}
           </span>
         </span>
@@ -85,7 +85,7 @@ function WorkspaceSwitcher({
 
       {open ? (
         <div className="absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-lg border border-border bg-surface p-1.5 shadow-[0_16px_40px_rgba(16,24,40,0.14)]">
-          <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-subtle">
+          <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-subtle">
             Workspaces
           </p>
           {workspaces.map((workspace) => {
@@ -108,21 +108,21 @@ function WorkspaceSwitcher({
                 }}
                 className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left hover:bg-hover disabled:cursor-not-allowed disabled:opacity-55"
               >
-                <span className="grid size-7 place-items-center rounded-md border border-border bg-elevated text-[10px] font-semibold">
+                <span className="grid size-7 place-items-center rounded-md border border-border bg-elevated text-xs font-semibold">
                   {workspace.mark}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-xs font-medium">
                     {workspace.name}
                   </span>
-                  <span className="block truncate text-[10px] text-subtle">
+                  <span className="block truncate text-xs text-subtle">
                     {workspace.type}
                   </span>
                 </span>
                 {current ? (
                   <Check className="size-3.5 text-brand" />
                 ) : !available ? (
-                  <span className="text-[9px] font-medium uppercase tracking-wide text-subtle">
+                  <span className="text-xs font-medium uppercase tracking-wide text-subtle">
                     Restricted
                   </span>
                 ) : null}
@@ -176,7 +176,7 @@ function Items({
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
+              "flex min-h-[var(--control-height)] items-center gap-[var(--space-2)] rounded-md px-[var(--space-3)] py-[var(--space-2)] text-sm font-medium leading-snug transition-colors",
               active
                 ? "bg-brand-tint text-brand"
                 : "text-muted hover:bg-hover hover:text-foreground",
@@ -230,26 +230,26 @@ function Panel({
         onWorkspaceChange={onWorkspaceChange}
         onNavigate={onNavigate}
       />
-      <p className="mt-7 mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.13em] text-subtle">
+      <p className="mt-7 mb-2 px-2.5 text-xs font-semibold uppercase tracking-[0.13em] text-subtle">
         {auditor ? "Review" : "Engagement"}
       </p>
       <Items items={items} onNavigate={onNavigate} />
       <div className="mt-auto grid gap-3 border-t border-border px-1 pt-4">
         {org ? (
-          <div className="flex items-center gap-2 px-2 text-[11px] text-subtle">
-            <ShieldCheck className="size-3.5 text-success" />
+          <div className="flex items-center gap-2 px-2 text-xs text-subtle">
+            <ShieldCheck className="size-3.5 text-success-foreground" />
             Workspace access enforced
           </div>
         ) : null}
         <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-[11px] font-semibold text-muted">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-xs font-semibold text-muted">
             {initials(who)}
           </span>
           <div className="min-w-0 flex-1">
             <div className="truncate text-xs font-medium text-foreground">
               {who}
             </div>
-            <div className="truncate text-[10px] text-subtle">{org}</div>
+            <div className="truncate text-xs text-subtle">{org}</div>
           </div>
         </div>
         <button
@@ -304,7 +304,7 @@ export function Sidebar(props: {
       <div
         role="region"
         aria-label="Mobile workspace controls"
-        className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-surface/90 px-4 py-3 backdrop-blur lg:hidden"
+        className="sticky top-0 z-30 flex items-center justify-between gap-[var(--space-3)] border-b border-border bg-surface/90 px-[var(--space-4)] py-[var(--space-2)] backdrop-blur lg:hidden"
       >
         <Logo sub={props.sub} />
         <div className="flex items-center gap-1">
@@ -313,7 +313,7 @@ export function Sidebar(props: {
             type="button"
             aria-label="Open menu"
             onClick={() => setOpen(true)}
-            className="rounded-lg p-2 text-muted hover:bg-hover"
+            className="grid size-[var(--control-height)] place-items-center rounded-[var(--control-radius)] text-muted hover:bg-hover"
           >
             <Menu className="size-5" />
           </button>

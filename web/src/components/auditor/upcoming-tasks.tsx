@@ -120,27 +120,27 @@ export function AuditorUpcomingTasks({ engagements }: { engagements: ClientSumma
             <form onSubmit={saveTask} className="mx-4 my-3 grid gap-3 rounded-lg border border-border bg-elevated/40 p-3">
               <p className="text-xs font-semibold text-foreground">{editingId ? "Edit task" : "New internal task"}</p>
               {!editingId ? (
-                <label className="grid gap-1 text-[11px] font-medium text-muted">
+                <label className="grid gap-1 text-xs font-medium text-muted">
                   Engagement
                   <Select aria-label="Task engagement" value={engagementId} onChange={(event) => setEngagementId(event.target.value)} required>
                     {engagements.map((engagement) => <option key={engagement.id} value={engagement.id}>{engagement.firmName}</option>)}
                   </Select>
                 </label>
               ) : null}
-              <label className="grid gap-1 text-[11px] font-medium text-muted">
+              <label className="grid gap-1 text-xs font-medium text-muted">
                 Task title
                 <Input aria-label="Task title" value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} required maxLength={255} />
               </label>
-              <label className="grid gap-1 text-[11px] font-medium text-muted">
+              <label className="grid gap-1 text-xs font-medium text-muted">
                 Request ID (optional)
                 <Input aria-label="Task request ID" value={draft.requestId ?? ""} onChange={(event) => setDraft((current) => ({ ...current, requestId: event.target.value || null }))} maxLength={120} placeholder="AML-BD-001" />
               </label>
               <div className="grid grid-cols-2 gap-2">
-                <label className="grid gap-1 text-[11px] font-medium text-muted">
+                <label className="grid gap-1 text-xs font-medium text-muted">
                   Due date
                   <Input aria-label="Task due date" type="date" value={draft.due ?? ""} onChange={(event) => setDraft((current) => ({ ...current, due: event.target.value || null }))} />
                 </label>
-                <label className="grid gap-1 text-[11px] font-medium text-muted">
+                <label className="grid gap-1 text-xs font-medium text-muted">
                   Priority
                   <Select aria-label="Task priority" value={draft.priority} onChange={(event) => setDraft((current) => ({ ...current, priority: event.target.value as TaskPriority }))}>
                     <option value="high">High</option>
@@ -156,7 +156,7 @@ export function AuditorUpcomingTasks({ engagements }: { engagements: ClientSumma
             </form>
           ) : null}
           {loading ? <p role="status" className="px-4 py-8 text-center text-xs text-subtle">Loading upcoming tasks…</p> : null}
-          {error ? <p role="alert" className="mx-4 my-3 rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-xs text-danger">{error}</p> : null}
+          {error ? <p role="alert" className="status-note mx-[var(--space-4)] my-[var(--space-3)]" data-tone="danger">{error}</p> : null}
           <ul className="divide-y divide-border">
             {tasks.map((task) => {
               const isComplete = task.completed;
@@ -171,7 +171,7 @@ export function AuditorUpcomingTasks({ engagements }: { engagements: ClientSumma
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start gap-2">
-                      <p className={cn("min-w-0 flex-1 text-[13px] font-medium leading-5 text-foreground", isComplete && "text-subtle line-through")}>{task.title}</p>
+                      <p className={cn("min-w-0 flex-1 text-sm font-medium leading-5 text-foreground", isComplete && "text-subtle line-through")}>{task.title}</p>
                       <Button variant="ghost" size="icon-sm" aria-label={`Edit ${task.title}`} onClick={() => startEdit(task)}>
                         <Pencil aria-hidden="true" />
                       </Button>
@@ -182,7 +182,7 @@ export function AuditorUpcomingTasks({ engagements }: { engagements: ClientSumma
                     >
                       {task.requestId ?? "Engagement task"}
                     </Link>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-subtle">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-subtle">
                       <span className="inline-flex items-center gap-1">
                         <CalendarDays className="size-3" aria-hidden="true" />
                         {task.due ? new Date(`${task.due}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "No due date"}
@@ -198,7 +198,7 @@ export function AuditorUpcomingTasks({ engagements }: { engagements: ClientSumma
                         {task.priority} priority
                       </span>
                     </div>
-                    <p className="mt-2 text-[11px] text-subtle">
+                    <p className="mt-2 text-xs text-subtle">
                       Assigned to {task.assignee}
                     </p>
                   </div>
@@ -209,7 +209,7 @@ export function AuditorUpcomingTasks({ engagements }: { engagements: ClientSumma
           {!loading && !tasks.length ? <p className="px-4 py-8 text-center text-xs text-subtle">No upcoming tasks assigned.</p> : null}
         </CardContent>
       </Card>
-      <p className="mt-2 text-[11px] text-subtle">
+      <p className="mt-2 text-xs text-subtle">
         Synthetic internal tasks. Completion never finalizes a finding.
       </p>
     </section>

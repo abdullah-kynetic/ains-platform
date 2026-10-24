@@ -57,13 +57,13 @@ export default function OverviewPage() {
       />
 
       {USE_MOCKS ? (
-        <div className="mb-5 flex items-center gap-2 text-[11px] text-subtle">
+        <div className="mb-[var(--space-5)] flex items-center gap-[var(--space-2)] text-xs leading-snug text-muted">
           <span className="size-1.5 rounded-full bg-success" />
           Synthetic demonstration workspace
         </div>
       ) : null}
 
-      <section aria-label="Quick actions" className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Quick actions" className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2 xl:grid-cols-4">
         {[
           { href: "/upload", icon: FileUp, title: "Upload your documents", detail: "Add files or send a replacement" },
           { href: "/checklist", icon: ListTodo, title: "View requests", detail: "See what to send next" },
@@ -72,7 +72,7 @@ export default function OverviewPage() {
         ].map(({ href, icon: Icon, title, detail }) => <Link key={href} href={href} className="group rounded-xl border border-border bg-surface p-6 transition-colors hover:border-brand focus-visible:outline-brand"><Icon aria-hidden="true" className="mb-5 size-6 text-brand" /><span className="block text-base font-semibold">{title}</span><span className="mt-2 block text-sm text-muted">{detail}</span><ArrowUpRight aria-hidden="true" className="mt-5 size-5 text-brand" /></Link>)}
       </section>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-3)] md:grid-cols-2 xl:grid-cols-4">
         <Stat
           label="To upload"
           value={counts.requested}
@@ -114,25 +114,25 @@ export default function OverviewPage() {
           </CardHeader>
           <CardContent>
             <Progress value={progress.pct} className="h-2.5" />
-            <div className="mt-5 grid grid-cols-3 divide-x divide-border rounded-lg border border-border bg-background py-3">
-              <div className="px-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-subtle">
+            <div className="mt-[var(--space-5)] grid grid-cols-1 divide-y divide-border rounded-lg border border-border bg-background sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              <div className="px-[var(--space-4)] py-[var(--space-3)]">
+                <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted">
                   Received
                 </p>
                 <p className="mt-1 text-lg font-semibold tabular-nums">
                   {progress.done}
                 </p>
               </div>
-              <div className="px-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-subtle">
+              <div className="px-[var(--space-4)] py-[var(--space-3)]">
+                <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted">
                   Total
                 </p>
                 <p className="mt-1 text-lg font-semibold tabular-nums">
                   {progress.total}
                 </p>
               </div>
-              <div className="px-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-subtle">
+              <div className="px-[var(--space-4)] py-[var(--space-3)]">
+                <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted">
                   Remaining
                 </p>
                 <p className="mt-1 text-lg font-semibold tabular-nums">
@@ -171,7 +171,7 @@ export default function OverviewPage() {
                 </p>
               </div>
             </div>
-            <div className="rounded-lg border border-border bg-background px-3 py-2.5 text-xs leading-5 text-muted">
+            <div className="rounded-lg border border-border bg-background px-[var(--space-3)] py-[var(--space-3)] text-xs leading-normal text-muted">
               The auditor will review submitted materials after intake checks
               are complete.
             </div>
@@ -204,7 +204,7 @@ export default function OverviewPage() {
                     <p className="truncate text-sm font-medium">
                       {item.title}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-subtle">
+                    <p className="mt-[var(--space-1)] text-xs leading-snug text-muted">
                       Document request
                     </p>
                   </div>

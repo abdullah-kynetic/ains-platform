@@ -18,13 +18,13 @@ export function Shell({
     <div className="flex min-h-screen flex-col lg:flex-row">
       {sidebar}
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between border-b border-border bg-surface/90 px-8 backdrop-blur">
-          <div className="flex items-center gap-2 text-xs text-subtle">
+        <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-[var(--space-3)] border-b border-border bg-surface/90 px-[var(--space-4)] py-[var(--space-2)] backdrop-blur sm:px-[var(--space-6)] xl:px-[var(--space-7)]">
+          <div className="flex min-w-0 items-center gap-[var(--space-2)] text-xs leading-snug text-muted">
             <span>AINS</span>
-            <span>/</span>
-            <span className="font-medium text-muted">{auditor ? "Audit operations" : "Your engagement"}</span>
+            <span aria-hidden="true">/</span>
+            <span className="truncate font-medium text-foreground">{auditor ? "Audit operations" : "Your engagement"}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-[var(--space-2)]">
             <CommandPalette items={items} />
             <div className="hidden lg:block"><ThemeToggle /></div>
           </div>
@@ -34,7 +34,7 @@ export function Shell({
           tabIndex={-1}
           className="min-h-[calc(100vh-4rem)] bg-background"
         >
-          <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-8 sm:py-8 xl:px-10">
+          <div className="mx-auto w-full max-w-[1440px] px-[var(--space-4)] py-[var(--space-5)] sm:px-[var(--space-6)] sm:py-[var(--space-6)] xl:px-[var(--space-7)]">
             {children}
           </div>
         </main>
@@ -55,21 +55,25 @@ export function PageHeader({
   badge?: React.ReactNode;
 }) {
   return (
-    <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
+    <div className="mb-[var(--space-6)] flex flex-col items-start justify-between gap-[var(--space-4)] sm:flex-row sm:flex-wrap">
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-[26px] font-semibold tracking-[-0.035em] text-foreground">
+        <div className="flex flex-wrap items-center gap-[var(--space-3)]">
+          <h1 className="type-display text-foreground">
             {title}
           </h1>
           {badge}
         </div>
         {description ? (
-          <p className="mt-1.5 max-w-3xl text-sm leading-6 text-muted">
+          <p className="mt-[var(--space-2)] max-w-3xl text-sm leading-normal text-muted">
             {description}
           </p>
         ) : null}
       </div>
-      {actions}
+      {actions ? (
+        <div className="flex w-full shrink-0 flex-wrap items-center gap-[var(--space-2)] sm:w-auto">
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -90,22 +94,22 @@ export function Stat({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-surface p-5 shadow-[0_1px_2px_rgba(16,24,40,0.03)]",
+        "rounded-xl border border-border bg-surface p-[var(--space-4)] shadow-[0_1px_2px_rgba(16,24,40,0.03)] sm:p-[var(--space-5)]",
         className,
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="text-xs font-medium text-muted">{label}</div>
+        <div className="type-caption font-medium text-muted">{label}</div>
         {icon ? (
           <div className="grid size-8 place-items-center rounded-md bg-elevated text-muted">
             {icon}
           </div>
         ) : null}
       </div>
-      <div className="mt-3 text-[26px] font-semibold tabular-nums tracking-[-0.04em] text-foreground">
+      <div className="type-metric mt-[var(--space-3)] text-foreground">
         {value}
       </div>
-      {hint ? <div className="mt-1.5 text-[11px] text-subtle">{hint}</div> : null}
+      {hint ? <div className="type-caption mt-[var(--space-2)] text-muted">{hint}</div> : null}
     </div>
   );
 }

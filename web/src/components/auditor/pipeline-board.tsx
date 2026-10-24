@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Select } from "@/components/ui/select";
 import { PageHeader, Stat } from "@/components/shell/page";
+import { LoadState } from "@/components/ui/load-state";
 import { getPipeline, movePipelineStage, type PipelineEngagement, type PipelineStage } from "@/lib/workflow-api";
 
 const stages: { id: PipelineStage; label: string; description: string }[] = [
@@ -82,7 +83,7 @@ export function AuditorPipelineBoard() {
         badge={<Badge variant="brand">Synthetic preview</Badge>}
       />
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-3)] md:grid-cols-2 xl:grid-cols-4">
         <Stat
           label="Active engagements"
           value={active.length}
@@ -118,12 +119,12 @@ export function AuditorPipelineBoard() {
         </p>
       ) : null}
 
-      {error ? <p role="alert" className="mb-4 rounded-lg border border-danger/20 bg-danger/5 px-4 py-3 text-sm text-danger">{error}</p> : null}
-      {loading ? <p role="status" className="py-12 text-center text-sm text-subtle">Loading audit pipeline…</p> : null}
+      {error ? <p role="alert" className="status-note mb-[var(--space-4)]" data-tone="danger">{error}</p> : null}
+      {loading ? <LoadState label="Loading audit pipeline…" /> : null}
 
       {!loading ? <div
         aria-label="Audit pipeline stages"
-        className="-mx-4 overflow-x-auto px-4 pb-5 sm:-mx-8 sm:px-8 xl:-mx-10 xl:px-10"
+        className="-mx-[var(--space-4)] overflow-x-auto px-[var(--space-4)] pb-[var(--space-5)] sm:-mx-[var(--space-6)] sm:px-[var(--space-6)] xl:-mx-[var(--space-7)] xl:px-[var(--space-7)]"
       >
         <div className="grid min-w-[1800px] grid-cols-6 items-start gap-4">
           {stages.map((stage) => {
@@ -142,11 +143,11 @@ export function AuditorPipelineBoard() {
                     >
                       {stage.label}
                     </h2>
-                    <p className="mt-0.5 text-[11px] text-subtle">
+                    <p className="mt-0.5 text-xs text-subtle">
                       {stage.description}
                     </p>
                   </div>
-                  <span className="grid size-6 place-items-center rounded-full border border-border bg-surface text-[11px] font-semibold text-muted">
+                  <span className="grid size-6 place-items-center rounded-full border border-border bg-surface text-xs font-semibold text-muted">
                     {cards.length}
                   </span>
                 </div>
@@ -162,7 +163,7 @@ export function AuditorPipelineBoard() {
                           <h3 className="text-sm font-semibold leading-5 text-foreground">
                             {engagement.firm}
                           </h3>
-                          <p className="mt-1 text-[11px] text-subtle">
+                          <p className="mt-1 text-xs text-subtle">
                             FINRA Rule 3310 independent AML test
                           </p>
                         </div>
@@ -174,7 +175,7 @@ export function AuditorPipelineBoard() {
                         ) : null}
                       </div>
 
-                      <div className="mt-4 flex items-center justify-between text-[11px] text-subtle">
+                      <div className="mt-4 flex items-center justify-between text-xs text-subtle">
                         <span>{engagement.progress}% reviewed</span>
                         <span>{engagement.due ? new Date(`${engagement.due}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "No due date"}</span>
                       </div>
@@ -196,7 +197,7 @@ export function AuditorPipelineBoard() {
                           </Badge>
                         )}
                         <span
-                          className="grid size-7 place-items-center rounded-full bg-foreground text-[10px] font-semibold text-background"
+                          className="grid size-7 place-items-center rounded-full bg-foreground text-xs font-semibold text-background"
                           title={`Assigned to ${engagement.assignee}`}
                         >
                           Q
@@ -204,7 +205,7 @@ export function AuditorPipelineBoard() {
                       </div>
 
                       <div className="mt-4 border-t border-border pt-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-subtle">
+                        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-subtle">
                           Next action
                         </p>
                         <p className="mt-1 text-xs leading-5 text-muted">
@@ -212,10 +213,10 @@ export function AuditorPipelineBoard() {
                         </p>
                       </div>
 
-                      <label className="mt-4 block text-[11px] font-medium text-muted">
+                      <label className="mt-4 block text-xs font-medium text-muted">
                         Move stage
                         <Select
-                          className="mt-1 h-8 text-xs"
+                          className="mt-[var(--space-2)]"
                           aria-label={`Move ${engagement.firm} to stage`}
                           value={engagement.stage}
                           onChange={(event) =>

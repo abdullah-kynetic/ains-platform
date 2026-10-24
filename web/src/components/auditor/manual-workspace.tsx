@@ -203,12 +203,12 @@ function EngagementWorkspace({ id }: { id: string }) {
         <ClientInvitations engagementId={id} firmName={data.firmName} />
       </div>
       {error && (
-        <p role="alert" className="mb-4 text-red-300">
+        <p role="alert" className="status-note mb-[var(--space-4)]" data-tone="danger">
           {error}
         </p>
       )}
       {notice && (
-        <p role="status" className="mb-4 text-green-300">
+        <p role="status" className="status-note mb-[var(--space-4)]" data-tone="success">
           {notice}
         </p>
       )}
@@ -248,7 +248,7 @@ function EngagementWorkspace({ id }: { id: string }) {
               </summary>
               <div className="mt-4 grid gap-4">
                 {request.restricted ? (
-                  <p className="text-sm text-amber-300">
+                  <p className="text-sm text-warning-foreground">
                     Human-only handling. Do not upload or record restricted
                     document content here.
                   </p>

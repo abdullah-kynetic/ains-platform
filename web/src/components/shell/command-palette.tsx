@@ -46,14 +46,14 @@ export function CommandPalette({ items }: { items: NavItem[] }) {
             setQuery("");
             setOpen(true);
           }}
-          className="flex min-h-11 items-center gap-2 rounded-lg border border-border bg-background px-3 text-xs text-muted sm:pr-16"
+          className="flex h-[var(--control-height)] items-center gap-[var(--space-2)] rounded-[var(--control-radius)] border border-border bg-background px-[var(--space-3)] text-sm text-muted sm:pr-16"
         >
           <Search className="size-4" aria-hidden="true" />
-          <span>Search workspace</span>
+          <span className="sr-only sm:not-sr-only">Search workspace</span>
         </button>
         <kbd
           aria-hidden="true"
-          className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-surface px-1.5 py-1 text-[10px] sm:block"
+          className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-[var(--control-radius)] border border-border bg-surface px-[var(--space-2)] py-[var(--space-1)] text-xs leading-none text-muted sm:block"
         >
           ⌘ K
         </kbd>
@@ -103,7 +103,7 @@ export function CommandPalette({ items }: { items: NavItem[] }) {
           <p className="mt-4 text-xs text-subtle" role="status">
             {results.length + themes.length} matching commands
           </p>
-          <p className="mt-4 text-[10px] font-semibold uppercase tracking-widest text-subtle">
+          <p className="mt-[var(--space-4)] text-xs font-semibold uppercase tracking-[0.08em] text-muted">
             Workspace pages
           </p>
           <div className="mt-2 grid gap-1">
@@ -120,7 +120,7 @@ export function CommandPalette({ items }: { items: NavItem[] }) {
             ))}
           </div>
           <div className="mt-4 border-t border-border pt-4">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-subtle">
+            <p className="mb-[var(--space-2)] text-xs font-semibold uppercase tracking-[0.08em] text-muted">
               Appearance
             </p>
             <div className="flex gap-2">
