@@ -13,6 +13,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
+    # Error monitoring is completely disabled without an explicit DSN.
+    sentry_dsn: SecretStr = SecretStr("")
+    sentry_environment: str = "production"
+    sentry_traces_sample_rate: float = Field(default=0, ge=0, le=1)
+
     # Optional Egnyte connector (off by default; select STORAGE_BACKEND=egnyte).
     # Egnyte (Internal app). EGNYTE_API_KEY is the app's Client ID.
     egnyte_domain: str = ""  # subdomain only, e.g. "quintonsfirm"

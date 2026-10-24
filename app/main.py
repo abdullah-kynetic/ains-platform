@@ -8,10 +8,12 @@ from app.auth import router as auth_router
 from app.auth.invitations import auditor_router as invitation_auditor_router
 from app.auth.invitations import public_router as invitation_public_router
 from app.config import get_settings
+from app.monitoring import init_sentry
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    init_sentry(settings)
     application = FastAPI(title="AINS Platform", version="0.1.0")
     application.add_middleware(
         CORSMiddleware,
