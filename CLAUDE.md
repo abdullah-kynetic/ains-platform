@@ -1,6 +1,6 @@
 # Project instructions for coding agents
 
-AINS: AI-native financial regulatory audit platform. First service: FINRA Rule 3310 independent AML tests for broker-dealers. A credentialed auditor (Quinton) approves findings and signs every report.
+Kien Solutions (https://kiensolutions.com): AI-native financial regulatory audit platform. First service: FINRA Rule 3310 independent AML tests for broker-dealers. A credentialed auditor (Quinton) approves findings and signs every report.
 
 ## Stack
 - Python 3.12, FastAPI, Pydantic v2, pydantic-settings, httpx, tenacity

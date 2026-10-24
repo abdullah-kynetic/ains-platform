@@ -20,7 +20,7 @@ export function Shell({
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between border-b border-border bg-surface/90 px-8 backdrop-blur">
           <div className="flex items-center gap-2 text-xs text-subtle">
-            <span>AINS</span>
+            <span>Kien</span>
             <span>/</span>
             <span className="font-medium text-muted">{auditor ? "Audit operations" : "Your engagement"}</span>
           </div>

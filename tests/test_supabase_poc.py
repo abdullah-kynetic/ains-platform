@@ -103,7 +103,7 @@ def test_supabase_migration_guard_refuses_existing_application_data() -> None:
         session.commit()
 
     with engine.connect() as connection:
-        with pytest.raises(RuntimeError, match="already contains AINS application data"):
+        with pytest.raises(RuntimeError, match="already contains Kien Solutions application data"):
             ensure_no_existing_application_data(connection)
 
     engine.dispose()

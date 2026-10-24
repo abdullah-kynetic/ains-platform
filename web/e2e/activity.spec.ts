@@ -5,7 +5,7 @@ test("auditor activity links to assigned work without exposing audit details", a
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByRole("button", { name: /Kien Operations/ }).click();
   await page.goto("/auditor");
 
   await expect(page.getByRole("heading", { name: "Latest activity" })).toBeVisible();

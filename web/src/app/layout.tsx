@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "@/components/auth/session";
 
 export const metadata: Metadata = {
-  title: { default: "AINS Client Portal", template: "%s · AINS" },
+  title: { default: "Kien Solutions Client Portal", template: "%s · Kien Solutions" },
   description: "Upload your audit documents and track their status.",
   robots: { index: false, follow: false },
 };

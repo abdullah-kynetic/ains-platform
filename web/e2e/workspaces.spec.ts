@@ -4,11 +4,11 @@ import AxeBuilder from "@axe-core/playwright";
 test("auditor creates a workspace and manages a single-use synthetic client invitation", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByRole("button", { name: /Kien Operations/ }).click();
   await page.goto("/auditor");
 
   await page.goto("/auditor/settings");
-  await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByRole("button", { name: /Kien Operations/ }).click();
   await page.getByLabel("Current authenticator code").fill("123456");
   await page.getByRole("button", { name: "Replace recovery codes" }).click();
   await expect(page.getByText("Previous unused codes are revoked.")).toBeVisible();
