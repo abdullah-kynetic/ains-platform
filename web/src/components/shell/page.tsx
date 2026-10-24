@@ -94,7 +94,7 @@ export function Stat({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-surface p-[var(--space-4)] shadow-[0_1px_2px_rgba(16,24,40,0.03)] sm:p-[var(--space-5)]",
+        "rounded-xl border border-border bg-surface p-[var(--space-4)] shadow-card sm:p-[var(--space-5)]",
         className,
       )}
     >

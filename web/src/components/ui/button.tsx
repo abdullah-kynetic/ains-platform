@@ -8,7 +8,7 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-foreground text-background hover:bg-foreground/90 shadow-[0_1px_2px_rgba(16,24,40,0.14)]",
+          "bg-accent text-on-accent hover:bg-accent-hover shadow-button",
         secondary:
           "bg-elevated text-foreground border border-border hover:bg-hover",
         outline:

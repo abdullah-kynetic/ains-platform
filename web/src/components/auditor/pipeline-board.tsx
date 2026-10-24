@@ -156,7 +156,7 @@ export function AuditorPipelineBoard() {
                   {cards.map((engagement) => (
                     <Card
                       key={engagement.id}
-                      className="p-4 shadow-[0_8px_24px_-20px_rgba(16,24,40,0.35)]"
+                      className="p-4 shadow-pop"
                     >
                       <div className="flex items-start gap-2">
                         <div className="min-w-0 flex-1">

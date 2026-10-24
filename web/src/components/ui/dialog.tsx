@@ -69,7 +69,7 @@ export function Dialog({
         if (dismissible) onOpenChange(false);
       }}
       className={cn(
-        "fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-var(--space-6))] max-w-lg overflow-y-auto rounded-xl border border-border bg-surface p-[var(--space-5)] text-foreground shadow-2xl",
+        "fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-var(--space-6))] max-w-lg overflow-y-auto rounded-xl border border-border bg-surface p-[var(--space-5)] text-foreground shadow-overlay",
         className,
       )}
     >
@@ -126,7 +126,7 @@ export function Sheet({
         onOpenChange(false);
       }}
       className={cn(
-        "fixed inset-y-0 m-0 h-dvh max-h-none w-72 max-w-[85vw] overflow-y-auto border border-border bg-background pt-10 text-foreground shadow-2xl",
+        "fixed inset-y-0 m-0 h-dvh max-h-none w-72 max-w-[85vw] overflow-y-auto border border-border bg-background pt-10 text-foreground shadow-overlay",
         side === "left" ? "left-0 right-auto" : "left-auto right-0",
         className,
       )}
