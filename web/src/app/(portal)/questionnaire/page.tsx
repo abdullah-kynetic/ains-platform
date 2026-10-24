@@ -114,7 +114,7 @@ export default function QuestionnairePage() {
     <>
       <PageHeader
         title="Firm questionnaire"
-        description="Answer these yes-or-no questions so we only request documents that apply to your firm. Quinton reviews every N/A answer."
+        description="Answer these yes-or-no questions so we only request documents that apply to your firm. Quentin reviews every N/A answer."
       />
       <div className="grid gap-4">
         {data.questions.length === 0 ? (
@@ -130,7 +130,7 @@ export default function QuestionnairePage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <CardTitle>{question.question}</CardTitle>
                   {question.naReviewState === "pending" ? (
-                    <Badge variant="warning">N/A awaiting Quinton</Badge>
+                    <Badge variant="warning">N/A awaiting Quentin</Badge>
                   ) : null}
                   {question.naReviewState === "approved" ? (
                     <Badge variant="success">N/A approved</Badge>
