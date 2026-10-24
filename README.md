@@ -167,6 +167,12 @@ calls or credentials. It validates file receipt, type signatures, and fingerprin
 completeness, and audit sufficiency remain manual auditor decisions. No model runner or model
 credential is part of this application.
 
+`uv run python scripts/backup_restore.py` seeds a private Postgres cluster with synthetic rows,
+writes a custom-format `pg_dump`, restores it into a second database, and checks per-table row
+counts. `tests/test_backup_restore.py` runs the same drill and skips when local Postgres
+binaries are absent. Fetching a production dump from S3 and restoring it by hand is covered in
+[`docs/backup-restore.md`](docs/backup-restore.md).
+
 ## Data rules (non-negotiable)
 
 1. **No secrets in git.** `.env` and keys live only locally and in the password manager. Never paste them into chats, issues, or AI tools.
