@@ -35,6 +35,10 @@ uv run pytest
 uv run ruff check .
 ```
 
+`.env.example` sets `CORS_ORIGINS=http://localhost:3000` so the portal on that origin can call
+the API at `http://localhost:8000`. That localhost origin is for local development. Production
+sets its public HTTPS portal origins and does not include localhost.
+
 The backend owns authentication and uses an HTTP-only `ains_session` cookie. There is no public
 sign-up endpoint. Assigned auditors create firm-bound client invitations, and clients set a
 password while accepting the single-use, expiring token. Invitations can be rotated or revoked;

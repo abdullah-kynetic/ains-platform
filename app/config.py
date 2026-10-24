@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     invitation_preview_enabled: bool = False
 
     # Comma-separated browser origins; wildcard origins are deliberately unsupported.
+    # Local development default: portal http://localhost:3000, API http://localhost:8000.
+    # Production must set public HTTPS origins and must not include localhost.
     cors_origins: str = "http://localhost:3000"
 
     def parsed_cors_origins(self) -> list[str]:
