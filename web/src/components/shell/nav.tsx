@@ -280,7 +280,7 @@ export function Sidebar(props: {
       <aside className="sticky top-0 hidden h-screen w-68 shrink-0 border-r border-border bg-sidebar lg:block">
         <Panel {...props} />
       </aside>
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-surface/90 px-4 py-3 backdrop-blur lg:hidden">
+      <div role="region" aria-label="Mobile workspace controls" className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-surface/90 px-4 py-3 backdrop-blur lg:hidden">
         <Logo sub={props.sub} />
         <div className="flex items-center gap-1">
           <ThemeToggle />
@@ -293,7 +293,7 @@ export function Sidebar(props: {
             <Menu className="size-5" />
           </button>
         </div>
-      </header>
+      </div>
       <Sheet open={open} onOpenChange={setOpen} label="Navigation">
         <Panel {...props} onNavigate={() => setOpen(false)} />
       </Sheet>

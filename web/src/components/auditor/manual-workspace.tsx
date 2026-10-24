@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AuthGate } from "@/components/auth/session";
-import { PageHeader } from "@/components/shell/page";
-import { Button } from "@/components/ui/button";
+import { EngagementDrawer } from "@/components/auditor/engagement-drawer";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { USE_MOCKS } from "@/lib/api";
+import { PageHeader, Stat } from "@/components/shell/page";
+import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadState } from "@/components/ui/load-state";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -26,6 +30,7 @@ import {
 } from "@/lib/workflow-api";
 
 function Dashboard() {
+  const [selected, setSelected] = useState<ClientSummary | null>(null);
   const [clients, setClients] = useState<ClientSummary[] | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -37,8 +42,11 @@ function Dashboard() {
     <>
       <PageHeader
         title="Client audits"
-        description="Your assigned engagements. All audit decisions are made by a human."
+        description="A clear view of your engagements, review progress, and next priorities."
+        actions={<Link href="/auditor/workspaces/new" className={buttonVariants()}>Create client workspace</Link>}
       />
+      {USE_MOCKS && <p className="mb-5 text-xs text-subtle">Synthetic demonstration workspace</p>}
+      <div className="mb-7 grid gap-4 sm:grid-cols-3"><Stat label="Assigned engagements" value={clients?.length ?? "—"} hint="Your active review portfolio" /><Stat label="Requests reviewed" value={clients?.reduce((sum, client) => sum + client.readiness.reviewed, 0) ?? "—"} hint="Human review recorded" /><Stat label="Ready for drafting" value={clients?.filter((client) => client.readiness.ready).length ?? "—"} hint="Auditor sign-off still required" /></div>
       {!clients && (
         <LoadState
           error={error}
@@ -56,7 +64,7 @@ function Dashboard() {
       <div className="grid items-start gap-6 xl:grid-cols-12">
         <section
           aria-labelledby="assigned-audits-title"
-          className="xl:col-span-4"
+          className="xl:col-span-8"
         >
           <h2
             id="assigned-audits-title"
@@ -64,14 +72,16 @@ function Dashboard() {
           >
             Assigned engagements
           </h2>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+          <div className="grid gap-4 md:grid-cols-2">
             {clients?.map((client) => (
               <Card key={client.id}>
                 <CardHeader>
+                  <div className="mb-3"><Badge variant="brand">{client.readiness.ready ? "Drafting" : "In review"}</Badge></div>
                   <CardTitle>{client.firmName}</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-3">
-                  <p>
+                  <Progress value={client.readiness.total ? client.readiness.reviewed / client.readiness.total * 100 : 0} />
+                  <p className="text-sm text-muted">
                     {client.readiness.reviewed}/{client.readiness.total} requests
                     reviewed
                   </p>
@@ -80,6 +90,7 @@ function Dashboard() {
                       ? "Ready for report drafting"
                       : "Review incomplete"}
                   </p>
+                  <Button variant="outline" onClick={() => setSelected(client)}>View engagement details</Button>
                   <Link
                     className="font-medium text-brand-hover underline underline-offset-4"
                     href={`/auditor/engagements/${client.id}`}
@@ -91,13 +102,14 @@ function Dashboard() {
             ))}
           </div>
         </section>
-        <div className="xl:col-span-5">
+        <div className="xl:col-span-8 xl:row-start-2">
           <AuditorActivityFeed />
         </div>
-        <div className="xl:col-span-3">
+        <div className="xl:col-span-4 xl:col-start-9 xl:row-span-2 xl:row-start-1">
           <AuditorUpcomingTasks engagements={clients ?? []} />
         </div>
       </div>
+      <EngagementDrawer client={selected} onClose={() => setSelected(null)} />
       <div className="mt-6">
         <MFARecoveryCodes />
       </div>

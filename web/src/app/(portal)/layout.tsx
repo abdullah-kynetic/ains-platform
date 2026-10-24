@@ -40,9 +40,11 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   return (
     <AuthGate>
       <Shell
+        items={isAuditor ? auditorItems : clientItems}
+        auditor={isAuditor}
         sidebar={
           <Sidebar
-            items={isAuditor ? auditorItems : clientItems}
+            items={isAuditor ? auditorItems : clientItems.filter((item) => item.href !== "/questionnaire" && item.href !== "/upload")}
             sub={isAuditor ? "Auditor workspace" : "Client portal"}
             who={user?.name ?? user?.email ?? "Signed-in user"}
             org={

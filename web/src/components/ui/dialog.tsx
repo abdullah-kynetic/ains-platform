@@ -103,12 +103,14 @@ export function Sheet({
   children,
   side = "left",
   label,
+  className,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
   side?: "left" | "right";
   label: string;
+  className?: string;
 }) {
   const panel = useModal(open);
   if (typeof document === "undefined") return null;
@@ -124,10 +126,11 @@ export function Sheet({
       className={cn(
         "fixed inset-y-0 m-0 h-dvh max-h-none w-72 max-w-[85vw] overflow-y-auto border border-border bg-background pt-10 text-foreground shadow-2xl",
         side === "left" ? "left-0 right-auto" : "left-auto right-0",
+        className,
       )}
     >
       <button
-        aria-label="Close navigation"
+        aria-label={side === "left" ? "Close navigation" : "Close record"}
         onClick={() => onOpenChange(false)}
         className="absolute right-3 top-2 rounded-lg p-2"
       >
