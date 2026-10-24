@@ -1,52 +1,38 @@
 import { cn } from "@/lib/utils";
-import { Bell, Search } from "lucide-react";
+import type { NavItem } from "./nav";
+import { CommandPalette } from "./command-palette";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 
 export function Shell({
   sidebar,
   children,
+  items,
+  auditor,
 }: {
   sidebar: React.ReactNode;
+  items: NavItem[];
+  auditor: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       {sidebar}
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 hidden h-16 items-center justify-between border-b border-border bg-surface/90 px-8 backdrop-blur lg:flex">
+        <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between border-b border-border bg-surface/90 px-8 backdrop-blur">
           <div className="flex items-center gap-2 text-xs text-subtle">
             <span>AINS</span>
             <span>/</span>
-            <span className="font-medium text-muted">Audit workspace</span>
+            <span className="font-medium text-muted">{auditor ? "Audit operations" : "Your engagement"}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled
-              title="Global search is coming in a later checkpoint"
-              className="flex h-9 w-56 items-center gap-2 rounded-md border border-border bg-background px-3 text-xs text-subtle shadow-[0_1px_2px_rgba(16,24,40,0.03)]"
-            >
-              <Search className="size-3.5" />
-              <span>Search workspace</span>
-              <kbd className="ml-auto rounded border border-border bg-surface px-1.5 py-0.5 font-sans text-[9px]">
-                ⌘ K
-              </kbd>
-            </button>
-            <ThemeToggle />
-            <button
-              type="button"
-              disabled
-              title="Notifications are coming in a later checkpoint"
-              className="grid size-9 place-items-center rounded-md border border-border bg-surface text-subtle shadow-[0_1px_2px_rgba(16,24,40,0.03)]"
-            >
-              <Bell className="size-4" />
-            </button>
+            <CommandPalette items={items} />
+            <div className="hidden lg:block"><ThemeToggle /></div>
           </div>
         </header>
         <main
           id="main-content"
           tabIndex={-1}
-          className="min-h-[calc(100vh-4rem)] bg-glow"
+          className="min-h-[calc(100vh-4rem)] bg-background"
         >
           <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-8 sm:py-8 xl:px-10">
             {children}
@@ -104,7 +90,7 @@ export function Stat({
   return (
     <div
       className={cn(
-        "rounded-[10px] border border-border bg-surface p-4 shadow-[0_1px_2px_rgba(16,24,40,0.03)]",
+        "rounded-xl border border-border bg-surface p-5 shadow-[0_1px_2px_rgba(16,24,40,0.03)]",
         className,
       )}
     >
