@@ -25,8 +25,11 @@ The public Cloudflare deployment is a synthetic demonstration. Its role switch i
    flows. Acceptance-test recovery, deactivation, and invitation delivery for the deployment.
 5. Choose and configure an approved email delivery provider if magic links or invitation emails
    are required. Configure delivery privately; never return tokens in API responses or logs.
-6. Deploy the authenticated frontend separately from the public demo, set
-   `NEXT_PUBLIC_USE_MOCKS=false`, and point `NEXT_PUBLIC_API_URL` to the deployed backend.
+6. Deploy the authenticated frontend separately from the public demo. Production
+   `npm run build:cloudflare:production` sets `NEXT_PUBLIC_USE_MOCKS=false` and defaults
+   `NEXT_PUBLIC_API_URL` to `https://api.kiensolutions.com`. The portal is served from
+   `https://kiensolutions.com` and `https://www.kiensolutions.com`. Local dev stays
+   `http://localhost:3000` with the API at `http://localhost:8000`.
 7. Test client/auditor sign-in, MFA failures, session expiry, revocation, tenant isolation,
    invitations, recovery, and browser cookie behavior before using real engagement data.
 

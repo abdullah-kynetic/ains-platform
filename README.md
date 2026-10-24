@@ -77,7 +77,9 @@ npm run typecheck
 npm run build
 ```
 
-The portal uses real backend sessions and API data by default. Set
+The portal uses real backend sessions and API data by default. `NEXT_PUBLIC_API_URL`
+is the only API base (`web/src/lib/api.ts`): `http://localhost:8000` for local dev
+(`http://localhost:3000`) and `https://api.kiensolutions.com` for production. Set
 `NEXT_PUBLIC_USE_MOCKS=true` only for the built-in synthetic client demo. Client users get the
 overview, document checklist, and firm questionnaire; auditor accounts are routed to an internal
 review queue where Quinton can inspect evidence, decide N/A requests, review cited findings, and

@@ -7,8 +7,16 @@ import {
 import catalog from "../../.generated/catalog.json";
 
 export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
+
+// Build-time public setting. Local `next dev` falls back to the local API.
+// Production compilations fall back to the production API when the variable is unset.
+// `npm run build:cloudflare:production` sets it from wrangler `env.production.vars`.
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
 export const API_URL = (
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+  configuredApiUrl ||
+  (process.env.NODE_ENV === "production"
+    ? "https://api.kiensolutions.com"
+    : "http://localhost:8000")
 ).replace(/\/$/, "");
 
 const configuredMaxMb = Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB ?? "100");
@@ -30,19 +38,23 @@ async function responseError(response: Response): Promise<Error> {
   return new Error(detail);
 }
 
-export async function apiRequest<T>(
-  path: string,
-  init: RequestInit = {},
-): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
+function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(`${API_URL}${path}`, {
     ...init,
     credentials: "include",
+    cache: "no-store",
     headers: {
       ...(init.body ? { "Content-Type": "application/json" } : {}),
       ...init.headers,
     },
-    cache: "no-store",
   });
+}
+
+export async function apiRequest<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const response = await apiFetch(path, init);
   if (!response.ok) throw await responseError(response);
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
@@ -576,17 +588,16 @@ export async function downloadDraftReport(
   engagementId: string,
   format: "docx" | "pdf",
 ): Promise<void> {
-  const response = await fetch(
-    `${API_URL}/auditor/engagements/${encodeURIComponent(engagementId)}/report?format=${format}`,
-    { method: "POST", credentials: "include" },
+  const response = await apiFetch(
+    `/auditor/engagements/${encodeURIComponent(engagementId)}/report?format=${format}`,
+    { method: "POST" },
   );
   if (!response.ok) throw await responseError(response);
   const blob = await response.blob();
-  const disposition = response.headers.get("Content-Disposition") ?? "";
-  const match = disposition.match(/filename="([^"]+)"/);
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = match?.[1] ?? `ains-draft-report.${format}`;
+  // CORS exposes no response headers, so Content-Disposition is not available.
+  link.download = `kien-draft-report.${format}`;
   link.click();
   URL.revokeObjectURL(link.href);
 }
@@ -601,12 +612,7 @@ export async function getEngagement(): Promise<Engagement> {
     }));
     return data;
   }
-  const response = await fetch(`${API_URL}/engagements/current`, {
-    credentials: "include",
-    cache: "no-store",
-  });
-  if (!response.ok) throw await responseError(response);
-  return (await response.json()) as Engagement;
+  return apiRequest<Engagement>("/engagements/current");
 }
 
 export async function uploadDocument(
@@ -660,7 +666,7 @@ export async function uploadDocument(
       "POST",
       `${API_URL}/engagements/${encodeURIComponent(engagementId)}/items/${encodeURIComponent(itemId)}/documents`,
     );
-    request.withCredentials = true;
+    request.withCredentials = true; // ains_session cookie, same as fetch credentials: "include"
     request.timeout = 120000;
     request.ontimeout = () =>
       reject(
