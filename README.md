@@ -39,10 +39,12 @@ The backend owns authentication and uses an HTTP-only `ains_session` cookie. The
 sign-up endpoint. Assigned auditors create firm-bound client invitations, and clients set a
 password while accepting the single-use, expiring token. Invitations can be rotated or revoked;
 an email cannot be invited into more than one firm. Client users may later sign in with a password
-or magic link, and auditor accounts require TOTP MFA. Set `SESSION_SECRET` to a long, random value
-before using sign-in. Magic-link and invitation email delivery are intentionally not configured in
-this checkpoint. For synthetic local testing only, set `INVITATION_PREVIEW_ENABLED=true` to return
-an acceptance link to the auditor UI; never enable token previews in a shared or production system.
+or magic link. Auditors enroll TOTP MFA with their existing password and receive ten single-use,
+hashed recovery codes; replacing recovery codes requires a current authenticator code. Set
+`SESSION_SECRET` to a long, random value before using sign-in. Magic-link and invitation email
+delivery are intentionally not configured in this checkpoint. For synthetic local testing only,
+set `INVITATION_PREVIEW_ENABLED=true` to return an acceptance link to the auditor UI; never enable
+token previews in a shared or production system.
 
 Tenant-owned database records carry an explicit `firm_id`. API queries scope clients to their firm
 and auditors to assigned engagements. Run `uv run alembic check` after model changes to confirm a

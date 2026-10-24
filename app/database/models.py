@@ -107,6 +107,7 @@ class User(Base):
     password_hash: Mapped[str | None] = mapped_column(String(255))
     mfa_secret: Mapped[str | None] = mapped_column(String(64))
     mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    mfa_enrollment_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     invited_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -116,6 +117,20 @@ class User(Base):
     assigned_engagements: Mapped[list[Engagement]] = relationship(
         back_populates="auditor", foreign_keys="Engagement.auditor_id"
     )
+
+
+class MFARecoveryCode(Base):
+    __tablename__ = "mfa_recovery_codes"
+    __table_args__ = (
+        Index("ix_mfa_recovery_codes_user_active", "user_id", "used_at", "revoked_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class ClientInvitation(Base):

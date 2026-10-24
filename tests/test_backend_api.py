@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.auth.router import get_magic_link_sender
-from app.auth.security import hash_password
+from app.auth.security import hash_mfa_recovery_code, hash_password
 from app.checklist import ClientStatus
 from app.checks.processor import DocumentProcessor
 from app.config import Settings, get_settings
@@ -35,6 +35,7 @@ from app.database.models import (
     EngagementStatus,
     FindingDraft,
     Firm,
+    MFARecoveryCode,
     ReviewState,
     TaskPriority,
     User,
@@ -140,7 +141,15 @@ def backend() -> Iterator[
             mfa_enabled=True,
             accepted_at=datetime.now(UTC),
         )
-        db.add_all([client_a, client_b, auditor])
+        enrolling_auditor = User(
+            email="enrolling-auditor@example.test",
+            name="Synthetic Enrolling Auditor",
+            role=UserRole.AUDITOR,
+            password_hash=hash_password(AUDITOR_PASSWORD),
+            mfa_enabled=False,
+            accepted_at=datetime.now(UTC),
+        )
+        db.add_all([client_a, client_b, auditor, enrolling_auditor])
         db.flush()
         engagement_a = Engagement(
             firm_id=firm_a.id,
@@ -199,6 +208,7 @@ def backend() -> Iterator[
             client_a=client_a.id,
             client_b=client_b.id,
             auditor=auditor.id,
+            enrolling_auditor=enrolling_auditor.id,
             engagement_a=engagement_a.id,
             engagement_b=engagement_b.id,
             item_a=item_a.id,
@@ -289,6 +299,167 @@ def test_auditor_requires_mfa(backend) -> None:
     )
     assert response.status_code == 200
     assert response.json()["user"]["role"] == "auditor"
+
+
+def test_auditor_enrolls_mfa_and_uses_each_recovery_code_once(backend) -> None:
+    client, factory, ids, _, _ = backend
+    credentials = {
+        "email": "enrolling-auditor@example.test",
+        "password": AUDITOR_PASSWORD,
+    }
+    required = client.post("/auth/password", json=credentials)
+    assert required.status_code == 403
+    assert required.json()["detail"] == "Auditor MFA enrollment is required"
+
+    client_user = client.post(
+        "/auth/auditor/mfa/enrollment",
+        json={"email": "alpha-client@example.test", "password": CLIENT_PASSWORD},
+    )
+    assert client_user.status_code == 403
+    assert client_user.json()["detail"] == "Auditor access required"
+
+    started = client.post("/auth/auditor/mfa/enrollment", json=credentials)
+    assert started.status_code == 200
+    start_body = started.json()
+    assert "enrolling-auditor%40example.test" in start_body["provisioning_uri"]
+    assert start_body["secret"] not in client.get("/openapi.json").text
+
+    wrong = client.post(
+        "/auth/auditor/mfa/enrollment/confirm",
+        json={**credentials, "code": "000000"},
+    )
+    assert wrong.status_code == 401
+
+    confirmed = client.post(
+        "/auth/auditor/mfa/enrollment/confirm",
+        json={**credentials, "code": pyotp.TOTP(start_body["secret"]).now()},
+    )
+    assert confirmed.status_code == 200
+    recovery_codes = confirmed.json()["recovery_codes"]
+    assert confirmed.json()["user"]["role"] == "auditor"
+    assert len(recovery_codes) == 10
+    assert len(set(recovery_codes)) == 10
+    assert client.get("/auth/session").status_code == 200
+
+    with factory() as db:
+        auditor = db.get(User, ids["enrolling_auditor"])
+        records = db.scalars(
+            select(MFARecoveryCode).where(MFARecoveryCode.user_id == auditor.id)
+        ).all()
+        assert auditor.mfa_enabled is True
+        assert auditor.mfa_enrollment_expires_at is None
+        assert len(records) == 10
+        assert {record.code_hash for record in records} == {
+            hash_mfa_recovery_code(code) for code in recovery_codes
+        }
+        assert all(code not in {record.code_hash for record in records} for code in recovery_codes)
+        assert db.scalar(
+            select(AuditLog).where(
+                AuditLog.actor_id == auditor.id,
+                AuditLog.action == "auth.mfa_enrollment_completed",
+            )
+        ) is not None
+
+    client.cookies.clear()
+    recovery_sign_in = client.post(
+        "/auth/password",
+        json={**credentials, "mfa_code": recovery_codes[0]},
+    )
+    assert recovery_sign_in.status_code == 200
+    client.cookies.clear()
+    replay = client.post(
+        "/auth/password",
+        json={**credentials, "mfa_code": recovery_codes[0]},
+    )
+    assert replay.status_code == 401
+    assert replay.json()["detail"] == "Invalid MFA code"
+
+
+def test_auditor_mfa_enrollment_expires_and_existing_mfa_cannot_restart(backend) -> None:
+    client, factory, ids, _, _ = backend
+    credentials = {
+        "email": "enrolling-auditor@example.test",
+        "password": AUDITOR_PASSWORD,
+    }
+    started = client.post("/auth/auditor/mfa/enrollment", json=credentials)
+    assert started.status_code == 200
+    with factory() as db:
+        auditor = db.get(User, ids["enrolling_auditor"])
+        auditor.mfa_enrollment_expires_at = datetime.now(UTC) - timedelta(seconds=1)
+        db.commit()
+    expired = client.post(
+        "/auth/auditor/mfa/enrollment/confirm",
+        json={**credentials, "code": pyotp.TOTP(started.json()["secret"]).now()},
+    )
+    assert expired.status_code == 410
+
+    already_enabled = client.post(
+        "/auth/auditor/mfa/enrollment",
+        json={"email": "auditor@example.test", "password": AUDITOR_PASSWORD},
+    )
+    assert already_enabled.status_code == 409
+
+
+def test_auditor_rotates_recovery_codes_with_current_totp(backend) -> None:
+    client, factory, ids, _, _ = backend
+    previous_code = "AAAA-BBBB-CCCC-DDDD-EEEE-FFFF"
+    with factory() as db:
+        previous = MFARecoveryCode(
+            user_id=ids["auditor"], code_hash=hash_mfa_recovery_code(previous_code)
+        )
+        db.add(previous)
+        db.commit()
+        previous_id = previous.id
+    sign_in_auditor(client)
+    assert (
+        client.post("/auth/auditor/mfa/recovery-codes", json={"code": "000000"}).status_code
+        == 401
+    )
+    rotated = client.post(
+        "/auth/auditor/mfa/recovery-codes",
+        json={"code": pyotp.TOTP(MFA_SECRET).now()},
+    )
+    assert rotated.status_code == 200
+    codes = rotated.json()["recovery_codes"]
+    assert len(codes) == 10
+
+    client.cookies.clear()
+    assert (
+        client.post(
+            "/auth/password",
+            json={
+                "email": "auditor@example.test",
+                "password": AUDITOR_PASSWORD,
+                "mfa_code": previous_code,
+            },
+        ).status_code
+        == 401
+    )
+    with factory() as db:
+        assert db.get(MFARecoveryCode, previous_id).revoked_at is not None
+
+    sign_in_client(client)
+    assert (
+        client.post("/auth/auditor/mfa/recovery-codes", json={"code": "000000"}).status_code
+        == 403
+    )
+    client.cookies.clear()
+    recovery_sign_in = client.post(
+        "/auth/password",
+        json={
+            "email": "auditor@example.test",
+            "password": AUDITOR_PASSWORD,
+            "mfa_code": codes[0],
+        },
+    )
+    assert recovery_sign_in.status_code == 200
+    with factory() as db:
+        assert db.scalar(
+            select(AuditLog).where(
+                AuditLog.actor_id == ids["auditor"],
+                AuditLog.action == "auth.mfa_recovery_codes_rotated",
+            )
+        ) is not None
 
 
 def test_magic_link_is_single_use(backend) -> None:
