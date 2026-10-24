@@ -5,6 +5,15 @@
   "compatibility_date": "2026-10-20",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+  "env": {
+    "production": {
+      "name": "ains-platform",
+      "workers_dev": false,
+      "services": [
+        { "binding": "WORKER_SELF_REFERENCE", "service": "ains-platform" }
+      ]
+    }
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"

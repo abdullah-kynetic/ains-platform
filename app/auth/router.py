@@ -1,9 +1,4 @@
-"""Invite-only password and magic-link sign-in endpoints.
-
-Magic-link delivery is intentionally an injectable boundary. The default sender records no
-token and emits no logs; deployment must supply an email delivery adapter before enabling that
-method. Tests inject a capture sender without exposing real credentials.
-"""
+"""Invite-only password and magic-link sign-in with injectable Resend delivery."""
 
 from __future__ import annotations
 
@@ -110,7 +105,11 @@ class UnconfiguredMagicLinkSender:
         del email, token, expires_at
 
 
-def get_magic_link_sender() -> MagicLinkSender:
+def get_magic_link_sender(settings: AuthSettings) -> MagicLinkSender:
+    from .email import ResendSender
+
+    if settings.resend_api_key.get_secret_value() and settings.email_from:
+        return ResendSender(settings)
     return UnconfiguredMagicLinkSender()
 
 
@@ -187,10 +186,7 @@ def _new_recovery_codes(db: Session, user: User) -> list[str]:
         record.revoked_at = now
     codes = [new_mfa_recovery_code() for _ in range(10)]
     db.add_all(
-        [
-            MFARecoveryCode(user_id=user.id, code_hash=hash_mfa_recovery_code(code))
-            for code in codes
-        ]
+        [MFARecoveryCode(user_id=user.id, code_hash=hash_mfa_recovery_code(code)) for code in codes]
     )
     return codes
 

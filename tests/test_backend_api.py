@@ -806,7 +806,8 @@ def test_client_invitation_expires_and_email_cannot_cross_firms(backend):
     assert denied.status_code == 404
 
 
-def test_client_invitation_preview_is_hidden_unless_explicitly_enabled(backend):
+def test_client_invitation_preview_is_hidden_unless_explicitly_enabled(backend, monkeypatch):
+    monkeypatch.setattr("app.auth.email.ResendSender.send", lambda self, **kwargs: None)
     client, _, ids, _, _ = backend
     enabled_settings = client.app.dependency_overrides[get_settings]()
     client.app.dependency_overrides[get_settings] = lambda: enabled_settings.model_copy(
@@ -1489,3 +1490,26 @@ def test_draft_report_includes_only_auditor_approved_findings(backend) -> None:
     pdf = client.post(f"/auditor/engagements/{ids['engagement_a']}/report?format=pdf")
     assert pdf.status_code == 200
     assert pdf.content.startswith(b"%PDF-")
+
+
+def test_unconfigured_invitation_delivery_does_not_persist_invite(backend):
+    client, factory, ids, _, _ = backend
+    settings = client.app.dependency_overrides[get_settings]()
+    client.app.dependency_overrides[get_settings] = lambda: settings.model_copy(
+        update={"invitation_preview_enabled": False}
+    )
+    sign_in_auditor(client)
+    response = client.post(
+        f"/auditor/engagements/{ids['engagement_a']}/invitations",
+        json={"email": "delivery-unconfigured@example.test", "name": "Synthetic"},
+    )
+    assert response.status_code == 503
+    with factory() as db:
+        assert (
+            db.scalar(
+                select(ClientInvitation).where(
+                    ClientInvitation.email == "delivery-unconfigured@example.test"
+                )
+            )
+            is None
+        )

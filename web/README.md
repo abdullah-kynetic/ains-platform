@@ -28,7 +28,7 @@ without that adapter. Never place credentials in a `NEXT_PUBLIC_*` variable.
 The `ains-platform-demo` Worker serves the client and auditor workflow demo at
 https://ains-platform-demo.ains-web.workers.dev. This deployment always builds with
 `NEXT_PUBLIC_USE_MOCKS=true`; it does not deploy FastAPI, Postgres, real sign-in or
-Egnyte ingestion. Demo receipts and decisions stay in browser storage. Use synthetic
+S3 or optional Egnyte ingestion. Demo receipts and decisions stay in browser storage. Use synthetic
 files only and use the labeled demo role switch to inspect the auditor workspace.
 
 ```bash
@@ -46,3 +46,22 @@ To test the packaged Worker locally, run `npx wrangler dev --port 8787`, then in
 terminal run `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8787 npm run test:e2e`.
 `PLAYWRIGHT_BASE_URL` skips Playwright's development server and targets the supplied
 synthetic demo instead. CI also builds the Cloudflare bundle to catch adapter regressions.
+
+### Production on Cloudflare Workers
+
+Use a custom portal domain under the same parent domain as the API (for example,
+`portal.example.com` and `api.example.com`) so secure backend session cookies work.
+`NEXT_PUBLIC_API_URL` is a **public build-time** setting, not a secret. Set it to
+`https://api.example.com` before building; changing a Wrangler runtime variable does
+not replace a URL already embedded in browser JavaScript.
+
+```sh
+export PATH="$HOME/.local/node22/bin:$PATH"
+NEXT_PUBLIC_API_URL=https://api.example.com npm run build:cloudflare:production
+npx opennextjs-cloudflare deploy --env production
+```
+
+Configure the custom domain for the production Worker in Cloudflare before publishing;
+production disables `workers.dev`. The production build forces mocks off; demo builds
+retain their existing synthetic behavior. Do not use `deploy:demo` for production.
+See [the AWS deployment runbook](../docs/deploy-aws.md) for backend, CORS, DNS and secrets.

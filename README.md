@@ -3,7 +3,7 @@
 AINS is an AI-native financial regulatory audit firm. Our software does the legwork; a credentialed auditor (Quinton) makes the calls and signs every report. The first service is the FINRA Rule 3310 independent AML test for broker-dealers; more regulatory audits will follow.
 
 This repo holds the audit workflow backend (Python 3.12, FastAPI, Pydantic) and the portal
-(Next.js 16 in `web/`). Client documents are stored in Egnyte via an Internal API app.
+(Next.js 16 in `web/`). Client documents use S3 by default; Egnyte is an optional, off-by-default connector.
 
 ## Canonical checklist
 
@@ -41,8 +41,8 @@ password while accepting the single-use, expiring token. Invitations can be rota
 an email cannot be invited into more than one firm. Client users may later sign in with a password
 or magic link. Auditors enroll TOTP MFA with their existing password and receive ten single-use,
 hashed recovery codes; replacing recovery codes requires a current authenticator code. Set
-`SESSION_SECRET` to a long, random value before using sign-in. Magic-link and invitation email
-delivery are intentionally not configured in this checkpoint. For synthetic local testing only,
+`SESSION_SECRET` to a long, random value before using sign-in. Set `RESEND_API_KEY`, `EMAIL_FROM` and `PORTAL_URL` to enable Resend delivery for
+magic links, invitations and password reset; unconfigured email returns 503. For synthetic local testing only,
 set `INVITATION_PREVIEW_ENABLED=true` to return an acceptance link to the auditor UI; never enable
 token previews in a shared or production system.
 
@@ -84,7 +84,15 @@ review queue where Quinton can inspect evidence, decide N/A requests, review cit
 generate unsigned DOCX/PDF drafts. Browser-visible `NEXT_PUBLIC_*` values must never contain
 secrets. See `web/README.md` for the portal-specific workflow.
 
-## Connect to Egnyte
+## Storage
+
+S3 is the default (`STORAGE_BACKEND=s3`). Configure `S3_BUCKET` and `AWS_REGION`,
+using an instance role in AWS. See [the AWS runbook](docs/deploy-aws.md) for encryption,
+retention and deployment. Egnyte credentials are not required.
+
+### Optional Egnyte connector
+
+To opt in, set `STORAGE_BACKEND=egnyte`, then:
 
 1. In Egnyte's admin console (Apps & Integrations), create an Internal app and note its **Client ID** and **Client Secret**.
 2. In `.env` set:
@@ -101,11 +109,8 @@ secrets. See `web/README.md` for the portal-specific workflow.
    ```
    Other commands: `mkdir <path>`, `upload <local> <remote>`, `download <remote> <dest>`.
 
-**Tokens.** Egnyte access tokens last **30 days** and are revoked if the user changes their password. Internal apps may request only **10 tokens per user per hour**, and API calls are limited to 2/sec and 1,000/day per token, so reuse tokens rather than logging in on every run:
-```bash
-uv run python -m app.egnyte_client get-token /tmp/egnyte-token.env
-```
-This logs in once and writes `EGNYTE_ACCESS_TOKEN` and `EGNYTE_REFRESH_TOKEN` to that file only (mode 600; nothing is printed). Copy the two lines into `.env` and delete the file. With `EGNYTE_ACCESS_TOKEN` set, the password flow is skipped (username/password become optional); on a 401 or expiry the client renews the token with `EGNYTE_REFRESH_TOKEN` (needs `EGNYTE_CLIENT_SECRET`), falling back to the password flow if credentials are set.
+Credentials and token renewal are handled by the guarded client. Use the CLI
+commands above; never print tokens or export them into files.
 
 Uploads use Egnyte's simple upload endpoint (files up to 100 MB). The client sends the raw file
 body as `application/octet-stream`, as required by that endpoint, with Egnyte's SHA-512 integrity
@@ -120,7 +125,8 @@ and stores the resulting Egnyte path and version in Postgres.
 In the synthetic web demo, open `/upload`, search for a request, choose multiple synthetic
 files, adjust their destinations, then confirm. Each file gets its own receipt/failure and
 SHA-256 fingerprint. Receipt metadata persists in this browser; file bytes are not stored
-or sent to Egnyte in demo mode. The real API stores bytes only under `/Shared/AINS-Dev`.
+or sent to storage in demo mode. The real API uses firm-scoped S3 keys by default;
+the optional Egnyte connector remains guarded under `/Shared/AINS-Dev`.
 Run `cd web && npx playwright install chromium && npm run test:e2e` for the browser test.
 The checklist is a progress view, not a second upload screen.
 
@@ -176,3 +182,6 @@ credential is part of this application.
 See `docs/build-handoff.md` for the six-task delivery summary, synthetic demo instructions,
 validation and remaining production prerequisites. CI includes browser/accessibility tests and
 short-lived synthetic screenshots. Automated accessibility checks are not a compliance certification.
+
+AWS deployment, storage selection, secrets, costs and Cloudflare production builds are documented
+in [the deployment runbook](docs/deploy-aws.md).
