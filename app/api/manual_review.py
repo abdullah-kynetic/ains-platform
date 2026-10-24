@@ -284,6 +284,7 @@ def create_workspace(payload: WorkspaceCreate, user: CurrentUser, db: DB):
             entity_id=engagement.id,
             details={
                 "firm_name": firm.name,
+                "checklist_version": engagement.checklist_version,
                 "review_period_start": payload.review_period_start.isoformat(),
                 "review_period_end": payload.review_period_end.isoformat(),
             },
@@ -653,7 +654,8 @@ def initialize(engagement_id: str, user: CurrentUser, db: DB):
             action="engagement.initialized",
             entity_type="engagement",
             entity_id=engagement.id,
-            details={"before": {"requests": 0}, "after": {"requests": 34}},
+            details={"before": {"requests": 0}, "after": {"requests": 34},
+                     "checklist_version": engagement.checklist_version},
         )
     )
     db.commit()
