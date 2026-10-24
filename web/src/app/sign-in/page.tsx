@@ -134,7 +134,7 @@ function SignInForm() {
         <Card featured>
           <CardHeader>
             <h1 className="text-xl font-semibold">
-              {token ? "Complete sign in" : "Sign in to AINS"}
+              {token ? "Complete sign in" : "Sign in to Kien Solutions"}
             </h1>
             <CardDescription>
               Invite-only access. Auditors must also enter their MFA code.
@@ -298,7 +298,7 @@ function SignInForm() {
           </CardContent>
         </Card>
         <p className="text-center text-xs text-subtle">
-          Only invited firm users and AINS auditors can sign in.
+          Only invited firm users and Kien Solutions auditors can sign in.
         </p>
       </div>
     </main>

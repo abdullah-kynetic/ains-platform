@@ -79,7 +79,7 @@ function Settings() {
               security.
             </p>
             <p className="mt-4 rounded-md bg-elevated p-3 text-sm">
-              Security preferences preview · MFA policy is managed by AINS.
+              Security preferences preview · MFA policy is managed by Kien Solutions.
             </p>
           </section>
           <section
@@ -89,7 +89,7 @@ function Settings() {
             <h2 className="mb-4 text-lg font-semibold">Firm</h2>
             <label className="grid gap-2 text-sm">
               Workspace name
-              <Input defaultValue="AINS Operations" />
+              <Input defaultValue="Kien Operations" />
             </label>
             <p className="mt-3 text-xs text-muted">
               Workspace membership and engagement assignments are managed by

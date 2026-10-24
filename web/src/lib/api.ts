@@ -171,7 +171,7 @@ export async function startAuditorMFAEnrollment(
     return {
       secret: "SYNTHETICMFAPREVIEWONLY",
       provisioning_uri:
-        "otpauth://totp/AINS:synthetic-auditor?secret=SYNTHETICMFAPREVIEWONLY&issuer=AINS",
+        "otpauth://totp/Kien%20Solutions:synthetic-auditor?secret=SYNTHETICMFAPREVIEWONLY&issuer=Kien%20Solutions",
       expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     };
   return apiRequest<AuditorMFAEnrollment>("/auth/auditor/mfa/enrollment", {
@@ -586,7 +586,7 @@ export async function downloadDraftReport(
   const match = disposition.match(/filename="([^"]+)"/);
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = match?.[1] ?? `ains-draft-report.${format}`;
+  link.download = match?.[1] ?? `kien-draft-report.${format}`;
   link.click();
   URL.revokeObjectURL(link.href);
 }

@@ -1,6 +1,6 @@
 # AWS deployment runbook (lean single-host profile)
 
-Low-volume, single-region production for Kien Solutions (AINS). Not a certification
+Low-volume, single-region production for Kien Solutions (https://kiensolutions.com). Not a certification
 or high-availability service. Quinton must approve control evidence, retention policy
 and release before client use. Use synthetic documents for every smoke test.
 

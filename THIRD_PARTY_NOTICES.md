@@ -1,6 +1,6 @@
 # Third-party design and implementation notices
 
-These MIT sources were inspected before adaptation. Components are adapted to AINS React/Next routing, accessible native controls and FastAPI cookie sessions; no upstream authentication integrations are included. Entendre is a general visual direction only; no wording, logos or code were copied.
+These MIT sources were inspected before adaptation. Components are adapted to Kien Solutions React/Next routing, accessible native controls and FastAPI cookie sessions; no upstream authentication integrations are included. Entendre is a general visual direction only; no wording, logos or code were copied.
 
 ## Kiranism/next-shadcn-dashboard-starter
 
@@ -70,7 +70,7 @@ Source: https://github.com/marmelab/atomic-crm
 
 Revision: 562b8b05e25f7b68b6f85e1e78f9d32c14400960
 
-Adaptation: Record sheet composition: identity header, summary sections and dated activity timeline. Existing AINS audit events remain the source.
+Adaptation: Record sheet composition: identity header, summary sections and dated activity timeline. Existing Kien Solutions audit events remain the source.
 
 The MIT License (MIT)
 

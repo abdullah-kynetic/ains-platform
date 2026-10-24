@@ -5,7 +5,7 @@ test("auditor task completion persists without finalizing audit work", async ({
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByRole("button", { name: /Kien Operations/ }).click();
   await page.goto("/auditor");
 
   const task = page.getByRole("checkbox", {
@@ -23,7 +23,7 @@ test("auditor task completion persists without finalizing audit work", async ({
 test("auditor can create and edit a synthetic internal task", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByRole("button", { name: /Kien Operations/ }).click();
   await page.goto("/auditor");
 
   await page.getByRole("button", { name: "Add task" }).click();

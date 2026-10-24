@@ -1,4 +1,4 @@
-"""Egnyte API client for AINS.
+"""Egnyte API client for Kien Solutions.
 
 See ``client.py`` for the doc URLs each call is built against. CLI:
 ``uv run python -m app.egnyte_client --help``.

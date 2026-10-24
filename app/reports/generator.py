@@ -105,7 +105,7 @@ class ReportGenerator:
         return ReportArtifact(
             data=buffer.getvalue(),
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            filename=f"ains-{engagement.id}-draft-report.docx",
+            filename=f"kien-{engagement.id}-draft-report.docx",
         )
 
     def _pdf(self, engagement: Engagement, findings: list[FindingDraft]) -> ReportArtifact:
@@ -162,5 +162,5 @@ class ReportGenerator:
         return ReportArtifact(
             data=buffer.getvalue(),
             media_type="application/pdf",
-            filename=f"ains-{engagement.id}-draft-report.pdf",
+            filename=f"kien-{engagement.id}-draft-report.pdf",
         )

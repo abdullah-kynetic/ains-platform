@@ -8,7 +8,7 @@ test("manual auditor decision stays internal while neutral replacement feedback 
   await page.getByRole("button", { name: "Confirm and upload" }).click();
   await expect(page.getByRole("status").filter({ hasText: /^Received$/ })).toBeVisible();
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByRole("button", { name: /Kien Operations/ }).click();
   await page.getByRole("link", { name: "Open audit workspace" }).click();
   await page.locator("summary").filter({ hasText: "AML-BD-001 —" }).click();
   await expect(page.getByText("synthetic.txt", { exact: true })).toBeVisible();
@@ -19,7 +19,7 @@ test("manual auditor decision stays internal while neutral replacement feedback 
   await expect(page.getByText("request.manual_decision", { exact: false })).toBeVisible();
   await page.getByLabel("Intake feedback for synthetic.txt").selectOption("unreadable");
   await expect(page.getByText("document.feedback", { exact: false })).toBeVisible();
-  await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByRole("button", { name: /Kien Operations/ }).click();
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
   await page.goto("/checklist");
   await expect(page.getByText("Please replace this file with a readable copy.").first()).toBeVisible();

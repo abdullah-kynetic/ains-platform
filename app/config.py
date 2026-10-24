@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = False
     session_ttl_hours: int = 12
     magic_link_ttl_minutes: int = 15
-    auditor_mfa_issuer: str = "AINS"
+    auditor_mfa_issuer: str = "Kien Solutions"
     auditor_mfa_enrollment_ttl_minutes: int = 10
     client_invitation_ttl_hours: int = 72
     invitation_preview_enabled: bool = False

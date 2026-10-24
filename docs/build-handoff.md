@@ -90,12 +90,12 @@ verification database; `alembic check` found no missing operations. CI is pinned
 
 ## Supabase decision
 
-Supabase is not planned for AINS. Do not create a Supabase project or schedule work for Supabase
+Supabase is not planned for Kien Solutions. Do not create a Supabase project or schedule work for Supabase
 Auth, Storage, Realtime, Edge Functions, browser keys, direct browser database access or an RLS-led
 authorization redesign. Do not remove working application services in anticipation of such a
 migration.
 
 FastAPI owns the user directory, password and session flows, auditor MFA, firm binding, auditor
-assignment and workflow authorization. AINS operates PostgreSQL and its production safeguards.
+assignment and workflow authorization. Kien Solutions operates PostgreSQL and its production safeguards.
 Egnyte remains the document system of record. The browser calls FastAPI exclusively. The existing
 synthetic Supabase PostgreSQL PoC is an archived decision record and requires no follow-up.

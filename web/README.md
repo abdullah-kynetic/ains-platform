@@ -1,6 +1,6 @@
-# AINS web (client portal)
+# Kien Solutions web (client portal)
 
-Next.js 16 (App Router, TypeScript) + Tailwind v4. Talks to the AINS FastAPI backend at `NEXT_PUBLIC_API_URL`.
+Next.js 16 (App Router, TypeScript) + Tailwind v4. Talks to the Kien Solutions FastAPI backend at `NEXT_PUBLIC_API_URL`.
 
 ```bash
 cd web
