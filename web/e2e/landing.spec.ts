@@ -31,10 +31,18 @@ test("public landing page states the service and the contact email", async ({
     page.getByRole("heading", { name: /testimonial|trusted by|our clients/i }),
   ).toHaveCount(0);
 
-  const result = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-    .analyze();
-  expect(result.violations, JSON.stringify(result.violations)).toEqual([]);
+  for (const scheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await openLanding(page);
+    const background = await page.evaluate(
+      () => getComputedStyle(document.body).backgroundColor,
+    );
+    expect(background).toBe(scheme === "dark" ? "rgb(51, 64, 92)" : "rgb(246, 242, 233)");
+    const result = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze();
+    expect(result.violations, `${scheme}: ${JSON.stringify(result.violations)}`).toEqual([]);
+  }
 });
 
 test("landing page keeps the contact link on a phone width", async ({
