@@ -261,3 +261,28 @@ availability risk. Sources: [AWS Free Tier](https://aws.amazon.com/free/),
 - RDS deletion protection and S3 `prevent_destroy` deliberately block casual
   teardown. Never remove retention or delete state to force a destroy. Retain
   required report versions, backup evidence and trail logs under the approved policy.
+
+## Optional Sentry error monitoring
+
+Sentry free plan -- optional; leave DSNs blank to disable it entirely. No Sentry
+account, auth token or source-map upload is required to build or deploy.
+Backend settings: `SENTRY_DSN` (blank by default), `SENTRY_ENVIRONMENT` (default
+`production`), `SENTRY_TRACES_SAMPLE_RATE` (0 by default; range 0–1). Supply backend
+settings through the deployment environment and restart the API. Browser monitoring
+uses `NEXT_PUBLIC_SENTRY_DSN`, a public build-time DSN; rebuild the portal after
+changing it. Never put a Sentry auth token in public variables.
+
+The browser-only `@sentry/browser` SDK runs through Next.js client instrumentation
+and is compatible with OpenNext/Cloudflare Workers without a server SDK or build
+plugin. It captures uncaught browser errors; Worker/server-render errors are not
+captured. Backend FastAPI exceptions use `sentry-sdk[fastapi]`.
+
+Both scrubbers rebuild events from a strict allowlist: a fixed error label and
+numeric stack line/column locations only. Request bodies, cookies, headers, URLs,
+users/emails, exception messages, source/locals, breadcrumbs, tags, custom context,
+document metadata/content and SAR data are discarded, including unknown fields.
+This intentionally limits diagnostic detail and grouping. PII, session tracking,
+replay, logs and trace propagation are disabled. Backend transaction events are
+always dropped for privacy, even if a nonzero trace sample rate is configured.
+Source maps are neither generated for Sentry nor uploaded. Use only synthetic data
+when checking delivery; do not add attachments or alternate telemetry transports.

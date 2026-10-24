@@ -22,6 +22,7 @@ dependencies = [
     "reportlab>=4.4",
     "pyyaml>=6.0",
     "boto3>=1.43.118",
+    "sentry-sdk[fastapi]>=2,<3",
 ]
 
 [dependency-groups]
