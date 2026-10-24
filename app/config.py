@@ -37,7 +37,11 @@ class Settings(BaseSettings):
     s3_kms_key_id: str = ""
     s3_retention_days: int = Field(default=0, ge=0)
     s3_retention_mode: Literal["COMPLIANCE", "GOVERNANCE"] = "GOVERNANCE"
+    # Optional. Production injects SSM Parameter Store /ains-prod/RESEND_API_KEY
+    # into this process environment. A blank key skips transactional email.
     resend_api_key: SecretStr = SecretStr("")
+    # Deployment compatibility only. Invite, reset, and report-ready mail uses
+    # the fixed Kien Solutions sender in app.auth.email.
     email_from: str = ""
     portal_url: str = "http://localhost:3000"
     password_reset_ttl_minutes: int = Field(default=15, ge=1, le=60)

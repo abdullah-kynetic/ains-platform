@@ -23,8 +23,10 @@ The public Cloudflare deployment is a synthetic demonstration. Its role switch i
    cookie settings merely to make cross-site development work.
 4. Apply migrations. Use the existing operator bootstrap, client invitations, and auditor MFA enrollment/recovery
    flows. Acceptance-test recovery, deactivation, and invitation delivery for the deployment.
-5. Choose and configure an approved email delivery provider if magic links or invitation emails
-   are required. Configure delivery privately; never return tokens in API responses or logs.
+5. Set `RESEND_API_KEY` (in production, SSM `/ains-prod/RESEND_API_KEY`) to deliver magic links,
+   invitations, password reset, and report-ready mail as `Kien Solutions <no-reply@kiensolutions.com>`.
+   A blank key skips those sends without failing the request, except magic-link sign-in, which
+   stays unavailable. Configure delivery privately; never return tokens in API responses or logs.
 6. Deploy the authenticated frontend separately from the public demo, set
    `NEXT_PUBLIC_USE_MOCKS=false`, and point `NEXT_PUBLIC_API_URL` to the deployed backend.
 7. Test client/auditor sign-in, MFA failures, session expiry, revocation, tenant isolation,

@@ -108,7 +108,7 @@ class UnconfiguredMagicLinkSender:
 def get_magic_link_sender(settings: AuthSettings) -> MagicLinkSender:
     from .email import ResendSender
 
-    if settings.resend_api_key.get_secret_value() and settings.email_from:
+    if settings.resend_api_key.get_secret_value().strip():
         return ResendSender(settings)
     return UnconfiguredMagicLinkSender()
 

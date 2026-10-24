@@ -4,7 +4,6 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 import pytest
 import respx
-from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 from sqlalchemy import create_engine, select
@@ -110,19 +109,27 @@ def test_rate_limits_and_provider_failure_are_generic(reset_backend):
     assert send.call_count == 3
 
 
-def test_email_unconfigured(reset_backend):
+def test_email_unconfigured(reset_backend, monkeypatch, caplog):
+    import logging
+
     client, _, settings = reset_backend
     settings.resend_api_key = SecretStr("")
-    assert (
-        client.post(
+
+    def fail(*args: object, **kwargs: object) -> None:
+        raise AssertionError("Resend client must not be called")
+
+    monkeypatch.setattr("app.auth.email.httpx.post", fail)
+    with caplog.at_level(logging.INFO, logger="app.auth.email"):
+        response = client.post(
             "/auth/password-reset/request", json={"email": "synthetic@example.test"}
-        ).status_code
-        == 503
-    )
-    with pytest.raises(HTTPException):
-        ResendSender(settings).send(
-            email="synthetic@example.test", token="synthetic", expires_at=datetime.now(UTC)
         )
+        ResendSender(settings, "reset").send(
+            email="synthetic@example.test", token="synthetic-token", expires_at=datetime.now(UTC)
+        )
+    assert response.status_code == 202
+    assert "RESEND_API_KEY is not configured" in caplog.text
+    assert "synthetic-token" not in caplog.text
+    assert "synthetic@example.test" not in caplog.text
 
 
 @respx.mock
