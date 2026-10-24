@@ -169,6 +169,27 @@ def auditor_queue(user: CurrentUser, db: DB) -> list[QueueItemView]:
                 ],
             )
         )
+    for item in items:
+        db.add(
+            AuditLog(
+                firm_id=item.firm_id,
+                actor_id=user.id,
+                action="engagement.view",
+                entity_type="engagement",
+                entity_id=item.engagement_id,
+            )
+        )
+        for document in item.documents:
+            db.add(
+                AuditLog(
+                    firm_id=item.firm_id,
+                    actor_id=user.id,
+                    action="document.view",
+                    entity_type="document",
+                    entity_id=document.id,
+                )
+            )
+    db.commit()
     return queue
 
 
@@ -296,3 +317,36 @@ def generate_report(
         media_type=artifact.media_type,
         headers={"Content-Disposition": f'attachment; filename="{artifact.filename}"'},
     )
+
+
+class ReportSignoff(APIModel):
+    report_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    attestation: Literal[True]
+
+
+@router.post("/engagements/{engagement_id}/report/signoff")
+def signoff_report(engagement_id: str, payload: ReportSignoff, user: CurrentUser, db: DB):
+    """Record the assigned auditor's explicit approval of a specific report artifact."""
+    from app.database.models import EngagementStatus
+
+    _require_auditor(user)
+    engagement = db.scalar(
+        select(Engagement).where(Engagement.id == engagement_id, Engagement.auditor_id == user.id)
+    )
+    if not engagement:
+        raise HTTPException(404, "Engagement not found")
+    if engagement.status != EngagementStatus.AWAITING_SIGNATURE:
+        raise HTTPException(409, "Engagement must be awaiting signature")
+    db.add(
+        AuditLog(
+            firm_id=engagement.firm_id,
+            actor_id=user.id,
+            action="report.signoff",
+            entity_type="engagement",
+            entity_id=engagement.id,
+            details={"report_sha256": payload.report_sha256, "attestation": True},
+        )
+    )
+    engagement.status = EngagementStatus.COMPLETE
+    db.commit()
+    return {"signed_off": True, "report_sha256": payload.report_sha256}

@@ -15,6 +15,7 @@ const clientItems: NavItem[] = [
 ];
 
 const auditorItems: NavItem[] = [
+  { href: "/auditor/audit-log", label: "Audit Log", icon: "History" },
   { href: "/auditor", label: "Review queue", icon: "ShieldCheck", exact: true },
   { href: "/auditor/pipeline", label: "Audit pipeline", icon: "Columns3" },
 ];

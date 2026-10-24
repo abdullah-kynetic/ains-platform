@@ -314,6 +314,7 @@ def dashboard(user: CurrentUser, db: DB):
         {
             "id": entry.id,
             "firmName": entry.firm.name,
+            "firmId": entry.firm_id,
             "status": entry.status,
             "readiness": readiness(entry),
         }
@@ -708,6 +709,27 @@ def workspace(engagement_id: str, user: CurrentUser, db: DB):
                 ],
             }
         )
+    db.add(
+        AuditLog(
+            firm_id=engagement.firm_id,
+            actor_id=user.id,
+            action="engagement.view",
+            entity_type="engagement",
+            entity_id=engagement.id,
+        )
+    )
+    for item in items:
+        for doc in item.documents:
+            db.add(
+                AuditLog(
+                    firm_id=engagement.firm_id,
+                    actor_id=user.id,
+                    action="document.view",
+                    entity_type="document",
+                    entity_id=doc.id,
+                )
+            )
+    db.commit()
     entity_ids = [
         engagement.id,
         *[item.id for item in items],

@@ -974,7 +974,10 @@ def test_manual_decision_history_and_client_privacy(backend, assessment):
     workspace = client.get(base + "/workspace").json()
     item = next(item for item in workspace["requests"] if item["id"] == ids["item_a"])
     assert item["assessment"] == assessment and item["applicability"] == "applicable"
-    event = workspace["history"][-1]
+    event = next(
+        row for row in reversed(workspace["history"])
+        if row["action"] == "request.manual_decision"
+    )
     assert event["actorId"] == ids["auditor"]
     assert event["details"]["before"]["assessment"] is None
     assert event["details"]["after"] == decision
