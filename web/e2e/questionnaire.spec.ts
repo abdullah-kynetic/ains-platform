@@ -10,7 +10,7 @@ test("questionnaire saves representations and blocks uploads while N/A is pendin
   await page.getByRole("button", { name: "Save answers" }).click();
   await expect(page.getByRole("status")).toContainText("Answers saved");
   await page.reload();
-  await expect(page.getByText("N/A awaiting Quinton")).toBeVisible();
+  await expect(page.getByText("N/A awaiting Quentin")).toBeVisible();
   await page.goto("/checklist");
   await expect(page.getByText("N/A or no-activity confirmation awaiting auditor review", { exact: false })).toBeVisible();
   await page.goto("/upload");

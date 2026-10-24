@@ -184,7 +184,7 @@ function EngagementWorkspace({ id }: { id: string }) {
             — {data.readiness.reviewed}/{data.readiness.total} reviewed
           </p>
           <p className="text-sm text-muted">
-            {data.readiness.meaning} Quinton’s rubric remains to be completed
+            {data.readiness.meaning} Quentin’s rubric remains to be completed
             separately.
           </p>
           <details>
