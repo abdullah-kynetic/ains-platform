@@ -27,7 +27,8 @@ surplus credits.
   free). Billed S3 data events are off (`trail_document_data_events`).
 - **Backups**: `ains-backup.timer` runs `pg_dump -Fc` daily at 09:30 UTC to
   `s3://<ops>/backups/`. There is no point-in-time recovery; worst-case data loss is
-  one day. Test a restore with `pg_restore` into a scratch database.
+  one day. Restore procedure, including the synthetic count drill:
+  [backup-restore.md](backup-restore.md).
 - **Image**: with `app_image` empty, Terraform uploads a `git archive` bundle to the
   ops bucket and the host builds the image locally (no registry). A new bundle
   replaces the instance (user-data changes), so **dump the DB first**; the EIP and

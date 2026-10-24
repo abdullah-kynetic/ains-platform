@@ -226,6 +226,9 @@ __marimo__/
 data/real/
 *.pem
 
+# Database dumps from restore drills. Production dumps contain client data.
+*.dump
+
 # Terraform state, plans, credentials and local deployment inputs
 **/.terraform/
 *.tfstate
