@@ -1,17 +1,8 @@
-# S3 is the primary/default storage; no Egnyte account or credentials are required.
-region       = "us-east-1"
-name         = "ains-prod"
-bucket_name  = "replace-with-globally-unique-ains-documents"
-api_domain   = "api.example.com"
-portal_url   = "https://portal.example.com"
-email_from   = "AINS <access@example.com>"
-app_image    = "ghcr.io/your-org/ains-platform@sha256:REPLACE_WITH_ARM64_IMAGE_DIGEST"
-secret_arns = {
-  SESSION_SECRET = "arn:aws:secretsmanager:us-east-1:123456789012:secret:ains/session-REPLACE"
-  DATABASE_URL   = "arn:aws:secretsmanager:us-east-1:123456789012:secret:ains/database-REPLACE"
-  RESEND_API_KEY = "arn:aws:secretsmanager:us-east-1:123456789012:secret:ains/resend-REPLACE"
-}
-s3_sse = "AES256"
-retention_days = 0 # Quinton must choose the final-report retention policy.
-retention_mode = "GOVERNANCE"
-create_app_access_key = false
+region      = "us-east-2"
+bucket_name = "ains-docs-ACCOUNT_ID-use2"
+# Empty api_domain uses <elastic-ip>.sslip.io; set to api.example.com once DNS points at api_ip.
+api_domain  = ""
+portal_url  = "https://portal.example.com"
+email_from  = "noreply@example.com"
+# Empty app_image builds on the instance from this git-archive bundle.
+source_bundle_path = "/path/to/ains-source.tar.gz"
