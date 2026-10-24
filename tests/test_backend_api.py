@@ -1023,7 +1023,14 @@ def test_initialize_from_catalog_and_complete_readiness(backend):
     sign_in_auditor(client)
     base = f"/auditor/engagements/{engagement_id}"
     assert client.post(base + "/initialize").json() == {"requests": 34}
+    with factory() as db:
+        initialized = db.get(Engagement, engagement_id)
+        assert initialized.checklist_version == "aml_bd_v1"
+        assert len(initialized.checklist_snapshot["requests"]) == 34
+        snapshot = initialized.checklist_snapshot
     assert client.post(base + "/initialize").status_code == 409
+    with factory() as db:
+        assert db.get(Engagement, engagement_id).checklist_snapshot == snapshot
     workspace = client.get(base + "/workspace").json()
     assert len(workspace["requests"]) == 34 and not workspace["readiness"]["ready"]
     with factory() as db:

@@ -173,6 +173,8 @@ class Engagement(Base):
     status: Mapped[EngagementStatus] = mapped_column(
         Enum(EngagementStatus, native_enum=False), default=EngagementStatus.COLLECTING
     )
+    checklist_version: Mapped[str | None] = mapped_column(String(120))
+    checklist_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     review_period_start: Mapped[date] = mapped_column(Date)
     review_period_end: Mapped[date] = mapped_column(Date)
     due_date: Mapped[date | None] = mapped_column(Date)

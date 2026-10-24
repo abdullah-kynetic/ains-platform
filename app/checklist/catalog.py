@@ -82,6 +82,9 @@ def initialize_engagement(engagement) -> None:
     if engagement.items:
         raise ValueError("Engagement already has request instances")
     catalog = load_catalog()
+    # Preserve initialization provenance without replacing current catalog rendering.
+    engagement.checklist_version = catalog.version
+    engagement.checklist_snapshot = catalog.model_dump(mode="json")
     sections = {section.id: section.title for section in catalog.sections}
     for index, request in enumerate(catalog.requests):
         engagement.items.append(

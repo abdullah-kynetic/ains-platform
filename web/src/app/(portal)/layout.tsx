@@ -9,6 +9,7 @@ import { USE_MOCKS } from "@/lib/api";
 const clientItems: NavItem[] = [
   { href: "/", label: "Overview", icon: "LayoutDashboard", exact: true },
   { href: "/checklist", label: "Document checklist", icon: "ListChecks" },
+  { href: "/progress", label: "Document progress", icon: "ChartNoAxesCombined" },
   { href: "/upload", label: "Upload center", icon: "Upload" },
   { href: "/questionnaire", label: "Firm questionnaire", icon: "ClipboardCheck" },
 ];
