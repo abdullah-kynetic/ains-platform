@@ -16,6 +16,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test:unit": "tsc -p tsconfig.unit.json --noEmit && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/lib/tenant.test.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

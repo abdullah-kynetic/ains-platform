@@ -6,9 +6,15 @@ Next.js 16 (App Router, TypeScript) + Tailwind v4. Talks to the AINS FastAPI bac
 cd web
 cp .env.example .env.local   # NEXT_PUBLIC_USE_MOCKS=true serves synthetic demo data
 npm ci
-npm run dev                  # http://localhost:3000
-npm run lint && npm run typecheck && npm run build
+npm run dev                  # http://kynetic.localhost:3000
+npm run lint && npm run typecheck && npm run test:unit && npm run build
 ```
+
+The portal reads the firm slug from the request host. Production hosts are
+`<firm>.kiensolutions.com`. Local hosts are `<firm>.localhost:3000`
+(`kynetic.localhost:3000`). `kiensolutions.com`, `www`, and a host with no firm
+slug render the unknown-firm page. `*.localhost` already points at this machine.
+API calls stay on `NEXT_PUBLIC_API_URL` with `credentials: "include"`.
 
 - `src/lib/checklist.ts`: client statuses (same values as `app/checklist.ClientStatus`), labels, progress helpers.
 - `src/lib/api.ts`: typed API client for backend sessions, engagements, questionnaire answers, uploads, auditor review, and draft report downloads.
@@ -42,29 +48,52 @@ npm run deploy:demo
 by that command. Cloudflare runs the OpenNext adapter with Node compatibility; generated
 `.open-next` and `.wrangler` artifacts are ignored. Never add deployment tokens to files.
 
-To test the packaged Worker locally, run `npx wrangler dev --port 8787`, then in another
-terminal run `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8787 npm run test:e2e`.
+To test the packaged Worker locally, run `npx wrangler dev --ip 0.0.0.0 --port 8787`, then in another
+terminal run `PLAYWRIGHT_BASE_URL=http://kynetic.localhost:8787 npm run test:e2e`.
 `PLAYWRIGHT_BASE_URL` skips Playwright's development server and targets the supplied
-synthetic demo instead. CI also builds the Cloudflare bundle to catch adapter regressions.
+synthetic demo instead. The suite expects a firm host such as `kynetic.localhost`.
+A `workers.dev` hostname has no firm slug, so it shows the unknown-firm page.
+CI also builds the Cloudflare bundle to catch adapter regressions.
 
 ### Production on Cloudflare Workers
 
-Use a custom portal domain under the same parent domain as the API (for example,
-`portal.example.com` and `api.example.com`) so secure backend session cookies work.
-`NEXT_PUBLIC_API_URL` is a **public build-time** setting, not a secret. Set it to
-`https://api.example.com` before building; changing a Wrangler runtime variable does
-not replace a URL already embedded in browser JavaScript.
+One portal Worker serves every firm host `<firm>.kiensolutions.com`. The landing
+Worker keeps `kiensolutions.com` and `www.kiensolutions.com`. Workers Custom
+Domains match one exact hostname and do not support a wildcard, so attach a
+**route** `*.kiensolutions.com/*` on the `kiensolutions.com` zone. Give the
+landing Worker the more specific route `www.kiensolutions.com/*` (and the apex
+route `kiensolutions.com/*`). The more specific route wins, and a route also
+wins over a Custom Domain on the same host.
+
+DNS: add a proxied wildcard record, `A * 192.0.2.1` or `AAAA * 100::`
+(orange cloud). Those placeholder addresses are originless; this Worker answers.
+Exact records beat `*`, so leave apex and `www` on the landing Worker and leave
+`api` **DNS-only** (grey cloud) to the API host. A proxied `api` name would
+match the portal route.
+
+Certificates: on a zone that uses Cloudflare nameservers, Universal SSL already
+covers the apex and one label of `*.kiensolutions.com`. Firm hosts do not need
+a certificate each, and they do not need an Advanced Certificate Manager
+subscription. Buy Advanced Certificate Manager only for a partial (CNAME) DNS
+setup, where Universal SSL does not provision the wildcard for you, or for
+names deeper than one label. This portal uses a single label.
+
+`NEXT_PUBLIC_API_URL` is a **public build-time** setting, not a secret. Set it
+to `https://api.kiensolutions.com` before building; changing a Wrangler runtime
+variable does not replace a URL already embedded in browser JavaScript. The API
+host has to share the registrable domain `kiensolutions.com` so the browser
+treats portal and API as the same site.
 
 ```sh
 export PATH="$HOME/.local/node22/bin:$PATH"
-NEXT_PUBLIC_API_URL=https://api.example.com npm run build:cloudflare:production
+NEXT_PUBLIC_API_URL=https://api.kiensolutions.com npm run build:cloudflare:production
 npx opennextjs-cloudflare deploy --env production
 ```
 
-Configure the custom domain for the production Worker in Cloudflare before publishing;
-production disables `workers.dev`. The production build forces mocks off; demo builds
-retain their existing synthetic behavior. Do not use `deploy:demo` for production.
-See [the AWS deployment runbook](../docs/deploy-aws.md) for backend, CORS, DNS and secrets.
+Production disables `workers.dev`. The production build forces mocks off; demo
+builds retain their existing synthetic behavior. Do not use `deploy:demo` for
+production. See [the AWS deployment runbook](../docs/deploy-aws.md) for backend
+CORS, cookies, DNS and secrets.
 
 ## Optional Sentry error monitoring
 

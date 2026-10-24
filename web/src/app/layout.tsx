@@ -1,13 +1,16 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "@/components/auth/session";
+import { TenantProvider } from "@/components/tenant/tenant-provider";
+import { UnknownFirm } from "@/components/tenant/unknown-firm";
+import {
+  firmSlugFromHost,
+  getTenantBranding,
+  safeHostLabel,
+} from "@/lib/tenant";
 
-export const metadata: Metadata = {
-  title: { default: "AINS Client Portal", template: "%s · AINS" },
-  description: "Upload your audit documents and track their status.",
-  robots: { index: false, follow: false },
-};
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
@@ -16,13 +19,52 @@ export const viewport: Viewport = {
   colorScheme: "light dark",
 };
 
-export default function RootLayout({
+async function requestTenant() {
+  const host = (await headers()).get("host");
+  return { host, tenant: firmSlugFromHost(host) };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { tenant } = await requestTenant();
+  if (!tenant.ok) {
+    return {
+      title: "Unknown firm",
+      description: "This address has no matching firm.",
+      robots: { index: false, follow: false },
+    };
+  }
+  const branding = await getTenantBranding(tenant.slug);
+  return {
+    title: { default: `${branding.name} portal`, template: `%s · ${branding.name}` },
+    description: "Upload your audit documents and track their status.",
+    robots: { index: false, follow: false },
+  };
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { host, tenant } = await requestTenant();
+  if (!tenant.ok) {
+    return (
+      <html lang="en" className="h-full">
+        <body className="min-h-full bg-background text-foreground">
+          <UnknownFirm reason={tenant.reason} host={safeHostLabel(host)} />
+        </body>
+      </html>
+    );
+  }
+
+  const branding = await getTenantBranding(tenant.slug);
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html
+      lang="en"
+      className="h-full"
+      data-firm-slug={tenant.slug}
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -37,10 +79,12 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <SessionProvider>
-          {children}
-          <Toaster />
-        </SessionProvider>
+        <TenantProvider slug={tenant.slug} branding={branding}>
+          <SessionProvider>
+            {children}
+            <Toaster />
+          </SessionProvider>
+        </TenantProvider>
       </body>
     </html>
   );
