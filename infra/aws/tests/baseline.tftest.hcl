@@ -1,6 +1,6 @@
 mock_provider "aws" {
   mock_data "aws_availability_zones" {
-    defaults = { names = ["us-east-1a", "us-east-1b"] }
+    defaults = { names = ["us-east-2a", "us-east-2b"] }
   }
   mock_data "aws_caller_identity" {
     defaults = { account_id = "123456789012" }
@@ -8,8 +8,8 @@ mock_provider "aws" {
   mock_data "aws_ssm_parameter" {
     defaults = { value = "ami-0123456789abcdef0" }
   }
-  mock_resource "aws_db_instance" {
-    defaults = { master_user_secret = [{ secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:synthetic-master", secret_status = "active", kms_key_id = "synthetic" }] }
+  mock_resource "aws_eip" {
+    defaults = { public_ip = "198.51.100.7" }
   }
 }
 variables {
@@ -18,33 +18,44 @@ variables {
   app_image   = "ghcr.io/synthetic/ains@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   portal_url  = "https://portal.example.test"
   email_from  = "synthetic@example.test"
-  secret_arns = {
-    SESSION_SECRET = "arn:aws:secretsmanager:us-east-1:123456789012:secret:synthetic-session"
-    DATABASE_URL   = "arn:aws:secretsmanager:us-east-1:123456789012:secret:synthetic-database"
-    RESEND_API_KEY = "arn:aws:secretsmanager:us-east-1:123456789012:secret:synthetic-email"
-  }
 }
-run "private_database_and_retention" {
-  command = plan
+run "lean_single_host" {
+  command = apply
   assert {
-    condition     = !aws_db_instance.main.publicly_accessible && aws_db_instance.main.storage_encrypted && aws_db_instance.main.backup_retention_period == 7
-    error_message = "Database must remain private, encrypted and backed up."
+    condition     = aws_instance.app.instance_type == "t4g.micro" && aws_instance.app.root_block_device[0].volume_size == 20 && aws_instance.app.root_block_device[0].encrypted
+    error_message = "Lean profile is one encrypted 20 GB t4g.micro."
   }
   assert {
-    condition     = aws_s3_bucket.documents.object_lock_enabled && aws_s3_bucket_versioning.all["documents"].versioning_configuration[0].status == "Enabled"
+    condition     = strcontains(aws_instance.app.user_data, "postgresql16-server") && strcontains(aws_instance.app.user_data, "listen_addresses = 'localhost'") && strcontains(aws_instance.app.user_data, "/swapfile")
+    error_message = "Postgres must run locally on the host with swap."
+  }
+  assert {
+    condition     = strcontains(aws_instance.app.user_data, "SecureString") && !strcontains(aws_instance.app.user_data, "secretsmanager")
+    error_message = "Secrets must use SSM Parameter Store, not Secrets Manager."
+  }
+  assert {
+    condition     = strcontains(aws_instance.app.user_data, "pg_dump") && strcontains(aws_instance.app.user_data, "ains-backup.timer")
+    error_message = "Daily database backup to S3 is required."
+  }
+  assert {
+    condition     = strcontains(aws_instance.app.user_data, "--entrypoint python") && strcontains(aws_instance.app.user_data, "--host 127.0.0.1")
+    error_message = "Worker must avoid concurrent migrations; API binds loopback only."
+  }
+  assert {
+    condition     = aws_s3_bucket.documents.object_lock_enabled && aws_s3_bucket_versioning.documents.versioning_configuration[0].status == "Enabled"
     error_message = "Document storage must support immutable versions."
   }
   assert {
-    condition     = length(aws_iam_access_key.app) == 0
-    error_message = "EC2 must default to role credentials."
+    condition     = length(aws_cloudtrail.main.event_selector) == 0
+    error_message = "Billed CloudTrail data events are off by default."
   }
   assert {
-    condition     = strcontains(aws_instance.app.user_data, "--entrypoint python") && strcontains(aws_instance.app.user_data, "--forwarded-allow-ips=*")
-    error_message = "Worker must avoid concurrent migrations; localhost proxy must forward client IP."
+    condition     = alltrue([for rule in aws_security_group.app.ingress : !contains([22, 5432], rule.from_port)])
+    error_message = "No SSH or database port may be public."
   }
 }
 run "kms_retention_settings" {
-  command = plan
+  command = apply
   variables {
     s3_sse         = "aws:kms"
     retention_days = 365

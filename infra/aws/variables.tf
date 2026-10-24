@@ -1,6 +1,6 @@
 variable "region" {
   type    = string
-  default = "us-east-1"
+  default = "us-east-2"
 }
 variable "name" {
   type    = string
@@ -10,19 +10,32 @@ variable "bucket_name" {
   type = string
 }
 variable "api_domain" {
-  type = string
+  description = "API hostname. Empty uses <elastic-ip>.sslip.io so Caddy can obtain a certificate before DNS exists."
+  type        = string
+  default     = ""
 }
 variable "app_image" {
-  description = "Public registry ARM64 image pinned by digest"
+  description = "Public registry ARM64 image pinned by digest. Empty builds the image on the instance from source_bundle_path."
   type        = string
+  default     = ""
 }
-variable "secret_arns" {
-  description = "Existing Secrets Manager secret ARNs for runtime environment. Values stay out of Terraform."
-  type        = map(string)
+variable "source_bundle_path" {
+  description = "Local git-archive tarball of the repo, uploaded to the ops bucket and built on the instance when app_image is empty."
+  type        = string
+  default     = ""
   validation {
-    condition     = alltrue([for key in ["SESSION_SECRET", "DATABASE_URL", "RESEND_API_KEY"] : contains(keys(var.secret_arns), key)])
-    error_message = "Provide SESSION_SECRET, DATABASE_URL and RESEND_API_KEY secret ARNs."
+    condition     = var.source_bundle_path == "" || endswith(var.source_bundle_path, ".tar.gz")
+    error_message = "source_bundle_path must be a .tar.gz produced by git archive."
   }
+}
+variable "instance_type" {
+  description = "t4g.micro (1 GB) by default; t4g.small (2 GB) if memory is tight."
+  type        = string
+  default     = "t4g.micro"
+}
+variable "root_volume_gb" {
+  type    = number
+  default = 20
 }
 variable "portal_url" {
   type = string
@@ -54,8 +67,23 @@ variable "retention_mode" {
     error_message = "Choose GOVERNANCE or COMPLIANCE."
   }
 }
-variable "create_app_access_key" {
-  description = "Optional compatibility credential; EC2 uses its instance role instead. Secret is only in state."
+variable "trail_document_data_events" {
+  description = "Record S3 object-level events for documents in CloudTrail (billed per event)."
   type        = bool
   default     = false
+}
+variable "log_retention_days" {
+  description = "Expire S3 access and CloudTrail logs after N days."
+  type        = number
+  default     = 90
+}
+variable "backup_retention_days" {
+  description = "Expire daily pg_dump backups after N days."
+  type        = number
+  default     = 14
+}
+variable "noncurrent_version_days" {
+  description = "Expire superseded document versions after N days (locked versions are kept until retention ends)."
+  type        = number
+  default     = 365
 }

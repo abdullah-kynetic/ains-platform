@@ -1,35 +1,111 @@
 #!/bin/bash
+# Lean single-host bootstrap: PostgreSQL 16 + API + worker + Caddy on one t4g.micro.
 set -euo pipefail
-dnf update -y
-dnf install -y docker python3-pip
+exec > >(tee -a /var/log/ains-bootstrap.log) 2>&1
+REGION=${region}
+PREFIX=${param_prefix}
+
+# 2 GB swap so the 1 GB host survives image builds and memory spikes.
+if [ ! -f /swapfile ]; then
+  fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile
+  echo '/swapfile none swap defaults 0 0' >> /etc/fstab
+fi
+swapon -a || true
+sysctl -w vm.swappiness=10 && echo 'vm.swappiness=10' > /etc/sysctl.d/90-ains.conf
+
+dnf install -y docker postgresql16-server postgresql16
 systemctl enable --now docker
-python3 -m pip install boto3
+
+# --- Runtime secrets: generated on the host, stored as SSM SecureStrings ------
+param() { aws ssm get-parameter --region $REGION --with-decryption --name "$PREFIX/$1" --query Parameter.Value --output text 2>/dev/null || true; }
+ensure_param() {
+  if [ -z "$(param $1)" ]; then
+    aws ssm put-parameter --region $REGION --type SecureString --name "$PREFIX/$1" --value "$(openssl rand -hex 32)" >/dev/null
+  fi
+}
+ensure_param SESSION_SECRET
+ensure_param DB_PASSWORD
+DB_PASSWORD=$(param DB_PASSWORD)
+
+# --- PostgreSQL 16 on localhost, tuned for 1 GB RAM ---------------------------
+if [ ! -f /var/lib/pgsql/data/PG_VERSION ]; then
+  postgresql-setup --initdb
+fi
+cat > /var/lib/pgsql/data/conf.d.ains.conf <<'PGCONF'
+listen_addresses = 'localhost'
+max_connections = 30
+shared_buffers = 128MB
+effective_cache_size = 384MB
+work_mem = 4MB
+maintenance_work_mem = 32MB
+wal_buffers = 4MB
+max_wal_size = 512MB
+min_wal_size = 64MB
+checkpoint_completion_target = 0.9
+random_page_cost = 1.1
+effective_io_concurrency = 100
+password_encryption = scram-sha-256
+log_min_duration_statement = 1000
+PGCONF
+grep -q conf.d.ains.conf /var/lib/pgsql/data/postgresql.conf || echo "include 'conf.d.ains.conf'" >> /var/lib/pgsql/data/postgresql.conf
+cat > /var/lib/pgsql/data/pg_hba.conf <<'HBA'
+local   all   postgres                peer
+local   all   all                     scram-sha-256
+host    all   all   127.0.0.1/32      scram-sha-256
+host    all   all   ::1/128           scram-sha-256
+HBA
+chown postgres:postgres /var/lib/pgsql/data/conf.d.ains.conf /var/lib/pgsql/data/pg_hba.conf
+systemctl enable postgresql
+systemctl restart postgresql
+sudo -u postgres psql -v ON_ERROR_STOP=1 -q <<SQL
+DO \$\$ BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'ains_app') THEN CREATE ROLE ains_app LOGIN; END IF;
+END \$\$;
+ALTER ROLE ains_app PASSWORD '$DB_PASSWORD';
+SQL
+sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='ains'" | grep -q 1 || sudo -u postgres createdb -O ains_app ains
+
+# --- Environment loader (rerun on every service start) ------------------------
 install -d -m 700 /etc/ains
-cat > /etc/ains/load-environment.py <<'PY'
-import json
-import os
-import boto3
-client = boto3.client('secretsmanager', region_name=${jsonencode(region)})
-values = json.loads(${jsonencode(environment)})
-for key, arn in json.loads(${jsonencode(secret_arns)}).items():
-    values[key] = client.get_secret_value(SecretId=arn)['SecretString']
-for value in values.values():
-    if '\n' in value or '\r' in value:
-        raise ValueError('Environment values must be single-line')
-fd = os.open('/etc/ains/runtime.env', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-with os.fdopen(fd, 'w') as target:
-    target.write(''.join(f'{key}={value}\n' for key, value in values.items()))
-PY
-chmod 600 /etc/ains/load-environment.py
+cat > /etc/ains/environment.json <<'JSON'
+${environment}
+JSON
+cat > /etc/ains/load-environment.sh <<'LOADER'
+#!/bin/bash
+set -euo pipefail
+REGION=${region}
+PREFIX=${param_prefix}
+get() { aws ssm get-parameter --region $REGION --with-decryption --name "$PREFIX/$1" --query Parameter.Value --output text 2>/dev/null || true; }
+umask 077
+{
+  python3 -c 'import json;[print(f"{k}={v}") for k,v in json.load(open("/etc/ains/environment.json")).items()]'
+  echo "SESSION_SECRET=$(get SESSION_SECRET)"
+  echo "DATABASE_URL=postgresql+psycopg://ains_app:$(get DB_PASSWORD)@127.0.0.1:5432/ains"
+  RESEND=$(get RESEND_API_KEY); [ -n "$RESEND" ] && echo "RESEND_API_KEY=$RESEND"
+  true
+} > /etc/ains/runtime.env.tmp
+mv /etc/ains/runtime.env.tmp /etc/ains/runtime.env
+LOADER
+chmod 700 /etc/ains/load-environment.sh
+
+%{ if source_uri != "" ~}
+# --- Build the ARM64 image locally from the private release bundle ------------
+rm -rf /opt/ains/src && install -d /opt/ains/src
+aws s3 cp ${source_uri} /opt/ains/source.tar.gz --region $REGION
+tar -xzf /opt/ains/source.tar.gz -C /opt/ains/src
+docker build -t ${image} /opt/ains/src
+%{ else ~}
+docker pull ${image}
+%{ endif ~}
+
 cat > /etc/systemd/system/ains.service <<'UNIT'
 [Unit]
-After=docker.service network-online.target
-Requires=docker.service
+After=docker.service postgresql.service network-online.target
+Requires=docker.service postgresql.service
 [Service]
-ExecStartPre=/usr/bin/python3 /etc/ains/load-environment.py
-ExecStartPre=/usr/bin/docker pull ${image}
+ExecStartPre=/etc/ains/load-environment.sh
 ExecStartPre=-/usr/bin/docker rm -f ains-api
-ExecStart=/usr/bin/docker run --name ains-api --env-file /etc/ains/runtime.env -p 127.0.0.1:8000:8000 --log-opt max-size=10m --log-opt max-file=3 ${image} uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
+ExecStart=/usr/bin/docker run --name ains-api --network host --memory 384m --env-file /etc/ains/runtime.env --log-opt max-size=10m --log-opt max-file=3 ${image} uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips=127.0.0.1
 ExecStop=/usr/bin/docker stop ains-api
 Restart=always
 RestartSec=10
@@ -43,7 +119,7 @@ Requires=ains.service
 [Service]
 ExecStartPre=/usr/bin/sleep 15
 ExecStartPre=-/usr/bin/docker rm -f ains-worker
-ExecStart=/usr/bin/docker run --name ains-worker --entrypoint python --env-file /etc/ains/runtime.env --log-opt max-size=10m --log-opt max-file=3 ${image} -m app.worker
+ExecStart=/usr/bin/docker run --name ains-worker --network host --memory 256m --entrypoint python --env-file /etc/ains/runtime.env --log-opt max-size=10m --log-opt max-file=3 ${image} -m app.worker
 ExecStop=/usr/bin/docker stop ains-worker
 Restart=always
 RestartSec=10
@@ -64,12 +140,35 @@ After=docker.service
 Requires=docker.service
 [Service]
 ExecStartPre=-/usr/bin/docker rm -f ains-proxy
-ExecStart=/usr/bin/docker run --name ains-proxy --network host -v /etc/ains/Caddyfile:/etc/caddy/Caddyfile:ro -v ains-caddy:/data --log-opt max-size=10m --log-opt max-file=3 caddy:2
+ExecStart=/usr/bin/docker run --name ains-proxy --network host --memory 96m -v /etc/ains/Caddyfile:/etc/caddy/Caddyfile:ro -v ains-caddy:/data --log-opt max-size=10m --log-opt max-file=3 caddy:2
 ExecStop=/usr/bin/docker stop ains-proxy
 Restart=always
 RestartSec=10
 [Install]
 WantedBy=multi-user.target
 UNIT
+
+# --- Daily pg_dump to S3 (lifecycle expires old dumps) ------------------------
+cat > /etc/ains/backup.sh <<'BACKUP'
+#!/bin/bash
+set -euo pipefail
+STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+sudo -u postgres pg_dump -Fc ains | aws s3 cp - s3://${ops_bucket}/backups/ains-$STAMP.dump --sse AES256 --region ${region}
+BACKUP
+chmod 700 /etc/ains/backup.sh
+cat > /etc/systemd/system/ains-backup.service <<'UNIT'
+[Service]
+Type=oneshot
+ExecStart=/etc/ains/backup.sh
+UNIT
+cat > /etc/systemd/system/ains-backup.timer <<'UNIT'
+[Timer]
+OnCalendar=*-*-* 09:30:00 UTC
+Persistent=true
+[Install]
+WantedBy=timers.target
+UNIT
+
 systemctl daemon-reload
-systemctl enable --now ains ains-worker ains-proxy
+systemctl enable --now ains ains-worker ains-proxy ains-backup.timer
+echo "AINS bootstrap complete"
