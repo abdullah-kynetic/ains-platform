@@ -183,6 +183,27 @@ def current_engagement(user: CurrentUser, db: DB) -> EngagementView:
     )
     if not engagement:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active engagement")
+    db.add(
+        AuditLog(
+            firm_id=engagement.firm_id,
+            actor_id=user.id,
+            action="engagement.view",
+            entity_type="engagement",
+            entity_id=engagement.id,
+        )
+    )
+    for item in engagement.items:
+        for document in item.documents:
+            db.add(
+                AuditLog(
+                    firm_id=engagement.firm_id,
+                    actor_id=user.id,
+                    action="document.view",
+                    entity_type="document",
+                    entity_id=document.id,
+                )
+            )
+    db.commit()
     return _serialize_engagement(engagement)
 
 

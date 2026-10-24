@@ -1,5 +1,6 @@
 "use client";
 
+import { AuditTimeline } from "./audit-log";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Sheet } from "@/components/ui/dialog";
@@ -32,6 +33,7 @@ function RecordDetails({ client }: { client: ClientSummary }) {
     <section aria-labelledby="record-activity"><h3 id="record-activity" className="mb-5 font-semibold">Activity timeline</h3>
       {error ? <div role="alert"><p>{error}</p><button className="mt-2 text-brand underline" onClick={load}>Retry activity</button></div> : activity === null ? <p role="status">Loading activity…</p> : !activity.length ? <p className="text-sm text-muted">No activity recorded for this engagement.</p> : <ol className="ml-2 border-l border-border">{activity.map((item) => <li key={item.id} className="relative pb-6 pl-6"><span aria-hidden="true" className="absolute -left-1.5 top-1 size-3 rounded-full border-2 border-surface bg-brand" /><p className="text-sm"><span className="font-medium">{item.actor}</span> {item.action} {item.subject}</p><p className="mt-1 text-xs text-muted">{item.context}</p><time dateTime={item.occurredAt} className="mt-2 block text-xs text-subtle">{new Date(item.occurredAt).toLocaleString()}</time></li>)}</ol>}
     </section>
+    <AuditTimeline firm={client.firmId ?? client.id} entityId={client.id} />
     <Link href={`/auditor/engagements/${client.id}`} className={buttonVariants()}>Continue to audit workspace</Link>
   </div>;
 }
