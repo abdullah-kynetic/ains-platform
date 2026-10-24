@@ -119,8 +119,10 @@ npx opennextjs-cloudflare deploy --env production
 Set the production Worker's custom domain to `portal.example.com` in Cloudflare.
 The production Wrangler environment has a distinct Worker/self-reference and
 `workers_dev=false`. Keep the API and portal on sibling HTTPS domains. Backend
-`CORS_ORIGINS` and `PORTAL_URL` are set from the Terraform `portal_url` variable;
-secure HttpOnly cookies remain backend-owned. Never put secrets in `NEXT_PUBLIC_*`.
+`CORS_ORIGINS` and `PORTAL_URL` are set from the Terraform `portal_url` variable.
+That production value is the public HTTPS portal origin. Local `.env` allows
+`http://localhost:3000` with the API at `http://localhost:8000`; do not copy localhost
+into production CORS. Secure HttpOnly cookies remain backend-owned. Never put secrets in `NEXT_PUBLIC_*`.
 Do not use `deploy:demo` for production: it intentionally builds synthetic mocks.
 Reset links lead to `/reset-password`; magic links lead to `/sign-in?token=...`.
 Disable query-string logging/analytics on all authentication pages at the edge.

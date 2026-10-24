@@ -1498,6 +1498,10 @@ def test_draft_report_includes_only_auditor_approved_findings(backend) -> None:
     pdf = client.post(f"/auditor/engagements/{ids['engagement_a']}/report?format=pdf")
     assert pdf.status_code == 200
     assert pdf.content.startswith(b"%PDF-")
+    assert (
+        pdf.headers["content-disposition"]
+        == f'attachment; filename="kien-{ids["engagement_a"]}-draft-report.pdf"'
+    )
 
 
 def test_unconfigured_invitation_delivery_does_not_persist_invite(backend):
