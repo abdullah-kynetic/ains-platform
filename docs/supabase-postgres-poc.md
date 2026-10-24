@@ -1,5 +1,9 @@
 # Synthetic Supabase PostgreSQL proof of concept
 
+> **Archived decision record:** Supabase is not part of the planned AINS architecture. This
+> synthetic evaluation is retained only to document what was considered. Do not run it, provision
+> a Supabase project, configure credentials, migrate data or replace working AINS services.
+
 This checkpoint uses Supabase only as hosted PostgreSQL. FastAPI continues to own sessions,
 client invitations, password hashing, auditor MFA, workflow authorization, and tenant scoping.
 Supabase Auth, Storage, Realtime, Edge Functions, and production data are out of scope.
