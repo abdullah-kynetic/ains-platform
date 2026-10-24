@@ -8,6 +8,9 @@ test("auditor creates a workspace and manages a single-use synthetic client invi
   await page.goto("/auditor");
 
   await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByLabel("Current authenticator code").fill("123456");
+  await page.getByRole("button", { name: "Replace recovery codes" }).click();
+  await expect(page.getByText("Previous unused codes are revoked.")).toBeVisible();
   await page.getByRole("link", { name: "Add client workspace" }).click();
   await expect(page.getByRole("heading", { name: "Add client workspace" })).toBeVisible();
   await page.getByLabel("Firm name").fill("Synthetic Gamma Securities");
