@@ -12,6 +12,7 @@ import { FolderOpen } from "lucide-react";
 import { AuditorActivityFeed } from "@/components/auditor/activity-feed";
 import { AuditorUpcomingTasks } from "@/components/auditor/upcoming-tasks";
 import { ClientInvitations } from "@/components/auditor/client-invitations";
+import { MFARecoveryCodes } from "@/components/auditor/mfa-recovery-codes";
 import {
   getClients,
   getWorkspace,
@@ -96,6 +97,9 @@ function Dashboard() {
         <div className="xl:col-span-3">
           <AuditorUpcomingTasks engagements={clients ?? []} />
         </div>
+      </div>
+      <div className="mt-6">
+        <MFARecoveryCodes />
       </div>
     </>
   );

@@ -60,6 +60,16 @@ export type SessionUser = {
 
 export type SessionData = { user: SessionUser };
 
+export type AuditorMFAEnrollment = {
+  secret: string;
+  provisioning_uri: string;
+  expires_at: string;
+};
+
+export type AuditorMFAEnrollmentComplete = SessionData & {
+  recovery_codes: string[];
+};
+
 export type ClientInvitationStatus =
   | "pending"
   | "expired"
@@ -151,6 +161,69 @@ export async function passwordSignIn(
     method: "POST",
     body: JSON.stringify({ email, password, mfa_code: mfaCode || null }),
   });
+}
+
+export async function startAuditorMFAEnrollment(
+  email: string,
+  password: string,
+): Promise<AuditorMFAEnrollment> {
+  if (USE_MOCKS)
+    return {
+      secret: "SYNTHETICMFAPREVIEWONLY",
+      provisioning_uri:
+        "otpauth://totp/AINS:synthetic-auditor?secret=SYNTHETICMFAPREVIEWONLY&issuer=AINS",
+      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+    };
+  return apiRequest<AuditorMFAEnrollment>("/auth/auditor/mfa/enrollment", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function confirmAuditorMFAEnrollment(
+  email: string,
+  password: string,
+  code: string,
+): Promise<AuditorMFAEnrollmentComplete> {
+  if (USE_MOCKS) {
+    if (code !== "123456") throw new Error("Use synthetic code 123456.");
+    localStorage.setItem("ains-synthetic-role", "auditor");
+    localStorage.removeItem("ains-synthetic-signed-out");
+    return {
+      user: { ...mockSession.user, role: "auditor" },
+      recovery_codes: Array.from(
+        { length: 10 },
+        (_, index) => `DEMO-${String(index + 1).padStart(2, "0")}-NOT-A-REAL-CODE`,
+      ),
+    };
+  }
+  return apiRequest<AuditorMFAEnrollmentComplete>(
+    "/auth/auditor/mfa/enrollment/confirm",
+    {
+      method: "POST",
+      body: JSON.stringify({ email, password, code }),
+    },
+  );
+}
+
+export async function rotateAuditorMFARecoveryCodes(
+  code: string,
+): Promise<string[]> {
+  if (USE_MOCKS) {
+    if (code !== "123456") throw new Error("Use synthetic code 123456.");
+    return Array.from(
+      { length: 10 },
+      (_, index) => `ROTATED-${String(index + 1).padStart(2, "0")}-DEMO-ONLY`,
+    );
+  }
+  const result = await apiRequest<{ recovery_codes: string[] }>(
+    "/auth/auditor/mfa/recovery-codes",
+    {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    },
+  );
+  return result.recovery_codes;
 }
 
 export async function requestMagicLink(email: string): Promise<void> {

@@ -10,20 +10,31 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Protocol
 
+import pyotp
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
-from app.database.models import AuditLog, AuthSession, MagicLinkToken, User, UserRole
+from app.database.models import (
+    AuditLog,
+    AuthSession,
+    MagicLinkToken,
+    MFARecoveryCode,
+    User,
+    UserRole,
+)
 from app.database.session import get_db
 
 from .dependencies import SESSION_COOKIE, get_current_user
 from .security import (
     create_session_token,
     hash_magic_link_token,
+    hash_mfa_recovery_code,
     new_magic_link_token,
+    new_mfa_recovery_code,
+    new_totp_secret,
     verify_password,
     verify_totp,
 )
@@ -36,7 +47,7 @@ AuthSettings = Annotated[Settings, Depends(get_settings)]
 class PasswordSignIn(BaseModel):
     email: str
     password: str = Field(min_length=8, max_length=1024)
-    mfa_code: str | None = Field(default=None, min_length=6, max_length=8)
+    mfa_code: str | None = Field(default=None, min_length=6, max_length=32)
 
 
 class MagicLinkRequest(BaseModel):
@@ -45,7 +56,20 @@ class MagicLinkRequest(BaseModel):
 
 class MagicLinkVerify(BaseModel):
     token: str = Field(min_length=20, max_length=512)
-    mfa_code: str | None = Field(default=None, min_length=6, max_length=8)
+    mfa_code: str | None = Field(default=None, min_length=6, max_length=32)
+
+
+class AuditorMFAStart(BaseModel):
+    email: str
+    password: str = Field(min_length=8, max_length=1024)
+
+
+class AuditorMFAConfirm(AuditorMFAStart):
+    code: str = Field(min_length=6, max_length=8)
+
+
+class AuditorMFARecoveryRotate(BaseModel):
+    code: str = Field(min_length=6, max_length=8)
 
 
 class UserView(BaseModel):
@@ -60,6 +84,20 @@ class UserView(BaseModel):
 
 class SessionView(BaseModel):
     user: UserView
+
+
+class AuditorMFAEnrollmentView(BaseModel):
+    secret: str
+    provisioning_uri: str
+    expires_at: datetime
+
+
+class AuditorMFAEnrollmentComplete(SessionView):
+    recovery_codes: list[str]
+
+
+class AuditorMFARecoveryCodes(BaseModel):
+    recovery_codes: list[str]
 
 
 class MagicLinkSender(Protocol):
@@ -84,7 +122,7 @@ def _normalize_email(email: str) -> str:
     return email.strip().casefold()
 
 
-def _require_auditor_mfa(user: User, code: str | None) -> None:
+def _require_auditor_mfa(db: Session, user: User, code: str | None) -> None:
     if user.role != UserRole.AUDITOR:
         return
     if not user.mfa_enabled or not user.mfa_secret:
@@ -94,8 +132,58 @@ def _require_auditor_mfa(user: User, code: str | None) -> None:
         )
     if not code:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="MFA code required")
-    if not verify_totp(user.mfa_secret, code):
+    if verify_totp(user.mfa_secret, code):
+        return
+    recovery_code = db.scalar(
+        select(MFARecoveryCode)
+        .where(
+            MFARecoveryCode.user_id == user.id,
+            MFARecoveryCode.code_hash == hash_mfa_recovery_code(code or ""),
+            MFARecoveryCode.used_at.is_(None),
+            MFARecoveryCode.revoked_at.is_(None),
+        )
+        .with_for_update()
+    )
+    if recovery_code is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
+    recovery_code.used_at = datetime.now(UTC)
+    db.add(
+        AuditLog(
+            actor_id=user.id,
+            action="auth.mfa_recovery_code_used",
+            entity_type="user",
+            entity_id=user.id,
+        )
+    )
+
+
+def _password_user(db: Session, email: str, password: str) -> User:
+    user = db.scalar(select(User).where(User.email == _normalize_email(email)))
+    if not user or not user.is_active or not verify_password(password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+        )
+    return user
+
+
+def _new_recovery_codes(db: Session, user: User) -> list[str]:
+    now = datetime.now(UTC)
+    for record in db.scalars(
+        select(MFARecoveryCode).where(
+            MFARecoveryCode.user_id == user.id,
+            MFARecoveryCode.used_at.is_(None),
+            MFARecoveryCode.revoked_at.is_(None),
+        )
+    ):
+        record.revoked_at = now
+    codes = [new_mfa_recovery_code() for _ in range(10)]
+    db.add_all(
+        [
+            MFARecoveryCode(user_id=user.id, code_hash=hash_mfa_recovery_code(code))
+            for code in codes
+        ]
+    )
+    return codes
 
 
 def _issue_session(
@@ -145,13 +233,114 @@ def password_sign_in(
     db: DB,
     settings: AuthSettings,
 ) -> SessionView:
-    user = db.scalar(select(User).where(User.email == _normalize_email(payload.email)))
-    if not user or not user.is_active or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
-        )
-    _require_auditor_mfa(user, payload.mfa_code)
+    user = _password_user(db, payload.email, payload.password)
+    _require_auditor_mfa(db, user, payload.mfa_code)
     return _issue_session(db=db, settings=settings, response=response, user=user)
+
+
+@router.post("/auditor/mfa/enrollment", response_model=AuditorMFAEnrollmentView)
+def start_auditor_mfa_enrollment(
+    payload: AuditorMFAStart,
+    db: DB,
+    settings: AuthSettings,
+) -> AuditorMFAEnrollmentView:
+    user = _password_user(db, payload.email, payload.password)
+    if user.role != UserRole.AUDITOR:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Auditor access required")
+    if user.mfa_enabled:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="MFA is already enabled")
+
+    now = datetime.now(UTC)
+    secret = new_totp_secret()
+    user.mfa_secret = secret
+    user.mfa_enrollment_expires_at = now + timedelta(
+        minutes=settings.auditor_mfa_enrollment_ttl_minutes
+    )
+    db.add(
+        AuditLog(
+            actor_id=user.id,
+            action="auth.mfa_enrollment_started",
+            entity_type="user",
+            entity_id=user.id,
+        )
+    )
+    db.commit()
+    return AuditorMFAEnrollmentView(
+        secret=secret,
+        provisioning_uri=pyotp.TOTP(secret).provisioning_uri(
+            name=user.email,
+            issuer_name=settings.auditor_mfa_issuer,
+        ),
+        expires_at=user.mfa_enrollment_expires_at,
+    )
+
+
+@router.post("/auditor/mfa/enrollment/confirm", response_model=AuditorMFAEnrollmentComplete)
+def confirm_auditor_mfa_enrollment(
+    payload: AuditorMFAConfirm,
+    response: Response,
+    db: DB,
+    settings: AuthSettings,
+) -> AuditorMFAEnrollmentComplete:
+    user = _password_user(db, payload.email, payload.password)
+    if user.role != UserRole.AUDITOR:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Auditor access required")
+    if user.mfa_enabled:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="MFA is already enabled")
+    now = datetime.now(UTC)
+    if (
+        not user.mfa_secret
+        or not user.mfa_enrollment_expires_at
+        or (
+            user.mfa_enrollment_expires_at.replace(tzinfo=UTC)
+            if not user.mfa_enrollment_expires_at.tzinfo
+            else user.mfa_enrollment_expires_at
+        )
+        <= now
+    ):
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="MFA enrollment has expired")
+    if not verify_totp(user.mfa_secret, payload.code):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
+
+    user.mfa_enabled = True
+    user.mfa_enrollment_expires_at = None
+    recovery_codes = _new_recovery_codes(db, user)
+    db.add(
+        AuditLog(
+            actor_id=user.id,
+            action="auth.mfa_enrollment_completed",
+            entity_type="user",
+            entity_id=user.id,
+        )
+    )
+    session = _issue_session(db=db, settings=settings, response=response, user=user)
+    return AuditorMFAEnrollmentComplete(
+        user=session.user,
+        recovery_codes=recovery_codes,
+    )
+
+
+@router.post("/auditor/mfa/recovery-codes", response_model=AuditorMFARecoveryCodes)
+def rotate_auditor_mfa_recovery_codes(
+    payload: AuditorMFARecoveryRotate,
+    user: CurrentUser,
+    db: DB,
+) -> AuditorMFARecoveryCodes:
+    if user.role != UserRole.AUDITOR:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Auditor access required")
+    if not user.mfa_enabled or not verify_totp(user.mfa_secret, payload.code):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
+    recovery_codes = _new_recovery_codes(db, user)
+    db.add(
+        AuditLog(
+            actor_id=user.id,
+            action="auth.mfa_recovery_codes_rotated",
+            entity_type="user",
+            entity_id=user.id,
+        )
+    )
+    db.commit()
+    return AuditorMFARecoveryCodes(recovery_codes=recovery_codes)
 
 
 @router.post("/magic-link", status_code=status.HTTP_202_ACCEPTED)
@@ -202,7 +391,7 @@ def verify_magic_link(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Magic link is invalid or expired"
         )
-    _require_auditor_mfa(user, payload.mfa_code)
+    _require_auditor_mfa(db, user, payload.mfa_code)
     record.used_at = now
     return _issue_session(db=db, settings=settings, response=response, user=user)
 

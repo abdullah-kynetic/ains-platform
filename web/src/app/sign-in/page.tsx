@@ -15,10 +15,13 @@ import {
 import { Field } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
+  confirmAuditorMFAEnrollment,
   passwordSignIn,
   requestMagicLink,
+  startAuditorMFAEnrollment,
   verifyMagicLink,
   USE_MOCKS,
+  type AuditorMFAEnrollment,
 } from "@/lib/api";
 
 function SignInForm() {
@@ -28,6 +31,9 @@ function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
+  const [enrollment, setEnrollment] =
+    useState<AuditorMFAEnrollment | null>(null);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const token = searchParams.get("token") ?? "";
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -81,6 +87,46 @@ function SignInForm() {
     }
   }
 
+  async function startEnrollment() {
+    setBusy(true);
+    setError("");
+    try {
+      setEnrollment(await startAuditorMFAEnrollment(email, password));
+      setMfaCode("");
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not start MFA enrollment.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmEnrollment(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const completed = await confirmAuditorMFAEnrollment(
+        email,
+        password,
+        mfaCode,
+      );
+      setRecoveryCodes(completed.recovery_codes);
+      setEnrollment(null);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not confirm MFA enrollment.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main id="main-content" className="min-h-screen bg-glow px-4 py-12">
       <div className="mx-auto grid w-full max-w-md gap-7">
@@ -110,16 +156,70 @@ function SignInForm() {
                 </Button>
               </div>
             )}
-            {token ? (
+            {recoveryCodes.length ? (
+              <div className="grid gap-4">
+                <p className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-muted">
+                  Save these recovery codes now. Each works once and they will
+                  not be shown again.
+                </p>
+                <ul className="grid gap-1 font-mono text-xs sm:grid-cols-2">
+                  {recoveryCodes.map((code) => (
+                    <li key={code}>{code}</li>
+                  ))}
+                </ul>
+                <Button onClick={() => void refresh()}>
+                  I saved my recovery codes
+                </Button>
+              </div>
+            ) : enrollment ? (
+              <form className="grid gap-4" onSubmit={confirmEnrollment}>
+                {USE_MOCKS ? (
+                  <p className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-muted">
+                    Synthetic demo only. Use authenticator code 123456.
+                  </p>
+                ) : null}
+                <p className="text-sm text-muted">
+                  Add this setup key to your authenticator app, then enter its
+                  current six-digit code. Enrollment expires at{" "}
+                  {new Date(enrollment.expires_at).toLocaleTimeString()}.
+                </p>
+                <div className="break-all rounded-lg border border-border p-3 font-mono text-sm">
+                  {enrollment.secret}
+                </div>
+                <Field label="Authenticator code" htmlFor="enrollment-code">
+                  <Input
+                    id="enrollment-code"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    minLength={6}
+                    maxLength={8}
+                    required
+                    value={mfaCode}
+                    onChange={(event) => setMfaCode(event.target.value)}
+                  />
+                </Field>
+                <Button type="submit" disabled={busy || mfaCode.length < 6}>
+                  {busy ? "Confirming…" : "Confirm and enable MFA"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => setEnrollment(null)}
+                >
+                  Cancel enrollment
+                </Button>
+              </form>
+            ) : token ? (
               <form className="grid gap-4" onSubmit={handleToken}>
                 <Field
-                  label="Auditor MFA code (if required)"
+                  label="Auditor MFA or recovery code (if required)"
                   htmlFor="token-mfa"
                 >
                   <Input
                     id="token-mfa"
-                    inputMode="numeric"
                     autoComplete="one-time-code"
+                    maxLength={32}
                     value={mfaCode}
                     onChange={(event) => setMfaCode(event.target.value)}
                   />
@@ -151,11 +251,14 @@ function SignInForm() {
                     onChange={(event) => setPassword(event.target.value)}
                   />
                 </Field>
-                <Field label="Auditor MFA code (if required)" htmlFor="mfa">
+                <Field
+                  label="Auditor MFA or recovery code (if required)"
+                  htmlFor="mfa"
+                >
                   <Input
                     id="mfa"
-                    inputMode="numeric"
                     autoComplete="one-time-code"
+                    maxLength={32}
                     value={mfaCode}
                     onChange={(event) => setMfaCode(event.target.value)}
                   />
@@ -170,6 +273,14 @@ function SignInForm() {
                   onClick={() => void handleMagicLink()}
                 >
                   Email me a sign-in link
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy || !email || password.length < 8}
+                  onClick={() => void startEnrollment()}
+                >
+                  Set up auditor MFA
                 </Button>
               </form>
             )}

@@ -212,4 +212,20 @@ test("sign-in form has accessible labels and a useful failed-sign-in state", asy
       .getByRole("alert")
       .filter({ hasText: "Demo mode does not accept credentials" }),
   ).toBeVisible();
+
+  await page.getByRole("button", { name: "Set up auditor MFA" }).click();
+  await expect(page.getByText("SYNTHETICMFAPREVIEWONLY")).toBeVisible();
+  await page.getByLabel("Authenticator code").fill("123456");
+  await page
+    .getByRole("button", { name: "Confirm and enable MFA" })
+    .click();
+  await expect(page.getByText("Save these recovery codes now")).toBeVisible();
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .exclude("nextjs-portal")
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
 });

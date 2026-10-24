@@ -28,6 +28,24 @@ def verify_totp(secret: str | None, code: str | None) -> bool:
     return bool(secret and code and pyotp.TOTP(secret).verify(code, valid_window=1))
 
 
+def new_totp_secret() -> str:
+    return pyotp.random_base32()
+
+
+def new_mfa_recovery_code() -> str:
+    raw = secrets.token_hex(12).upper()
+    return "-".join(raw[index : index + 4] for index in range(0, len(raw), 4))
+
+
+def normalize_mfa_recovery_code(code: str) -> str:
+    return code.replace("-", "").replace(" ", "").upper()
+
+
+def hash_mfa_recovery_code(code: str) -> str:
+    normalized = normalize_mfa_recovery_code(code)
+    return hashlib.sha256(normalized.encode()).hexdigest()
+
+
 def new_magic_link_token() -> tuple[str, str]:
     token = secrets.token_urlsafe(32)
     return token, hashlib.sha256(token.encode()).hexdigest()
