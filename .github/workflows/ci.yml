@@ -48,6 +48,10 @@ jobs:
         env:
           NEXT_PUBLIC_USE_MOCKS: "true"
       - run: npx playwright install --with-deps chromium
+      # redesign e2e captures write to /workspace/screenshots (present in the
+      # dev workspace, absent on GitHub-hosted runners). Parent dirs are not
+      # created by page.screenshot, and /workspace is not writable without sudo.
+      - run: sudo mkdir -p /workspace/screenshots && sudo chown "$(id -u):$(id -g)" /workspace /workspace/screenshots
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: always()
