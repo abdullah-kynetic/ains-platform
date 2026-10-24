@@ -8,9 +8,9 @@
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
-  --color-background: #f6f7f9;
+  --color-background: #f8fafc;
   --color-surface: #ffffff;
-  --color-sidebar: #fbfbfc;
+  --color-sidebar: #f1f5f9;
   --color-elevated: #f1f3f6;
   --color-hover: #f4f5f7;
   --color-foreground: #17191c;
@@ -230,3 +230,12 @@ input[type="file"] {
 .dark input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0.7);
 }
+
+/* Icon rail follows the MIT dashboard starter composition. Mobile uses the existing focus-managed sheet. */
+.desktop-sidebar { transition: width 180ms ease; }
+.desktop-sidebar[data-collapsed="true"] { width: 76px; }
+.desktop-sidebar[data-collapsed="true"] .nav-label,
+.desktop-sidebar[data-collapsed="true"] .sidebar-panel > :not(nav) { display: none; }
+.desktop-sidebar[data-collapsed="true"] nav a { justify-content: center; padding-inline: 8px; }
+.desktop-sidebar[data-collapsed="true"] .sidebar-panel { padding-top: 24px; }
+@media (prefers-reduced-motion: reduce) { .desktop-sidebar { transition: none; } }

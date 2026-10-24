@@ -11,7 +11,7 @@ export function AuditTimeline({ firm, entityId }: { firm: string; entityId: stri
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   useEffect(() => { let active = true; auditEntries(firm, 0, "", entityId).then(r => { if (active) { setRows(r.items); setError(""); } }).catch(() => { if (active) setError("Audit entries could not be loaded."); }); return () => { active = false; }; }, [firm, entityId, retry]);
-  return <section><h3 className="mb-3 font-semibold">Recent audit entries</h3>{error ? <div role="alert">{error} <button onClick={() => setRetry(retry + 1)}>Retry audit entries</button></div> : <ol className="grid gap-3">{rows.map(r => <li key={r.id} className="border-l border-border pl-3 text-sm">{r.action}<time className="block text-xs text-muted" dateTime={r.created_at}>{new Date(r.created_at).toLocaleString()}</time></li>)}</ol>}</section>;
+  return <section><h3 className="mb-3 font-semibold">Recent audit entries</h3>{error ? <div role="alert">{error} <button onClick={() => setRetry(retry + 1)}>Retry audit entries</button></div> : <ol className="ml-2 border-l border-border">{rows.map(r => <li key={r.id} className="relative pb-6 pl-6 text-sm"><span aria-hidden="true" className="absolute -left-1.5 top-1 size-3 rounded-full border-2 border-surface bg-brand" /><span className="font-medium">{r.action}</span><p className="mt-1 text-xs text-muted">{r.actor_id ?? "System"} · {r.entity_type}</p><time className="block text-xs text-muted" dateTime={r.created_at}>{new Date(r.created_at).toLocaleString()}</time></li>)}</ol>}</section>;
 }
 function Log() {
   const [firms, setFirms] = useState<Awaited<ReturnType<typeof auditFirms>>>([]);

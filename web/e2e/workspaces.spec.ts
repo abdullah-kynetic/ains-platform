@@ -7,6 +7,7 @@ test("auditor creates a workspace and manages a single-use synthetic client invi
   await page.getByRole("button", { name: /AINS Operations/ }).click();
   await page.goto("/auditor");
 
+  await page.goto("/auditor/settings");
   await page.getByRole("button", { name: /AINS Operations/ }).click();
   await page.getByLabel("Current authenticator code").fill("123456");
   await page.getByRole("button", { name: "Replace recovery codes" }).click();

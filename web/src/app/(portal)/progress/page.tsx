@@ -18,6 +18,7 @@ export default function ClientProgressPage() {
   return <>
     <PageHeader title="Your document progress" description="Track what has been received, what is being checked, and what needs your attention. Document acceptance is not an audit conclusion."
       actions={<Link href="/checklist" className={buttonVariants()}>Upload documents</Link>} />
+    <Card className="mb-5"><CardHeader><CardTitle>Report status</CardTitle></CardHeader><CardContent><p className="text-sm text-muted">Your auditor will share report availability separately. Document collection progress does not indicate report approval or signature.</p></CardContent></Card>
     <div className="mb-5 grid gap-3 sm:grid-cols-3">
       <Stat label="Documents received" value={`${progress.done} / ${progress.total}`} />
       <Stat label="Being checked" value={counts.checking} />

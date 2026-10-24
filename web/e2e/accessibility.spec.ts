@@ -45,7 +45,7 @@ test("client and auditor screens meet automated accessibility basics", async ({
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
   await page.getByRole("button", { name: /AINS Operations/ }).click();
   await expect(
-    page.getByRole("heading", { name: "Client audits" }),
+    page.getByRole("heading", { name: "Overview", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Latest activity" }),

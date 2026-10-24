@@ -8,6 +8,8 @@ import {
   ChevronsUpDown,
   LogOut,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   ShieldCheck,
   type LucideIcon,
@@ -169,6 +171,8 @@ function Items({
           <Link
             key={item.href}
             href={item.href}
+            title={item.label}
+            aria-label={item.label}
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
@@ -179,12 +183,9 @@ function Items({
             )}
           >
             <Icon
-              className={cn(
-                "size-4",
-                active ? "text-brand" : "text-subtle",
-              )}
+              className={cn("size-4", active ? "text-brand" : "text-subtle")}
             />
-            {item.label}
+            <span className="nav-label">{item.label}</span>
           </Link>
         );
       })}
@@ -222,7 +223,7 @@ function Panel({
   const auditor = sub.toLowerCase().includes("auditor");
 
   return (
-    <div className="flex h-full flex-col p-3">
+    <div className="sidebar-panel flex min-h-0 flex-1 flex-col overflow-y-auto p-3">
       <Logo sub={sub} className="px-2 pt-2 pb-5" />
       <WorkspaceSwitcher
         auditor={auditor}
@@ -274,13 +275,37 @@ export function Sidebar(props: {
   onWorkspaceChange?: (workspace: "auditor" | "client") => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <>
-      <aside className="sticky top-0 hidden h-screen w-68 shrink-0 border-r border-border bg-sidebar lg:block">
+      <aside
+        data-collapsed={collapsed}
+        className="desktop-sidebar sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-sidebar lg:flex lg:flex-col"
+      >
+        <button
+          type="button"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed(!collapsed)}
+          className="mx-3 mt-3 flex items-center gap-2 rounded-md px-3 text-xs text-muted hover:bg-hover"
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="size-4" />
+          ) : (
+            <PanelLeftClose className="size-4" />
+          )}
+          <span className="nav-label">
+            {collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          </span>
+        </button>
         <Panel {...props} />
       </aside>
-      <div role="region" aria-label="Mobile workspace controls" className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-surface/90 px-4 py-3 backdrop-blur lg:hidden">
+      <div
+        role="region"
+        aria-label="Mobile workspace controls"
+        className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-surface/90 px-4 py-3 backdrop-blur lg:hidden"
+      >
         <Logo sub={props.sub} />
         <div className="flex items-center gap-1">
           <ThemeToggle />
