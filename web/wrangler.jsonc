@@ -9,6 +9,13 @@
     "production": {
       "name": "ains-platform",
       "workers_dev": false,
+      "vars": {
+        "NEXT_PUBLIC_API_URL": "https://api.kiensolutions.com"
+      },
+      "routes": [
+        { "pattern": "kiensolutions.com", "custom_domain": true },
+        { "pattern": "www.kiensolutions.com", "custom_domain": true }
+      ],
       "services": [
         { "binding": "WORKER_SELF_REFERENCE", "service": "ains-platform" }
       ]

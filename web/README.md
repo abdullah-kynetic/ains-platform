@@ -1,6 +1,6 @@
 # AINS web (client portal)
 
-Next.js 16 (App Router, TypeScript) + Tailwind v4. Talks to the AINS FastAPI backend at `NEXT_PUBLIC_API_URL`.
+Next.js 16 (App Router, TypeScript) + Tailwind v4. Talks to the AINS FastAPI backend at `NEXT_PUBLIC_API_URL`. There is no staging environment: local dev and production only.
 
 ```bash
 cd web
@@ -22,6 +22,44 @@ The default `.env.example` has `NEXT_PUBLIC_USE_MOCKS=false`. The FastAPI backen
 at `NEXT_PUBLIC_API_URL`, with an invited user in Postgres and `SESSION_SECRET` configured.
 Magic-link delivery still requires an approved backend email adapter; password sign-in works
 without that adapter. Never place credentials in a `NEXT_PUBLIC_*` variable.
+
+### `NEXT_PUBLIC_API_URL`
+
+Public build-time setting, not a secret. It is read in one place, `src/lib/api.ts`, and every
+browser call (including uploads) uses that value. Authenticated calls send the `ains_session`
+cookie (`credentials: "include"` on `fetch`; `withCredentials` on the upload `XMLHttpRequest`).
+
+| Environment | Portal origin | `NEXT_PUBLIC_API_URL` |
+| --- | --- | --- |
+| Local dev (`npm run dev`) | `http://localhost:3000` | `http://localhost:8000` (from `.env.local`, or this default when unset) |
+| Production Worker | `https://kiensolutions.com` and `https://www.kiensolutions.com` | `https://api.kiensolutions.com` |
+
+No other environment is configured. When the variable is unset, a development compile uses
+`http://localhost:8000` and a production compile uses `https://api.kiensolutions.com`.
+
+Production stores the URL in `wrangler.jsonc` under `env.production.vars.NEXT_PUBLIC_API_URL`.
+Next.js inlines `NEXT_PUBLIC_*` into the browser bundle, so the production build applies that
+Wrangler value before compile. An explicit shell value still wins:
+
+```sh
+NEXT_PUBLIC_API_URL=https://api.kiensolutions.com npm run build:cloudflare:production
+```
+
+`build:cloudflare:production` also sets `NEXT_PUBLIC_USE_MOCKS=false`. Changing the Wrangler
+variable without rebuilding does not change a URL already embedded in browser JavaScript.
+The demo Worker build stays on synthetic mocks and does not call this API.
+
+The backend must allow credentialed CORS from the portal origins only:
+
+- `https://kiensolutions.com`
+- `https://www.kiensolutions.com`
+- `http://localhost:3000` (local dev; port **3000**)
+
+Allowed methods are `GET`, `POST`, `PATCH`, and `OPTIONS`. Allowed request headers are
+`Authorization` and `Content-Type`. No response headers are exposed, so the portal cannot
+read `Content-Disposition` and saves draft reports as `kien-draft-report.docx` or
+`kien-draft-report.pdf`. Keep the API on `https://api.kiensolutions.com` so the
+`ains_session` cookie stays same-site with the portal.
 
 ## Cloudflare synthetic demo
 
@@ -49,22 +87,20 @@ synthetic demo instead. CI also builds the Cloudflare bundle to catch adapter re
 
 ### Production on Cloudflare Workers
 
-Use a custom portal domain under the same parent domain as the API (for example,
-`portal.example.com` and `api.example.com`) so secure backend session cookies work.
-`NEXT_PUBLIC_API_URL` is a **public build-time** setting, not a secret. Set it to
-`https://api.example.com` before building; changing a Wrangler runtime variable does
-not replace a URL already embedded in browser JavaScript.
+The production Worker (`env.production`, name `ains-platform`) disables `workers.dev` and
+serves `https://kiensolutions.com` and `https://www.kiensolutions.com`. The API is
+`https://api.kiensolutions.com`. Session cookies are `SameSite=Lax` and host-only on the
+API, so those sibling HTTPS origins are what the backend must allow.
 
 ```sh
 export PATH="$HOME/.local/node22/bin:$PATH"
-NEXT_PUBLIC_API_URL=https://api.example.com npm run build:cloudflare:production
+NEXT_PUBLIC_API_URL=https://api.kiensolutions.com npm run build:cloudflare:production
 npx opennextjs-cloudflare deploy --env production
 ```
 
-Configure the custom domain for the production Worker in Cloudflare before publishing;
-production disables `workers.dev`. The production build forces mocks off; demo builds
-retain their existing synthetic behavior. Do not use `deploy:demo` for production.
-See [the AWS deployment runbook](../docs/deploy-aws.md) for backend, CORS, DNS and secrets.
+`npm run build:cloudflare:production` alone uses the same URL from `wrangler.jsonc` and
+forces mocks off. Do not use `deploy:demo` for production. See
+[the AWS deployment runbook](../docs/deploy-aws.md) for backend, CORS, DNS and secrets.
 
 ## Optional Sentry error monitoring
 

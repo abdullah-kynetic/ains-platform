@@ -106,21 +106,27 @@ state or run `terraform show -json` into CI logs when keys exist.
 
 ## Cloudflare production portal
 
-The portal already uses `NEXT_PUBLIC_API_URL`. It is compiled into browser code;
-Wrangler runtime vars cannot change it after build. Use Node 22:
+The portal reads `NEXT_PUBLIC_API_URL` once, in `web/src/lib/api.ts`, at build time.
+Wrangler runtime vars cannot change it after build. Production default is
+`https://api.kiensolutions.com` (`wrangler.jsonc` `env.production.vars`, applied by
+`npm run build:cloudflare:production`, which also sets `NEXT_PUBLIC_USE_MOCKS=false`).
+There is no staging environment. Use Node 22:
 
 ```sh
 cd web
 npm ci
-NEXT_PUBLIC_API_URL=https://api.example.com npm run build:cloudflare:production
+NEXT_PUBLIC_API_URL=https://api.kiensolutions.com npm run build:cloudflare:production
 npx opennextjs-cloudflare deploy --env production
 ```
 
-Set the production Worker's custom domain to `portal.example.com` in Cloudflare.
-The production Wrangler environment has a distinct Worker/self-reference and
-`workers_dev=false`. Keep the API and portal on sibling HTTPS domains. Backend
-`CORS_ORIGINS` and `PORTAL_URL` are set from the Terraform `portal_url` variable;
-secure HttpOnly cookies remain backend-owned. Never put secrets in `NEXT_PUBLIC_*`.
+The production Worker serves `https://kiensolutions.com` and `https://www.kiensolutions.com`
+(`workers_dev=false`). Local dev is `http://localhost:3000`. Backend `CORS_ORIGINS` must
+allow those three origins (credentialed `GET`, `POST`, `PATCH`, `OPTIONS`; request headers
+`Authorization` and `Content-Type`; no exposed response headers). `PORTAL_URL` should be
+`https://kiensolutions.com` so email links use the apex. Terraform currently copies
+`portal_url` into both `CORS_ORIGINS` and `PORTAL_URL`; set `CORS_ORIGINS` to the comma-separated
+list above before production sign-in. Secure HttpOnly cookies remain backend-owned.
+Never put secrets in `NEXT_PUBLIC_*`.
 Do not use `deploy:demo` for production: it intentionally builds synthetic mocks.
 Reset links lead to `/reset-password`; magic links lead to `/sign-in?token=...`.
 Disable query-string logging/analytics on all authentication pages at the edge.
