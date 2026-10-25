@@ -1,6 +1,7 @@
 "use client";
 
 import { useTenant } from "@/components/tenant/tenant-provider";
+import { KIEN_MARK_SRC } from "@/lib/tenant";
 import { cn } from "@/lib/utils";
 
 /** Placeholder wordmark until a firm logo URL is available. */
@@ -17,13 +18,13 @@ export function Logo({ className, sub }: { className?: string; sub?: string }) {
   const { slug, branding } = useTenant();
   return (
     <div className={cn("flex items-center gap-2.5", className)} data-firm-slug={slug}>
-      {branding.logoUrl ? (
-        // Firm logos are host-specific URLs, including ones the API will supply later.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={branding.logoUrl} alt="" className="size-7 rounded-md" />
-      ) : (
-        <LogoMark />
-      )}
+      {/* A null logo stays on the Kien mark. Remote logos are https URLs from the API. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={branding.logoUrl ?? KIEN_MARK_SRC}
+        alt=""
+        className="size-7 rounded-md"
+      />
       <div className="leading-tight">
         <div className="text-[15px] font-semibold tracking-[-0.02em]">{branding.name}</div>
         {sub ? <div className="text-[10px] uppercase tracking-[0.14em] text-subtle">{sub}</div> : null}

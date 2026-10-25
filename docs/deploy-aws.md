@@ -112,61 +112,18 @@ Wrangler runtime vars cannot change it after build. Use Node 22:
 ```sh
 cd web
 npm ci
-NEXT_PUBLIC_API_URL=https://api.kiensolutions.com npm run build:cloudflare:production
+NEXT_PUBLIC_API_URL=https://api.example.com npm run build:cloudflare:production
 npx opennextjs-cloudflare deploy --env production
 ```
 
-One production Worker serves every `<firm>.kiensolutions.com`. The landing Worker
-keeps `kiensolutions.com` and `www`. The production Wrangler environment has a
-distinct Worker/self-reference and `workers_dev=false`.
-
-Cloudflare setup for this Worker:
-
-- **Route, not a wildcard Custom Domain.** Workers Custom Domains match one
-  exact hostname and do not support wildcards. Add a route
-  `*.kiensolutions.com/*` on the zone `kiensolutions.com`. On the landing
-  Worker, add the more specific routes `kiensolutions.com/*` and
-  `www.kiensolutions.com/*`. The most specific route wins. A route also runs
-  ahead of a Custom Domain on the same hostname, so `www` needs that explicit
-  route or the portal wildcard would receive it.
-- **Proxied wildcard DNS.** `A * 192.0.2.1` or `AAAA * 100::`, orange-clouded.
-  The addresses are originless placeholders; the Worker responds. An exact
-  record beats `*`. Keep apex and `www` proxied to the landing Worker. Keep
-  `api` DNS-only (grey cloud) to this API host. Proxying `api` would send it
-  through the portal route.
-- **Certificate.** A zone on Cloudflare nameservers gets Universal SSL for the
-  apex and for one level of `*.kiensolutions.com`. That covers
-  `kynetic.kiensolutions.com`. No per-firm certificate and no Advanced
-  Certificate Manager subscription are required for that. Advanced Certificate
-  Manager is for a partial CNAME setup (Universal SSL does not provision the
-  wildcard there; validate with TXT or Delegated DCV) or for names with more
-  than one label, which this portal does not use. Creating a Custom Domain
-  mints an Advanced Certificate for that one hostname; it still cannot express
-  `*.kiensolutions.com`.
-
-Cookies and the domain the backend must know (backend code is unchanged):
-
-- Build the portal with `NEXT_PUBLIC_API_URL=https://api.kiensolutions.com`.
-  The browser calls that host with `credentials: "include"`.
-- The session cookie `ains_session` is HttpOnly, `SameSite=Lax`, `Path=/`, and
-  has no `Domain` attribute, so it stays host-only on the API host. Leave it
-  that way. `SESSION_COOKIE_SECURE=true` in production (Terraform already sets
-  this). `kynetic.kiensolutions.com` and `api.kiensolutions.com` are the same
-  site, so the browser sends that Lax cookie on credentialed fetches to the
-  API. A `Domain=.kiensolutions.com` cookie would also be stored on the public
-  site and on every firm host; the portal never reads the cookie itself.
-- `CORS_ORIGINS` is an exact comma-separated list. Wildcard origins are
-  rejected. `allow_credentials` is already on. Each firm origin
-  `https://<firm>.kiensolutions.com` has to be in that list or the browser
-  hides the API response. Terraform currently copies one `portal_url` into
-  `CORS_ORIGINS`.
-- `PORTAL_URL` is a single origin. Magic links and password resets are built
-  from it (`/sign-in?token=...`, `/reset-password`). Pointing it at the apex
-  or `www` lands people on the landing site or the unknown-firm page. The
-  backend needs the firm host when it builds those links.
-- Never put secrets in `NEXT_PUBLIC_*`. Do not use `deploy:demo` for
-  production: it intentionally builds synthetic mocks. Disable query-string
-  logging and analytics on authentication pages at the edge.
+Set the production Worker's custom domain to `portal.example.com` in Cloudflare.
+The production Wrangler environment has a distinct Worker/self-reference and
+`workers_dev=false`. Keep the API and portal on sibling HTTPS domains. Backend
+`CORS_ORIGINS` and `PORTAL_URL` are set from the Terraform `portal_url` variable;
+secure HttpOnly cookies remain backend-owned. Never put secrets in `NEXT_PUBLIC_*`.
+Do not use `deploy:demo` for production: it intentionally builds synthetic mocks.
+Reset links lead to `/reset-password`; magic links lead to `/sign-in?token=...`.
+Disable query-string logging/analytics on all authentication pages at the edge.
 
 ## Monthly budget (USD, us-east-2 on-demand, low traffic)
 

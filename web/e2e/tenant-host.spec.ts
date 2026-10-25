@@ -17,7 +17,7 @@ async function expectUnknownFirm(page: Page, reason: "apex" | "www" | "missing")
   await expect(page.getByRole("heading", { name: "Sign in to AINS" })).toHaveCount(0);
 }
 
-test("tenant host exposes the firm slug and mock branding", async ({ page }) => {
+test("tenant host exposes the firm slug and mock branding", async ({ page }, testInfo) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-firm-slug", "kynetic");
   await expect(page.getByText("Kynetic", { exact: true }).first()).toBeVisible();
@@ -27,7 +27,7 @@ test("tenant host exposes the firm slug and mock branding", async ({ page }) => 
     (await new AxeBuilder({ page }).exclude("nextjs-portal").analyze()).violations,
   ).toEqual([]);
   await page.screenshot({
-    path: "screenshots/tenant-kynetic.png",
+    path: testInfo.outputPath("tenant-kynetic.png"),
     style: "nextjs-portal { display: none; }",
   });
 });
@@ -46,14 +46,14 @@ test("a production-style firm host resolves the same slug", async ({ page }) => 
   await expect(page.locator('img[src="/brand/kynetic-mark.svg"]').first()).toBeVisible();
 });
 
-test("apex, www, and a missing slug show the unknown firm page", async ({ page }) => {
+test("apex, www, and a missing slug show the unknown firm page", async ({ page }, testInfo) => {
   await page.goto(`${serverOrigin("kiensolutions.com")}/`);
   await expectUnknownFirm(page, "apex");
   expect(
     (await new AxeBuilder({ page }).exclude("nextjs-portal").analyze()).violations,
   ).toEqual([]);
   await page.screenshot({
-    path: "screenshots/unknown-firm.png",
+    path: testInfo.outputPath("unknown-firm.png"),
     style: "nextjs-portal { display: none; }",
   });
 

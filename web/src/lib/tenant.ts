@@ -5,33 +5,99 @@
 
 export const PORTAL_APEX_HOST = "kiensolutions.com";
 
+export const KIEN_MARK_SRC = "/brand/kien-mark.svg";
+
+/** Display branding. `logoUrl` is null until a firm logo replaces the Kien mark. */
 export type TenantBranding = {
   name: string;
-  logoUrl: string;
+  logoUrl: string | null;
 };
 
-/** Shown until a firm has its own name and logo. */
+/** Shown while branding loads, and when the branding request fails. */
 export const KIEN_DEFAULT_BRANDING: TenantBranding = {
   name: "Kien",
-  logoUrl: "/brand/kien-mark.svg",
+  logoUrl: null,
 };
+
+export type TenantRejection = "apex" | "www" | "missing" | "unlisted";
 
 export type TenantResolution =
   | { ok: true; slug: string }
-  | { ok: false; reason: "apex" | "www" | "missing" };
+  | { ok: false; reason: TenantRejection };
+
+export type BrandingLoad =
+  | { status: "ok"; branding: TenantBranding }
+  | { status: "unknown" }
+  | { status: "unavailable" };
+
+export const UNKNOWN_FIRM_DETAIL = "Unknown firm portal";
 
 const FIRM_LABEL = /^(?:[a-z0-9]|[a-z0-9][a-z0-9-]{0,61}[a-z0-9])$/;
 
-/**
- * Synthetic stand-ins. The API will later supply per-firm name and logoUrl.
- * This module does not call the network.
- */
+/** Synthetic stand-in used when `NEXT_PUBLIC_USE_MOCKS=true`. */
 const MOCK_FIRM_BRANDING: Record<string, TenantBranding> = {
   kynetic: {
     name: "Kynetic",
     logoUrl: "/brand/kynetic-mark.svg",
   },
 };
+
+export function mockBrandingForSlug(slug: string): TenantBranding {
+  return MOCK_FIRM_BRANDING[slug] ?? KIEN_DEFAULT_BRANDING;
+}
+
+/** First paint. Live portals stay on the Kien defaults until the API responds. */
+export function brandingForKnownSlug(slug: string): TenantBranding {
+  if (process.env.NEXT_PUBLIC_USE_MOCKS === "true") return mockBrandingForSlug(slug);
+  return KIEN_DEFAULT_BRANDING;
+}
+
+export function safeLogoUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const logo = value.trim();
+  if (!logo || logo !== value || logo.includes("\\") || logo.includes("..")) return null;
+  if (logo.startsWith("/") && !logo.startsWith("//")) return logo;
+  try {
+    const url = new URL(logo);
+    if (url.protocol === "https:") return url.toString();
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+/** Map a `/tenant/branding` response. Does not call the network. */
+export function interpretBrandingResponse(
+  status: number,
+  body: unknown,
+): BrandingLoad {
+  if (
+    status === 404 &&
+    isRecord(body) &&
+    body.detail === UNKNOWN_FIRM_DETAIL
+  ) {
+    return { status: "unknown" };
+  }
+  if (status !== 200 || !isRecord(body) || typeof body.name !== "string") {
+    return { status: "unavailable" };
+  }
+  if (body.logoUrl != null && typeof body.logoUrl !== "string") {
+    return { status: "unavailable" };
+  }
+  const name = body.name.trim();
+  if (!name) return { status: "unavailable" };
+  return {
+    status: "ok",
+    branding: {
+      name,
+      logoUrl: safeLogoUrl(typeof body.logoUrl === "string" ? body.logoUrl : null),
+    },
+  };
+}
 
 export function hostnameFromHeader(
   hostHeader: string | null | undefined,
@@ -81,15 +147,6 @@ export function firmSlugFromHost(
 
 export function safeHostLabel(hostHeader: string | null | undefined): string {
   const host = hostnameFromHeader(hostHeader);
-  if (!host || host.length > 253 || !/^[a-z0-9.-]+$/.test(host)) return "";
+  if (!host || host.length > 253 || !/^[a-z0-9.:-]+$/.test(host)) return "";
   return host;
-}
-
-export async function getTenantBranding(slug: string): Promise<TenantBranding> {
-  const branded = MOCK_FIRM_BRANDING[slug];
-  if (!branded) return KIEN_DEFAULT_BRANDING;
-  return {
-    name: branded.name.trim() || KIEN_DEFAULT_BRANDING.name,
-    logoUrl: branded.logoUrl.trim() || KIEN_DEFAULT_BRANDING.logoUrl,
-  };
 }
