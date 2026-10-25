@@ -11,6 +11,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  devIndicators: { position: "bottom-right" },
   poweredByHeader: false,
   // Dev already allows *.localhost. These let Playwright open production-style hosts.
   allowedDevOrigins: ["127.0.0.1", "kiensolutions.com", "*.kiensolutions.com"],

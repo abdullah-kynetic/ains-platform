@@ -372,7 +372,12 @@ input[type="file"] {
 .desktop-sidebar { transition: width 180ms ease; }
 .desktop-sidebar[data-dragging="true"] { transition: none; user-select: none; }
 .desktop-sidebar[data-collapsed="true"] .nav-label,
-.desktop-sidebar[data-collapsed="true"] .sidebar-panel > :not(nav) { display: none; }
+.desktop-sidebar[data-collapsed="true"] .sidebar-navigation > :not(nav),
+.desktop-sidebar[data-collapsed="true"] .sidebar-identity { display: none; }
+.desktop-sidebar[data-collapsed="true"] .theme-segments { flex-direction: column; }
+.desktop-sidebar[data-collapsed="true"] .theme-segments button { display: grid; place-items: center; padding: 0; }
+.desktop-sidebar[data-collapsed="true"] .theme-segment-label { display: none; }
+.desktop-sidebar[data-collapsed="true"] .theme-segment-icon { display: block; }
 .desktop-sidebar[data-collapsed="true"] nav a { justify-content: center; padding-inline: 8px; }
 .desktop-sidebar[data-collapsed="true"] .sidebar-panel { padding-top: 24px; }
 @media (prefers-reduced-motion: reduce) { .desktop-sidebar { transition: none; } }

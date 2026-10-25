@@ -172,15 +172,16 @@ function Items({
   items: NavItem[];
   onNavigate?: () => void;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname().replace(/\/+$/, "") || "/";
 
   return (
     <nav aria-label="Main navigation" className="grid gap-1">
       {items.map((item) => {
         const Icon = Icons[item.icon] as LucideIcon;
-        const active = item.exact
-          ? pathname === item.href
-          : pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active =
+          item.exact || item.href === "/" || item.href === "/auditor"
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
         return (
           <Link
@@ -240,21 +241,25 @@ function Panel({
   const auditor = sub.toLowerCase().includes("auditor");
 
   return (
-    <div className="sidebar-panel flex min-h-0 flex-1 flex-col overflow-y-auto p-3">
-      {!desktop ? <Logo sub={sub} className="px-2 pt-2 pb-5" /> : null}
-      <WorkspaceSwitcher
-        auditor={auditor}
-        onWorkspaceChange={onWorkspaceChange}
-        onNavigate={onNavigate}
-      />
-      <p className="mt-7 mb-2 px-2.5 text-xs font-semibold uppercase tracking-[0.13em] text-subtle">
-        {auditor ? "Review" : "Engagement"}
-      </p>
-      <Items items={items} onNavigate={onNavigate} />
-      <div className="mt-auto pt-3">
-        <ThemeToggle />
+    <div
+      className={cn(
+        "sidebar-panel flex min-h-0 flex-1 flex-col overflow-hidden p-3",
+        !desktop && "h-full",
+      )}
+    >
+      <div className="sidebar-navigation min-h-0 flex-1 overflow-y-auto">
+        {!desktop ? <Logo sub={sub} className="px-2 pt-2 pb-5" /> : null}
+        <WorkspaceSwitcher
+          auditor={auditor}
+          onWorkspaceChange={onWorkspaceChange}
+          onNavigate={onNavigate}
+        />
+        <p className="mt-7 mb-2 px-2.5 text-xs font-semibold uppercase tracking-[0.13em] text-subtle">
+          {auditor ? "Review" : "Engagement"}
+        </p>
+        <Items items={items} onNavigate={onNavigate} />
       </div>
-      <div className="mt-3 flex items-center gap-2 border-t border-border px-1 pt-3">
+      <div className="sidebar-identity mt-3 flex shrink-0 items-center gap-2 border-t border-border px-1 pt-3">
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-xs font-semibold text-muted">
           {initials(who)}
         </span>
@@ -286,6 +291,9 @@ function Panel({
         >
           <LogOut aria-hidden="true" className="size-3.5" />
         </button>
+      </div>
+      <div className="sidebar-theme shrink-0 pt-3">
+        <ThemeToggle />
       </div>
     </div>
   );

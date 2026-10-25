@@ -1,5 +1,6 @@
 "use client";
 
+import { Sun, Moon, Monitor } from "lucide-react";
 import { useEffect, useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark" | "system";
@@ -122,7 +123,7 @@ export function ThemeToggle() {
     <div
       role="group"
       aria-label="Color theme"
-      className="flex rounded-md border border-border bg-surface p-1"
+      className="theme-segments flex rounded-md border border-border bg-surface p-1"
     >
       {(["light", "dark", "system"] as const).map((value) => (
         <button
@@ -150,7 +151,23 @@ export function ThemeToggle() {
           }}
           className={`min-h-8 min-w-0 flex-1 rounded px-2 text-xs capitalize text-foreground hover:bg-hover ${theme === value ? "bg-hover" : ""}`}
         >
-          {value}
+          {value === "light" ? (
+            <Sun
+              aria-hidden="true"
+              className="theme-segment-icon hidden size-4"
+            />
+          ) : value === "dark" ? (
+            <Moon
+              aria-hidden="true"
+              className="theme-segment-icon hidden size-4"
+            />
+          ) : (
+            <Monitor
+              aria-hidden="true"
+              className="theme-segment-icon hidden size-4"
+            />
+          )}
+          <span className="theme-segment-label">{value}</span>
         </button>
       ))}
     </div>

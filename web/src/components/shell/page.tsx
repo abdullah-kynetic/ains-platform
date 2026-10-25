@@ -1,9 +1,14 @@
 "use client";
 
+import { createContext, useContext, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "./nav";
 import { CommandPalette } from "./command-palette";
 import { SiteFooter } from "@/components/brand/site-footer";
+
+const SearchHostContext = createContext<(host: HTMLDivElement | null) => void>(
+  () => {},
+);
 
 export function Shell({
   sidebar,
@@ -15,21 +20,26 @@ export function Shell({
   auditor: boolean;
   children: React.ReactNode;
 }) {
+  const [searchHost, setSearchHost] = useState<HTMLDivElement | null>(null);
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      {sidebar}
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <main id="main-content" tabIndex={-1} className="flex-1 bg-background">
-          <div className="mx-auto w-full max-w-[1440px] px-[var(--space-4)] py-[var(--space-5)] sm:px-[var(--space-6)] sm:py-[var(--space-6)] xl:px-[var(--space-7)]">
-            <div className="mb-[var(--space-4)] flex justify-end">
-              <CommandPalette items={items} />
+    <SearchHostContext.Provider value={setSearchHost}>
+      <CommandPalette items={items} triggerHost={searchHost} />
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        {sidebar}
+        <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="flex-1 bg-background"
+          >
+            <div className="mx-auto w-full max-w-[1440px] px-[var(--space-4)] py-[var(--space-5)] sm:px-[var(--space-6)] sm:py-[var(--space-6)] xl:px-[var(--space-7)]">
+              {children}
             </div>
-            {children}
-          </div>
-        </main>
-        <SiteFooter />
+          </main>
+          <SiteFooter />
+        </div>
       </div>
-    </div>
+    </SearchHostContext.Provider>
   );
 }
 
@@ -44,9 +54,13 @@ export function PageHeader({
   actions?: React.ReactNode;
   badge?: React.ReactNode;
 }) {
+  const setSearchHost = useContext(SearchHostContext);
   return (
-    <div className="mb-[var(--space-6)] flex flex-col items-start justify-between gap-[var(--space-4)] sm:flex-row sm:flex-wrap">
-      <div className="min-w-0">
+    <div
+      data-page-header
+      className="mb-[var(--space-6)] flex flex-col items-start justify-between gap-[var(--space-4)] sm:flex-row"
+    >
+      <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-[var(--space-3)]">
           <h1 className="type-display text-foreground">{title}</h1>
           {badge}
@@ -57,11 +71,10 @@ export function PageHeader({
           </p>
         ) : null}
       </div>
-      {actions ? (
-        <div className="flex w-full shrink-0 flex-wrap items-center gap-[var(--space-2)] sm:w-auto">
-          {actions}
-        </div>
-      ) : null}
+      <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-[var(--space-2)] sm:w-auto sm:max-w-full">
+        <div ref={setSearchHost} />
+        {actions}
+      </div>
     </div>
   );
 }
