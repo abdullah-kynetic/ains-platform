@@ -112,15 +112,18 @@ Wrangler runtime vars cannot change it after build. Use Node 22:
 ```sh
 cd web
 npm ci
-NEXT_PUBLIC_API_URL=https://api.example.com npm run build:cloudflare:production
+NEXT_PUBLIC_API_URL=https://api.kiensolutions.com npm run build:cloudflare:production
 npx opennextjs-cloudflare deploy --env production
 ```
 
-Set the production Worker's custom domain to `portal.example.com` in Cloudflare.
-The production Wrangler environment has a distinct Worker/self-reference and
-`workers_dev=false`. Keep the API and portal on sibling HTTPS domains. Backend
-`CORS_ORIGINS` and `PORTAL_URL` are set from the Terraform `portal_url` variable;
-secure HttpOnly cookies remain backend-owned. Never put secrets in `NEXT_PUBLIC_*`.
+Firm portals, the session cookie, and CORS are described in
+[multi-tenant portals](multi-tenant-portals.md). The production Worker serves the
+apex, `www`, and `*.kiensolutions.com`. `api.kiensolutions.com` stays on this host.
+`PORTAL_BASE_DOMAIN`, `PORTAL_URL` (`https://{slug}.kiensolutions.com`), and an empty
+`CORS_ORIGINS` are in the instance user-data. Do not apply that user-data change
+until the database has been dumped: `user_data_replace_on_change` replaces the host.
+Secure HttpOnly cookies remain backend-owned and host-only. Never put secrets in
+`NEXT_PUBLIC_*`.
 Do not use `deploy:demo` for production: it intentionally builds synthetic mocks.
 Reset links lead to `/reset-password`; magic links lead to `/sign-in?token=...`.
 Disable query-string logging/analytics on all authentication pages at the edge.

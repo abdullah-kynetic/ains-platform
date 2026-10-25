@@ -18,8 +18,9 @@ The public Cloudflare deployment is a synthetic demonstration. Its role switch i
    the Next.js demonstration only. Choose the backend host before configuring callback URLs.
 2. Generate a random `SESSION_SECRET` of at least 32 bytes and store it in the backend host's
    secret manager. Do not paste it into chat or a repository file. Configure `DATABASE_URL` there.
-3. Use HTTPS and `SESSION_COOKIE_SECURE=true`. Prefer a same-site application/API arrangement;
-   verify cookie behavior and CORS against the actual domains before deployment. Do not weaken
+3. Use HTTPS and `SESSION_COOKIE_SECURE=true`. Leave `ains_session` host-only (no `Domain`).
+   The portal calls `https://api.kiensolutions.com` with credentials, so firm isolation is the
+   server-side host check. See [multi-tenant portals](multi-tenant-portals.md). Do not weaken
    cookie settings merely to make cross-site development work.
 4. Apply migrations. Use the existing operator bootstrap, client invitations, and auditor MFA enrollment/recovery
    flows. Acceptance-test recovery, deactivation, and invitation delivery for the deployment.

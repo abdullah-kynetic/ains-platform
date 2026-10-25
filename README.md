@@ -42,12 +42,15 @@ an email cannot be invited into more than one firm. Client users may later sign 
 or magic link. Auditors enroll TOTP MFA with their existing password and receive ten single-use,
 hashed recovery codes; replacing recovery codes requires a current authenticator code. Set
 `SESSION_SECRET` to a long, random value before using sign-in. Set `RESEND_API_KEY`, `EMAIL_FROM` and `PORTAL_URL` to enable Resend delivery for
-magic links, invitations and password reset; unconfigured email returns 503. For synthetic local testing only,
+magic links, invitations, password reset and report-ready notices; unconfigured email returns 503.
+`PORTAL_URL` may be `https://{slug}.kiensolutions.com`. Leave `PORTAL_BASE_DOMAIN` empty locally.
+For synthetic local testing only,
 set `INVITATION_PREVIEW_ENABLED=true` to return an acceptance link to the auditor UI; never enable
 token previews in a shared or production system.
 
 Tenant-owned database records carry an explicit `firm_id`. API queries scope clients to their firm
-and auditors to assigned engagements. Run `uv run alembic check` after model changes to confirm a
+and auditors to assigned engagements. Firm portals and the host-only session cookie are described in
+[`docs/multi-tenant-portals.md`](docs/multi-tenant-portals.md). Run `uv run alembic check` after model changes to confirm a
 migration is present.
 
 Supabase is not part of the planned AINS architecture. FastAPI remains the application,

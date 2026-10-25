@@ -265,7 +265,7 @@ resource "aws_instance" "app" {
     param_prefix = local.param_prefix
     ops_bucket   = aws_s3_bucket.ops.id
     source_uri   = local.build_from_source ? "s3://${aws_s3_bucket.ops.id}/${local.bundle_key}" : ""
-    environment  = jsonencode({ STORAGE_BACKEND = "s3", S3_BUCKET = var.bucket_name, AWS_REGION = var.region, S3_SSE = var.s3_sse, S3_KMS_KEY_ID = var.s3_sse == "aws:kms" ? aws_kms_key.documents[0].arn : "", S3_RETENTION_DAYS = tostring(var.retention_days), S3_RETENTION_MODE = var.retention_mode, SESSION_COOKIE_SECURE = "true", CORS_ORIGINS = var.portal_url, PORTAL_URL = var.portal_url, EMAIL_FROM = var.email_from })
+    environment  = jsonencode({ STORAGE_BACKEND = "s3", S3_BUCKET = var.bucket_name, AWS_REGION = var.region, S3_SSE = var.s3_sse, S3_KMS_KEY_ID = var.s3_sse == "aws:kms" ? aws_kms_key.documents[0].arn : "", S3_RETENTION_DAYS = tostring(var.retention_days), S3_RETENTION_MODE = var.retention_mode, SESSION_COOKIE_SECURE = "true", CORS_ORIGINS = "", PORTAL_BASE_DOMAIN = var.portal_base_domain, PORTAL_URL = var.portal_url, EMAIL_FROM = var.email_from })
   })
   user_data_replace_on_change = true
   tags                        = { Name = var.name }

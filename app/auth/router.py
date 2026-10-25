@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated, Protocol
 
 import pyotp
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -15,14 +15,16 @@ from app.config import Settings, get_settings
 from app.database.models import (
     AuditLog,
     AuthSession,
+    Firm,
     MagicLinkToken,
     MFARecoveryCode,
     User,
     UserRole,
 )
 from app.database.session import get_db
+from app.tenancy import assert_user_on_portal, require_firm_portal
 
-from .dependencies import SESSION_COOKIE, get_current_user
+from .dependencies import apply_session_cookie, clear_session_cookie, get_current_user
 from .security import (
     create_session_token,
     hash_magic_link_token,
@@ -96,13 +98,17 @@ class AuditorMFARecoveryCodes(BaseModel):
 
 
 class MagicLinkSender(Protocol):
-    def send(self, *, email: str, token: str, expires_at: datetime) -> None: ...
+    def send(
+        self, *, email: str, token: str, expires_at: datetime, slug: str | None = None
+    ) -> None: ...
 
 
 class UnconfiguredMagicLinkSender:
-    def send(self, *, email: str, token: str, expires_at: datetime) -> None:
+    def send(
+        self, *, email: str, token: str, expires_at: datetime, slug: str | None = None
+    ) -> None:
         # Never log or return a sign-in token. A production email adapter replaces this dependency.
-        del email, token, expires_at
+        del email, token, expires_at, slug
 
 
 def get_magic_link_sender(settings: AuthSettings) -> MagicLinkSender:
@@ -219,27 +225,26 @@ def _issue_session(
         )
     )
     db.commit()
-    response.set_cookie(
-        SESSION_COOKIE,
-        token,
-        httponly=True,
-        secure=settings.session_cookie_secure,
-        samesite="lax",
-        max_age=settings.session_ttl_hours * 3600,
-        path="/",
-    )
+    apply_session_cookie(response, token, settings)
     return SessionView(user=UserView.model_validate(user))
+
+
+def _portal_firm(request: Request, settings: Settings, db: Session):
+    return require_firm_portal(request, settings, db)
 
 
 @router.post("/password", response_model=SessionView)
 def password_sign_in(
     payload: PasswordSignIn,
+    request: Request,
     response: Response,
     db: DB,
     settings: AuthSettings,
 ) -> SessionView:
+    portal = _portal_firm(request, settings, db)
     user = _password_user(db, payload.email, payload.password)
     _require_auditor_mfa(db, user, payload.mfa_code)
+    assert_user_on_portal(user, portal)
     return _issue_session(db=db, settings=settings, response=response, user=user)
 
 
@@ -283,11 +288,14 @@ def start_auditor_mfa_enrollment(
 @router.post("/auditor/mfa/enrollment/confirm", response_model=AuditorMFAEnrollmentComplete)
 def confirm_auditor_mfa_enrollment(
     payload: AuditorMFAConfirm,
+    request: Request,
     response: Response,
     db: DB,
     settings: AuthSettings,
 ) -> AuditorMFAEnrollmentComplete:
+    portal = _portal_firm(request, settings, db)
     user = _password_user(db, payload.email, payload.password)
+    assert_user_on_portal(user, portal)
     if user.role != UserRole.AUDITOR:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Auditor access required")
     if user.mfa_enabled:
@@ -363,13 +371,20 @@ def request_magic_link(
         expires = datetime.now(UTC) + timedelta(minutes=settings.magic_link_ttl_minutes)
         db.add(MagicLinkToken(user_id=user.id, token_hash=token_hash, expires_at=expires))
         db.commit()
-        sender.send(email=user.email, token=token, expires_at=expires)
+        firm = db.get(Firm, user.firm_id) if user.firm_id else None
+        sender.send(
+            email=user.email,
+            token=token,
+            expires_at=expires,
+            slug=firm.slug if firm else None,
+        )
     return {"status": "accepted"}
 
 
 @router.post("/magic-link/verify", response_model=SessionView)
 def verify_magic_link(
     payload: MagicLinkVerify,
+    request: Request,
     response: Response,
     db: DB,
     settings: AuthSettings,
@@ -399,6 +414,7 @@ def verify_magic_link(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Magic link is invalid or expired"
         )
     _require_auditor_mfa(db, user, payload.mfa_code)
+    assert_user_on_portal(user, _portal_firm(request, settings, db))
     record.used_at = now
     return _issue_session(db=db, settings=settings, response=response, user=user)
 
@@ -413,6 +429,7 @@ def sign_out(
     response: Response,
     user: CurrentUser,
     db: DB,
+    settings: AuthSettings,
 ) -> None:
     # Revoking all current sessions is conservative and appropriate for the first release.
     for auth_session in db.scalars(
@@ -420,4 +437,4 @@ def sign_out(
     ):
         auth_session.revoked_at = datetime.now(UTC)
     db.commit()
-    response.delete_cookie(SESSION_COOKIE, path="/")
+    clear_session_cookie(response, settings)

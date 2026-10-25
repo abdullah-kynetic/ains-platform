@@ -325,7 +325,9 @@ class ReportSignoff(APIModel):
 
 
 @router.post("/engagements/{engagement_id}/report/signoff")
-def signoff_report(engagement_id: str, payload: ReportSignoff, user: CurrentUser, db: DB):
+def signoff_report(
+    engagement_id: str, payload: ReportSignoff, user: CurrentUser, db: DB, settings: AppSettings
+):
     """Record the assigned auditor's explicit approval of a specific report artifact."""
     from app.database.models import EngagementStatus
 
@@ -349,4 +351,7 @@ def signoff_report(engagement_id: str, payload: ReportSignoff, user: CurrentUser
     )
     engagement.status = EngagementStatus.COMPLETE
     db.commit()
+    from app.auth.email import send_report_ready_notices
+
+    send_report_ready_notices(settings, db, firm_id=engagement.firm_id)
     return {"signed_off": True, "report_sha256": payload.report_sha256}

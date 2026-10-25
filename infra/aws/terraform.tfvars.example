@@ -2,7 +2,8 @@ region      = "us-east-2"
 bucket_name = "ains-docs-ACCOUNT_ID-use2"
 # Empty api_domain uses <elastic-ip>.sslip.io; set to api.example.com once DNS points at api_ip.
 api_domain  = ""
-portal_url  = "https://portal.example.com"
+portal_base_domain = "kiensolutions.com"
+portal_url         = "https://{slug}.kiensolutions.com"
 email_from  = "noreply@example.com"
 # Empty app_image builds on the instance from this git-archive bundle.
 source_bundle_path = "/path/to/ains-source.tar.gz"

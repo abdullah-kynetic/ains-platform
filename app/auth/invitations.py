@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 from sqlalchemy import select
@@ -32,6 +32,7 @@ from app.database.models import (
     UserRole,
 )
 from app.database.session import get_db
+from app.tenancy import assert_user_on_portal, require_firm_portal
 
 from .router import SessionView, _issue_session
 
@@ -237,8 +238,12 @@ def create_invitation(
         if not settings.invitation_preview_enabled:
             from .email import ResendSender
 
+            firm = db.get(Firm, invitation.firm_id)
             ResendSender(settings, "invitation").send(
-                email=invitation.email, token=token, expires_at=invitation.expires_at
+                email=invitation.email,
+                token=token,
+                expires_at=invitation.expires_at,
+                slug=firm.slug if firm else None,
             )
         db.commit()
     except IntegrityError:
@@ -280,8 +285,12 @@ def resend_invitation(
     if not settings.invitation_preview_enabled:
         from .email import ResendSender
 
+        firm = db.get(Firm, invitation.firm_id)
         ResendSender(settings, "invitation").send(
-            email=invitation.email, token=token, expires_at=invitation.expires_at
+            email=invitation.email,
+            token=token,
+            expires_at=invitation.expires_at,
+            slug=firm.slug if firm else None,
         )
     db.commit()
     return _view(db, invitation, settings, token=token)
@@ -349,11 +358,15 @@ def invitation_details(token: str, db: DB) -> InvitationDetails:
 @public_router.post("/accept", response_model=SessionView)
 def accept_invitation(
     payload: InvitationAccept,
+    request: Request,
     response: Response,
     db: DB,
     settings: AuthSettings,
 ) -> SessionView:
+    portal = require_firm_portal(request, settings, db)
     invitation = _valid_invitation(db, payload.token, lock=True)
+    if portal is not None and invitation.firm_id != portal.id:
+        raise HTTPException(status_code=403, detail="Session firm does not match this portal")
     if db.scalar(select(User.id).where(User.email == invitation.email)) is not None:
         raise HTTPException(status_code=409, detail="This invitation can no longer be accepted")
 
@@ -388,4 +401,5 @@ def accept_invitation(
             details={"email": invitation.email, "engagement_id": invitation.engagement_id},
         )
     )
+    assert_user_on_portal(user, portal)
     return _issue_session(db=db, settings=settings, response=response, user=user)
