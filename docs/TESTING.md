@@ -1,0 +1,63 @@
+# Testing
+
+## Goals and scope
+
+Before release, validate PRD journeys F-01 through F-10, especially server-side role checks, firm isolation, assigned auditor access, upload safety, neutral client feedback, and human-only findings/sign-off. Planned F-11/F-12 are not implemented and must not be reported as covered. CI contains backend and web jobs; see `.github/workflows/ci.yml`.
+
+## Test layers
+
+- **Unit:** pytest backend rules/helpers; web Node tests for tenant host and sign-in redirect utility. Synthetic storage providers and fixtures are used.
+- **Integration:** FastAPI API tests with test database/storage fixtures; auth/MFA, invitation, firm/engagement isolation, upload, worker, report, and audit-log behavior. Postgres-specific audit-chain coverage may depend on local PostgreSQL binaries and can skip where unavailable.
+- **End-to-end:** Playwright browser journeys in `web/e2e/`, using the synthetic web mock mode and synthetic files. E2E is not proof of live backend, cloud storage, or email behavior.
+- **Manual:** Review screenshots and actual keyboard/focus/motion behavior for UI changes. Full human accessibility review and contrast certification are not automated.
+
+## Acceptance test matrix
+
+| Feature/risk | Scenario | Expected result | Layer | Status |
+| --- | --- | --- | --- | --- |
+| F-01 | Client requests own current engagement | Own firm/allowed fields returned | Integration | Covered in source; this session not run |
+| F-01 / Isolation | Client requests another firm’s engagement/document/questionnaire | Denied with no cross-firm data | Integration | Covered in source; this session not run |
+| F-02 | Client answers applicability / no-activity question | Answer persists; N/A waits for auditor decision | Integration/e2e | Covered in source; this session not run |
+| F-03 | Client uploads several files without choosing request | Files receive unassigned, firm-scoped receipts | Integration/e2e | Covered in source; this session not run |
+| F-03 / Security | Restricted item, invalid type, zero byte or >100 MB upload | Rejected before storage; safe error | Integration | Invalid type/oversize/restricted covered; this session not run |
+| F-04 | Auditor gives document-level replacement feedback | Client sees neutral message and can re-upload | Integration/e2e | Covered in source; this session not run |
+| F-04 / Privacy | Client attempts finding/internal-note/audit-log route | Denied or omitted from response | Integration | Covered in source; this session not run |
+| F-05 / Permissions | Auditor accesses assigned engagement | Data available | Integration/e2e | Covered in source; this session not run |
+| F-05 / Isolation | Auditor accesses unassigned engagement | Denied even if UI route is opened directly | Integration | Covered in source; this session not run |
+| F-06 | Auditor records manual decision and review history | Decision and actor history persisted | Integration | Covered in source; this session not run |
+| F-07 | Auditor signs report with hash and attestation | Assigned auditor sign-off recorded; client/other auditor denied | Integration | Covered in source; this session not run |
+| F-08 | Auditor MFA challenge/enrollment/recovery | Challenge required when enrolled; recovery code single-use | Integration/e2e | Covered in source; this session not run |
+| F-09 | Invitation or magic/reset token replay/expiry | Expired/used token rejected; no session created | Integration | Covered in source; this session not run |
+| F-10 | Phone nav, keyboard, reduced-motion, theme, load retry | Usable responsive state, focus return, motion preference honored | E2E/manual | Browser tests exist; this session not run |
+| Workflow boundary | Search app/forbidden dependency locations for inference provider calls | No direct model provider in workflow app | pytest | Executed this session; see Results |
+| F-11 / F-12 | AI intake or SAR pre-screen | No implementation or model behavior claimed | N/A | Planned; not run |
+
+Source examples include `tests/test_backend_api.py`, `tests/test_audit_log.py`, `tests/test_document_ingestion.py`, `tests/test_auth_readiness.py`, `tests/test_workflow_boundary.py`, and web specs for upload, tenant API, auditor, sign-in, accessibility, tasks, questionnaire, report/audit log, and responsive sidebar. Source presence indicates test implementation only, not a passing result.
+
+## Fixtures and environments
+
+- **Synthetic users/data:** `tests/conftest.py`, synthetic provider fakes, `app/demo_seed.py`, `data/synthetic/`, generated checklist catalog, and browser mock data. Never use real client evidence or actual SAR records in tests.
+- **External services:** Backend tests mock or fake storage/email/provider boundaries; browser tests use `NEXT_PUBLIC_USE_MOCKS=true`. They do not validate live R2/Egnyte, Resend delivery, Worker deployment, or OVH/AWS production configuration.
+- **Reset/isolation:** Tests build isolated test state via fixtures; Postgres audit integration may use private temporary cluster support when local binaries exist. Exact persistent service reset and production-data isolation procedures remain unresolved.
+
+## Verified commands
+
+- Backend unit/integration: `uv run pytest -q`; targeted workflow boundary: `uv run pytest tests/test_workflow_boundary.py -q`.
+- Backend lint: `uv run ruff check .`.
+- Web unit: from `web/`, `npm run test:unit`.
+- Web e2e: from `web/`, `npm run test:e2e` (Playwright; browser install in CI uses `npx playwright install --with-deps chromium`).
+- Web lint/type/build: from `web/`, `npm run lint`, `npm run typecheck`, `npm run build:cloudflare`.
+
+These commands are confirmed in project configuration/CI. Only commands listed under Results were executed this documentation session.
+
+## Release criteria
+
+Required: applicable CI jobs pass; new endpoints have permission-denial and firm-isolation coverage; upload and auth changes include failure cases; no real client data/secrets; docs/code agree on behavior. The product owner and auditor approve acceptance decisions. An automated pass does not certify regulatory compliance or security.
+
+## Results
+
+### This documentation session
+
+- **Passed:** `uv run pytest tests/test_workflow_boundary.py -q` — 1 passed in 0.07s.
+- **Failed:** None.
+- **Not run:** Full backend suite, Ruff, web lint/type/unit/build/e2e, accessibility screenshots, production service checks, and all other commands. Documentation-only changes do not alter application code.
