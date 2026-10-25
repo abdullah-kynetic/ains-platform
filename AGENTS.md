@@ -1,56 +1,36 @@
-# Project instructions for coding agents
+# Kien coding-agent guide
 
-Kien Solutions (https://kiensolutions.com): AI-native financial regulatory audit platform. First service: FINRA Rule 3310 independent AML tests for broker-dealers. A credentialed auditor (Quinton) approves findings and signs every report.
+Kien by Kien Solutions is workflow software for independent AML testing of broker-dealers under FINRA Rule 3310. Quentin is the AINS partner and auditor who approves findings and signs reports. Historical repository text spells the name “Quinton”; use “Quentin” in current product context.
 
-## Stack
-- Python 3.12, FastAPI, Pydantic v2, pydantic-settings, httpx, tenacity
-- uv for packages (`uv sync`, `uv run pytest`, `uv run ruff check .`)
-- Postgres 16 locally via `docker compose up -d`
-- Client documents in S3 by default (`STORAGE_BACKEND=s3`); Egnyte is an optional,
-  off-by-default connector (Internal API app, OAuth password flow)
-- This repository is workflow software only. No direct model calls; a separate pipeline may
-  connect later through an authenticated backend adapter.
-- Next.js 16 (TypeScript, Tailwind v4) client portal in `web/` (npm); talks to the API via `NEXT_PUBLIC_API_URL`
+## Read before product work
 
-## Layout
-```
-app/
-  main.py            FastAPI app (/health)
-  config.py          Settings loaded from environment variables
-  auth/              Backend sessions, invite-only password/magic-link sign-in, auditor MFA
-  api/               Tenant-scoped engagement and document endpoints
-  checks/            Storage receipt verification only; no model inference
-  database/          SQLAlchemy models and session management
-  documents/         Upload validation, hashing, and selected storage ingestion
-  egnyte_client/     Egnyte API client (client.py), path guard (paths.py), CLI (cli.py)
-  reports/           Unsigned DOCX/PDF draft report generation
-  worker.py          Durable Postgres-backed async document-check worker
-  checklist/         Checklist items and client-facing statuses
-tests/               pytest suite (synthetic data only)
-web/                 Next.js client portal (see web/README.md)
-data/synthetic/      Fake documents for tests and demos
-templates/report/    Swappable draft-report layout and required notices
-.github/workflows/   CI: backend ruff + pytest; web lint + typecheck + build
-```
+Read [PRD](docs/PRD.md), [Design System](docs/DESIGN_SYSTEM.md), [Architecture](docs/ARCHITECTURE.md), [Database](docs/DATABASE.md), [Security](docs/SECURITY.md), [Code Style](docs/CODE_STYLE.md), and [Testing](docs/TESTING.md). Keep them mutually consistent. Treat explicit unresolved items as unresolved, not approved design.
 
-## Rules
-- **Never read, print, log, or commit `.env` or any secret.** Use `.env.example` for variable names. Load config only through `app/config.py`.
-- **Egnyte: only touch paths under `/Shared/AINS-Dev` (`EGNYTE_DEV_ROOT`) during development.** Always go through `EgnyteClient` (it enforces the path guard).
-- **To use Egnyte, run the CLI**: `uv run python -m app.egnyte_client whoami | ls <path> | mkdir <path> | upload <local> <remote> | download <remote> <dest>`. It loads credentials itself; never read `.env` and never run `get-token` or print tokens.
-- **Synthetic data only** in tests, fixtures, and `data/synthetic/`. Never add or request real client documents.
-- **Synthetic upload checks**: run `uv run python scripts/evaluate_synthetic.py`. This command
-  validates receipt/type/fingerprints only, with no network access or model integration.
-- **No restricted document contents in this app or its fixtures.** Restricted catalog requests reject uploads; do not paste restricted contents into notes. Catalog metadata is retained only to route human handling.
-- **Intake feedback to clients must never reveal audit findings.** Only document-level issues (unreadable, wrong period, wrong document, missing pages).
-- **No model calls, model SDKs, inference, or model credentials in this repository.** Any future external pipeline connection requires a separately approved authenticated backend adapter.
-- **Humans approve findings and sign reports.** Code never marks a finding final or a report signed without an auditor action.
-- **Tenant isolation is mandatory.** Every tenant-owned query must filter by `firm_id`; client users see only their firm and auditors only assigned engagements. Add a cross-tenant denial test for each new API path.
-- **`web/`**: no secrets in `NEXT_PUBLIC_*` vars (they ship to the browser); mock data must be synthetic; status values must match `app/checklist.ClientStatus`; never show audit findings in client UI. Run `npm run lint && npm run build` in `web/` before committing.
-- **Portal roles**: client routes expose only neutral intake state; `/auditor` contains internal checks and finding drafts and must remain protected by backend auditor authorization as well as the UI role gate.
-- Keep changes small, typed, and tested. Run `uv run ruff check .` and `uv run pytest` before committing.
-- Request definitions live only in `data/checklist/aml_bd_v1.yaml` (34 stable IDs).
-  Backend rendering and generated web demo data use this catalog. Leave rubric placeholders
-  empty for Quinton; never infer audit criteria from file acceptance rules.
-- UI changes need web lint/typecheck/build plus Playwright browser tests. Automated accessibility
-  checks cover client and auditor screens; keep mobile focus management, retry states and
-  synthetic-only demo labels intact. Demo role switching must never affect real authorization.
+## Working rules
+
+- Inspect relevant code, tests, docs, nested `AGENTS.md` files, and the current git diff before editing. Build on existing app structures; do not create parallel systems without a documented need.
+- Use synthetic data only in tests, fixtures, demos, examples, and documentation. Never request, add, or expose real client documents. Never include secrets in code, docs, logs, commits, chat, screenshots, or browser-visible `NEXT_PUBLIC_*` values. Document environment variable names only.
+- This repository is workflow software. Keep model calls, inference SDKs, and model credentials out of `app/`; `tests/test_workflow_boundary.py` must continue to pass. Planned AI intake is not authorization to implement model processing. SAR material must never be sent to a model; the planned SAR pre-screen starts without model runs.
+- Client-visible intake feedback may describe document issues only (unreadable, wrong period/document, missing pages), never audit findings. Findings remain drafts until a human auditor approves them; only an auditor action can sign a report.
+- `data/checklist/aml_bd_v1.yaml` is the canonical source for 34 stable request IDs; backend and generated web catalog derive from it. Keep rubric placeholders empty for Quentin until he approves them; never infer audit criteria from file-acceptance rules. Restricted item contents are not retained in ordinary app notes; route metadata only and human handling.
+- Keep web checklist status values aligned with `app/checklist.ClientStatus`. Demo role switching must never affect real authorization. The synthetic web demo stores receipt metadata locally and never represents real sign-in, email, or document storage.
+- Every tenant-owned query and API path must enforce `firm_id` ownership and auditor engagement assignment on the server. Add cross-tenant denial coverage for new API paths. UI role gates are not authorization.
+- Egnyte is optional and off by default. During development, access only `/Shared/AINS-Dev` through `EgnyteClient`; use `uv run python -m app.egnyte_client <command>`. Never read `.env` or request/print tokens.
+- Do not touch n8n, the client portal, or Twenty on the shared OVH VPS `40.160.150.91`. Kien lives in `/opt/kien`, compose project `kien`. This restriction does not authorize deployment or server access.
+- Use real merge commits; do not rebase, squash-merge, or force-push. Keep costs minimal. Preserve unrelated changes.
+- Do not redesign the look the owner loves. Avoid generic filler copy and generic visuals. Prefer compact tiles with the primary action at top right. For UI changes, capture before/after screenshots at desktop light, desktop dark, and phone sizes; preserve accessibility, keyboard flow, reduced-motion behavior, and synthetic-demo labels.
+- Keep changes small, typed, and tested. Report exactly which commands were run and their results. Never claim unrun checks passed.
+- Git commit identity: `abdullah-kynetic <211030198+abdullah-kynetic@users.noreply.github.com>`.
+- Do not deploy, delete data, run production migrations, or send external messages unless specifically authorized.
+
+## Verified commands
+
+See [Code Style](docs/CODE_STYLE.md) and [Testing](docs/TESTING.md) for commands verified in project configuration. Backend includes `uv run ruff check .`, `uv run pytest -q`; web commands are run from `web/` and include `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run build:cloudflare`, and `npm run test:e2e`.
+
+## Session sequence
+
+1. Read the seven documents above and applicable nested instructions; inspect implementation and repository state.
+2. Summarize requirements, acceptance criteria, risks, and unresolved decisions before proposing product changes.
+3. Make the smallest scoped change in existing structures.
+4. Run relevant verified checks. UI work needs browser/accessibility coverage and before/after screenshots in desktop light, desktop dark, and phone sizes.
+5. Review the full diff for secrets, real client data, scope creep, and inaccurate docs; report changes, exact checks and results, and limitations.
