@@ -279,3 +279,114 @@ test("system theme follows OS changes, persists, and client firm card is static"
   await page.emulateMedia({ colorScheme: "light" });
   await expect(page.locator("html")).toHaveClass(/dark/);
 });
+
+test("theme reveal animates effective changes from segment and System origins", async ({
+  page,
+}) => {
+  await page.emulateMedia({
+    colorScheme: "light",
+    reducedMotion: "no-preference",
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem("ains-theme", "light");
+    const start = document.startViewTransition.bind(document);
+    const calls: { x: string; y: string }[] = [];
+    Object.assign(window, { themeTransitions: calls });
+    document.startViewTransition = (callback) => {
+      calls.push({
+        x: document.documentElement.style.getPropertyValue(
+          "--theme-transition-x",
+        ),
+        y: document.documentElement.style.getPropertyValue(
+          "--theme-transition-y",
+        ),
+      });
+      return start(callback);
+    };
+  });
+  await page.goto("/");
+  const sidebar = page.locator(".desktop-sidebar");
+  const dark = sidebar.getByRole("button", { name: "Dark theme", exact: true });
+  const light = sidebar.getByRole("button", {
+    name: "Light theme",
+    exact: true,
+  });
+  const system = sidebar.getByRole("button", {
+    name: "System theme",
+    exact: true,
+  });
+  const calls = () =>
+    page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            themeTransitions: { x: string; y: string }[];
+          }
+        ).themeTransitions,
+    );
+  const settled = () =>
+    expect
+      .poll(() =>
+        page.evaluate(() =>
+          document.documentElement.style.getPropertyValue(
+            "--theme-transition-x",
+          ),
+        ),
+      )
+      .toBe("");
+  await dark.click({ position: { x: 8, y: 8 } });
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  const bounds = await dark.boundingBox();
+  expect((await calls())[0]).toEqual({
+    x: `${Math.floor(bounds!.x + 8)}px`,
+    y: `${Math.floor(bounds!.y + 8)}px`,
+  });
+  await settled();
+  await dark.click();
+  expect(await calls()).toHaveLength(1);
+  await light.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  const lightBounds = await light.boundingBox();
+  expect((await calls())[1]).toEqual({
+    x: `${lightBounds!.x + lightBounds!.width / 2}px`,
+    y: `${lightBounds!.y + lightBounds!.height / 2}px`,
+  });
+  await settled();
+  await system.click();
+  expect(await calls()).toHaveLength(2);
+  await dark.click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await settled();
+  await system.click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  expect(await calls()).toHaveLength(4);
+  await settled();
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  const systemBounds = await system.boundingBox();
+  expect((await calls())[4]).toEqual({
+    x: `${systemBounds!.x + systemBounds!.width / 2}px`,
+    y: `${systemBounds!.y + systemBounds!.height / 2}px`,
+  });
+  await settled();
+  await sidebar.evaluate((element) => {
+    (element as HTMLElement).style.display = "none";
+  });
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  expect((await calls())[5]).toEqual(
+    await page.evaluate(() => ({
+      x: `${window.innerWidth / 2}px`,
+      y: `${window.innerHeight / 2}px`,
+    })),
+  );
+  await settled();
+  await sidebar.evaluate((element) => {
+    (element as HTMLElement).style.display = "";
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await dark.click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  expect(await calls()).toHaveLength(6);
+});

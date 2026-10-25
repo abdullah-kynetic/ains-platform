@@ -3,6 +3,74 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark" | "system";
+type EffectiveTheme = "light" | "dark";
+let pendingTheme: EffectiveTheme | undefined;
+
+function applyTheme(theme: EffectiveTheme) {
+  const root = document.documentElement;
+  root.classList.toggle("dark", theme === "dark");
+  root.dataset.theme = theme;
+  pendingTheme = undefined;
+}
+
+function transitionTheme(
+  theme: EffectiveTheme,
+  origin: { x: number; y: number },
+) {
+  const root = document.documentElement;
+  if ((pendingTheme ?? root.dataset.theme) === theme) return;
+  pendingTheme = theme;
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+
+  if (!document.startViewTransition || reduceMotion) {
+    applyTheme(theme);
+    return;
+  }
+
+  root.style.setProperty("--theme-transition-x", `${origin.x}px`);
+  root.style.setProperty("--theme-transition-y", `${origin.y}px`);
+
+  const transition = document.startViewTransition(() => applyTheme(theme));
+  void transition.finished.finally(() => {
+    root.style.removeProperty("--theme-transition-x");
+    root.style.removeProperty("--theme-transition-y");
+  });
+}
+
+function systemOrigin() {
+  const buttons = document.querySelectorAll<HTMLButtonElement>(
+    'button[aria-label="System theme"]',
+  );
+  for (const button of buttons) {
+    const bounds = button.getBoundingClientRect();
+    if (
+      button.checkVisibility() &&
+      bounds.width &&
+      bounds.height &&
+      bounds.bottom > 0 &&
+      bounds.right > 0 &&
+      bounds.top < window.innerHeight &&
+      bounds.left < window.innerWidth
+    ) {
+      return {
+        x: bounds.left + bounds.width / 2,
+        y: bounds.top + bounds.height / 2,
+      };
+    }
+  }
+  return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+}
+
+function resolveTheme(theme: Theme): EffectiveTheme {
+  return theme === "system"
+    ? window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light"
+    : theme;
+}
+
 function preference(): Theme {
   try {
     const saved = localStorage.getItem("ains-theme");
@@ -27,15 +95,29 @@ export function ThemeToggle() {
   );
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
+    // Reconcile OS changes that occurred between the bootstrap script and hydration.
+    if (!document.documentElement.dataset.theme) {
+      applyTheme(resolveTheme(preference()));
+    } else {
+      transitionTheme(resolveTheme(preference()), systemOrigin());
+    }
     const apply = () => {
-      const dark = theme === "dark" || (theme === "system" && media.matches);
-      document.documentElement.classList.toggle("dark", dark);
-      document.documentElement.dataset.theme = dark ? "dark" : "light";
+      if (preference() === "system") {
+        transitionTheme(media.matches ? "dark" : "light", systemOrigin());
+      }
     };
-    apply();
+    const syncPreference = (event: StorageEvent) => {
+      if (event.key === "ains-theme" || event.key === null) {
+        transitionTheme(resolveTheme(preference()), systemOrigin());
+      }
+    };
     media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
-  }, [theme]);
+    window.addEventListener("storage", syncPreference);
+    return () => {
+      media.removeEventListener("change", apply);
+      window.removeEventListener("storage", syncPreference);
+    };
+  }, []);
   return (
     <div
       role="group"
@@ -48,7 +130,17 @@ export function ThemeToggle() {
           type="button"
           aria-label={`${value[0].toUpperCase()}${value.slice(1)} theme`}
           aria-pressed={theme === value}
-          onClick={() => {
+          onClick={(event) => {
+            const bounds = event.currentTarget.getBoundingClientRect();
+            const keyboardActivation = event.detail === 0;
+            transitionTheme(resolveTheme(value), {
+              x: keyboardActivation
+                ? bounds.left + bounds.width / 2
+                : event.clientX,
+              y: keyboardActivation
+                ? bounds.top + bounds.height / 2
+                : event.clientY,
+            });
             try {
               localStorage.setItem("ains-theme", value);
             } catch {
