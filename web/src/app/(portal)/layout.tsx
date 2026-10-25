@@ -8,10 +8,11 @@ import { USE_MOCKS } from "@/lib/api";
 
 const clientItems: NavItem[] = [
   { href: "/", label: "Overview", icon: "LayoutDashboard", exact: true },
-  { href: "/checklist", label: "Document checklist", icon: "ListChecks" },
-  { href: "/progress", label: "Document progress", icon: "ChartNoAxesCombined" },
-  { href: "/upload", label: "Upload center", icon: "Upload" },
-  { href: "/questionnaire", label: "Firm questionnaire", icon: "ClipboardCheck" },
+  { href: "/upload", label: "Upload", icon: "Upload" },
+  { href: "/checklist", label: "Checklist", icon: "ListChecks" },
+  { href: "/questionnaire", label: "Questionnaire", icon: "ClipboardCheck" },
+  { href: "/messages", label: "Messages", icon: "MessagesSquare" },
+  { href: "/progress", label: "Progress", icon: "ChartNoAxesCombined" },
 ];
 
 const auditorItems: NavItem[] = [
@@ -47,7 +48,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         auditor={isAuditor}
         sidebar={
           <Sidebar
-            items={isAuditor ? auditorItems : clientItems.filter((item) => item.href !== "/questionnaire" && item.href !== "/upload")}
+            items={isAuditor ? auditorItems : clientItems}
             sub={isAuditor ? "Auditor workspace" : "Client portal"}
             who={user?.name ?? user?.email ?? "Signed-in user"}
             org={

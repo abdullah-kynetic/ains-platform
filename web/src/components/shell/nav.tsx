@@ -73,11 +73,11 @@ function WorkspaceSwitcher({
           {active.mark}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold text-foreground">
+          <span
+            title={active.name}
+            className="block break-words text-sm font-semibold text-foreground"
+          >
             {active.name}
-          </span>
-          <span className="block truncate text-xs text-subtle">
-            {active.type}
           </span>
         </span>
         <ChevronsUpDown className="size-3.5 text-subtle" />
@@ -211,7 +211,9 @@ function Panel({
   onNavigate,
   onSignOut,
   onWorkspaceChange,
+  desktop = false,
 }: {
+  desktop?: boolean;
   items: NavItem[];
   sub: string;
   who: string;
@@ -224,7 +226,7 @@ function Panel({
 
   return (
     <div className="sidebar-panel flex min-h-0 flex-1 flex-col overflow-y-auto p-3">
-      <Logo sub={sub} className="px-2 pt-2 pb-5" />
+      {!desktop ? <Logo sub={sub} className="px-2 pt-2 pb-5" /> : null}
       <WorkspaceSwitcher
         auditor={auditor}
         onWorkspaceChange={onWorkspaceChange}
@@ -234,32 +236,37 @@ function Panel({
         {auditor ? "Review" : "Engagement"}
       </p>
       <Items items={items} onNavigate={onNavigate} />
-      <div className="mt-auto grid gap-3 border-t border-border px-1 pt-4">
-        {org ? (
-          <div className="flex items-center gap-2 px-2 text-xs text-subtle">
-            <ShieldCheck className="size-3.5 text-success-foreground" />
-            Workspace access enforced
+      <div className="mt-auto flex items-center gap-2 border-t border-border px-1 pt-3">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-xs font-semibold text-muted">
+          {initials(who)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div
+            title={who}
+            className="truncate text-xs font-medium text-foreground"
+          >
+            {who}
           </div>
-        ) : null}
-        <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-xs font-semibold text-muted">
-            {initials(who)}
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-xs font-medium text-foreground">
-              {who}
-            </div>
-            <div className="truncate text-xs text-subtle">{org}</div>
+          <div title={org} className="truncate text-xs text-subtle">
+            {org}
           </div>
         </div>
+        <span title="Workspace access enforced" className="shrink-0">
+          <ShieldCheck
+            aria-hidden="true"
+            className="size-3.5 text-success-foreground"
+          />
+          <span className="sr-only">Workspace access enforced</span>
+        </span>
         <button
           type="button"
+          aria-label="Sign out"
+          title="Sign out"
           onClick={onSignOut}
           disabled={!onSignOut}
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-subtle transition-colors hover:bg-hover hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+          className="grid size-8 shrink-0 place-items-center rounded-md text-subtle hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
         >
-          <LogOut className="size-3.5" />
-          Sign out
+          <LogOut aria-hidden="true" className="size-3.5" />
         </button>
       </div>
     </div>
@@ -283,23 +290,23 @@ export function Sidebar(props: {
         data-collapsed={collapsed}
         className="desktop-sidebar sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-sidebar lg:flex lg:flex-col"
       >
-        <button
-          type="button"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-expanded={!collapsed}
-          onClick={() => setCollapsed(!collapsed)}
-          className="mx-3 mt-3 flex items-center gap-2 rounded-md px-3 text-xs text-muted hover:bg-hover"
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="size-4" />
-          ) : (
-            <PanelLeftClose className="size-4" />
-          )}
-          <span className="nav-label">
-            {collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          </span>
-        </button>
-        <Panel {...props} />
+        <div className="flex items-center justify-between gap-1 p-3">
+          {!collapsed ? <Logo sub={props.sub} className="min-w-0" /> : null}
+          <button
+            type="button"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
+            onClick={() => setCollapsed(!collapsed)}
+            className="grid size-8 shrink-0 place-items-center rounded-md text-muted hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="size-4" />
+            ) : (
+              <PanelLeftClose className="size-4" />
+            )}
+          </button>
+        </div>
+        <Panel {...props} desktop />
       </aside>
       <div
         role="region"
