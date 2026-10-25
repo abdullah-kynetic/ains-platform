@@ -55,9 +55,18 @@ for (const role of ["client", "auditor"] as const) {
       }
       const control = sidebar.getByRole("group", { name: "Color theme" });
       const controlBounds = await control.boundingBox();
+      const identity = sidebar.locator(".sidebar-identity");
+      await expect(sidebar.locator(".sidebar-theme + .sidebar-identity")).toHaveCount(1);
+      const identityBounds = await identity.boundingBox();
       const sidebarBounds = await sidebar.boundingBox();
+      if (!collapsed) {
+        expect(controlBounds!.y + controlBounds!.height).toBeLessThanOrEqual(identityBounds!.y);
+      } else {
+        await expect(identity).toBeHidden();
+      }
+      const bottomBounds = collapsed ? controlBounds! : identityBounds!;
       expect(
-        sidebarBounds!.y + sidebarBounds!.height - controlBounds!.y - controlBounds!.height,
+        sidebarBounds!.y + sidebarBounds!.height - bottomBounds.y - bottomBounds.height,
       ).toBeLessThanOrEqual(16);
       if (collapsed) {
         await expect(sidebar.locator(".theme-control svg").first()).toBeVisible();
@@ -80,8 +89,18 @@ for (const role of ["client", "auditor"] as const) {
       ),
     ).toBe(true);
     await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(
-      page.getByRole("dialog").getByRole("group", { name: "Color theme" }),
-    ).toBeInViewport({ ratio: 1 });
+    const drawer = page.getByRole("dialog");
+    const control = drawer.getByRole("group", { name: "Color theme" });
+    const identity = drawer.locator(".sidebar-identity");
+    await expect(drawer.locator(".sidebar-theme + .sidebar-identity")).toHaveCount(1);
+    await expect(control).toBeInViewport({ ratio: 1 });
+    await expect(identity).toBeInViewport({ ratio: 1 });
+    const controlBounds = await control.boundingBox();
+    const identityBounds = await identity.boundingBox();
+    const panelBounds = await drawer.locator(".sidebar-panel").boundingBox();
+    expect(controlBounds!.y + controlBounds!.height).toBeLessThanOrEqual(identityBounds!.y);
+    expect(
+      panelBounds!.y + panelBounds!.height - identityBounds!.y - identityBounds!.height,
+    ).toBeLessThanOrEqual(16);
   });
 }
