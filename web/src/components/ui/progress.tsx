@@ -23,8 +23,8 @@ export function Progress({
     >
       <div
         className={cn(
-          "h-full rounded-full transition-[width] duration-500",
-          tone === "brand" && "bg-brand-gradient",
+          "progress-fill h-full rounded-full",
+          tone === "brand" && "bg-brand",
           tone === "warning" && "bg-warning",
           tone === "danger" && "bg-danger",
         )}

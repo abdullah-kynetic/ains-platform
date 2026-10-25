@@ -1,4 +1,5 @@
-import { AlertCircle, LoaderCircle } from "lucide-react";
+import { Skeleton } from "./skeleton";
+import { AlertCircle } from "lucide-react";
 import { Button } from "./button";
 
 export function LoadState({
@@ -18,10 +19,10 @@ export function LoadState({
       {error ? (
         <AlertCircle aria-hidden className="mx-auto size-8 text-warning-foreground" />
       ) : (
-        <LoaderCircle
-          aria-hidden
-          className="mx-auto size-8 animate-spin text-brand"
-        />
+        <div aria-hidden className="mx-auto grid w-48 gap-2">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-48" />
+        </div>
       )}
       <p className="text-sm font-medium leading-normal">
         {error ? "We couldn’t load this screen." : label}
