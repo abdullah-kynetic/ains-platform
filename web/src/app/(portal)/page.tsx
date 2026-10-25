@@ -69,7 +69,23 @@ export default function OverviewPage() {
           { href: "/checklist", icon: ListTodo, title: "View requests", detail: "See what to send next" },
           { href: "/messages", icon: MessageSquare, title: "Messages", detail: "Document follow-ups from your auditor" },
           { href: "/progress", icon: CheckCircle2, title: "Report status", detail: "View your engagement milestones" },
-        ].map(({ href, icon: Icon, title, detail }) => <Link key={href} href={href} className="group rounded-xl border border-border bg-surface p-6 transition-colors hover:border-brand focus-visible:outline-brand"><Icon aria-hidden="true" className="mb-5 size-6 text-brand" /><span className="block text-base font-semibold">{title}</span><span className="mt-2 block text-sm text-muted">{detail}</span><ArrowUpRight aria-hidden="true" className="mt-5 size-5 text-brand" /></Link>)}
+        ].map(({ href, icon: Icon, title, detail }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group rounded-xl border border-border bg-surface p-5 transition-colors hover:border-brand focus-visible:outline-brand"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <Icon aria-hidden="true" className="size-6 text-brand" />
+              <ArrowUpRight
+                aria-hidden="true"
+                className="size-5 shrink-0 text-brand"
+              />
+            </div>
+            <span className="mt-3 block text-base font-semibold">{title}</span>
+            <span className="mt-1 block text-sm text-muted">{detail}</span>
+          </Link>
+        ))}
       </section>
 
       <div className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-3)] md:grid-cols-2 xl:grid-cols-4">
