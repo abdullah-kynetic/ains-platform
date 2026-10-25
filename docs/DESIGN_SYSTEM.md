@@ -76,3 +76,12 @@ Shared components live in `web/src/components/ui/`, with shell, checklist, audit
 ## Approval
 
 Design owner: Unresolved. Source of truth: current main CSS/components. `design.kiensolutions.com` on `origin/feat/apple-polish` remains an unapproved design branch reference.
+
+## Invoice surfaces
+
+The auditor-only register, draft form and detail reuse the existing shell, card, field,
+button, badge and native dialog components. Status pills include text; fields have visible
+labels. Add/remove lines and payment dialogs support keyboards and narrow screens.
+Print media shows the invoice content with dark text on white and hides navigation,
+actions and internal history. The existing global type scale and theme tokens remain
+unchanged. Synthetic mode explicitly labels local metadata and absence of email/payments.

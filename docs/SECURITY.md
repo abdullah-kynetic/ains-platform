@@ -57,3 +57,15 @@
 ## Verification
 
 See [TESTING.md](TESTING.md) for permission-denial, firm-isolation, malformed/oversized upload, token/MFA, and secret exposure coverage. Residual risks include lack of confirmed malware scanning, operational retention/backup controls, broad non-auth rate limiting, and external audit-chain checkpointing. Owners and due dates: unresolved. This document does not establish regulatory compliance or a security certification.
+
+## Invoice access
+
+All `/auditor/invoices` endpoints require the auditor role. Invoice reads and mutations
+require the issuer scope, creating auditor and current matching engagement assignment;
+firm-only invoices require a current assignment in the billed client firm. Numbering is
+shared within the auditor firm; invoice access is not implicitly shared with its other
+auditors. Unbound legacy auditors receive an individual issuer scope. Client-side route
+and sidebar gates supplement server checks. Invoice audit entries belong to the issuer
+firm (or system chain for an unbound auditor), so billed clients cannot read invoice
+notes or amounts through their activity endpoints. Concurrent mutations lock the invoice
+row to avoid duplicate/over payments. No email, model or payment-provider call is made.

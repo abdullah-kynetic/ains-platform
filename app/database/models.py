@@ -9,10 +9,12 @@ from __future__ import annotations
 import enum
 import uuid
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     CheckConstraint,
     Date,
@@ -21,6 +23,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -422,3 +425,88 @@ class AuthRateLimit(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     count: Mapped[int] = mapped_column(Integer, default=0)
     window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class InvoiceIssuer(Base):
+    """One numbering scope per auditor firm, or per legacy unbound auditor."""
+
+    __tablename__ = "invoice_issuers"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    firm_id: Mapped[str | None] = mapped_column(ForeignKey("firms.id"), unique=True)
+    auditor_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), unique=True)
+    next_number: Mapped[int] = mapped_column(Integer, default=1)
+    __table_args__ = (
+        CheckConstraint(
+            "(firm_id IS NULL) <> (auditor_id IS NULL)", name="ck_invoice_issuer_owner"
+        ),
+    )
+
+
+class Invoice(Base):
+    __tablename__ = "invoices"
+    __table_args__ = (
+        UniqueConstraint("issuer_id", "number", name="uq_invoice_issuer_number"),
+        Index("ix_invoice_scope_status_due", "issuer_id", "status", "due_date"),
+        Index("ix_invoice_client_issue", "firm_id", "issue_date"),
+        CheckConstraint("status IN ('draft', 'sent', 'paid', 'void')", name="ck_invoice_status"),
+        CheckConstraint("due_date >= issue_date", name="ck_invoice_dates"),
+        CheckConstraint(
+            "total_cents > 0 AND subtotal_cents = total_cents AND "
+            "amount_paid_cents >= 0 AND amount_paid_cents <= total_cents",
+            name="ck_invoice_amounts",
+        ),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    issuer_id: Mapped[str] = mapped_column(ForeignKey("invoice_issuers.id"))
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"))
+    engagement_id: Mapped[str | None] = mapped_column(ForeignKey("engagements.id"), index=True)
+    auditor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    number: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(12), default="draft")
+    issue_date: Mapped[date] = mapped_column(Date)
+    due_date: Mapped[date] = mapped_column(Date)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    currency: Mapped[str] = mapped_column(String(3), default="USD")
+    subtotal_cents: Mapped[int] = mapped_column(BigInteger)
+    total_cents: Mapped[int] = mapped_column(BigInteger)
+    amount_paid_cents: Mapped[int] = mapped_column(BigInteger, default=0)
+    paid_at: Mapped[date | None] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+    firm: Mapped[Firm] = relationship()
+    line_items: Mapped[list[InvoiceLineItem]] = relationship(
+        cascade="all, delete-orphan", order_by="InvoiceLineItem.position"
+    )
+    events: Mapped[list[InvoiceEvent]] = relationship(order_by="InvoiceEvent.occurred_at")
+
+
+class InvoiceLineItem(Base):
+    __tablename__ = "invoice_line_items"
+    __table_args__ = (
+        UniqueConstraint("invoice_id", "position", name="uq_invoice_line_position"),
+        CheckConstraint(
+            "quantity > 0 AND rate_cents >= 0 AND amount_cents >= 0", name="ck_invoice_line_amounts"
+        ),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    invoice_id: Mapped[str] = mapped_column(ForeignKey("invoices.id"), index=True)
+    description: Mapped[str] = mapped_column(String(1000))
+    quantity: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    rate_cents: Mapped[int] = mapped_column(BigInteger)
+    amount_cents: Mapped[int] = mapped_column(BigInteger)
+    position: Mapped[int] = mapped_column(Integer)
+
+
+class InvoiceEvent(Base):
+    __tablename__ = "invoice_events"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    invoice_id: Mapped[str] = mapped_column(ForeignKey("invoices.id"), index=True)
+    type: Mapped[str] = mapped_column(String(32))
+    from_status: Mapped[str | None] = mapped_column(String(12))
+    to_status: Mapped[str] = mapped_column(String(12))
+    amount_cents: Mapped[int | None] = mapped_column(BigInteger)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    details: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict)

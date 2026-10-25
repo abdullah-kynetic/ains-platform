@@ -484,3 +484,18 @@ input[type="file"] {
   color: var(--color-foreground) !important;
   border-color: var(--color-border) !important;
 }
+
+@media print {
+  body:has(.invoice-print) { background: white; color: #1a1a1a; }
+  body:has(.invoice-print) aside,
+  body:has(.invoice-print) nav,
+  body:has(.invoice-print) header,
+  body:has(.invoice-print) footer,
+  body:has(.invoice-print) .invoice-controls,
+  body:has(.invoice-print) dialog,
+  body:has(.invoice-print) [data-sonner-toaster] { display: none !important; }
+  body:has(.invoice-print) #main-content { background: white; }
+  .invoice-print { background: white; color: #1a1a1a; border: 0; box-shadow: none; }
+  .invoice-print .text-muted, .invoice-print .text-subtle { color: #444; }
+  .invoice-print tr { break-inside: avoid; }
+}

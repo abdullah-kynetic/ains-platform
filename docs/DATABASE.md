@@ -81,3 +81,29 @@ Application defaults are Python-side unless a migration defines a server default
 ## Data validation
 
 Database constraints include review period ordering, unique firm slug, unique email/token hashes, unique checklist key per engagement, unique check job per document, unique document version tuple, and unique audit sequence per firm. Pydantic and service code enforce role-specific allowed values, date/file constraints, firm ownership, assignment, workflow transitions, and restricted checklist behavior. Upload limit is 100 MB per file; supported extensions derive from the checklist and ingestion validation. On mismatch, reject safely and do not expose other tenant existence/content.
+
+## Auditor invoice ledger
+
+Additive revision `a112_auditor_invoices` creates four tables without changing existing
+tables or backfilling their data:
+
+- `invoice_issuers`: numbering owner (exactly one of auditor firm or legacy unbound
+  auditor), unique owner links and next number. An existing firm/user row lock serializes
+  first use and subsequent allocation. Numbers are unique per issuer, increasing and
+  retained for void invoices; a rolled-back transaction consumes no number.
+- `invoices`: issuer, assigned auditor, client `firm_id`, optional engagement, unique
+  issuer/number, draft/sent/paid/void status, issue/due dates, currency, notes, integer
+  subtotal/total/amount-paid cents, full-payment date and timestamps.
+- `invoice_line_items`: invoice, description, Numeric(12,2) quantity, integer rate/amount
+  cents, unique ordered position. Each line rounds half-up to the nearest cent before
+  summation. Positive invoice totals are capped at 100,000,000,000 cents.
+- `invoice_events`: invoice, type, from/to status, optional integer payment cents,
+  recorded timestamp, actor and JSON metadata (including the effective payment date).
+  Application routes append events; they do not edit or delete them. These are not the
+  immutable chained `audit_logs` table; actions also append to that existing audit ledger.
+
+USD/EUR/GBP/CAD/AUD/CHF are supported with two-decimal minor units. No taxes or currency
+conversion. Fully paid and void invoices are terminal; payments must be positive and
+cannot exceed the balance. Paid invoices and partially paid invoices cannot be voided.
+Invoice migration downgrade intentionally refuses deletion of financial history; image
+rollback retains the additive tables. Retention/refund policies remain unresolved.
