@@ -2,11 +2,28 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "@/components/auth/session";
+import {
+  companyName,
+  companyUrl,
+  pageDescription,
+  pageTitle,
+  productName,
+} from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: { default: "AINS Client Portal", template: "%s · AINS" },
-  description: "Upload your audit documents and track their status.",
+  title: { default: pageTitle, template: `%s · ${productName}` },
+  description: pageDescription,
+  applicationName: productName,
+  authors: [{ name: companyName, url: companyUrl }],
   robots: { index: false, follow: false },
+  openGraph: {
+    title: pageTitle,
+    description: pageDescription,
+    siteName: companyName,
+    url: companyUrl,
+    type: "website",
+    locale: "en_US",
+  },
 };
 export const viewport: Viewport = {
   colorScheme: "light dark",

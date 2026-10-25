@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
+import { SiteFooter } from "@/components/brand/site-footer";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -52,7 +53,8 @@ function ResetForm() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen bg-glow px-[var(--space-4)] py-[var(--space-8)] sm:py-[var(--space-9)]">
+    <div className="flex min-h-screen flex-col bg-glow">
+    <main id="main-content" className="flex-1 px-[var(--space-4)] py-[var(--space-8)] sm:py-[var(--space-9)]">
       <div className="mx-auto grid w-full max-w-md gap-[var(--space-6)]">
         <Logo sub="Secure portal" className="justify-self-center" />
         <Card featured>
@@ -87,6 +89,8 @@ function ResetForm() {
         </Card>
       </div>
     </main>
+    <SiteFooter />
+    </div>
   );
 }
 

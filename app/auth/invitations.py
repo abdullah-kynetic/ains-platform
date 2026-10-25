@@ -201,7 +201,9 @@ def create_invitation(
         select(ClientInvitation).where(ClientInvitation.email == payload.email)
     )
     if existing_user is not None:
-        raise HTTPException(status_code=409, detail="This email already has an AINS account")
+        raise HTTPException(
+            status_code=409, detail="This email already has a Kien Solutions account"
+        )
     if existing_invitation is not None:
         detail = (
             "This client is already invited to this firm; resend the existing invitation"
@@ -260,7 +262,9 @@ def resend_invitation(
     if invitation.accepted_at is not None:
         raise HTTPException(status_code=409, detail="Accepted invitations cannot be resent")
     if db.scalar(select(User.id).where(User.email == invitation.email)) is not None:
-        raise HTTPException(status_code=409, detail="This email already has an AINS account")
+        raise HTTPException(
+            status_code=409, detail="This email already has a Kien Solutions account"
+        )
 
     token, invitation.token_hash = new_invitation_token()
     invitation.expires_at = datetime.now(UTC) + timedelta(

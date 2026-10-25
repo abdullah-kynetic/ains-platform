@@ -14,7 +14,7 @@ from app.monitoring import init_sentry
 def create_app() -> FastAPI:
     settings = get_settings()
     init_sentry(settings)
-    application = FastAPI(title="AINS Platform", version="0.1.0")
+    application = FastAPI(title="Kien Solutions", version="0.1.0")
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.parsed_cors_origins(),

@@ -53,7 +53,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             who={user?.name ?? user?.email ?? "Signed-in user"}
             org={
               isAuditor
-                ? "AINS independent review"
+                ? "Kien Solutions independent review"
                 : "Example Securities LLC (synthetic)"
             }
             onSignOut={() => void handleSignOut()}

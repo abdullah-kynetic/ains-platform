@@ -322,6 +322,7 @@ def test_auditor_enrolls_mfa_and_uses_each_recovery_code_once(backend) -> None:
     assert started.status_code == 200
     start_body = started.json()
     assert "enrolling-auditor%40example.test" in start_body["provisioning_uri"]
+    assert "issuer=Kien%20Solutions" in start_body["provisioning_uri"]
     assert start_body["secret"] not in client.get("/openapi.json").text
 
     wrong = client.post(
@@ -1481,6 +1482,10 @@ def test_draft_report_includes_only_auditor_approved_findings(backend) -> None:
     sign_in_auditor(client)
     docx = client.post(f"/auditor/engagements/{ids['engagement_a']}/report?format=docx")
     assert docx.status_code == 200
+    assert (
+        docx.headers["content-disposition"]
+        == f'attachment; filename="kien-{ids["engagement_a"]}-draft-report.docx"'
+    )
     assert docx.headers["content-type"].startswith(
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
@@ -1493,6 +1498,10 @@ def test_draft_report_includes_only_auditor_approved_findings(backend) -> None:
     pdf = client.post(f"/auditor/engagements/{ids['engagement_a']}/report?format=pdf")
     assert pdf.status_code == 200
     assert pdf.content.startswith(b"%PDF-")
+    assert (
+        pdf.headers["content-disposition"]
+        == f'attachment; filename="kien-{ids["engagement_a"]}-draft-report.pdf"'
+    )
 
 
 def test_unconfigured_invitation_delivery_does_not_persist_invite(backend):

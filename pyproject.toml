@@ -1,7 +1,7 @@
 [project]
 name = "ains-platform"
 version = "0.1.0"
-description = "AINS: AI-native financial regulatory audit platform"
+description = "Kien Solutions: AI-native financial regulatory audit platform"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

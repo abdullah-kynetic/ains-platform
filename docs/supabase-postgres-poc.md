@@ -1,8 +1,8 @@
 # Synthetic Supabase PostgreSQL proof of concept
 
-> **Archived decision record:** Supabase is not part of the planned AINS architecture. This
+> **Archived decision record:** Supabase is not part of the planned Kien Solutions architecture. This
 > synthetic evaluation is retained only to document what was considered. Do not run it, provision
-> a Supabase project, configure credentials, migrate data or replace working AINS services.
+> a Supabase project, configure credentials, migrate data or replace working Kien Solutions services.
 
 This checkpoint uses Supabase only as hosted PostgreSQL. FastAPI continues to own sessions,
 client invitations, password hashing, auditor MFA, workflow authorization, and tenant scoping.
@@ -29,7 +29,7 @@ SUPABASE_POC_SYNTHETIC_ONLY=true \
 uv run python scripts/supabase_poc.py run
 ```
 
-`run` refuses any target that already contains AINS application rows, applies the repository's
+`run` refuses any target that already contains Kien Solutions application rows, applies the repository's
 Alembic migrations, confirms the exact migration head, creates two synthetic firms inside a
 transaction, verifies client firm isolation and auditor assignment scope, and rolls the entire
 probe back. It never prints the connection URL. `migrate` and `verify` are available separately
