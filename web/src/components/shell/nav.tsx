@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Check,
   ChevronsUpDown,
@@ -301,11 +301,52 @@ export function Sidebar(props: {
 }) {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [width, setWidth] = useState(256);
+  const [dragging, setDragging] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const drag = useRef<{ pointer: number; start: number; width: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem("kien-sidebar") ?? "null",
+        );
+        if (
+          saved &&
+          typeof saved.width === "number" &&
+          Number.isFinite(saved.width)
+        ) {
+          setWidth(Math.max(200, Math.min(360, saved.width)));
+          setCollapsed(saved.collapsed === true);
+        }
+      } catch {
+        /* Use defaults if storage is unavailable. */
+      }
+      setRestored(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  useEffect(() => {
+    if (restored) {
+      try {
+        localStorage.setItem(
+          "kien-sidebar",
+          JSON.stringify({ width, collapsed }),
+        );
+      } catch {
+        /* Resizing works without storage. */
+      }
+    }
+  }, [width, collapsed, restored]);
 
   return (
     <>
       <aside
         data-collapsed={collapsed}
+        data-dragging={dragging}
+        style={{ width: collapsed ? 76 : width }}
         className="desktop-sidebar sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-sidebar lg:flex lg:flex-col"
       >
         <div className="flex items-center justify-between gap-1 p-3">
@@ -325,6 +366,71 @@ export function Sidebar(props: {
           </button>
         </div>
         <Panel {...props} desktop />
+        <div
+          role="separator"
+          aria-label="Resize sidebar"
+          aria-orientation="vertical"
+          aria-valuemin={200}
+          aria-valuemax={360}
+          aria-valuenow={width}
+          aria-valuetext={collapsed ? "Collapsed" : `${width} pixels`}
+          tabIndex={0}
+          className="absolute inset-y-0 -right-1 z-40 w-2 cursor-col-resize touch-none hover:bg-brand/20 focus-visible:bg-brand/20 focus-visible:outline-2 focus-visible:outline-brand"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === "Home") {
+              event.preventDefault();
+              setCollapsed((value) => !value);
+            } else if (
+              event.key === "ArrowLeft" ||
+              event.key === "ArrowRight"
+            ) {
+              event.preventDefault();
+              setCollapsed(false);
+              setWidth((value) =>
+                Math.max(
+                  200,
+                  Math.min(360, value + (event.key === "ArrowLeft" ? -16 : 16)),
+                ),
+              );
+            }
+          }}
+          onPointerDown={(event) => {
+            if (
+              event.button !== 0 ||
+              !window.matchMedia("(min-width: 1024px)").matches
+            )
+              return;
+            event.preventDefault();
+            event.currentTarget.setPointerCapture(event.pointerId);
+            drag.current = {
+              pointer: event.pointerId,
+              start: event.clientX,
+              width: collapsed ? 76 : width,
+            };
+            setDragging(true);
+          }}
+          onPointerMove={(event) => {
+            const current = drag.current;
+            if (!current || current.pointer !== event.pointerId) return;
+            const next = current.width + event.clientX - current.start;
+            setCollapsed(next < 140);
+            if (next >= 140) setWidth(Math.max(200, Math.min(360, next)));
+          }}
+          onPointerUp={(event) => {
+            if (drag.current?.pointer !== event.pointerId) return;
+            drag.current = null;
+            setDragging(false);
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerCancel={() => {
+            drag.current = null;
+            setDragging(false);
+          }}
+          onLostPointerCapture={() => {
+            drag.current = null;
+            setDragging(false);
+          }}
+        />
       </aside>
       <div
         role="region"

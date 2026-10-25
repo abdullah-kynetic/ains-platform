@@ -6,20 +6,15 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test("auditor signs in one field at a time and returns to next", async ({
+test("auditor signs in with credentials together and returns to next", async ({
   page,
 }) => {
   await page.goto("/sign-in?next=%2Fauditor");
-  await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Forgot password?")).toHaveCount(0);
+  await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
+  await expect(page.getByText("Forgot password?")).toBeVisible();
   await page
     .getByLabel("Email", { exact: true })
     .fill("auditor@example.invalid");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByLabel("Email", { exact: true })).toHaveCount(0);
-  await expect(
-    page.getByText("auditor@example.invalid", { exact: false }),
-  ).toBeVisible();
   await page
     .getByLabel("Password", { exact: true })
     .fill("synthetic-only-password");
@@ -35,7 +30,6 @@ test("invalid next falls back home", async ({ page }) => {
   await page
     .getByLabel("Email", { exact: true })
     .fill("client@example.invalid");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
     .getByLabel("Password", { exact: true })
     .fill("synthetic-only-password");
@@ -96,7 +90,6 @@ test("API password challenge sends credentials together and verifies MFA", async
   });
   await page.goto("/sign-in?next=%2Fauditor");
   await page.getByLabel("Email", { exact: true }).fill(user.email);
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
   expect(payloads).toEqual([]);
   await page
     .getByLabel("Password", { exact: true })
@@ -115,24 +108,19 @@ test("API password challenge sends credentials together and verifies MFA", async
   ]);
 });
 
-test("email validation and change keep later fields hidden", async ({
-  page,
-}) => {
+test("credentials validate email before sign in", async ({ page }) => {
   await page.goto("/sign-in");
+  await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Forgot password?" }),
+  ).toBeVisible();
   await page.getByLabel("Email", { exact: true }).fill("invalid");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0);
-  await page
-    .getByLabel("Email", { exact: true })
-    .fill("client@example.invalid");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
     .getByLabel("Password", { exact: true })
     .fill("synthetic-only-password");
-  await page.getByRole("link", { name: "Change", exact: true }).click();
-  await expect(page.getByLabel("Email", { exact: true })).toHaveValue(
-    "client@example.invalid",
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Authenticator or recovery code")).toHaveCount(
+    0,
   );
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByLabel("Password", { exact: true })).toHaveValue("");
 });

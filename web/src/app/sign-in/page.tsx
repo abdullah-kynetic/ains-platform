@@ -21,7 +21,7 @@ function SignInForm() {
   const { session, refresh } = useSession();
   const next = sanitizeSignInNext(params.get("next"));
   const token = params.get("token");
-  const [step, setStep] = useState<"email" | "password" | "mfa">("email");
+  const [step, setStep] = useState<"credentials" | "mfa">("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -64,8 +64,7 @@ function SignInForm() {
   function submit(event: FormEvent) {
     event.preventDefault();
     setError("");
-    if (step === "email" && !token) setStep("password");
-    else void authenticate();
+    void authenticate();
   }
 
   return (
@@ -82,37 +81,19 @@ function SignInForm() {
             </CardHeader>
             <CardContent>
               <form className="grid gap-4" onSubmit={submit}>
-                {step === "email" && !token ? (
-                  <Field label="Email" htmlFor="email">
-                    <Input
-                      key="email"
-                      id="email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      autoFocus
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                    />
-                  </Field>
-                ) : step === "password" ? (
+                {step === "credentials" && !token ? (
                   <>
-                    <p className="text-xs text-subtle">
-                      {email}{" "}
-                      <a
-                        href="#"
-                        className="text-brand underline underline-offset-4"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          setStep("email");
-                          setPassword("");
-                          setCode("");
-                          setError("");
-                        }}
-                      >
-                        Change
-                      </a>
-                    </p>
+                    <Field label="Email" htmlFor="email">
+                      <Input
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        autoFocus
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                      />
+                    </Field>
                     <Field label="Password" htmlFor="password">
                       <Input
                         key="password"
@@ -121,7 +102,6 @@ function SignInForm() {
                         autoComplete="current-password"
                         required
                         maxLength={1024}
-                        autoFocus
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
                       />
@@ -143,15 +123,9 @@ function SignInForm() {
                   </Field>
                 ) : null}
                 <Button type="submit" disabled={busy}>
-                  {busy
-                    ? "Signing in…"
-                    : step === "mfa"
-                      ? "Verify"
-                      : step === "password" || token
-                        ? "Sign in"
-                        : "Continue"}
+                  {busy ? "Signing in…" : step === "mfa" ? "Verify" : "Sign in"}
                 </Button>
-                {step === "password" ? (
+                {step === "credentials" && !token ? (
                   <a
                     href="/reset-password"
                     className="text-sm leading-normal text-brand underline underline-offset-4"

@@ -370,7 +370,7 @@ input[type="file"] {
 
 /* Icon rail follows the MIT dashboard starter composition. Mobile uses the existing focus-managed sheet. */
 .desktop-sidebar { transition: width 180ms ease; }
-.desktop-sidebar[data-collapsed="true"] { width: 76px; }
+.desktop-sidebar[data-dragging="true"] { transition: none; user-select: none; }
 .desktop-sidebar[data-collapsed="true"] .nav-label,
 .desktop-sidebar[data-collapsed="true"] .sidebar-panel > :not(nav) { display: none; }
 .desktop-sidebar[data-collapsed="true"] nav a { justify-content: center; padding-inline: 8px; }

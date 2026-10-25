@@ -208,7 +208,6 @@ test("sign-in form has accessible labels and a useful failed-sign-in state", asy
   await page
     .getByLabel("Email", { exact: true })
     .fill("synthetic@example.invalid");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
     .getByLabel("Password", { exact: true })
     .fill("synthetic-only-password");
