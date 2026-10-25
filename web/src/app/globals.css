@@ -141,28 +141,29 @@
   --control-radius: var(--radius-control);
 }
 
-/* Dark theme: Ink Blue field, deeper and lighter ink for surfaces and borders, Ochre accent.
+/* Dark theme: deepened Ink Blue field, deeper and lighter ink for surfaces and borders, Ochre accent.
    prefers-color-scheme applies until data-theme or the .dark toggle overrides it. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --color-background: var(--color-ink);
-    --color-surface: color-mix(in srgb, var(--color-ink) 93%, white);
-    --color-sidebar: color-mix(in srgb, var(--color-ink) 78%, black);
-    --color-elevated: color-mix(in srgb, var(--color-ink) 88%, white);
-    --color-hover: color-mix(in srgb, var(--color-ink) 84%, white);
+    --color-ink-deep: #242D40;
+    --color-background: var(--color-ink-deep);
+    --color-surface: color-mix(in srgb, var(--color-ink-deep) 93%, white);
+    --color-sidebar: color-mix(in srgb, var(--color-ink-deep) 78%, black);
+    --color-elevated: color-mix(in srgb, var(--color-ink-deep) 88%, white);
+    --color-hover: color-mix(in srgb, var(--color-ink-deep) 84%, white);
     --color-foreground: color-mix(in srgb, var(--color-ink) 10%, white);
     --color-muted: color-mix(in srgb, var(--color-ink) 16%, white);
     --color-subtle: color-mix(in srgb, var(--color-ink) 18%, white);
-    --color-border: color-mix(in srgb, var(--color-ink) 72%, white);
-    --color-border-strong: color-mix(in srgb, var(--color-ink) 60%, white);
+    --color-border: color-mix(in srgb, var(--color-ink-deep) 72%, white);
+    --color-border-strong: color-mix(in srgb, var(--color-ink-deep) 60%, white);
     --color-focus: color-mix(in srgb, var(--color-ochre) 35%, white);
     --color-brand: color-mix(in srgb, var(--color-ochre) 32%, white);
     --color-brand-hover: color-mix(in srgb, var(--color-ochre) 25%, white);
-    --color-brand-tint: color-mix(in srgb, var(--color-ink) 82%, white);
+    --color-brand-tint: color-mix(in srgb, var(--color-ink-deep) 82%, white);
     --color-accent: var(--color-ochre);
     --color-accent-hover: color-mix(in srgb, var(--color-ochre) 88%, white);
-    --color-on-accent: color-mix(in srgb, var(--color-ink) 58%, black);
+    --color-on-accent: color-mix(in srgb, var(--color-ink-deep) 58%, black);
     --color-chart-primary: color-mix(in srgb, var(--color-ink) 16%, white);
     --color-chart-secondary: color-mix(in srgb, var(--color-ochre) 80%, white);
     --color-success: color-mix(in srgb, var(--color-ink) 40%, white);
@@ -183,23 +184,24 @@
 }
 :is(.dark, [data-theme="dark"]) {
   color-scheme: dark;
-  --color-background: var(--color-ink);
-  --color-surface: color-mix(in srgb, var(--color-ink) 93%, white);
-  --color-sidebar: color-mix(in srgb, var(--color-ink) 78%, black);
-  --color-elevated: color-mix(in srgb, var(--color-ink) 88%, white);
-  --color-hover: color-mix(in srgb, var(--color-ink) 84%, white);
+  --color-ink-deep: #242D40;
+  --color-background: var(--color-ink-deep);
+  --color-surface: color-mix(in srgb, var(--color-ink-deep) 93%, white);
+  --color-sidebar: color-mix(in srgb, var(--color-ink-deep) 78%, black);
+  --color-elevated: color-mix(in srgb, var(--color-ink-deep) 88%, white);
+  --color-hover: color-mix(in srgb, var(--color-ink-deep) 84%, white);
   --color-foreground: color-mix(in srgb, var(--color-ink) 10%, white);
   --color-muted: color-mix(in srgb, var(--color-ink) 16%, white);
   --color-subtle: color-mix(in srgb, var(--color-ink) 18%, white);
-  --color-border: color-mix(in srgb, var(--color-ink) 72%, white);
-  --color-border-strong: color-mix(in srgb, var(--color-ink) 60%, white);
+  --color-border: color-mix(in srgb, var(--color-ink-deep) 72%, white);
+  --color-border-strong: color-mix(in srgb, var(--color-ink-deep) 60%, white);
   --color-focus: color-mix(in srgb, var(--color-ochre) 35%, white);
   --color-brand: color-mix(in srgb, var(--color-ochre) 32%, white);
   --color-brand-hover: color-mix(in srgb, var(--color-ochre) 25%, white);
-  --color-brand-tint: color-mix(in srgb, var(--color-ink) 82%, white);
+  --color-brand-tint: color-mix(in srgb, var(--color-ink-deep) 82%, white);
   --color-accent: var(--color-ochre);
   --color-accent-hover: color-mix(in srgb, var(--color-ochre) 88%, white);
-  --color-on-accent: color-mix(in srgb, var(--color-ink) 58%, black);
+  --color-on-accent: color-mix(in srgb, var(--color-ink-deep) 58%, black);
   --color-chart-primary: color-mix(in srgb, var(--color-ink) 16%, white);
   --color-chart-secondary: color-mix(in srgb, var(--color-ochre) 80%, white);
   --color-success: color-mix(in srgb, var(--color-ink) 40%, white);
