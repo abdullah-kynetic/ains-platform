@@ -24,17 +24,17 @@ function Settings() {
           e.preventDefault();
           setSaved(true);
         }}
-        className="grid gap-6 lg:grid-cols-[180px_1fr]"
+        className="grid gap-[var(--space-6)] md:grid-cols-[11rem_minmax(0,1fr)]"
       >
         <nav
           aria-label="Settings sections"
-          className="flex flex-wrap gap-2 lg:flex-col lg:items-start"
+          className="flex flex-wrap gap-[var(--space-2)] md:flex-col md:items-start"
         >
           {["Profile", "MFA", "Firm", "Notifications"].map((name) => (
             <a
               key={name}
               href={`#settings-${name.toLowerCase()}`}
-              className="rounded-md px-3 py-2 text-sm text-muted hover:bg-elevated hover:text-foreground"
+              className="inline-flex min-h-[var(--control-height)] items-center rounded-[var(--control-radius)] px-[var(--space-3)] text-sm leading-snug text-muted hover:bg-elevated hover:text-foreground"
             >
               {name}
             </a>
@@ -126,7 +126,7 @@ function Settings() {
           <div className="flex items-center gap-4">
             <Button type="submit">Save preview preferences</Button>
             {saved && (
-              <p role="status" className="text-sm text-muted">
+              <p role="status" className="status-note" data-tone="success">
                 Preview preferences saved for this page only.
               </p>
             )}

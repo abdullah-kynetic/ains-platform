@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { StatusNote } from "@/components/ui/status-note";
 import { Badge } from "@/components/ui/badge";
 import { LoadState } from "@/components/ui/load-state";
 import {
@@ -208,17 +209,17 @@ export default function QuestionnairePage() {
             </p>
           ) : null}
           {saved ? (
-            <p role="status" className="text-sm text-green-400">
+            <StatusNote tone="success" role="status" className="basis-full">
               Answers saved.{" "}
               <Link href="/checklist" className="underline">
                 View applicable requests
               </Link>
-            </p>
+            </StatusNote>
           ) : null}
           {error ? (
-            <p role="alert" className="text-sm text-red-400">
+            <StatusNote tone="danger" role="alert" className="basis-full">
               {error}
-            </p>
+            </StatusNote>
           ) : null}
         </div>
       ) : null}

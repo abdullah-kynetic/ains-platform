@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Field } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { StatusNote } from "@/components/ui/status-note";
 import {
   confirmAuditorMFAEnrollment,
   passwordSignIn,
@@ -131,12 +132,12 @@ function SignInForm() {
 
   return (
     <div className="flex min-h-screen flex-col bg-glow">
-    <main id="main-content" className="flex-1 px-4 py-12">
-      <div className="mx-auto grid w-full max-w-md gap-7">
+    <main id="main-content" className="flex-1 px-[var(--space-4)] py-[var(--space-8)] sm:py-[var(--space-9)]">
+      <div className="mx-auto grid w-full max-w-md gap-[var(--space-6)]">
         <Logo sub="Secure portal" className="justify-self-center" />
         <Card featured>
           <CardHeader>
-            <h1 className="text-xl font-semibold">
+            <h1 className="type-title">
               {token ? "Complete sign in" : `Sign in to ${productName}`}
             </h1>
             <CardDescription>
@@ -285,18 +286,18 @@ function SignInForm() {
                 >
                   Set up auditor MFA
                 </Button>
-                <a href="/reset-password" className="text-sm underline">Forgot your password?</a>
+                <a href="/reset-password" className="text-sm leading-normal text-brand underline underline-offset-4">Forgot your password?</a>
               </form>
             )}
             {message ? (
-              <p className="mt-4 text-sm text-green-400" role="status">
+              <StatusNote tone="success" role="status" className="mt-[var(--space-4)]">
                 {message}
-              </p>
+              </StatusNote>
             ) : null}
             {error ? (
-              <p className="mt-4 text-sm text-red-400" role="alert">
+              <StatusNote tone="danger" role="alert" className="mt-[var(--space-4)]">
                 {error}
-              </p>
+              </StatusNote>
             ) : null}
           </CardContent>
         </Card>

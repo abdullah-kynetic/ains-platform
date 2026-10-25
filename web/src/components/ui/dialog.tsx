@@ -69,15 +69,17 @@ export function Dialog({
         if (dismissible) onOpenChange(false);
       }}
       className={cn(
-        "fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-5 text-foreground shadow-2xl",
+        "fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-var(--space-6))] max-w-lg overflow-y-auto rounded-xl border border-border bg-surface p-[var(--space-5)] text-foreground shadow-overlay",
         className,
       )}
     >
-      <div className="mb-4 flex items-start justify-between gap-4">
+      <div className="mb-[var(--space-4)] flex items-start justify-between gap-[var(--space-4)]">
         <div>
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="text-lg font-semibold leading-snug">{title}</h2>
           {description && (
-            <p className="mt-1 text-sm text-muted">{description}</p>
+            <p className="mt-[var(--space-2)] text-sm leading-normal text-muted">
+              {description}
+            </p>
           )}
         </div>
         {dismissible && (
@@ -124,7 +126,7 @@ export function Sheet({
         onOpenChange(false);
       }}
       className={cn(
-        "fixed inset-y-0 m-0 h-dvh max-h-none w-72 max-w-[85vw] overflow-y-auto border border-border bg-background pt-10 text-foreground shadow-2xl",
+        "fixed inset-y-0 m-0 h-dvh max-h-none w-72 max-w-[85vw] overflow-y-auto border border-border bg-background pt-10 text-foreground shadow-overlay",
         side === "left" ? "left-0 right-auto" : "left-auto right-0",
         className,
       )}

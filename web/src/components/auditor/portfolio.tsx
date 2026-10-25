@@ -90,7 +90,7 @@ function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
                 width={(g.value / Math.max(clients.length, 1)) * 320}
                 height="32"
                 rx="5"
-                fill={i ? "var(--color-brand-violet)" : "var(--color-brand)"}
+                fill={i ? "var(--color-chart-secondary)" : "var(--color-chart-primary)"}
               />
               <text
                 x={165 + (g.value / Math.max(clients.length, 1)) * 320}
