@@ -37,8 +37,14 @@ variable "root_volume_gb" {
   type    = number
   default = 20
 }
+variable "portal_base_domain" {
+  description = "Apex domain. Landing hosts are this name and www. Firm portals are https://<slug>.<domain>."
+  type        = string
+  default     = "kiensolutions.com"
+}
 variable "portal_url" {
-  type = string
+  description = "Link template for email. Use https://{slug}.kiensolutions.com so each firm gets its own host."
+  type        = string
 }
 variable "email_from" {
   type = string

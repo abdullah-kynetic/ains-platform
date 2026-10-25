@@ -8,8 +8,10 @@ from .engagements import router as engagements_router
 from .intake import router as intake_router
 from .manual_review import router as manual_review_router
 from .questionnaire import router as questionnaire_router
+from .tenant import router as tenant_router
 
 router = APIRouter()
+router.include_router(tenant_router)
 router.include_router(audit_log_router)
 router.include_router(auditor_router)
 router.include_router(engagements_router)

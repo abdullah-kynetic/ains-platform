@@ -1,6 +1,5 @@
 """Assigned-auditor manual workflow. No inference or client-facing conclusions."""
 
-import re
 from datetime import date
 from typing import Literal
 
@@ -26,6 +25,7 @@ from app.database.models import (
     UserRole,
     utcnow,
 )
+from app.tenancy import allocate_firm_slug
 
 from .engagements import DB, CurrentUser, visible_engagements
 from .intake import intake_item
@@ -249,13 +249,7 @@ def readiness(engagement, items=None):
 
 
 def _available_firm_slug(db: DB, name: str) -> str:
-    base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:80] or "client"
-    slug = base
-    suffix = 2
-    while db.scalar(select(Firm.id).where(Firm.slug == slug)) is not None:
-        slug = f"{base}-{suffix}"
-        suffix += 1
-    return slug
+    return allocate_firm_slug(db, name)
 
 
 @router.post("/workspaces", status_code=201)
