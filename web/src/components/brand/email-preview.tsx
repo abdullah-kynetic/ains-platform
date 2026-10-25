@@ -24,7 +24,7 @@ export function InvitationEmailPreview({
       className="overflow-hidden rounded-lg border border-border bg-surface"
     >
       <div className="border-b border-border bg-elevated px-4 py-3 text-sm">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-subtle">
+        <p className="text-[length:var(--text-label)] font-semibold uppercase tracking-[0.12em] text-subtle">
           Synthetic email preview
         </p>
         <p className="mt-2">

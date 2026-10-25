@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ArrowUpRight, Sun, Moon } from "lucide-react";
@@ -7,7 +8,13 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { NavItem } from "./nav";
 
-export function CommandPalette({ items }: { items: NavItem[] }) {
+export function CommandPalette({
+  items,
+  host,
+}: {
+  items: NavItem[];
+  host: HTMLSpanElement | null;
+}) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -39,25 +46,30 @@ export function CommandPalette({ items }: { items: NavItem[] }) {
   }
   return (
     <>
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => {
-            setQuery("");
-            setOpen(true);
-          }}
-          className="flex h-[var(--control-height)] items-center gap-[var(--space-2)] rounded-[var(--control-radius)] border border-border bg-background px-[var(--space-3)] text-sm text-muted sm:pr-16"
-        >
-          <Search className="size-4" aria-hidden="true" />
-          <span className="sr-only sm:not-sr-only">Search workspace</span>
-        </button>
-        <kbd
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-[var(--control-radius)] border border-border bg-surface px-[var(--space-2)] py-[var(--space-1)] text-xs leading-none text-muted sm:block"
-        >
-          ⌘ K
-        </kbd>
-      </div>
+      {host
+        ? createPortal(
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setOpen(true);
+                }}
+                className="floating-material control-motion flex h-[var(--control-height)] items-center gap-[var(--space-2)] rounded-[var(--control-radius)] border border-border bg-background px-[var(--space-3)] text-sm text-muted sm:pr-16"
+              >
+                <Search className="size-4" aria-hidden="true" />
+                <span className="sr-only sm:not-sr-only">Search workspace</span>
+              </button>
+              <kbd
+                aria-hidden="true"
+                className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-[var(--control-radius)] border border-border bg-surface px-[var(--space-2)] py-[var(--space-1)] text-xs leading-none text-muted sm:block"
+              >
+                ⌘ K
+              </kbd>
+            </div>,
+            host,
+          )
+        : null}
       <Dialog
         open={open}
         onOpenChange={setOpen}

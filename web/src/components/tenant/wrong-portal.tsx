@@ -21,7 +21,7 @@ export function WrongPortal({
     <main
       id="main-content"
       data-tenant-state="wrong-portal"
-      className="min-h-screen bg-glow px-4 py-16"
+      className="min-h-screen page-enter px-4 py-16"
     >
       <div className="mx-auto grid w-full max-w-lg gap-6">
         <p className="text-center text-sm font-semibold tracking-[-0.02em]">

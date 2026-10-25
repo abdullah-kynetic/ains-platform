@@ -38,6 +38,7 @@ function ClientUploadCenter() {
   const [files, setFiles] = useState<Pending[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
   function addFiles(selected: File[]) {
     setFiles((current) => [
       ...current,
@@ -123,10 +124,10 @@ function ClientUploadCenter() {
       {!!data.unassignedDocuments?.length && (
         <section
           aria-label="Previous uploads"
-          className="mb-5 grid gap-2 text-sm"
+          className="grouped-list mb-6 text-sm"
         >
           {data.unassignedDocuments.map((document) => (
-            <p key={document.id}>
+            <p key={document.id} className="inset-row break-words px-4 py-4">
               <span>{document.name}</span> · Received ·{" "}
               <span className="break-all text-xs text-muted">
                 SHA-256: {document.sha256}
@@ -136,10 +137,20 @@ function ClientUploadCenter() {
         </section>
       )}
       <div
-        className="grid max-w-4xl gap-5 rounded-2xl border border-border bg-surface p-4 sm:p-6"
-        onDragOver={(event) => event.preventDefault()}
+        className="upload-zone grid max-w-4xl gap-6 surface-card rounded-2xl border border-border bg-surface p-4 sm:p-6"
+        data-dragging={dragging}
+        aria-busy={busy}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+            setDragging(false);
+        }}
         onDrop={(event) => {
           event.preventDefault();
+          setDragging(false);
           if (!busy) addFiles(Array.from(event.dataTransfer.files));
         }}
       >
@@ -170,14 +181,11 @@ function ClientUploadCenter() {
         {files.length > 0 && (
           <section
             aria-label="Confirm files"
-            className="grid gap-3 rounded-xl border border-border p-4"
+            className="grouped-list grid gap-4 bg-elevated/30 p-4"
           >
             <h2 className="font-semibold">Confirm files</h2>
             {files.map((pending) => (
-              <div
-                key={pending.id}
-                className="grid gap-2 border-t border-border pt-3"
-              >
+              <div key={pending.id} className="inset-row grid gap-2 px-4 py-4">
                 <p className="break-all font-medium">{pending.file.name}</p>
                 <p role="status">
                   {pending.state === "received"

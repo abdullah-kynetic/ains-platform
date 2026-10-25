@@ -157,11 +157,11 @@ export function AuditorUpcomingTasks({ engagements }: { engagements: ClientSumma
           ) : null}
           {loading ? <p role="status" className="px-4 py-8 text-center text-xs text-subtle">Loading upcoming tasks…</p> : null}
           {error ? <p role="alert" className="status-note mx-[var(--space-4)] my-[var(--space-3)]" data-tone="danger">{error}</p> : null}
-          <ul className="divide-y divide-border">
+          <ul className="grouped-list">
             {tasks.map((task) => {
               const isComplete = task.completed;
               return (
-                <li key={task.id} className="flex gap-3 px-4 py-4">
+                <li key={task.id} className="inset-row flex gap-4 px-4 py-4">
                   <input
                     type="checkbox"
                     checked={isComplete}

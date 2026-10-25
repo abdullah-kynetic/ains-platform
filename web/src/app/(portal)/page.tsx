@@ -73,7 +73,7 @@ export default function OverviewPage() {
           <Link
             key={href}
             href={href}
-            className="clickable-card group rounded-xl border border-border bg-surface p-5 hover:border-brand"
+            className="clickable-card group surface-card rounded-xl border border-border bg-surface p-4 hover:border-brand"
           >
             <div className="flex items-center justify-between gap-3">
               <Icon aria-hidden="true" className="size-6 text-brand" />
@@ -115,7 +115,7 @@ export default function OverviewPage() {
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
         <Card>
           <CardHeader className="flex-row items-start justify-between gap-4">
             <div>

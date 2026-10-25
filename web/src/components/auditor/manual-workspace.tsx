@@ -46,7 +46,7 @@ function Dashboard() {
         actions={<Link href="/auditor/workspaces/new" className={buttonVariants()}>Create client workspace</Link>}
       />
       {USE_MOCKS && <p className="mb-5 text-xs text-subtle">Synthetic demonstration workspace</p>}
-      <div className="mb-7 grid gap-4 sm:grid-cols-3"><Stat label="Assigned engagements" value={clients?.length ?? "—"} hint="Your active review portfolio" /><Stat label="Requests reviewed" value={clients?.reduce((sum, client) => sum + client.readiness.reviewed, 0) ?? "—"} hint="Human review recorded" /><Stat label="Ready for drafting" value={clients?.filter((client) => client.readiness.ready).length ?? "—"} hint="Auditor sign-off still required" /></div>
+      <div className="mb-6 grid gap-4 sm:grid-cols-3"><Stat label="Assigned engagements" value={clients?.length ?? "—"} hint="Your active review portfolio" /><Stat label="Requests reviewed" value={clients?.reduce((sum, client) => sum + client.readiness.reviewed, 0) ?? "—"} hint="Human review recorded" /><Stat label="Ready for drafting" value={clients?.filter((client) => client.readiness.ready).length ?? "—"} hint="Auditor sign-off still required" /></div>
       {!clients && (
         <LoadState
           error={error}
@@ -215,7 +215,7 @@ function EngagementWorkspace({ id }: { id: string }) {
       <label className="mb-5 grid gap-2">
         Search audit requests
         <input
-          className="rounded-lg border border-border bg-surface p-3"
+          className="control-motion rounded-lg border border-border-strong bg-surface px-4 py-3"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -237,7 +237,7 @@ function EngagementWorkspace({ id }: { id: string }) {
           return (
             <details
               key={request.id}
-              className="rounded-xl border border-border bg-surface p-4"
+              className="surface-card rounded-xl border border-border bg-surface p-4"
             >
               <summary className="cursor-pointer font-medium">
                 {request.requestId} — {request.title}
@@ -270,7 +270,7 @@ function EngagementWorkspace({ id }: { id: string }) {
                 )}
                 {request.documents.map((doc) => (
                   <div
-                    className="grid gap-2 rounded-lg border border-border p-3"
+                    className="inset-row grid gap-2 rounded-lg bg-elevated/40 p-4"
                     key={doc.id}
                   >
                     <p className="break-all font-medium">{doc.name}</p>
@@ -282,7 +282,7 @@ function EngagementWorkspace({ id }: { id: string }) {
                       Intake feedback for {doc.name}
                       <select
                         aria-label={`Intake feedback for ${doc.name}`}
-                        className="rounded-lg border border-border bg-surface p-2"
+                        className="control-motion rounded-lg border border-border-strong bg-surface px-4 py-2 text-sm"
                         disabled={busy}
                         value=""
                         onChange={(event) => {
@@ -321,7 +321,7 @@ function EngagementWorkspace({ id }: { id: string }) {
                   Applicability
                   <select
                     aria-label={`Applicability ${request.requestId}`}
-                    className="rounded-lg border border-border bg-surface p-2"
+                    className="control-motion rounded-lg border border-border-strong bg-surface px-4 py-2 text-sm"
                     value={draft.applicability}
                     disabled={busy}
                     onChange={(event) => {
@@ -345,7 +345,7 @@ function EngagementWorkspace({ id }: { id: string }) {
                     Evidence assessment
                     <select
                       aria-label={`Evidence assessment ${request.requestId}`}
-                      className="rounded-lg border border-border bg-surface p-2"
+                      className="control-motion rounded-lg border border-border-strong bg-surface px-4 py-2 text-sm"
                       value={draft.assessment ?? "unable_to_determine"}
                       disabled={busy}
                       onChange={(event) =>
@@ -365,7 +365,7 @@ function EngagementWorkspace({ id }: { id: string }) {
                   Internal notes
                   <textarea
                     aria-label={`Internal notes ${request.requestId}`}
-                    className="min-h-24 rounded-lg border border-border bg-background p-3"
+                    className="control-motion min-h-24 rounded-lg border border-border-strong bg-surface p-4 text-sm"
                     value={draft.notes}
                     maxLength={5000}
                     disabled={busy}
@@ -405,9 +405,9 @@ function EngagementWorkspace({ id }: { id: string }) {
           Actor, time, and before/after values. Internal only.
         </p>
         {!data.history.length && <p>No workflow changes recorded yet.</p>}
-        <ol className="grid gap-3">
+        <ol className="grouped-list">
           {data.history.map((event) => (
-            <li key={event.id} className="rounded-lg border border-border p-3">
+            <li key={event.id} className="inset-row p-4">
               <p className="text-sm">
                 {event.actor} · {new Date(event.at).toLocaleString()} ·{" "}
                 {event.action}

@@ -95,7 +95,7 @@ export default function ChecklistPage() {
                 {section.items.length === 1 ? "" : "s"}
               </span>
             </summary>
-            <div className="mt-3">
+            <div className="grouped-list mt-4 bg-background/40">
               {section.items.map((item) => (
                 <ChecklistItemRow key={item.id} item={item} />
               ))}

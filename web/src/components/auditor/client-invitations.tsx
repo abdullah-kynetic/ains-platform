@@ -173,11 +173,11 @@ export function ClientInvitations({
       ) : null}
 
       {invitations?.length ? (
-        <ul className="grid gap-3">
+        <ul className="grouped-list">
           {invitations.map((invitation) => (
             <li
               key={invitation.id}
-              className="grid gap-3 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[1fr_auto] sm:items-center"
+              className="inset-row grid gap-4 bg-surface p-4 sm:grid-cols-[1fr_auto] sm:items-center"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">

@@ -25,7 +25,7 @@ export default function MessagesPage() {
           requests.map((item) => (
             <article
               key={item.id}
-              className="rounded-xl border border-border bg-surface p-[var(--space-5)]"
+              className="surface-card rounded-xl border border-border bg-surface p-[var(--space-5)]"
             >
               <p className="text-xs text-muted">Document request · {item.id}</p>
               <h2 className="mt-2 font-semibold">{item.title}</h2>

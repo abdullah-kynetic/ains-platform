@@ -130,7 +130,7 @@ export default function AuditorUploadCenter() {
           description="Pending N/A and restricted requests do not accept portal files. Review your checklist or contact your auditor."
         />
       ) : (
-        <div className="grid max-w-4xl gap-5 rounded-2xl border border-border bg-surface p-4 sm:p-6">
+        <div className="upload-zone grid max-w-4xl gap-6 surface-card rounded-2xl border border-border bg-surface p-4 sm:p-6">
           <label className="grid gap-2">
             Search requests
             <Input
@@ -206,13 +206,13 @@ export default function AuditorUploadCenter() {
           {files.length > 0 && (
             <section
               aria-label="Confirm file destinations"
-              className="grid gap-3 rounded-xl border border-border p-4"
+              className="grouped-list grid gap-4 bg-elevated/30 p-4"
             >
               <h2 className="font-semibold">Confirm file destinations</h2>
               {files.map((pending) => (
                 <div
                   key={pending.id}
-                  className="grid gap-2 border-t border-border pt-3"
+                  className="inset-row grid gap-2 px-4 py-4"
                 >
                   <p className="break-all font-medium">{pending.file.name}</p>
                   <label className="grid gap-1 text-sm">

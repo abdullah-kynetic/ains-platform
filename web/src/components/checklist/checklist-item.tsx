@@ -10,7 +10,7 @@ export function ChecklistItemRow({ item }: { item: ChecklistItem }) {
     item.status === "action_needed_reupload" ||
     item.status === "action_needed_more";
   return (
-    <div className="grid gap-3 border-t border-border py-4 first:border-t-0">
+    <div className="inset-row grid gap-4 px-4 py-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs font-mono text-brand-hover">{item.requestId}</p>
@@ -48,11 +48,11 @@ export function ChecklistItemRow({ item }: { item: ChecklistItem }) {
       ) : null}
 
       {item.files.length ? (
-        <ul className="grid gap-1">
+        <ul className="grouped-list grid bg-elevated/40 px-3">
           {item.files.map((f) => (
             <li
               key={f.id}
-              className="flex flex-wrap items-center gap-2 text-xs text-muted"
+              className="inset-row flex flex-wrap items-center gap-2 py-3 text-xs text-muted"
             >
               <FileText className="size-3.5" />
               <span className="truncate">{f.name}</span>

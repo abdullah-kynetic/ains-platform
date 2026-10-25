@@ -44,7 +44,7 @@ function FindingEditor({ finding, onUpdated }: { finding: AuditorFinding; onUpda
   }
 
   return (
-    <div className="grid gap-3 rounded-lg border border-border bg-elevated/50 p-4">
+    <div className="grid gap-4 rounded-xl bg-elevated/50 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="font-medium">{finding.title}</div>
         <Badge variant={finding.reviewState === "rejected" ? "danger" : finding.reviewState === "pending" ? "warning" : "success"}>{finding.reviewState}</Badge>
@@ -102,7 +102,7 @@ function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () =
         </div>
         <CardDescription>{item.firmName}</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-5">
+      <CardContent className="grid gap-6">
         {item.naReviewState === "pending" ? (
           <div className="rounded-lg border border-warning/30 bg-warning/5 p-4">
             <p className="text-sm text-foreground">The firm answered that this item does not apply. Quentin must approve or reject that answer.</p>
@@ -116,7 +116,7 @@ function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () =
         <section>
           <h3 className="mb-2 text-sm font-semibold">Evidence and automated checks</h3>
           {item.evidence.length ? item.evidence.map((evidence) => (
-            <div key={evidence.id} className="mb-2 rounded-lg border border-border p-3 text-sm">
+            <div key={evidence.id} className="inset-row mb-2 rounded-lg bg-elevated/40 p-4 text-sm">
               <div className="font-medium">{evidence.name}</div>
               <div className="mt-1 break-all text-xs text-subtle">SHA-256 {evidence.sha256} · version {evidence.version}</div>
               <div className="mt-2 grid gap-1">
@@ -194,7 +194,7 @@ export function AuditorWorkspace({ engagementId }: { engagementId?: string }) {
       />
       {error ? <p className="status-note mb-[var(--space-4)]" data-tone="danger">{error}</p> : null}
       {!items ? <Skeleton className="h-72 w-full" /> : engagementId ? (
-        <div className="grid gap-5">
+        <div className="grid gap-6">
           <Link href="/auditor" className={buttonVariants({ variant: "link" })}>← Back to queue</Link>
           {visible.length ? visible.map((item) => <ItemCard key={item.itemId} item={item} onChanged={load} />) : <Card><CardContent className="pt-5 text-sm text-muted">No pending work for this engagement.</CardContent></Card>}
         </div>

@@ -42,9 +42,9 @@ function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
   return (
     <section
       aria-label="Overview charts"
-      className="mb-7 grid gap-5 lg:grid-cols-[1.6fr_1fr]"
+      className="mb-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]"
     >
-      <div className="rounded-xl border border-border bg-surface p-6">
+      <div className="surface-card rounded-xl border border-border bg-surface p-6">
         <div className="flex justify-between">
           <div>
             <h2 className="font-semibold">Engagement distribution</h2>
@@ -110,7 +110,7 @@ function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
           </text>
         </svg>
       </div>
-      <div className="rounded-xl border border-border bg-surface p-6">
+      <div className="surface-card rounded-xl border border-border bg-surface p-6">
         <h2 className="font-semibold">Request review coverage</h2>
         <p className="mt-1 text-xs text-muted">
           Recorded human reviews across assigned engagements
@@ -200,7 +200,7 @@ export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
   return (
     <section
       aria-labelledby="engagement-table-title"
-      className="rounded-xl border border-border bg-surface"
+      className="surface-card rounded-xl border border-border bg-surface"
     >
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-5">
         <div>
@@ -457,7 +457,7 @@ function Portfolio({ tableOnly }: { tableOnly: boolean }) {
       )}
       <EngagementTable clients={clients} />
       {!tableOnly && (
-        <div className="mt-6 grid items-start gap-5 xl:grid-cols-2">
+        <div className="mt-6 grid items-start gap-6 xl:grid-cols-2">
           <AuditorActivityFeed />
           <AuditorUpcomingTasks engagements={clients} />
         </div>

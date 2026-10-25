@@ -59,6 +59,26 @@ function WorkspaceSwitcher({
   onNavigate?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const popover = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    function dismiss(event: PointerEvent) {
+      if (!popover.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function escape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        trigger.current?.focus();
+      }
+    }
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [open]);
   const active = workspaces[auditor ? 0 : 1];
 
   if (!auditor)
@@ -77,8 +97,9 @@ function WorkspaceSwitcher({
     );
 
   return (
-    <div className="relative">
+    <div ref={popover} className="relative">
       <button
+        ref={trigger}
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
@@ -99,7 +120,7 @@ function WorkspaceSwitcher({
       </button>
 
       {open ? (
-        <div className="absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-lg border border-border bg-surface p-1.5 shadow-pop">
+        <div className="floating-material animate-pop-in absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-lg border border-border bg-surface p-1.5 shadow-pop">
           <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-subtle">
             Workspaces
           </p>
@@ -251,7 +272,7 @@ function Panel({
         {auditor ? "Review" : "Engagement"}
       </p>
       <Items items={items} onNavigate={onNavigate} />
-      <div className="mt-auto pt-3">
+      <div className="sidebar-appearance sticky bottom-0 mt-auto bg-sidebar pt-4 pb-2">
         <ThemeToggle />
       </div>
       <div className="mt-3 flex items-center gap-2 border-t border-border px-1 pt-3">
@@ -435,7 +456,7 @@ export function Sidebar(props: {
       <div
         role="region"
         aria-label="Mobile workspace controls"
-        className="sticky top-0 z-30 flex items-center justify-between gap-[var(--space-3)] border-b border-border bg-surface/90 px-[var(--space-4)] py-[var(--space-2)] backdrop-blur lg:hidden"
+        className="sticky top-0 z-30 flex items-center justify-between gap-[var(--space-3)] border-b border-border bg-surface px-[var(--space-4)] py-[var(--space-2)] lg:hidden"
       >
         <Logo sub={props.sub} />
         <div className="flex items-center gap-1">
@@ -449,7 +470,12 @@ export function Sidebar(props: {
           </button>
         </div>
       </div>
-      <Sheet open={open} onOpenChange={setOpen} label="Navigation">
+      <Sheet
+        open={open}
+        onOpenChange={setOpen}
+        label="Navigation"
+        className="navigation-sheet"
+      >
         <Panel {...props} onNavigate={() => setOpen(false)} />
       </Sheet>
     </>

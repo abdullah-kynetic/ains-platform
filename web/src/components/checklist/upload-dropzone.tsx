@@ -31,11 +31,13 @@ export function UploadDropzone({ onUpload, compact }: { onUpload: (file: File, o
   const busy = progress !== null;
   return (
     <div
+      data-dragging={drag}
+      aria-busy={busy}
       onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
       onDragLeave={() => setDrag(false)}
       onDrop={(e) => { e.preventDefault(); setDrag(false); if (!busy) void send(e.dataTransfer.files); }}
       className={cn(
-        "flex flex-col items-center gap-2 rounded-xl border border-dashed text-center transition-colors",
+        "upload-zone bg-background/40 flex flex-col items-center gap-2 rounded-xl border border-dashed text-center transition-colors",
         compact ? "p-4" : "p-6",
         drag ? "border-brand bg-brand-tint" : "border-border-strong",
       )}

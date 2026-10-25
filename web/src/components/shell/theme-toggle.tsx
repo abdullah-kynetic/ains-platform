@@ -2,6 +2,8 @@
 
 import { useEffect, useSyncExternalStore, type CSSProperties } from "react";
 
+import { Sun, Moon, Monitor } from "lucide-react";
+
 type Theme = "light" | "dark" | "system";
 type EffectiveTheme = "light" | "dark";
 let pendingTheme: EffectiveTheme | undefined;
@@ -123,7 +125,11 @@ export function ThemeToggle() {
       role="group"
       aria-label="Color theme"
       className="theme-control flex rounded-md border border-border bg-surface p-1"
-      style={{ "--theme-index": ["light", "dark", "system"].indexOf(theme) } as CSSProperties}
+      style={
+        {
+          "--theme-index": ["light", "dark", "system"].indexOf(theme),
+        } as CSSProperties
+      }
     >
       <span aria-hidden="true" className="theme-indicator" />
       {(["light", "dark", "system"] as const).map((value) => (
@@ -152,7 +158,14 @@ export function ThemeToggle() {
           }}
           className="min-h-8 min-w-0 flex-1 rounded px-2 text-xs capitalize text-foreground hover:bg-hover/40"
         >
-          {value}
+          {value === "light" ? (
+            <Sun aria-hidden className="size-3.5 shrink-0" />
+          ) : value === "dark" ? (
+            <Moon aria-hidden className="size-3.5 shrink-0" />
+          ) : (
+            <Monitor aria-hidden className="size-3.5 shrink-0" />
+          )}
+          <span className="theme-label">{value}</span>
         </button>
       ))}
     </div>
