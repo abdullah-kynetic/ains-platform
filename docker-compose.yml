@@ -1,4 +1,6 @@
 # Local development database only. Do not use these credentials anywhere else.
+# The API listens on http://localhost:8000. Local CORS_ORIGINS in .env.example
+# includes http://localhost:3000 for the portal. Production does not use that origin.
 services:
   postgres:
     image: postgres:16

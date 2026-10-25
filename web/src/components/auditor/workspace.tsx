@@ -64,14 +64,14 @@ function FindingEditor({ finding, onUpdated }: { finding: AuditorFinding; onUpda
         <p className="mb-1 text-xs font-medium uppercase tracking-wide text-subtle">Evidence citations</p>
         {finding.citations.length ? finding.citations.map((citation, index) => (
           <p key={`${citation.page}-${index}`} className="text-sm text-muted">Page {citation.page}: “{citation.quote}”</p>
-        )) : <p className="text-sm text-red-400">A page citation is required before approval.</p>}
+        )) : <p className="status-note text-sm" data-tone="danger">A page citation is required before approval.</p>}
       </div>
       <div className="flex flex-wrap gap-2">
         <Button size="sm" disabled={busy || !finding.citations.length} onClick={() => void decide("accept")}>Accept</Button>
         <Button size="sm" variant="secondary" disabled={busy || !finding.citations.length || !body.trim()} onClick={() => void decide("edit")}>Save edited</Button>
         <Button size="sm" variant="destructive" disabled={busy} onClick={() => void decide("reject")}>Reject</Button>
       </div>
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? <p className="status-note" data-tone="danger">{error}</p> : null}
     </div>
   );
 }
@@ -105,7 +105,7 @@ function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () =
       <CardContent className="grid gap-5">
         {item.naReviewState === "pending" ? (
           <div className="rounded-lg border border-warning/30 bg-warning/5 p-4">
-            <p className="text-sm text-foreground">The firm answered that this item does not apply. Quinton must approve or reject that answer.</p>
+            <p className="text-sm text-foreground">The firm answered that this item does not apply. Quentin must approve or reject that answer.</p>
             <div className="mt-3 flex gap-2">
               <Button size="sm" disabled={busy} onClick={() => void decideNA("approve")}>Approve N/A</Button>
               <Button size="sm" variant="destructive" disabled={busy} onClick={() => void decideNA("reject")}>Reject N/A</Button>
@@ -138,7 +138,7 @@ function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () =
             )) : <p className="text-sm text-muted">No finding drafts.</p>}
           </div>
         </section>
-        {error ? <p className="text-sm text-red-400">{error}</p> : null}
+        {error ? <p className="status-note" data-tone="danger">{error}</p> : null}
       </CardContent>
     </Card>
   );
@@ -183,7 +183,7 @@ export function AuditorWorkspace({ engagementId }: { engagementId?: string }) {
   return (
     <AuthGate role="auditor">
       <PageHeader
-        title={engagementId ? (visible[0]?.firmName ?? "Engagement review") : "Quinton’s review queue"}
+        title={engagementId ? (visible[0]?.firmName ?? "Engagement review") : "Quentin’s review queue"}
         description="Internal evidence, automated checks, and finding drafts. Nothing on this page is shown to clients."
         actions={engagementId ? (
           <div className="flex gap-2">
@@ -192,7 +192,7 @@ export function AuditorWorkspace({ engagementId }: { engagementId?: string }) {
           </div>
         ) : undefined}
       />
-      {error ? <p className="mb-4 text-sm text-red-400">{error}</p> : null}
+      {error ? <p className="status-note mb-[var(--space-4)]" data-tone="danger">{error}</p> : null}
       {!items ? <Skeleton className="h-72 w-full" /> : engagementId ? (
         <div className="grid gap-5">
           <Link href="/auditor" className={buttonVariants({ variant: "link" })}>← Back to queue</Link>

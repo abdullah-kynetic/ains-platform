@@ -18,8 +18,8 @@ export function TR({ className, ...props }: React.HTMLAttributes<HTMLTableRowEle
   return <tr className={cn("border-b border-border transition-colors hover:bg-hover", className)} {...props} />;
 }
 export function TH({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th className={cn("h-10 px-4 text-left align-middle text-[11px] font-medium uppercase tracking-[0.08em] text-subtle whitespace-nowrap", className)} {...props} />;
+  return <th className={cn("h-[var(--control-height)] px-[var(--space-4)] text-left align-middle text-xs font-medium uppercase tracking-[0.06em] leading-snug text-muted whitespace-nowrap", className)} {...props} />;
 }
 export function TD({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-4 py-3 align-middle text-foreground/90", className)} {...props} />;
+  return <td className={cn("px-[var(--space-4)] py-[var(--space-3)] align-middle text-sm leading-normal text-foreground", className)} {...props} />;
 }

@@ -1,6 +1,6 @@
-# AINS web (client portal)
+# Kien Solutions web (client portal)
 
-Next.js 16 (App Router, TypeScript) + Tailwind v4. Talks to the AINS FastAPI backend at `NEXT_PUBLIC_API_URL`.
+Next.js 16 (App Router, TypeScript) + Tailwind v4. Talks to the Kien Solutions FastAPI backend at `NEXT_PUBLIC_API_URL`.
 
 ```bash
 cd web
@@ -28,7 +28,7 @@ wrong-portal screen and a sign-out action. There is no `/api` proxy.
 - `src/lib/mock-data.ts`: synthetic engagement only.
 - `src/components/ui`: shared UI primitives; `src/components/checklist`: checklist, status badge, drag-and-drop upload with progress.
 - `/sign-in`: invite-only password or magic-link sign-in; auditor accounts also provide MFA.
-- `/questionnaire`: client yes/no applicability questions. N/A answers remain pending until Quinton decides them.
+- `/questionnaire`: client yes/no applicability questions. N/A answers remain pending until Quentin decides them.
 - `/auditor`: auditor-only engagement queue, evidence/check results, cited finding review, and unsigned report drafts.
 
 The default `.env.example` has `NEXT_PUBLIC_USE_MOCKS=false`. The FastAPI backend must be running

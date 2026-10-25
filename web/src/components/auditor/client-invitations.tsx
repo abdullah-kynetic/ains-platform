@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
+import { InvitationEmailPreview } from "@/components/brand/email-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,7 @@ export function ClientInvitations({
   );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [previewPath, setPreviewPath] = useState<string | null>(null);
+  const [preview, setPreview] = useState<ClientInvitation | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -62,7 +62,7 @@ export function ClientInvitations({
     try {
       const updated = await action();
       setInvitations((current) => replaceInvitation(current ?? [], updated));
-      setPreviewPath(updated.previewPath);
+      setPreview(updated.previewPath ? updated : null);
       setNotice(message);
       return updated;
     } catch (reason) {
@@ -141,31 +141,33 @@ export function ClientInvitations({
         </div>
       </form>
 
-      {previewPath ? (
-        <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm">
-          <p className="font-medium text-foreground">
-            Synthetic local invitation preview
-          </p>
-          <p className="mt-1 text-muted">
-            This one-time link is shown only because local preview mode is
-            enabled. Never use it for a real client or expose it in logs.
-          </p>
-          <Link
-            className="mt-2 inline-block font-medium text-brand-hover underline underline-offset-4"
-            href={previewPath}
-          >
-            Open invitation preview
-          </Link>
+      {preview?.previewPath ? (
+        <div className="grid gap-3">
+          <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm">
+            <p className="font-medium text-foreground">
+              Synthetic local invitation preview
+            </p>
+            <p className="mt-1 text-muted">
+              This one-time link is shown only because local preview mode is
+              enabled. Never use it for a real client or expose it in logs.
+            </p>
+          </div>
+          <InvitationEmailPreview
+            to={preview.email}
+            firmName={preview.firmName}
+            previewPath={preview.previewPath}
+            expiresAt={preview.expiresAt}
+          />
         </div>
       ) : null}
 
       {notice ? (
-        <p role="status" className="text-sm text-green-300">
+        <p role="status" className="status-note" data-tone="success">
           {notice}
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-300">
+        <p role="alert" className="status-note" data-tone="danger">
           {error}
         </p>
       ) : null}

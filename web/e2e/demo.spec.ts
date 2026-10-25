@@ -8,7 +8,7 @@ test("synthetic document progress uses the current catalog without backend calls
   });
   await page.goto("/");
   await expect(page.getByText("Synthetic demonstration workspace")).toBeVisible();
-  await page.getByRole("link", { name: "Document progress", exact: true }).click();
+  await page.getByRole("link", { name: "Progress", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Your document progress" })).toBeVisible();
   await expect(page.getByText("Document acceptance is not an audit conclusion.", { exact: false })).toBeVisible();
   await expect(page.getByRole("progressbar").first()).toBeVisible();

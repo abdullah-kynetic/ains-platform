@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/brand/logo";
+import { SiteFooter } from "@/components/brand/site-footer";
 import { useSession } from "@/components/auth/session";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,12 +74,13 @@ function AcceptInvitationForm() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen bg-glow px-4 py-12">
-      <div className="mx-auto grid w-full max-w-md gap-7">
+    <div className="flex min-h-screen flex-col bg-glow">
+    <main id="main-content" className="flex-1 px-[var(--space-4)] py-[var(--space-8)] sm:py-[var(--space-9)]">
+      <div className="mx-auto grid w-full max-w-md gap-[var(--space-6)]">
         <Logo sub="Secure client access" className="justify-self-center" />
         <Card featured>
           <CardHeader>
-            <h1 className="text-xl font-semibold">Accept client invitation</h1>
+            <h1 className="type-title">Accept client invitation</h1>
             <CardDescription>
               Create your password to activate access to this firm’s isolated
               workspace.
@@ -136,7 +138,7 @@ function AcceptInvitationForm() {
               </form>
             ) : null}
             {visibleError ? (
-              <p className="mt-4 text-sm text-red-300" role="alert">
+              <p className="status-note mt-[var(--space-4)]" data-tone="danger" role="alert">
                 {visibleError}
               </p>
             ) : null}
@@ -144,6 +146,8 @@ function AcceptInvitationForm() {
         </Card>
       </div>
     </main>
+    <SiteFooter />
+    </div>
   );
 }
 

@@ -70,7 +70,7 @@ def alembic_config() -> Config:
 
 
 def ensure_no_existing_application_data(connection) -> None:
-    """Refuse to migrate a database that already contains AINS application records."""
+    """Refuse to migrate a database that already contains Kien Solutions application records."""
 
     schema = "public" if connection.dialect.name == "postgresql" else None
     existing_tables = set(inspect(connection).get_table_names(schema=schema))
@@ -80,7 +80,8 @@ def ensure_no_existing_application_data(connection) -> None:
         row_count = connection.scalar(select(func.count()).select_from(table))
         if row_count:
             raise RuntimeError(
-                "Supabase PoC migration refused: the target already contains AINS application data"
+                "Supabase PoC migration refused: the target already contains "
+                "Kien Solutions application data"
             )
 
 

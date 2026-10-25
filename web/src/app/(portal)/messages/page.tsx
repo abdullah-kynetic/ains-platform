@@ -1,8 +1,10 @@
 "use client";
+import { MessageSquare } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/shell/page";
 import { LoadState } from "@/components/ui/load-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useEngagement } from "@/components/checklist/use-engagement";
-import Link from "next/link";
 export default function MessagesPage() {
   const { data, error, reload } = useEngagement();
   if (!data || error) return <LoadState error={error} retry={reload} />;
@@ -17,13 +19,13 @@ export default function MessagesPage() {
       />
       <section
         aria-label="Document follow-ups"
-        className="grid max-w-3xl gap-4"
+        className="grid max-w-3xl gap-[var(--space-4)]"
       >
         {requests.length ? (
           requests.map((item) => (
             <article
               key={item.id}
-              className="rounded-xl border border-border bg-surface p-6"
+              className="rounded-xl border border-border bg-surface p-[var(--space-5)]"
             >
               <p className="text-xs text-muted">Document request · {item.id}</p>
               <h2 className="mt-2 font-semibold">{item.title}</h2>
@@ -40,9 +42,11 @@ export default function MessagesPage() {
             </article>
           ))
         ) : (
-          <p className="rounded-xl border border-border bg-surface p-6 text-muted">
-            No document follow-ups right now.
-          </p>
+          <EmptyState
+            icon={MessageSquare}
+            title="No document follow-ups right now."
+            description="When a document needs your attention, it will show up here."
+          />
         )}
       </section>
     </>

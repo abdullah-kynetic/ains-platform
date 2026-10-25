@@ -8,6 +8,16 @@ from fastapi import HTTPException
 
 from app.config import Settings
 
+PRODUCT_NAME = "Kien"
+BRAND_NAME = "Kien Solutions"
+BRAND_SITE = "https://kiensolutions.com"
+
+_SUBJECTS = {
+    "magic-link": f"Sign in to {PRODUCT_NAME}",
+    "invitation": f"You're invited to {PRODUCT_NAME}",
+    "reset": f"Reset your {PRODUCT_NAME} password",
+}
+
 
 class ResendSender:
     def __init__(self, settings: Settings, purpose: str = "magic-link"):
@@ -34,8 +44,12 @@ class ResendSender:
                 json={
                     "from": self.settings.email_from,
                     "to": [email],
-                    "subject": f"AINS {self.purpose}",
-                    "text": f"Open {url}\nExpires {expires_at.isoformat()}.",
+                    "subject": _SUBJECTS[self.purpose],
+                    "text": (
+                        f"Open {url}\n"
+                        f"Expires {expires_at.isoformat()}.\n"
+                        f"{PRODUCT_NAME} by {BRAND_NAME} — {BRAND_SITE}"
+                    ),
                 },
                 timeout=10,
             )

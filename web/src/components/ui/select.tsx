@@ -7,10 +7,17 @@ import { fieldBase } from "./input";
 export function Select({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <div className="relative">
-      <select className={cn(fieldBase, "h-10 appearance-none pr-9", className)} {...props}>
+      <select
+        className={cn(
+          fieldBase,
+          "h-[var(--control-height)] appearance-none pr-9",
+          className,
+        )}
+        {...props}
+      >
         {children}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-subtle" />
+      <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted" />
     </div>
   );
 }

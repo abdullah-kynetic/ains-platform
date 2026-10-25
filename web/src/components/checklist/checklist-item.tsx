@@ -29,7 +29,7 @@ export function ChecklistItemRow({ item }: { item: ChecklistItem }) {
         </div>
       ) : null}
       {item.followUp && (
-        <p className="text-sm text-amber-300">
+        <p className="text-sm text-warning-foreground">
           Follow-up requested by your auditor.
         </p>
       )}
@@ -57,7 +57,7 @@ export function ChecklistItemRow({ item }: { item: ChecklistItem }) {
               <FileText className="size-3.5" />
               <span className="truncate">{f.name}</span>
               {f.feedback && (
-                <span className="text-amber-300">{f.feedback}</span>
+                <span className="text-warning-foreground">{f.feedback}</span>
               )}
               <span className="text-subtle">
                 · {formatBytes(f.size)} · {formatDate(f.uploadedAt)}

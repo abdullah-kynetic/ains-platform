@@ -9,7 +9,14 @@ export function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={cn("size-7", className)} aria-hidden>
       <rect width="32" height="32" rx="7" className="fill-foreground" />
-      <path d="M9 23l7-14 7 14M11.5 18h9" className="stroke-background" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path
+        d="M10 7.5v17M10 16h7.2M17.2 16 23.5 7.5M17.2 16 23.5 24.5"
+        className="stroke-background"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
     </svg>
   );
 }
@@ -17,7 +24,7 @@ export function LogoMark({ className }: { className?: string }) {
 export function Logo({ className, sub }: { className?: string; sub?: string }) {
   const { slug, branding } = useTenant();
   return (
-    <div className={cn("flex items-center gap-2.5", className)} data-firm-slug={slug}>
+    <div className={cn("flex items-center gap-[var(--space-3)]", className)} data-firm-slug={slug}>
       {/* A null logo stays on the Kien mark. Remote logos are https URLs from the API. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -26,8 +33,8 @@ export function Logo({ className, sub }: { className?: string; sub?: string }) {
         className="size-7 rounded-md"
       />
       <div className="leading-tight">
-        <div className="text-[15px] font-semibold tracking-[-0.02em]">{branding.name}</div>
-        {sub ? <div className="text-[10px] uppercase tracking-[0.14em] text-subtle">{sub}</div> : null}
+        <div className="text-base font-semibold tracking-[-0.02em]">{branding.name}</div>
+        {sub ? <div className="text-xs font-medium uppercase tracking-[0.08em] text-muted">{sub}</div> : null}
       </div>
     </div>
   );

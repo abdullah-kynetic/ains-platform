@@ -43,7 +43,7 @@ export function WorkspaceCreate() {
         {created ? (
           <Card>
             <CardHeader>
-              <CheckCircle2 className="mb-2 size-7 text-success" aria-hidden="true" />
+              <CheckCircle2 className="mb-2 size-7 text-success-foreground" aria-hidden="true" />
               <CardTitle>{created.firmName} is ready</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 text-sm text-muted">
@@ -69,7 +69,7 @@ export function WorkspaceCreate() {
                   <Field label="Review period end" htmlFor="period-end"><Input id="period-end" type="date" value={periodEnd} min={periodStart || undefined} onChange={(event) => setPeriodEnd(event.target.value)} required /></Field>
                 </div>
                 <Field label="Target due date (optional)" htmlFor="due-date"><Input id="due-date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} /></Field>
-                {error ? <p role="alert" className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-sm text-danger">{error}</p> : null}
+                {error ? <p role="alert" className="status-note" data-tone="danger">{error}</p> : null}
                 <div className="flex justify-end gap-3"><Button variant="ghost" onClick={() => router.back()}>Cancel</Button><Button type="submit" disabled={saving || !firmName.trim() || !periodStart || !periodEnd}>{saving ? "Creating…" : "Create workspace"}</Button></div>
               </form>
             </CardContent>

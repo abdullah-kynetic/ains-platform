@@ -65,7 +65,7 @@ export function MFARecoveryCodes() {
           </Button>
         </form>
         {error ? (
-          <p role="alert" className="text-red-300">
+          <p role="alert" className="status-note" data-tone="danger">
             {error}
           </p>
         ) : null}

@@ -57,12 +57,14 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = False
     session_ttl_hours: int = 12
     magic_link_ttl_minutes: int = 15
-    auditor_mfa_issuer: str = "AINS"
+    auditor_mfa_issuer: str = "Kien Solutions"
     auditor_mfa_enrollment_ttl_minutes: int = 10
     client_invitation_ttl_hours: int = 72
     invitation_preview_enabled: bool = False
 
     # Comma-separated browser origins; wildcard origins are deliberately unsupported.
+    # Local development default: portal http://localhost:3000, API http://localhost:8000.
+    # Production must set public HTTPS origins and must not include localhost.
     cors_origins: str = "http://localhost:3000"
 
     def parsed_cors_origins(self) -> list[str]:

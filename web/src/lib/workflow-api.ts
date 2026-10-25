@@ -79,13 +79,13 @@ export async function createClientWorkspace(input: WorkspaceInput): Promise<Crea
 }
 
 const syntheticPipeline: PipelineEngagement[] = [
-  { id: "eng-synthetic-002", firm: "Northstar Brokerage Inc. (synthetic)", stage: "intake", due: "2026-12-18", assignee: "Quinton", progress: 8, blockers: 0, nextAction: "Confirm review period and applicable business lines", reportSigned: false },
-  { id: "eng-synthetic-001", firm: "Example Securities LLC (synthetic)", stage: "document_collection", due: "2026-12-15", assignee: "Quinton", progress: 41, blockers: 2, nextAction: "Receive two replacement documents", reportSigned: false },
-  { id: "eng-synthetic-003", firm: "Meridian Capital Markets (synthetic)", stage: "document_collection", due: "2026-12-22", assignee: "Quinton", progress: 56, blockers: 1, nextAction: "Complete remaining questionnaire representations", reportSigned: false },
-  { id: "eng-synthetic-004", firm: "Harborview Securities (synthetic)", stage: "auditor_review", due: "2026-11-26", assignee: "Quinton", progress: 74, blockers: 3, nextAction: "Resolve three evidence assessments", reportSigned: false },
-  { id: "eng-synthetic-005", firm: "Summit BD Partners (synthetic)", stage: "report_drafting", due: "2026-11-14", assignee: "Quinton", progress: 88, blockers: 0, nextAction: "Prepare draft for credentialed auditor review", reportSigned: false },
-  { id: "eng-synthetic-006", firm: "Cedar Ridge Financial (synthetic)", stage: "awaiting_signature", due: "2026-11-08", assignee: "Quinton", progress: 97, blockers: 0, nextAction: "Quinton reviews and explicitly signs the report", reportSigned: false },
-  { id: "eng-synthetic-007", firm: "Bluewater Securities Group (synthetic)", stage: "complete", due: "2026-10-17", assignee: "Quinton", progress: 100, blockers: 0, nextAction: "No open action", reportSigned: true },
+  { id: "eng-synthetic-002", firm: "Northstar Brokerage Inc. (synthetic)", stage: "intake", due: "2026-12-18", assignee: "Quentin", progress: 8, blockers: 0, nextAction: "Confirm review period and applicable business lines", reportSigned: false },
+  { id: "eng-synthetic-001", firm: "Example Securities LLC (synthetic)", stage: "document_collection", due: "2026-12-15", assignee: "Quentin", progress: 41, blockers: 2, nextAction: "Receive two replacement documents", reportSigned: false },
+  { id: "eng-synthetic-003", firm: "Meridian Capital Markets (synthetic)", stage: "document_collection", due: "2026-12-22", assignee: "Quentin", progress: 56, blockers: 1, nextAction: "Complete remaining questionnaire representations", reportSigned: false },
+  { id: "eng-synthetic-004", firm: "Harborview Securities (synthetic)", stage: "auditor_review", due: "2026-11-26", assignee: "Quentin", progress: 74, blockers: 3, nextAction: "Resolve three evidence assessments", reportSigned: false },
+  { id: "eng-synthetic-005", firm: "Summit BD Partners (synthetic)", stage: "report_drafting", due: "2026-11-14", assignee: "Quentin", progress: 88, blockers: 0, nextAction: "Prepare draft for credentialed auditor review", reportSigned: false },
+  { id: "eng-synthetic-006", firm: "Cedar Ridge Financial (synthetic)", stage: "awaiting_signature", due: "2026-11-08", assignee: "Quentin", progress: 97, blockers: 0, nextAction: "Quentin reviews and explicitly signs the report", reportSigned: false },
+  { id: "eng-synthetic-007", firm: "Bluewater Securities Group (synthetic)", stage: "complete", due: "2026-10-17", assignee: "Quentin", progress: 100, blockers: 0, nextAction: "No open action", reportSigned: true },
 ];
 
 export async function getPipeline(): Promise<PipelineEngagement[]> {
@@ -106,10 +106,10 @@ export async function movePipelineStage(id: string, stage: PipelineStage): Promi
 }
 
 const syntheticTasks: AuditorTask[] = [
-  { id: "task-review-program", engagementId: "eng-synthetic-001", title: "Review newly uploaded program evidence", requestId: "AML-BD-001", due: "2026-10-22", priority: "high", assignee: "Quinton", completed: false },
-  { id: "task-missing-pages", engagementId: "eng-synthetic-001", title: "Check replacement for missing pages", requestId: "AML-BD-009", due: "2026-10-23", priority: "high", assignee: "Quinton", completed: false },
-  { id: "task-applicability", engagementId: "eng-synthetic-001", title: "Resolve applicability representation", requestId: "AML-BD-026", due: "2026-11-05", priority: "normal", assignee: "Quinton", completed: false },
-  { id: "task-status-update", engagementId: "eng-synthetic-001", title: "Prepare engagement status update", requestId: "Example Securities LLC", due: "2026-11-07", priority: "low", assignee: "Quinton", completed: false },
+  { id: "task-review-program", engagementId: "eng-synthetic-001", title: "Review newly uploaded program evidence", requestId: "AML-BD-001", due: "2026-10-22", priority: "high", assignee: "Quentin", completed: false },
+  { id: "task-missing-pages", engagementId: "eng-synthetic-001", title: "Check replacement for missing pages", requestId: "AML-BD-009", due: "2026-10-23", priority: "high", assignee: "Quentin", completed: false },
+  { id: "task-applicability", engagementId: "eng-synthetic-001", title: "Resolve applicability representation", requestId: "AML-BD-026", due: "2026-11-05", priority: "normal", assignee: "Quentin", completed: false },
+  { id: "task-status-update", engagementId: "eng-synthetic-001", title: "Prepare engagement status update", requestId: "Example Securities LLC", due: "2026-11-07", priority: "low", assignee: "Quentin", completed: false },
 ];
 
 export async function getAuditorTasks(): Promise<AuditorTask[]> {
@@ -128,7 +128,7 @@ export async function createAuditorTask(engagementId: string, input: TaskInput):
       body: JSON.stringify({ title: input.title, request_id: input.requestId, due_date: input.due, priority: input.priority }),
     });
   }
-  const task: AuditorTask = { id: crypto.randomUUID(), engagementId, ...input, assignee: "Quinton", completed: false };
+  const task: AuditorTask = { id: crypto.randomUUID(), engagementId, ...input, assignee: "Quentin", completed: false };
   saveSyntheticTasks([...(await getAuditorTasks()), task]);
   return task;
 }

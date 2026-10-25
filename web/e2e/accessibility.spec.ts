@@ -43,7 +43,7 @@ test("client and auditor screens meet automated accessibility basics", async ({
       });
   }
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByRole("button", { name: /Kien Operations/ }).click();
   await expect(
     page.getByRole("heading", { name: "Overview", exact: true }),
   ).toBeVisible();
@@ -144,7 +144,7 @@ test("mobile navigation traps focus, closes with Escape and avoids horizontal ov
   }
   await page.getByRole("button", { name: "Open menu" }).click();
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByRole("button", { name: /Kien Operations/ }).click();
   await page.getByRole("link", { name: "Open audit workspace" }).click();
   await page.locator("summary").filter({ hasText: "AML-BD-001 —" }).click();
   expect(
@@ -189,9 +189,11 @@ test("sign-in form has accessible labels and a useful failed-sign-in state", asy
     localStorage.setItem("ains-synthetic-signed-out", "true"),
   );
   await page.goto("/sign-in");
+  await expect(page).toHaveTitle("Kien by Kien Solutions");
   await expect(
-    page.getByRole("heading", { name: "Sign in to AINS" }),
+    page.getByRole("heading", { name: "Sign in to Kien" }),
   ).toBeVisible();
+  await expect(page.getByRole("contentinfo")).toContainText("Kien by Kien Solutions");
   expect(
     (
       await new AxeBuilder({ page })
