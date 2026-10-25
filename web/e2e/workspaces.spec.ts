@@ -11,6 +11,13 @@ test("auditor creates a workspace and manages a single-use synthetic client invi
   await page.getByLabel("Current authenticator code").fill("123456");
   await page.getByRole("button", { name: "Replace recovery codes" }).click();
   await expect(page.getByText("Previous unused codes are revoked.")).toBeVisible();
+  // Working elsewhere dismisses the popover; reopen it for the next task.
+  const workspaceSwitcher = page.getByRole("button", { name: /Kien Operations/ });
+  await expect(workspaceSwitcher).toHaveAttribute("aria-expanded", "false");
+  await workspaceSwitcher.click();
+  await page.keyboard.press("Escape");
+  await expect(workspaceSwitcher).toBeFocused();
+  await workspaceSwitcher.click();
   await page.getByRole("link", { name: "Add client workspace" }).click();
   await expect(page.getByRole("heading", { name: "Add client workspace" })).toBeVisible();
   await page.getByLabel("Firm name").fill("Synthetic Gamma Securities");
