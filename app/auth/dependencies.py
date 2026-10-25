@@ -57,13 +57,13 @@ def clear_session_cookie(response: Response, settings: Settings) -> None:
     response.delete_cookie(SESSION_COOKIE, **session_cookie_flags(settings))
 
 
-def get_current_user(
-    request: Request,
+def get_authenticated_session(
     db: DB,
     settings: AuthSettings,
     session_cookie: SessionCookie = None,
     authorization: AuthorizationHeader = None,
-) -> User:
+) -> tuple[AuthSession, User]:
+    """Authenticate the presented session without resolving a portal firm."""
     token = session_cookie
     if not token and authorization and authorization.lower().startswith("bearer "):
         token = authorization[7:].strip()
@@ -91,6 +91,15 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Session is invalid or expired"
         )
-    user = row.User
+    return row.AuthSession, row.User
+
+
+AuthenticatedSession = Annotated[tuple[AuthSession, User], Depends(get_authenticated_session)]
+
+
+def get_current_user(
+    request: Request, db: DB, settings: AuthSettings, authenticated: AuthenticatedSession
+) -> User:
+    _, user = authenticated
     assert_user_on_portal(user, require_firm_portal(request, settings, db))
     return user

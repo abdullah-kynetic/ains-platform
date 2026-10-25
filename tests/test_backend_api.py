@@ -279,7 +279,7 @@ def test_invite_only_password_session_and_sign_out(backend) -> None:
     session = client.get("/auth/session")
     assert session.status_code == 200
     assert session.json()["user"]["role"] == "client"
-    assert client.post("/auth/sign-out").status_code == 204
+    assert client.post("/auth/sign-out").status_code == 200
     assert client.get("/auth/session").status_code == 401
 
 

@@ -24,6 +24,7 @@ from app.auth.security import hash_password, new_invitation_token
 from app.config import Settings, get_settings
 from app.cors import allowed_cors_origin
 from app.database.models import (
+    AuthSession,
     Base,
     ClientInvitation,
     Engagement,
@@ -605,3 +606,41 @@ def test_dev_localhost_session_binds_the_firm(portal) -> None:
     denied = client.get("/auth/session", headers=beta)
     assert denied.status_code == 403
     assert denied.json()["detail"] == "Session firm does not match this portal"
+
+
+@pytest.mark.parametrize("sign_out_headers", [_origin("synthetic-beta"), {}])
+def test_sign_out_authenticates_only_and_revokes_presented_session(
+    portal, sign_out_headers
+) -> None:
+    client, factory, _ = portal
+    body = {"email": "alpha-client@example.test", "password": CLIENT_PASSWORD}
+    assert (
+        client.post("/auth/password", headers=_origin("synthetic-alpha"), json=body).status_code
+        == 200
+    )
+    other_token = client.cookies.get("ains_session")
+    assert (
+        client.post("/auth/password", headers=_origin("synthetic-alpha"), json=body).status_code
+        == 200
+    )
+    token = client.cookies.get("ains_session")
+    assert token and token != other_token
+    for path in ("/auth/session", "/engagements/current"):
+        assert client.get(path, headers=_origin("synthetic-beta")).status_code == 403
+    response = client.post("/auth/sign-out", headers=sign_out_headers)
+    assert response.status_code == 200
+    cookie = response.headers["set-cookie"].lower()
+    assert 'ains_session=""' in cookie
+    assert "max-age=0" in cookie
+    assert "expires=" in cookie
+    assert "domain=" not in cookie
+    assert client.cookies.get("ains_session") is None
+    with factory() as db:
+        sessions = list(db.scalars(select(AuthSession)))
+        assert len(sessions) == 2
+        assert sum(session.revoked_at is not None for session in sessions) == 1
+    replay = {**_origin("synthetic-alpha"), "authorization": f"Bearer {token}"}
+    assert client.get("/auth/session", headers=replay).status_code == 401
+    assert client.post("/auth/sign-out", headers=replay).status_code == 401
+    other = {**_origin("synthetic-alpha"), "authorization": f"Bearer {other_token}"}
+    assert client.get("/auth/session", headers=other).status_code == 200

@@ -24,7 +24,12 @@ from app.database.models import (
 from app.database.session import get_db
 from app.tenancy import assert_user_on_portal, require_firm_portal
 
-from .dependencies import apply_session_cookie, clear_session_cookie, get_current_user
+from .dependencies import (
+    AuthenticatedSession,
+    apply_session_cookie,
+    clear_session_cookie,
+    get_current_user,
+)
 from .security import (
     create_session_token,
     hash_magic_link_token,
@@ -424,17 +429,14 @@ def read_session(user: CurrentUser) -> SessionView:
     return SessionView(user=UserView.model_validate(user))
 
 
-@router.post("/sign-out", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/sign-out", status_code=status.HTTP_200_OK)
 def sign_out(
     response: Response,
-    user: CurrentUser,
+    authenticated: AuthenticatedSession,
     db: DB,
     settings: AuthSettings,
 ) -> None:
-    # Revoking all current sessions is conservative and appropriate for the first release.
-    for auth_session in db.scalars(
-        select(AuthSession).where(AuthSession.user_id == user.id, AuthSession.revoked_at.is_(None))
-    ):
-        auth_session.revoked_at = datetime.now(UTC)
+    auth_session, _ = authenticated
+    auth_session.revoked_at = datetime.now(UTC)
     db.commit()
     clear_session_cookie(response, settings)
