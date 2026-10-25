@@ -199,10 +199,17 @@ export async function passwordSignIn(
   password: string,
   mfaCode?: string,
 ): Promise<SessionData> {
-  if (USE_MOCKS)
-    throw new Error(
-      "Demo mode does not accept credentials. Use Open synthetic demo.",
-    );
+  if (clientMocksEnabled()) {
+    const normalized = email.trim().toLowerCase();
+    const auditor = normalized === "auditor@example.invalid";
+    if ((!auditor && normalized !== "client@example.invalid") || password !== "synthetic-only-password")
+      throw new ApiError(401, "Invalid email or password");
+    if (auditor && !mfaCode) throw new ApiError(401, "MFA code required");
+    if (auditor && mfaCode !== "123456") throw new ApiError(401, "Invalid MFA code");
+    localStorage.setItem("ains-synthetic-role", auditor ? "auditor" : "client");
+    localStorage.removeItem("ains-synthetic-signed-out");
+    return getSession();
+  }
   return apiRequest<SessionData>("/auth/password", {
     method: "POST",
     body: JSON.stringify({ email, password, mfa_code: mfaCode || null }),

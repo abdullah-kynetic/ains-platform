@@ -205,6 +205,7 @@ test("sign-in form has accessible labels and a useful failed-sign-in state", asy
   await page
     .getByLabel("Email", { exact: true })
     .fill("synthetic@example.invalid");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
     .getByLabel("Password", { exact: true })
     .fill("synthetic-only-password");
@@ -212,9 +213,12 @@ test("sign-in form has accessible labels and a useful failed-sign-in state", asy
   await expect(
     page
       .getByRole("alert")
-      .filter({ hasText: "Demo mode does not accept credentials" }),
+      .filter({ hasText: "Email or password is incorrect" }),
   ).toBeVisible();
 
+  await page.goto("/account-setup");
+  await page.getByLabel("Email", { exact: true }).fill("auditor@example.invalid");
+  await page.getByLabel("Password", { exact: true }).fill("synthetic-only-password");
   await page.getByRole("button", { name: "Set up auditor MFA" }).click();
   await expect(page.getByText("SYNTHETICMFAPREVIEWONLY")).toBeVisible();
   await page.getByLabel("Authenticator code").fill("123456");
