@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
+import { SiteFooter } from "@/components/brand/site-footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
@@ -48,7 +49,8 @@ function ResetForm() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen bg-glow px-4 py-12">
+    <div className="flex min-h-screen flex-col bg-glow">
+    <main id="main-content" className="flex-1 px-4 py-12">
       <div className="mx-auto grid w-full max-w-md gap-6 rounded-xl border border-line bg-surface p-6">
         <h1 className="text-xl font-semibold">Reset your password</h1>
         {USE_MOCKS ? <p>Synthetic demo only</p> : null}
@@ -70,6 +72,8 @@ function ResetForm() {
         <Link className="underline" href="/sign-in">Back to sign in</Link>
       </div>
     </main>
+    <SiteFooter />
+    </div>
   );
 }
 

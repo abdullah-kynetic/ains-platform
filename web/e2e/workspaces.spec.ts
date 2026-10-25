@@ -26,10 +26,17 @@ test("auditor creates a workspace and manages a single-use synthetic client invi
   await page.getByLabel("Client email").fill("gamma-client@example.test");
   await page.getByRole("button", { name: "Create invitation" }).click();
 
-  const preview = page.getByRole("link", { name: "Open invitation preview" });
+  const email = page.getByRole("article", { name: "Invitation email preview" });
+  await expect(email.getByText("You're invited to Kien", { exact: true })).toBeVisible();
+  await expect(email.getByText("Kien by Kien Solutions", { exact: true })).toBeVisible();
+  await expect(email.getByRole("link", { name: "kiensolutions.com" })).toHaveAttribute(
+    "href",
+    "https://kiensolutions.com",
+  );
+  await expect(email.getByText("gamma-client@example.test")).toBeVisible();
+  const preview = email.getByRole("link", { name: "Open invitation preview" });
   await expect(preview).toBeVisible();
   const firstHref = await preview.getAttribute("href");
-  await expect(page.getByText("gamma-client@example.test")).toBeVisible();
   await page.getByRole("button", { name: "Revoke invitation" }).click();
   await expect(page.getByText("revoked", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Resend invitation" }).click();

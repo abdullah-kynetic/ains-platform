@@ -8,13 +8,14 @@ from fastapi import HTTPException
 
 from app.config import Settings
 
+PRODUCT_NAME = "Kien"
 BRAND_NAME = "Kien Solutions"
 BRAND_SITE = "https://kiensolutions.com"
 
 _SUBJECTS = {
-    "magic-link": f"Sign in to {BRAND_NAME}",
-    "invitation": f"You're invited to {BRAND_NAME}",
-    "reset": f"Reset your {BRAND_NAME} password",
+    "magic-link": f"Sign in to {PRODUCT_NAME}",
+    "invitation": f"You're invited to {PRODUCT_NAME}",
+    "reset": f"Reset your {PRODUCT_NAME} password",
 }
 
 
@@ -47,7 +48,7 @@ class ResendSender:
                     "text": (
                         f"Open {url}\n"
                         f"Expires {expires_at.isoformat()}.\n"
-                        f"{BRAND_NAME} — {BRAND_SITE}"
+                        f"{PRODUCT_NAME} by {BRAND_NAME} — {BRAND_SITE}"
                     ),
                 },
                 timeout=10,

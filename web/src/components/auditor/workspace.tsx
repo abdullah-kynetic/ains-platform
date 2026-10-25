@@ -105,7 +105,7 @@ function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () =
       <CardContent className="grid gap-5">
         {item.naReviewState === "pending" ? (
           <div className="rounded-lg border border-warning/30 bg-warning/5 p-4">
-            <p className="text-sm text-foreground">The firm answered that this item does not apply. Quinton must approve or reject that answer.</p>
+            <p className="text-sm text-foreground">The firm answered that this item does not apply. Quentin must approve or reject that answer.</p>
             <div className="mt-3 flex gap-2">
               <Button size="sm" disabled={busy} onClick={() => void decideNA("approve")}>Approve N/A</Button>
               <Button size="sm" variant="destructive" disabled={busy} onClick={() => void decideNA("reject")}>Reject N/A</Button>
@@ -183,7 +183,7 @@ export function AuditorWorkspace({ engagementId }: { engagementId?: string }) {
   return (
     <AuthGate role="auditor">
       <PageHeader
-        title={engagementId ? (visible[0]?.firmName ?? "Engagement review") : "Quinton’s review queue"}
+        title={engagementId ? (visible[0]?.firmName ?? "Engagement review") : "Quentin’s review queue"}
         description="Internal evidence, automated checks, and finding drafts. Nothing on this page is shown to clients."
         actions={engagementId ? (
           <div className="flex gap-2">
