@@ -60,7 +60,7 @@ export function PageHeader({
 }) {
   const setSearchHost = useContext(SearchHostContext);
   return (
-    <div className="mb-[var(--space-6)] flex flex-col items-start justify-between gap-[var(--space-4)] sm:flex-row sm:flex-wrap">
+    <div data-page-header className="mb-[var(--space-6)] flex flex-col items-start justify-between gap-[var(--space-4)] sm:flex-row sm:flex-wrap">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-[var(--space-3)]">
           <h1 className="type-display text-foreground">{title}</h1>

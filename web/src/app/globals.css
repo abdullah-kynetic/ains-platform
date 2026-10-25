@@ -398,9 +398,8 @@ input[type="file"] {
   user-select: none;
 }
 .desktop-sidebar[data-collapsed="true"] .nav-label,
-.desktop-sidebar[data-collapsed="true"]
-  .sidebar-panel
-  > :not(nav):not(.sidebar-appearance) {
+.desktop-sidebar[data-collapsed="true"] .sidebar-navigation > :not(nav),
+.desktop-sidebar[data-collapsed="true"] .sidebar-identity {
   display: none;
 }
 .desktop-sidebar[data-collapsed="true"] nav a {
@@ -706,7 +705,7 @@ input[type="file"] {
 .upload-zone[data-dragging="true"] {
   transform: scale(1.005);
 }
-.desktop-sidebar[data-collapsed="true"] .sidebar-appearance {
+.desktop-sidebar[data-collapsed="true"] .sidebar-theme {
   display: block;
 }
 .desktop-sidebar[data-collapsed="true"] .theme-control {
