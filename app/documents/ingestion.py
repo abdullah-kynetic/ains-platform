@@ -60,7 +60,7 @@ class StoredDocument:
 
 class DocumentIngestor(Protocol):
     async def ingest(
-        self, *, engagement: Engagement, item: ChecklistItemInstance, file: UploadFile
+        self, *, engagement: Engagement, item: ChecklistItemInstance | None, file: UploadFile
     ) -> StoredDocument: ...
 
 
@@ -122,14 +122,14 @@ class EgnyteDocumentIngestor:
         self.client_factory = client_factory
 
     async def ingest(
-        self, *, engagement: Engagement, item: ChecklistItemInstance, file: UploadFile
+        self, *, engagement: Engagement, item: ChecklistItemInstance | None, file: UploadFile
     ) -> StoredDocument:
         if self.settings.egnyte_dev_root.rstrip("/") != "/Shared/AINS-Dev":
             raise HTTPException(status_code=503, detail="Development storage root is not allowed")
         safe_name, suffix = _validated_filename(file.filename)
         accepted = {
             extension.casefold() if extension.startswith(".") else f".{extension.casefold()}"
-            for extension in item.accepted_extensions
+            for extension in (item.accepted_extensions if item else ALLOWED_EXTENSIONS)
         }
         if accepted and suffix not in accepted:
             raise HTTPException(
@@ -140,7 +140,7 @@ class EgnyteDocumentIngestor:
         root = self.settings.egnyte_dev_root.rstrip("/")
         firm = _safe_segment(engagement.firm.slug, fallback=engagement.firm_id)
         engagement_segment = _safe_segment(engagement.id, fallback="engagement")
-        item_segment = _safe_segment(item.item_key, fallback=item.id)
+        item_segment = _safe_segment(item.item_key, fallback=item.id) if item else "unassigned"
         folder = f"{root}/{firm}/{engagement_segment}/{item_segment}"
         upload_id = uuid.uuid4().hex[:12]
         remote_path = f"{folder}/{upload_id}-{safe_name}"
@@ -190,7 +190,7 @@ class S3DocumentIngestor:
         self.settings = settings
 
     async def ingest(
-        self, *, engagement: Engagement, item: ChecklistItemInstance, file: UploadFile
+        self, *, engagement: Engagement, item: ChecklistItemInstance | None, file: UploadFile
     ) -> StoredDocument:
         import asyncio
 
@@ -198,16 +198,20 @@ class S3DocumentIngestor:
 
         from app.storage.s3 import S3Storage
 
-        if item.firm_id != engagement.firm_id or item.engagement_id != engagement.id:
+        if item and (item.firm_id != engagement.firm_id or item.engagement_id != engagement.id):
             raise HTTPException(status_code=404, detail="Checklist item not found")
-        if item.restricted:
+        if item and item.restricted:
             raise HTTPException(status_code=422, detail="Restricted uploads are not accepted")
         name, suffix = _validated_filename(file.filename)
-        accepted = {f".{ext.lstrip('.').casefold()}" for ext in item.accepted_extensions}
+        accepted = {
+            f".{ext.lstrip('.').casefold()}"
+            for ext in (item.accepted_extensions if item else ALLOWED_EXTENSIONS)
+        }
         if accepted and suffix not in accepted:
             raise HTTPException(status_code=415, detail="File type is not accepted")
         content, digest = await _read_validated(file, suffix)
-        path = f"{engagement.id}/{item.item_key}/{uuid.uuid4().hex}-{name}"
+        segment = item.item_key if item else "unassigned"
+        path = f"{engagement.id}/{segment}/{uuid.uuid4().hex}-{name}"
         storage = None
         try:
             storage = S3Storage(self.settings)

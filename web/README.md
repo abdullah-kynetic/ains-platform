@@ -27,7 +27,9 @@ wrong-portal screen and a sign-out action. There is no `/api` proxy.
 - `src/lib/api.ts`: typed API client for backend sessions, engagements, questionnaire answers, uploads, auditor review, and draft report downloads.
 - `src/lib/mock-data.ts`: synthetic engagement only.
 - `src/components/ui`: shared UI primitives; `src/components/checklist`: checklist, status badge, drag-and-drop upload with progress.
-- `/sign-in`: invite-only password or magic-link sign-in; auditor accounts also provide MFA.
+- `/sign-in`: email, then password, then MFA only when required by the API. Safe local `next` paths return users to their requested page. Existing magic-link tokens can still be verified here.
+- `/accept-invitation`: invitation acceptance and initial password creation.
+- `/account-setup`: first-time auditor MFA enrollment and recovery codes.
 - `/questionnaire`: client yes/no applicability questions. N/A answers remain pending until Quentin decides them.
 - `/auditor`: auditor-only engagement queue, evidence/check results, cited finding review, and unsigned report drafts.
 
@@ -35,6 +37,10 @@ The default `.env.example` has `NEXT_PUBLIC_USE_MOCKS=false`. The FastAPI backen
 at `NEXT_PUBLIC_API_URL`, with an invited user in Postgres and `SESSION_SECRET` configured.
 Magic-link delivery still requires an approved backend email adapter; password sign-in works
 without that adapter. Never place credentials in a `NEXT_PUBLIC_*` variable.
+
+In mock mode, sign in with `client@example.invalid` or `auditor@example.invalid`,
+password `synthetic-only-password`; the auditor code is `123456`. These fixed
+synthetic identities only affect browser demo state. Never enter real credentials.
 
 ## Cloudflare synthetic demo
 

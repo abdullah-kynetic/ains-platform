@@ -4,6 +4,6 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src/lib/tenant.test.ts"],
+  "include": ["src/lib/tenant.test.ts", "src/lib/sign-in-next.test.ts"],
   "exclude": ["node_modules"]
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Check,
   ChevronsUpDown,
@@ -60,6 +60,21 @@ function WorkspaceSwitcher({
 }) {
   const [open, setOpen] = useState(false);
   const active = workspaces[auditor ? 0 : 1];
+
+  if (!auditor)
+    return (
+      <div className="flex min-h-[var(--control-height)] w-full items-center gap-[var(--space-3)] rounded-lg border border-border bg-surface p-[var(--space-2)] shadow-card">
+        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-xs font-semibold tracking-wide text-background">
+          {active.mark}
+        </span>
+        <span
+          title={active.name}
+          className="break-words text-sm font-semibold text-foreground"
+        >
+          {active.name}
+        </span>
+      </div>
+    );
 
   return (
     <div className="relative">
@@ -157,15 +172,18 @@ function Items({
   items: NavItem[];
   onNavigate?: () => void;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname().replace(/\/+$/, "") || "/";
 
   return (
     <nav aria-label="Main navigation" className="grid gap-1">
       {items.map((item) => {
         const Icon = Icons[item.icon] as LucideIcon;
-        const active = item.exact
-          ? pathname === item.href
-          : pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active =
+          item.href === "/auditor" && pathname === "/"
+            ? true
+            : item.exact || item.href === "/" || item.href === "/auditor"
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
         return (
           <Link
@@ -178,7 +196,7 @@ function Items({
             className={cn(
               "flex min-h-[var(--control-height)] items-center gap-[var(--space-2)] rounded-md px-[var(--space-3)] py-[var(--space-2)] text-sm font-medium leading-snug transition-colors",
               active
-                ? "bg-brand-tint text-brand"
+                ? "bg-hover text-foreground"
                 : "text-muted hover:bg-hover hover:text-foreground",
             )}
           >
@@ -225,18 +243,25 @@ function Panel({
   const auditor = sub.toLowerCase().includes("auditor");
 
   return (
-    <div className="sidebar-panel flex min-h-0 flex-1 flex-col overflow-y-auto p-3">
-      {!desktop ? <Logo sub={sub} className="px-2 pt-2 pb-5" /> : null}
-      <WorkspaceSwitcher
-        auditor={auditor}
-        onWorkspaceChange={onWorkspaceChange}
-        onNavigate={onNavigate}
-      />
-      <p className="mt-7 mb-2 px-2.5 text-xs font-semibold uppercase tracking-[0.13em] text-subtle">
-        {auditor ? "Review" : "Engagement"}
-      </p>
-      <Items items={items} onNavigate={onNavigate} />
-      <div className="mt-auto flex items-center gap-2 border-t border-border px-1 pt-3">
+    <div
+      className={cn(
+        "sidebar-panel flex min-h-0 flex-1 flex-col overflow-hidden p-3",
+        !desktop && "h-full",
+      )}
+    >
+      <div className="sidebar-navigation min-h-0 flex-1 overflow-y-auto">
+        {!desktop ? <Logo sub={sub} className="px-2 pt-2 pb-5" /> : null}
+        <WorkspaceSwitcher
+          auditor={auditor}
+          onWorkspaceChange={onWorkspaceChange}
+          onNavigate={onNavigate}
+        />
+        <p className="mt-7 mb-2 px-2.5 text-xs font-semibold uppercase tracking-[0.13em] text-subtle">
+          {auditor ? "Review" : "Engagement"}
+        </p>
+        <Items items={items} onNavigate={onNavigate} />
+      </div>
+      <div className="sidebar-identity mt-3 flex shrink-0 items-center gap-2 border-t border-border px-1 pt-3">
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-xs font-semibold text-muted">
           {initials(who)}
         </span>
@@ -269,6 +294,9 @@ function Panel({
           <LogOut aria-hidden="true" className="size-3.5" />
         </button>
       </div>
+      <div className="sidebar-theme shrink-0 pt-3">
+        <ThemeToggle />
+      </div>
     </div>
   );
 }
@@ -283,11 +311,52 @@ export function Sidebar(props: {
 }) {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [width, setWidth] = useState(256);
+  const [dragging, setDragging] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const drag = useRef<{ pointer: number; start: number; width: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem("kien-sidebar") ?? "null",
+        );
+        if (
+          saved &&
+          typeof saved.width === "number" &&
+          Number.isFinite(saved.width)
+        ) {
+          setWidth(Math.max(200, Math.min(360, saved.width)));
+          setCollapsed(saved.collapsed === true);
+        }
+      } catch {
+        /* Use defaults if storage is unavailable. */
+      }
+      setRestored(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  useEffect(() => {
+    if (restored) {
+      try {
+        localStorage.setItem(
+          "kien-sidebar",
+          JSON.stringify({ width, collapsed }),
+        );
+      } catch {
+        /* Resizing works without storage. */
+      }
+    }
+  }, [width, collapsed, restored]);
 
   return (
     <>
       <aside
         data-collapsed={collapsed}
+        data-dragging={dragging}
+        style={{ width: collapsed ? 76 : width }}
         className="desktop-sidebar sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-sidebar lg:flex lg:flex-col"
       >
         <div className="flex items-center justify-between gap-1 p-3">
@@ -307,6 +376,71 @@ export function Sidebar(props: {
           </button>
         </div>
         <Panel {...props} desktop />
+        <div
+          role="separator"
+          aria-label="Resize sidebar"
+          aria-orientation="vertical"
+          aria-valuemin={200}
+          aria-valuemax={360}
+          aria-valuenow={width}
+          aria-valuetext={collapsed ? "Collapsed" : `${width} pixels`}
+          tabIndex={0}
+          className="absolute inset-y-0 -right-1 z-40 w-2 cursor-col-resize touch-none hover:bg-brand/20 focus-visible:bg-brand/20 focus-visible:outline-2 focus-visible:outline-brand"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === "Home") {
+              event.preventDefault();
+              setCollapsed((value) => !value);
+            } else if (
+              event.key === "ArrowLeft" ||
+              event.key === "ArrowRight"
+            ) {
+              event.preventDefault();
+              setCollapsed(false);
+              setWidth((value) =>
+                Math.max(
+                  200,
+                  Math.min(360, value + (event.key === "ArrowLeft" ? -16 : 16)),
+                ),
+              );
+            }
+          }}
+          onPointerDown={(event) => {
+            if (
+              event.button !== 0 ||
+              !window.matchMedia("(min-width: 1024px)").matches
+            )
+              return;
+            event.preventDefault();
+            event.currentTarget.setPointerCapture(event.pointerId);
+            drag.current = {
+              pointer: event.pointerId,
+              start: event.clientX,
+              width: collapsed ? 76 : width,
+            };
+            setDragging(true);
+          }}
+          onPointerMove={(event) => {
+            const current = drag.current;
+            if (!current || current.pointer !== event.pointerId) return;
+            const next = current.width + event.clientX - current.start;
+            setCollapsed(next < 140);
+            if (next >= 140) setWidth(Math.max(200, Math.min(360, next)));
+          }}
+          onPointerUp={(event) => {
+            if (drag.current?.pointer !== event.pointerId) return;
+            drag.current = null;
+            setDragging(false);
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerCancel={() => {
+            drag.current = null;
+            setDragging(false);
+          }}
+          onLostPointerCapture={() => {
+            drag.current = null;
+            setDragging(false);
+          }}
+        />
       </aside>
       <div
         role="region"
@@ -315,7 +449,6 @@ export function Sidebar(props: {
       >
         <Logo sub={props.sub} />
         <div className="flex items-center gap-1">
-          <ThemeToggle />
           <button
             type="button"
             aria-label="Open menu"

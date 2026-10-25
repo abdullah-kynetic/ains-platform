@@ -1,51 +1,45 @@
 "use client";
 
+import { createContext, useContext, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "./nav";
 import { CommandPalette } from "./command-palette";
 import { SiteFooter } from "@/components/brand/site-footer";
-import { ThemeToggle } from "@/components/shell/theme-toggle";
-import { useTenant } from "@/components/tenant/tenant-provider";
+
+const SearchHostContext = createContext<(host: HTMLDivElement | null) => void>(
+  () => {},
+);
 
 export function Shell({
   sidebar,
   children,
   items,
-  auditor,
 }: {
   sidebar: React.ReactNode;
   items: NavItem[];
   auditor: boolean;
   children: React.ReactNode;
 }) {
-  const { branding } = useTenant();
+  const [searchHost, setSearchHost] = useState<HTMLDivElement | null>(null);
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      {sidebar}
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-[var(--space-3)] border-b border-border bg-surface/90 px-[var(--space-4)] py-[var(--space-2)] backdrop-blur sm:px-[var(--space-6)] xl:px-[var(--space-7)]">
-          <div className="flex min-w-0 items-center gap-[var(--space-2)] text-xs leading-snug text-muted">
-            <span>{branding.name}</span>
-            <span aria-hidden="true">/</span>
-            <span className="truncate font-medium text-foreground">{auditor ? "Audit operations" : "Your engagement"}</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-[var(--space-2)]">
-            <CommandPalette items={items} />
-            <div className="hidden lg:block"><ThemeToggle /></div>
-          </div>
-        </header>
-        <main
-          id="main-content"
-          tabIndex={-1}
-          className="flex-1 bg-background"
-        >
-          <div className="mx-auto w-full max-w-[1440px] px-[var(--space-4)] py-[var(--space-5)] sm:px-[var(--space-6)] sm:py-[var(--space-6)] xl:px-[var(--space-7)]">
-            {children}
-          </div>
-        </main>
-        <SiteFooter />
+    <SearchHostContext.Provider value={setSearchHost}>
+      <CommandPalette items={items} triggerHost={searchHost} />
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        {sidebar}
+        <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="flex-1 bg-background"
+          >
+            <div className="mx-auto w-full max-w-[1440px] px-[var(--space-4)] py-[var(--space-5)] sm:px-[var(--space-6)] sm:py-[var(--space-6)] xl:px-[var(--space-7)]">
+              {children}
+            </div>
+          </main>
+          <SiteFooter />
+        </div>
       </div>
-    </div>
+    </SearchHostContext.Provider>
   );
 }
 
@@ -60,13 +54,15 @@ export function PageHeader({
   actions?: React.ReactNode;
   badge?: React.ReactNode;
 }) {
+  const setSearchHost = useContext(SearchHostContext);
   return (
-    <div className="mb-[var(--space-6)] flex flex-col items-start justify-between gap-[var(--space-4)] sm:flex-row sm:flex-wrap">
-      <div className="min-w-0">
+    <div
+      data-page-header
+      className="mb-[var(--space-6)] flex flex-col items-start justify-between gap-[var(--space-4)] sm:flex-row"
+    >
+      <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-[var(--space-3)]">
-          <h1 className="type-display text-foreground">
-            {title}
-          </h1>
+          <h1 className="type-display text-foreground">{title}</h1>
           {badge}
         </div>
         {description ? (
@@ -75,11 +71,10 @@ export function PageHeader({
           </p>
         ) : null}
       </div>
-      {actions ? (
-        <div className="flex w-full shrink-0 flex-wrap items-center gap-[var(--space-2)] sm:w-auto">
-          {actions}
-        </div>
-      ) : null}
+      <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-[var(--space-2)] sm:w-auto sm:max-w-full">
+        <div ref={setSearchHost} />
+        {actions}
+      </div>
     </div>
   );
 }
@@ -115,7 +110,11 @@ export function Stat({
       <div className="type-metric mt-[var(--space-3)] text-foreground">
         {value}
       </div>
-      {hint ? <div className="type-caption mt-[var(--space-2)] text-muted">{hint}</div> : null}
+      {hint ? (
+        <div className="type-caption mt-[var(--space-2)] text-muted">
+          {hint}
+        </div>
+      ) : null}
     </div>
   );
 }

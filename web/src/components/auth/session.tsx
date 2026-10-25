@@ -139,7 +139,7 @@ export function AuthGate({
   useEffect(() => {
     if (loading) return;
     if (!session) {
-      router.replace(`/sign-in?next=${encodeURIComponent(pathname)}`);
+      router.replace(`/sign-in?next=${encodeURIComponent(pathname + window.location.search + window.location.hash)}`);
     } else if (role && session.user.role !== role) {
       router.replace(session.user.role === "auditor" ? "/auditor" : "/");
     }

@@ -199,10 +199,17 @@ export async function passwordSignIn(
   password: string,
   mfaCode?: string,
 ): Promise<SessionData> {
-  if (USE_MOCKS)
-    throw new Error(
-      "Demo mode does not accept credentials. Use Open synthetic demo.",
-    );
+  if (clientMocksEnabled()) {
+    const normalized = email.trim().toLowerCase();
+    const auditor = normalized === "auditor@example.invalid";
+    if ((!auditor && normalized !== "client@example.invalid") || password !== "synthetic-only-password")
+      throw new ApiError(401, "Invalid email or password");
+    if (auditor && !mfaCode) throw new ApiError(401, "MFA code required");
+    if (auditor && mfaCode !== "123456") throw new ApiError(401, "Invalid MFA code");
+    localStorage.setItem("ains-synthetic-role", auditor ? "auditor" : "client");
+    localStorage.removeItem("ains-synthetic-signed-out");
+    return getSession();
+  }
   return apiRequest<SessionData>("/auth/password", {
     method: "POST",
     body: JSON.stringify({ email, password, mfa_code: mfaCode || null }),
@@ -674,7 +681,7 @@ export async function getEngagement(): Promise<Engagement> {
 
 export async function uploadDocument(
   engagementId: string,
-  itemId: string,
+  itemId: string | null,
   file: File,
   onProgress: (pct: number) => void,
 ): Promise<UploadReceipt> {
@@ -688,10 +695,10 @@ export async function uploadDocument(
     const item = data.sections
       .flatMap((section) => section.items)
       .find((item) => item.id === itemId);
-    if (!item || item.restricted || item.canUpload === false)
+    if (itemId !== null && (!item || item.restricted || item.canUpload === false))
       throw new Error("This request cannot accept portal uploads.");
     const suffix = `.${file.name.split(".").pop()?.toLowerCase()}`;
-    if (!item.allowedEvidenceTypes.includes(suffix))
+    if (!(item?.allowedEvidenceTypes ?? [".csv", ".doc", ".docx", ".jpeg", ".jpg", ".pdf", ".png", ".tif", ".tiff", ".txt", ".xls", ".xlsx"]).includes(suffix))
       throw new Error("Wrong file type for this request.");
     if (!file.size) throw new Error("File is empty.");
     const sha256 = Array.from(
@@ -709,9 +716,14 @@ export async function uploadDocument(
       version: "synthetic-1",
       status: "checking" as const,
     };
-    item.files.push({ ...receipt, uploadedAt: new Date().toISOString() });
-    item.status = "checking";
-    invalidateMockDecision(itemId);
+    if (item) {
+      item.files.push({ ...receipt, uploadedAt: new Date().toISOString() });
+      item.status = "checking";
+      invalidateMockDecision(item.id);
+    } else {
+      data.unassignedDocuments ??= [];
+      data.unassignedDocuments.push({ ...receipt, uploadedAt: new Date().toISOString() });
+    }
     saveMockEngagement(data);
     onProgress(100);
     return receipt;
@@ -721,7 +733,7 @@ export async function uploadDocument(
     const request = new XMLHttpRequest();
     request.open(
       "POST",
-      `${API_URL}/engagements/${encodeURIComponent(engagementId)}/items/${encodeURIComponent(itemId)}/documents`,
+      `${API_URL}/engagements/${encodeURIComponent(engagementId)}${itemId === null ? "" : `/items/${encodeURIComponent(itemId)}`}/documents`,
     );
     request.withCredentials = true;
     request.timeout = 120000;

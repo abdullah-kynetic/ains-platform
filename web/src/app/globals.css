@@ -368,11 +368,59 @@ input[type="file"] {
   filter: invert(0.7);
 }
 
+.theme-control {
+  position: relative;
+  isolation: isolate;
+}
+.theme-indicator {
+  position: absolute;
+  z-index: -1;
+  inset-block: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / 3);
+  border-radius: 4px;
+  background: var(--color-hover);
+  transform: translateX(calc(var(--theme-index) * 100%));
+  transition: transform 320ms cubic-bezier(0.22, 1.3, 0.36, 1);
+}
+.desktop-sidebar[data-collapsed="true"] .theme-control {
+  flex-direction: column;
+}
+.desktop-sidebar[data-collapsed="true"] .theme-label {
+  display: none;
+}
+.desktop-sidebar[data-collapsed="true"] .theme-control button {
+  flex: none;
+  padding: 0;
+  min-height: 44px;
+}
+.desktop-sidebar[data-collapsed="true"] .theme-indicator {
+  top: 4px;
+  bottom: auto;
+  width: calc(100% - 8px);
+  height: 44px;
+  transform: translateY(calc(var(--theme-index) * 100%));
+}
+.theme-control button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  position: relative;
+}
+.theme-control {
+  flex-shrink: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-indicator { transition: none; }
+}
+
 /* Icon rail follows the MIT dashboard starter composition. Mobile uses the existing focus-managed sheet. */
 .desktop-sidebar { transition: width 180ms ease; }
-.desktop-sidebar[data-collapsed="true"] { width: 76px; }
+.desktop-sidebar[data-dragging="true"] { transition: none; user-select: none; }
 .desktop-sidebar[data-collapsed="true"] .nav-label,
-.desktop-sidebar[data-collapsed="true"] .sidebar-panel > :not(nav) { display: none; }
+.desktop-sidebar[data-collapsed="true"] .sidebar-navigation > :not(nav),
+.desktop-sidebar[data-collapsed="true"] .sidebar-identity { display: none; }
 .desktop-sidebar[data-collapsed="true"] nav a { justify-content: center; padding-inline: 8px; }
 .desktop-sidebar[data-collapsed="true"] .sidebar-panel { padding-top: 24px; }
 @media (prefers-reduced-motion: reduce) { .desktop-sidebar { transition: none; } }

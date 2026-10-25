@@ -39,7 +39,7 @@ class DocumentProcessor:
                              .options(selectinload(Document.item)))
         if not document:
             raise LookupError("document_not_found")
-        if document.item.restricted:
+        if document.item and document.item.restricted:
             raise RuntimeError("restricted_item_was_queued")
         if document.egnyte_path.startswith("s3://"):
             prefix = f"s3://{self.settings.s3_bucket}/firms/{document.firm_id}/"
@@ -60,7 +60,7 @@ class DocumentProcessor:
         ))
         # Receipt verification must not erase a later auditor replacement request
         # or a pending client representation.
-        if document.item.status == ClientStatus.CHECKING:
+        if document.item and document.item.status == ClientStatus.CHECKING:
             document.item.status = ClientStatus.WITH_AUDITOR
             document.item.client_reason = None
         db.add(AuditLog(

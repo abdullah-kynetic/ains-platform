@@ -17,7 +17,7 @@ const clientItems: NavItem[] = [
 
 const auditorItems: NavItem[] = [
   { href: "/auditor", label: "Overview", icon: "LayoutDashboard", exact: true },
-  { href: "/auditor/engagements", label: "Engagements", icon: "Building2", exact: true },
+  { href: "/auditor/engagements", label: "Engagements", icon: "Building2" },
   { href: "/auditor/pipeline", label: "Audit pipeline", icon: "Columns3" },
   { href: "/auditor/audit-log", label: "Audit Log", icon: "History" },
   { href: "/auditor/settings", label: "Settings", icon: "Settings" },
