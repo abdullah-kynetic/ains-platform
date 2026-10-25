@@ -179,7 +179,9 @@ function Items({
       {items.map((item) => {
         const Icon = Icons[item.icon] as LucideIcon;
         const active =
-          item.exact || item.href === "/" || item.href === "/auditor"
+          item.href === "/auditor" && pathname === "/"
+            ? true
+            : item.exact || item.href === "/" || item.href === "/auditor"
             ? pathname === item.href
             : pathname === item.href || pathname.startsWith(`${item.href}/`);
 

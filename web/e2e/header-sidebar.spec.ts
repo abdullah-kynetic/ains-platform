@@ -34,6 +34,11 @@ for (const role of ["client", "auditor"] as const) {
       exact: true,
     });
     await expect(overview).toHaveAttribute("aria-current", "page");
+    if (role === "auditor") {
+      await page.goto("/");
+      await expect(overview).toHaveAttribute("href", "/auditor");
+      await expect(overview).toHaveAttribute("aria-current", "page");
+    }
     for (const collapsed of [false, true]) {
       if (collapsed)
         await sidebar.getByRole("button", { name: "Collapse sidebar" }).click();
