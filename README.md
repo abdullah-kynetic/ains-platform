@@ -177,6 +177,14 @@ credential is part of this application.
 6. **No model inference in this repository.** Any future external pipeline needs its own approved authenticated adapter; evidence citations remain required for findings.
 7. **Humans decide.** Quinton approves, edits, or rejects every finding and signs the report.
 
+## Public site
+
+The marketing page for kiensolutions.com is a separate Cloudflare Worker of static
+files in `landing/`. It is not the portal. Deploy and DNS steps are in
+[`landing/README.md`](landing/README.md). A portal deploy does not publish that page,
+and the landing deploy does not change `kiensolutions.com` DNS until a custom domain
+is attached on purpose.
+
 ## Build handoff
 
 See `docs/build-handoff.md` for the six-task delivery summary, synthetic demo instructions,
