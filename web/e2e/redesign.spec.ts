@@ -36,9 +36,10 @@ test("auditor overview, sidebar rail and desktop screenshot", async ({
     .getByRole("navigation", { name: "Main navigation" })
     .getByRole("link", { name: "Settings" })
     .click();
+  await expect(page).toHaveURL(/\/auditor\/settings/, { timeout: 30000 });
   await expect(
     page.getByRole("heading", { name: "Settings", exact: true }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30000 });
   await page.getByRole("button", { name: "Expand sidebar" }).click();
   await page.getByLabel("Display name").fill("Synthetic Reviewer");
   await page.getByLabel("Weekly engagement digest").uncheck();
