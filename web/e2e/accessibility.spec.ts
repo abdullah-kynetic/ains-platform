@@ -8,13 +8,13 @@ test("theme toggle persists light and dark mode", async ({ page }) => {
     document.documentElement.classList.remove("dark");
   });
 
-  await page.getByRole("button", { name: "Toggle color theme" }).click();
+  await page.getByRole("button", { name: "Dark theme", exact: true }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
   expect(await page.evaluate(() => localStorage.getItem("ains-theme"))).toBe(
     "dark",
   );
 
-  await page.getByRole("button", { name: "Toggle color theme" }).click();
+  await page.getByRole("button", { name: "Light theme", exact: true }).click();
   await expect(page.locator("html")).not.toHaveClass(/dark/);
   expect(await page.evaluate(() => localStorage.getItem("ains-theme"))).toBe(
     "light",
@@ -42,8 +42,10 @@ test("client and auditor screens meet automated accessibility basics", async ({
         fullPage: true,
       });
   }
-  await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /Kien Operations/ }).click();
+  await page.evaluate(() =>
+    localStorage.setItem("ains-synthetic-role", "auditor"),
+  );
+  await page.goto("/auditor");
   await expect(
     page.getByRole("heading", { name: "Overview", exact: true }),
   ).toBeVisible();
@@ -119,14 +121,11 @@ test("mobile navigation traps focus, closes with Escape and avoids horizontal ov
     path: "test-results/upload-mobile.png",
     fullPage: true,
   });
-  await page.getByLabel("Request", { exact: true }).selectOption("AML-BD-001");
-  await page
-    .getByLabel("Select synthetic files")
-    .setInputFiles({
-      name: `${"synthetic-".repeat(12)}.txt`,
-      mimeType: "text/plain",
-      buffer: Buffer.from("Synthetic mobile fixture"),
-    });
+  await page.getByLabel("Select synthetic files").setInputFiles({
+    name: `${"synthetic-".repeat(12)}.txt`,
+    mimeType: "text/plain",
+    buffer: Buffer.from("Synthetic mobile fixture"),
+  });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -143,8 +142,10 @@ test("mobile navigation traps focus, closes with Escape and avoids horizontal ov
     ).toBe(true);
   }
   await page.getByRole("button", { name: "Open menu" }).click();
-  await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /Kien Operations/ }).click();
+  await page.evaluate(() =>
+    localStorage.setItem("ains-synthetic-role", "auditor"),
+  );
+  await page.goto("/auditor");
   await page.getByRole("link", { name: "Open audit workspace" }).click();
   await page.locator("summary").filter({ hasText: "AML-BD-001 —" }).click();
   expect(
@@ -193,7 +194,9 @@ test("sign-in form has accessible labels and a useful failed-sign-in state", asy
   await expect(
     page.getByRole("heading", { name: "Sign in to Kien" }),
   ).toBeVisible();
-  await expect(page.getByRole("contentinfo")).toContainText("Kien by Kien Solutions");
+  await expect(page.getByRole("contentinfo")).toContainText(
+    "Kien by Kien Solutions",
+  );
   expect(
     (
       await new AxeBuilder({ page })
@@ -217,14 +220,16 @@ test("sign-in form has accessible labels and a useful failed-sign-in state", asy
   ).toBeVisible();
 
   await page.goto("/account-setup");
-  await page.getByLabel("Email", { exact: true }).fill("auditor@example.invalid");
-  await page.getByLabel("Password", { exact: true }).fill("synthetic-only-password");
+  await page
+    .getByLabel("Email", { exact: true })
+    .fill("auditor@example.invalid");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("synthetic-only-password");
   await page.getByRole("button", { name: "Set up auditor MFA" }).click();
   await expect(page.getByText("SYNTHETICMFAPREVIEWONLY")).toBeVisible();
   await page.getByLabel("Authenticator code").fill("123456");
-  await page
-    .getByRole("button", { name: "Confirm and enable MFA" })
-    .click();
+  await page.getByRole("button", { name: "Confirm and enable MFA" }).click();
   await expect(page.getByText("Save these recovery codes now")).toBeVisible();
   expect(
     (
@@ -234,4 +239,44 @@ test("sign-in form has accessible labels and a useful failed-sign-in state", asy
         .analyze()
     ).violations,
   ).toEqual([]);
+});
+
+test("system theme follows OS changes, persists, and client firm card is static", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/upload");
+  const sidebar = page.locator(".desktop-sidebar");
+  await expect(
+    sidebar.getByRole("button", { name: /Example Securities/ }),
+  ).toHaveCount(0);
+  await expect(
+    sidebar.getByRole("link", { name: "Add client workspace" }),
+  ).toHaveCount(0);
+  await expect(page.getByText("Your engagement", { exact: true })).toHaveCount(
+    0,
+  );
+  await sidebar
+    .getByRole("button", { name: "System theme", exact: true })
+    .click();
+  await expect(
+    sidebar.getByRole("button", { name: "System theme", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expect(
+    sidebar.getByRole("link", { name: "Upload", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  await page.reload();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(page.locator("html")).not.toHaveClass(/dark/);
+  expect(await page.evaluate(() => localStorage.getItem("ains-theme"))).toBe(
+    "system",
+  );
+  await sidebar
+    .getByRole("button", { name: "Dark theme", exact: true })
+    .click();
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(page.locator("html")).toHaveClass(/dark/);
 });

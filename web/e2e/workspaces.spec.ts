@@ -3,8 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 test("auditor creates a workspace and manages a single-use synthetic client invitation", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /Kien Operations/ }).click();
+  await page.evaluate(() => localStorage.setItem("ains-synthetic-role", "auditor"));
   await page.goto("/auditor");
 
   await page.goto("/auditor/settings");

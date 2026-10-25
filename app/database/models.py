@@ -281,7 +281,8 @@ class Document(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
-    item_instance_id: Mapped[str] = mapped_column(
+    engagement_id: Mapped[str | None] = mapped_column(ForeignKey("engagements.id"), index=True)
+    item_instance_id: Mapped[str | None] = mapped_column(
         ForeignKey("checklist_item_instances.id"), index=True
     )
     uploaded_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
@@ -294,7 +295,7 @@ class Document(Base):
     feedback_code: Mapped[str | None] = mapped_column(String(50))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
-    item: Mapped[ChecklistItemInstance] = relationship(back_populates="documents")
+    item: Mapped[ChecklistItemInstance | None] = relationship(back_populates="documents")
     check_results: Mapped[list[CheckResult]] = relationship(
         back_populates="document", cascade="all, delete-orphan"
     )

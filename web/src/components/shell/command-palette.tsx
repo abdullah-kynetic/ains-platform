@@ -137,6 +137,7 @@ export function CommandPalette({ items }: { items: NavItem[] }) {
                     );
                     document.documentElement.dataset.theme = theme;
                     localStorage.setItem("ains-theme", theme);
+                    window.dispatchEvent(new Event("ains-theme-change"));
                     setOpen(false);
                   }}
                 >

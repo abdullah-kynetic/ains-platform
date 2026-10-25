@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session, selectinload
@@ -80,6 +80,7 @@ class EngagementView(APIModel):
     review_period: ReviewPeriodView
     due_date: str | None
     sections: list[SectionView]
+    unassigned_documents: list[FileView] = Field(default_factory=list)
 
 
 class DocumentView(APIModel):
@@ -204,7 +205,28 @@ def current_engagement(user: CurrentUser, db: DB) -> EngagementView:
                 )
             )
     db.commit()
-    return _serialize_engagement(engagement)
+    view = _serialize_engagement(engagement)
+    documents = db.scalars(
+        select(Document)
+        .where(
+            Document.firm_id == engagement.firm_id,
+            Document.engagement_id == engagement.id,
+            Document.item_instance_id.is_(None),
+        )
+        .order_by(Document.created_at)
+    ).all()
+    view.unassigned_documents = [
+        FileView(
+            id=document.id,
+            name=document.original_name,
+            size=document.size_bytes,
+            uploaded_at=document.created_at,
+            sha256=document.sha256,
+            feedback=None,
+        )
+        for document in documents
+    ]
+    return view
 
 
 @router.post(
@@ -249,6 +271,7 @@ async def upload_document(
     stored = await ingestor.ingest(engagement=engagement, item=item, file=file)
     document = Document(
         firm_id=engagement.firm_id,
+        engagement_id=engagement.id,
         item_instance_id=item.id,
         uploaded_by_id=user.id,
         original_name=file.filename or "upload",
@@ -288,4 +311,59 @@ async def upload_document(
         sha256=document.sha256,
         version=document.version,
         status=item.status,
+    )
+
+
+@router.post(
+    "/engagements/{engagement_id}/documents",
+    response_model=DocumentView,
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_unassigned_document(
+    engagement_id: str,
+    file: UploadedFile,
+    user: CurrentUser,
+    db: DB,
+    ingestor: Ingestor,
+) -> DocumentView:
+    engagement = db.scalar(visible_engagements(user).where(Engagement.id == engagement_id))
+    if not engagement:
+        raise HTTPException(status_code=404, detail="Engagement not found")
+    if engagement.status in {EngagementStatus.DRAFT, EngagementStatus.COMPLETE}:
+        raise HTTPException(status_code=409, detail="Engagement is not accepting uploads")
+    stored = await ingestor.ingest(engagement=engagement, item=None, file=file)
+    document = Document(
+        firm_id=engagement.firm_id,
+        engagement_id=engagement.id,
+        item_instance_id=None,
+        uploaded_by_id=user.id,
+        original_name=file.filename or "upload",
+        content_type=file.content_type,
+        size_bytes=stored.size_bytes,
+        egnyte_path=stored.egnyte_path,
+        sha256=stored.sha256,
+        version=stored.version,
+    )
+    db.add(document)
+    db.flush()
+    db.add(CheckJob(firm_id=engagement.firm_id, document_id=document.id))
+    db.add(
+        AuditLog(
+            firm_id=engagement.firm_id,
+            actor_id=user.id,
+            action="document.created",
+            entity_type="document",
+            entity_id=document.id,
+            details={"engagement_id": engagement.id, "unassigned": True},
+        )
+    )
+    db.commit()
+    db.refresh(document)
+    return DocumentView(
+        id=document.id,
+        name=document.original_name,
+        size=document.size_bytes,
+        sha256=document.sha256,
+        version=document.version,
+        status=ClientStatus.CHECKING,
     )

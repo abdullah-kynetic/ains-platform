@@ -61,6 +61,21 @@ function WorkspaceSwitcher({
   const [open, setOpen] = useState(false);
   const active = workspaces[auditor ? 0 : 1];
 
+  if (!auditor)
+    return (
+      <div className="flex min-h-[var(--control-height)] w-full items-center gap-[var(--space-3)] rounded-lg border border-border bg-surface p-[var(--space-2)] shadow-card">
+        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-xs font-semibold tracking-wide text-background">
+          {active.mark}
+        </span>
+        <span
+          title={active.name}
+          className="break-words text-sm font-semibold text-foreground"
+        >
+          {active.name}
+        </span>
+      </div>
+    );
+
   return (
     <div className="relative">
       <button
@@ -178,7 +193,7 @@ function Items({
             className={cn(
               "flex min-h-[var(--control-height)] items-center gap-[var(--space-2)] rounded-md px-[var(--space-3)] py-[var(--space-2)] text-sm font-medium leading-snug transition-colors",
               active
-                ? "bg-brand-tint text-brand"
+                ? "bg-hover text-foreground"
                 : "text-muted hover:bg-hover hover:text-foreground",
             )}
           >
@@ -236,7 +251,10 @@ function Panel({
         {auditor ? "Review" : "Engagement"}
       </p>
       <Items items={items} onNavigate={onNavigate} />
-      <div className="mt-auto flex items-center gap-2 border-t border-border px-1 pt-3">
+      <div className="mt-auto pt-3">
+        <ThemeToggle />
+      </div>
+      <div className="mt-3 flex items-center gap-2 border-t border-border px-1 pt-3">
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-xs font-semibold text-muted">
           {initials(who)}
         </span>
@@ -315,7 +333,6 @@ export function Sidebar(props: {
       >
         <Logo sub={props.sub} />
         <div className="flex items-center gap-1">
-          <ThemeToggle />
           <button
             type="button"
             aria-label="Open menu"

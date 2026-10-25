@@ -91,7 +91,7 @@ export default async function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('ains-theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;var root=document.documentElement;root.classList.toggle('dark',d);root.dataset.theme=t==='light'||t==='dark'?t:(d?'dark':'light')}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('ains-theme');var d=t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var root=document.documentElement;root.classList.toggle('dark',d);root.dataset.theme=t==='light'||t==='dark'?t:(d?'dark':'light')}catch(e){}})();`,
           }}
         />
       </head>

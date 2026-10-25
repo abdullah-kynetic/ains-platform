@@ -52,7 +52,7 @@ test("auditor overview, sidebar rail and desktop screenshot", async ({
   await page.getByRole("textbox", { name: "Search pages" }).fill("dark");
   await page.keyboard.press("ArrowDown");
   await expect(
-    page.getByRole("button", { name: "Dark theme", exact: true }),
+    page.getByRole("dialog").getByRole("button", { name: "Dark theme", exact: true }),
   ).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("html")).toHaveClass(/dark/);

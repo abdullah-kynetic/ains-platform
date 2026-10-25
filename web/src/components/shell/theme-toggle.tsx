@@ -1,72 +1,66 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { useEffect, useSyncExternalStore } from "react";
 
-type Theme = "light" | "dark";
-
-function applyTheme(theme: Theme) {
-  const root = document.documentElement;
-  root.classList.toggle("dark", theme === "dark");
-  root.dataset.theme = theme;
-  localStorage.setItem("ains-theme", theme);
-}
-
-function transitionTheme(
-  theme: Theme,
-  origin: { x: number; y: number },
-) {
-  const root = document.documentElement;
-  const reduceMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
-  ).matches;
-
-  if (!document.startViewTransition || reduceMotion) {
-    applyTheme(theme);
-    return;
+type Theme = "light" | "dark" | "system";
+function preference(): Theme {
+  try {
+    const saved = localStorage.getItem("ains-theme");
+    return saved === "light" || saved === "dark" ? saved : "system";
+  } catch {
+    return "system";
   }
-
-  root.style.setProperty("--theme-transition-x", `${origin.x}px`);
-  root.style.setProperty("--theme-transition-y", `${origin.y}px`);
-
-  const transition = document.startViewTransition(() => applyTheme(theme));
-  void transition.finished.finally(() => {
-    root.style.removeProperty("--theme-transition-x");
-    root.style.removeProperty("--theme-transition-y");
-  });
 }
-
+function subscribe(listener: () => void) {
+  window.addEventListener("storage", listener);
+  window.addEventListener("ains-theme-change", listener);
+  return () => {
+    window.removeEventListener("storage", listener);
+    window.removeEventListener("ains-theme-change", listener);
+  };
+}
 export function ThemeToggle() {
+  const theme = useSyncExternalStore(
+    subscribe,
+    preference,
+    () => "system" as Theme,
+  );
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      const dark = theme === "dark" || (theme === "system" && media.matches);
+      document.documentElement.classList.toggle("dark", dark);
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    };
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, [theme]);
   return (
-    <button
-      type="button"
-      aria-label="Toggle color theme"
-      title="Toggle color theme"
-      onClick={(event) => {
-        const nextTheme: Theme = document.documentElement.classList.contains(
-          "dark",
-        )
-          ? "light"
-          : "dark";
-        const bounds = event.currentTarget.getBoundingClientRect();
-        const keyboardActivation = event.detail === 0;
-
-        transitionTheme(nextTheme, {
-          x: keyboardActivation
-            ? bounds.left + bounds.width / 2
-            : event.clientX,
-          y: keyboardActivation
-            ? bounds.top + bounds.height / 2
-            : event.clientY,
-        });
-      }}
-      className="grid size-[var(--control-height)] place-items-center rounded-[var(--control-radius)] border border-border bg-surface text-muted shadow-card transition-colors hover:bg-hover hover:text-foreground"
+    <div
+      role="group"
+      aria-label="Color theme"
+      className="flex rounded-md border border-border bg-surface p-1"
     >
-      <span className="theme-icon-moon">
-        <Moon className="size-4" />
-      </span>
-      <span className="theme-icon-sun">
-        <Sun className="size-4" />
-      </span>
-    </button>
+      {(["light", "dark", "system"] as const).map((value) => (
+        <button
+          key={value}
+          type="button"
+          aria-label={`${value[0].toUpperCase()}${value.slice(1)} theme`}
+          aria-pressed={theme === value}
+          onClick={() => {
+            try {
+              localStorage.setItem("ains-theme", value);
+            } catch {
+              /* Storage may be unavailable. */
+            }
+            window.dispatchEvent(new Event("ains-theme-change"));
+          }}
+          className={`min-h-8 min-w-0 flex-1 rounded px-2 text-xs capitalize text-foreground hover:bg-hover ${theme === value ? "bg-hover" : ""}`}
+        >
+          {value}
+        </button>
+      ))}
+    </div>
   );
 }

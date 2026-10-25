@@ -171,3 +171,19 @@ async def test_ingestor_refuses_reconfigured_root_before_storage():
         await service.ingest(engagement=engagement, item=item, file=upload("test.pdf", b"%PDF-"))
     assert error.value.status_code == 503
     assert client.uploads == []
+
+
+async def test_unassigned_ingestion_keeps_validation_and_guarded_folder():
+    client = FakeEgnyteClient()
+    service = EgnyteDocumentIngestor(settings(), client_factory=lambda _: client)
+    engagement, _ = records()
+    stored = await service.ingest(
+        engagement=engagement, item=None, file=upload("synthetic.txt", b"synthetic")
+    )
+    assert "/unassigned/" in stored.egnyte_path
+    assert stored.egnyte_path.startswith("/Shared/AINS-Dev/")
+    with pytest.raises(HTTPException) as error:
+        await service.ingest(
+            engagement=engagement, item=None, file=upload("synthetic.exe", b"synthetic")
+        )
+    assert error.value.status_code == 415

@@ -66,12 +66,13 @@ class FakeIngestor:
         self.calls = 0
 
     async def ingest(
-        self, *, engagement: Engagement, item: ChecklistItemInstance, file: UploadFile
+        self, *, engagement: Engagement, item: ChecklistItemInstance | None, file: UploadFile
     ) -> StoredDocument:
         self.calls += 1
         content = await file.read()
+        segment = item.item_key if item else "unassigned"
         return StoredDocument(
-            egnyte_path=f"/Shared/AINS-Dev/{engagement.firm_id}/{engagement.id}/{item.item_key}/{file.filename}",
+            egnyte_path=f"/Shared/AINS-Dev/{engagement.firm_id}/{engagement.id}/{segment}/{file.filename}",
             sha256=hashlib.sha256(content).hexdigest(),
             size_bytes=len(content),
             version="synthetic-v1",
@@ -1525,3 +1526,65 @@ def test_unconfigured_invitation_delivery_does_not_persist_invite(backend):
             )
             is None
         )
+
+
+def test_unassigned_upload_is_engagement_owned_and_queued(backend):
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    response = client.post(
+        f"/engagements/{ids['engagement_a']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic unassigned evidence")},
+    )
+    assert response.status_code == 201
+    with factory() as db:
+        document = db.get(Document, response.json()["id"])
+        assert document.firm_id == ids["firm_a"]
+        assert document.engagement_id == ids["engagement_a"]
+        assert document.item_instance_id is None
+        assert document.check_job is not None
+    view = client.get("/engagements/current").json()
+    assert view["unassignedDocuments"][0]["id"] == response.json()["id"]
+
+
+def test_unassigned_upload_rejects_other_firm(backend):
+    client, _, ids, ingestor, _ = backend
+    sign_in_client(client)
+    response = client.post(
+        f"/engagements/{ids['engagement_b']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic")},
+    )
+    assert response.status_code == 404
+    assert ingestor.calls == 0
+
+
+async def test_unassigned_receipt_verification(backend):
+    client, factory, ids, _, _ = backend
+    sign_in_client(client)
+    content = b"Synthetic unassigned receipt"
+    response = client.post(
+        f"/engagements/{ids['engagement_a']}/documents",
+        files={"file": ("synthetic.txt", content)},
+    )
+    assert response.status_code == 201
+    processor = DocumentProcessor(
+        check_settings(), client_factory=lambda _: FakeDownloadClient(content)
+    )
+    with factory() as db:
+        await processor.process(db, response.json()["id"])
+        db.commit()
+        assert db.scalar(select(CheckResult)).status == "received"
+        assert db.get(Document, response.json()["id"]).item is None
+
+
+def test_unassigned_upload_rejects_unassigned_auditor(backend):
+    client, factory, ids, ingestor, _ = backend
+    with factory() as db:
+        db.get(Engagement, ids["engagement_b"]).auditor_id = None
+        db.commit()
+    sign_in_auditor(client)
+    response = client.post(
+        f"/engagements/{ids['engagement_b']}/documents",
+        files={"file": ("synthetic.txt", b"synthetic")},
+    )
+    assert response.status_code == 404
+    assert ingestor.calls == 0

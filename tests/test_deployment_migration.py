@@ -10,7 +10,7 @@ from app.database.models import Base
 
 def test_password_recovery_migration_up_and_down():
     config = Config("alembic.ini")
-    assert ScriptDirectory.from_config(config).get_heads() == ["a110_audit_chain"]
+    assert ScriptDirectory.from_config(config).get_heads() == ["a111_unassigned_documents"]
     engine = create_engine("sqlite://")
     tables = [
         table
@@ -23,7 +23,7 @@ def test_password_recovery_migration_up_and_down():
         command.stamp(config, "a110_audit_chain")
         command.downgrade(config, "a109_password_reset")
         command.stamp(config, "8ad73a592bc1")
-        command.upgrade(config, "head")
+        command.upgrade(config, "a110_audit_chain")
         names = inspect(connection).get_table_names()
         assert "password_reset_tokens" in names
         assert "auth_rate_limits" in names

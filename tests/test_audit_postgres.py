@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, select, text
+from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
@@ -78,7 +78,7 @@ def test_postgres_backfill_trigger_and_concurrent_appends(postgres_engine):
             (id, action, entity_type, details, created_at)
             VALUES ('synthetic-legacy', 'legacy.view', 'engagement', '{}', now())""")
         )
-        command.upgrade(config, "head")
+        command.upgrade(config, "a110_audit_chain")
     with Session(engine) as db:
         rows = db.scalars(select(AuditLog).order_by(AuditLog.sequence)).all()
         assert verify(rows) == {"valid": True, "checked": 1, "broken_at": None}
@@ -108,3 +108,26 @@ def test_postgres_backfill_trigger_and_concurrent_appends(postgres_engine):
     with engine.begin() as connection:
         config.attributes["connection"] = connection
         command.downgrade(config, "a109_password_reset")
+
+
+def test_unassigned_document_migration(postgres_engine):
+    engine = postgres_engine
+    Base.metadata.create_all(engine)
+    config = Config("alembic.ini")
+    with engine.begin() as connection:
+        config.attributes["connection"] = connection
+        connection.execute(text("ALTER TABLE documents DROP COLUMN engagement_id"))
+        connection.execute(text("ALTER TABLE documents ALTER COLUMN item_instance_id SET NOT NULL"))
+        command.stamp(config, "a110_audit_chain")
+        command.upgrade(config, "head")
+        columns = {
+            column["name"]: column for column in inspect(connection).get_columns("documents")
+        }
+        assert columns["item_instance_id"]["nullable"]
+        assert "engagement_id" in columns
+        command.downgrade(config, "a110_audit_chain")
+        columns = {
+            column["name"]: column for column in inspect(connection).get_columns("documents")
+        }
+        assert not columns["item_instance_id"]["nullable"]
+        assert "engagement_id" not in columns
