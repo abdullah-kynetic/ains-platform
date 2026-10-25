@@ -191,9 +191,9 @@ function Items({
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex min-h-[var(--control-height)] items-center gap-[var(--space-2)] rounded-md px-[var(--space-3)] py-[var(--space-2)] text-sm font-medium leading-snug transition-colors",
+              "flex min-h-[var(--control-height)] items-center gap-[var(--space-2)] rounded-full px-[var(--space-3)] py-[var(--space-2)] text-sm font-medium leading-snug transition-colors",
               active
-                ? "bg-hover text-foreground"
+                ? "sidebar-nav-active text-foreground"
                 : "text-muted hover:bg-hover hover:text-foreground",
             )}
           >

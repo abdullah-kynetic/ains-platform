@@ -73,7 +73,7 @@ export default function OverviewPage() {
           <Link
             key={href}
             href={href}
-            className="group rounded-xl border border-border bg-surface p-5 transition-colors hover:border-brand focus-visible:outline-brand"
+            className="clickable-card group rounded-xl border border-border bg-surface p-5 hover:border-brand"
           >
             <div className="flex items-center justify-between gap-3">
               <Icon aria-hidden="true" className="size-6 text-brand" />

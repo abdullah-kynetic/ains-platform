@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore, type CSSProperties } from "react";
 
 type Theme = "light" | "dark" | "system";
 type EffectiveTheme = "light" | "dark";
@@ -122,8 +122,10 @@ export function ThemeToggle() {
     <div
       role="group"
       aria-label="Color theme"
-      className="flex rounded-md border border-border bg-surface p-1"
+      className="theme-control flex rounded-md border border-border bg-surface p-1"
+      style={{ "--theme-index": ["light", "dark", "system"].indexOf(theme) } as CSSProperties}
     >
+      <span aria-hidden="true" className="theme-indicator" />
       {(["light", "dark", "system"] as const).map((value) => (
         <button
           key={value}
@@ -148,7 +150,7 @@ export function ThemeToggle() {
             }
             window.dispatchEvent(new Event("ains-theme-change"));
           }}
-          className={`min-h-8 min-w-0 flex-1 rounded px-2 text-xs capitalize text-foreground hover:bg-hover ${theme === value ? "bg-hover" : ""}`}
+          className="min-h-8 min-w-0 flex-1 rounded px-2 text-xs capitalize text-foreground hover:bg-hover/40"
         >
           {value}
         </button>
