@@ -11,10 +11,14 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import {
   getSession,
+  isWrongPortalStatus,
+  onWrongPortal,
   signOut,
+  ApiError,
   type SessionData,
   type UserRole,
 } from "@/lib/api";
+import { WrongPortal } from "@/components/tenant/wrong-portal";
 import { LoadState } from "@/components/ui/load-state";
 
 type SessionContextValue = {
@@ -27,31 +31,67 @@ type SessionContextValue = {
 const SessionContext = createContext<SessionContextValue | null>(null);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [wrongPortal, setWrongPortal] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState("");
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
       setSession(await getSession());
-    } catch {
+      setWrongPortal(false);
+    } catch (caught) {
       setSession(null);
+      if (caught instanceof ApiError && isWrongPortalStatus(caught.status, caught.message)) {
+        setWrongPortal(true);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
+  useEffect(() => onWrongPortal(() => setWrongPortal(true)), []);
+
   useEffect(() => {
     getSession()
-      .then(setSession)
-      .catch(() => setSession(null))
+      .then((next) => {
+        setSession(next);
+        setWrongPortal(false);
+      })
+      .catch((caught: unknown) => {
+        setSession(null);
+        if (caught instanceof ApiError && isWrongPortalStatus(caught.status, caught.message)) {
+          setWrongPortal(true);
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const logOut = useCallback(async () => {
     await signOut();
     setSession(null);
+    setWrongPortal(false);
   }, []);
+
+  async function signOutOfWrongPortal() {
+    setSigningOut(true);
+    setSignOutError("");
+    try {
+      await signOut();
+      setSession(null);
+      setWrongPortal(false);
+      router.replace("/sign-in");
+    } catch {
+      setSignOutError(
+        "Sign-out could not be completed from this portal. Open your firm's address and sign out there.",
+      );
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   const value = useMemo<SessionContextValue>(
     () => ({
@@ -62,6 +102,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }),
     [session, loading, refresh, logOut],
   );
+
+  if (wrongPortal) {
+    return (
+      <WrongPortal
+        busy={signingOut}
+        error={signOutError}
+        onSignOut={() => void signOutOfWrongPortal()}
+      />
+    );
+  }
 
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

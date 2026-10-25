@@ -11,6 +11,52 @@ export const API_URL = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
 ).replace(/\/$/, "");
 
+/** Playwright sets this so session and branding hit a mocked API. */
+export const LIVE_API_FLAG = "ains-e2e-live-api";
+
+const WRONG_PORTAL_DETAILS = new Set([
+  "Session firm does not match this portal",
+  "Firm portal host is required",
+]);
+
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, detail: string) {
+    super(detail);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+export function isWrongPortalStatus(status: number, detail: string): boolean {
+  return status === 403 && WRONG_PORTAL_DETAILS.has(detail);
+}
+
+type WrongPortalListener = () => void;
+const wrongPortalListeners = new Set<WrongPortalListener>();
+
+export function onWrongPortal(listener: WrongPortalListener): () => void {
+  wrongPortalListeners.add(listener);
+  return () => wrongPortalListeners.delete(listener);
+}
+
+function noteWrongPortal(status: number, detail: string) {
+  if (!isWrongPortalStatus(status, detail)) return;
+  for (const listener of wrongPortalListeners) listener();
+}
+
+/** Synthetic demo stays on unless a browser test opts into the API client. */
+export function clientMocksEnabled(): boolean {
+  if (!USE_MOCKS) return false;
+  if (typeof window === "undefined") return true;
+  try {
+    return window.localStorage.getItem(LIVE_API_FLAG) !== "1";
+  } catch {
+    return true;
+  }
+}
+
 const configuredMaxMb = Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB ?? "100");
 export const MAX_UPLOAD_BYTES =
   (Number.isFinite(configuredMaxMb) && configuredMaxMb > 0
@@ -19,15 +65,16 @@ export const MAX_UPLOAD_BYTES =
   1024 *
   1024;
 
-async function responseError(response: Response): Promise<Error> {
+async function responseError(response: Response): Promise<ApiError> {
   let detail = `Request failed (${response.status})`;
   try {
     const body = (await response.json()) as { detail?: string };
-    if (body.detail) detail = body.detail;
+    if (typeof body.detail === "string" && body.detail) detail = body.detail;
   } catch {
     // The status-only message is safe and useful when the response is not JSON.
   }
-  return new Error(detail);
+  noteWrongPortal(response.status, detail);
+  return new ApiError(response.status, detail);
 }
 
 export async function apiRequest<T>(
@@ -133,19 +180,18 @@ const mockSession: SessionData = {
 };
 
 export async function getSession(): Promise<SessionData> {
-  if (USE_MOCKS && localStorage.getItem("ains-synthetic-signed-out") === "true")
+  if (!clientMocksEnabled()) return apiRequest<SessionData>("/auth/session");
+  if (localStorage.getItem("ains-synthetic-signed-out") === "true")
     throw new Error("Demo signed out");
-  if (USE_MOCKS)
-    return {
-      user: {
-        ...mockSession.user,
-        role:
-          localStorage.getItem("ains-synthetic-role") === "auditor"
-            ? "auditor"
-            : "client",
-      },
-    };
-  return apiRequest<SessionData>("/auth/session");
+  return {
+    user: {
+      ...mockSession.user,
+      role:
+        localStorage.getItem("ains-synthetic-role") === "auditor"
+          ? "auditor"
+          : "client",
+    },
+  };
 }
 
 export async function passwordSignIn(
@@ -250,8 +296,11 @@ export async function verifyMagicLink(
 }
 
 export async function signOut(): Promise<void> {
-  if (USE_MOCKS) localStorage.setItem("ains-synthetic-signed-out", "true");
-  if (!USE_MOCKS) await apiRequest<void>("/auth/sign-out", { method: "POST" });
+  if (clientMocksEnabled()) {
+    localStorage.setItem("ains-synthetic-signed-out", "true");
+    return;
+  }
+  await apiRequest<void>("/auth/sign-out", { method: "POST" });
 }
 
 export async function getClientInvitations(
@@ -707,7 +756,8 @@ export async function uploadDocument(
       } catch {
         // Keep the status-only message for non-JSON responses.
       }
-      reject(new Error(message));
+      noteWrongPortal(request.status, message);
+      reject(new ApiError(request.status, message));
     };
     const form = new FormData();
     form.append("file", file);

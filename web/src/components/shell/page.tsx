@@ -1,9 +1,11 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import type { NavItem } from "./nav";
 import { CommandPalette } from "./command-palette";
 import { SiteFooter } from "@/components/brand/site-footer";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
-import { productName } from "@/lib/brand";
+import { useTenant } from "@/components/tenant/tenant-provider";
 
 export function Shell({
   sidebar,
@@ -16,13 +18,14 @@ export function Shell({
   auditor: boolean;
   children: React.ReactNode;
 }) {
+  const { branding } = useTenant();
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       {sidebar}
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-[var(--space-3)] border-b border-border bg-surface/90 px-[var(--space-4)] py-[var(--space-2)] backdrop-blur sm:px-[var(--space-6)] xl:px-[var(--space-7)]">
           <div className="flex min-w-0 items-center gap-[var(--space-2)] text-xs leading-snug text-muted">
-            <span>{productName}</span>
+            <span>{branding.name}</span>
             <span aria-hidden="true">/</span>
             <span className="truncate font-medium text-foreground">{auditor ? "Audit operations" : "Your engagement"}</span>
           </div>

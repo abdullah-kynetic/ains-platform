@@ -189,7 +189,7 @@ test("sign-in form has accessible labels and a useful failed-sign-in state", asy
     localStorage.setItem("ains-synthetic-signed-out", "true"),
   );
   await page.goto("/sign-in");
-  await expect(page).toHaveTitle("Kien by Kien Solutions");
+  await expect(page).toHaveTitle("Kynetic portal");
   await expect(
     page.getByRole("heading", { name: "Sign in to Kien" }),
   ).toBeVisible();

@@ -1,7 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "@/components/auth/session";
+import { TenantProvider } from "@/components/tenant/tenant-provider";
+import { UnknownFirm } from "@/components/tenant/unknown-firm";
+import {
+  brandingForKnownSlug,
+  firmSlugFromHost,
+  safeHostLabel,
+} from "@/lib/tenant";
 import {
   companyName,
   companyUrl,
@@ -10,7 +18,7 @@ import {
   productName,
 } from "@/lib/brand";
 
-export const metadata: Metadata = {
+const defaultMetadata: Metadata = {
   title: { default: pageTitle, template: `%s · ${productName}` },
   description: pageDescription,
   applicationName: productName,
@@ -25,17 +33,61 @@ export const metadata: Metadata = {
     locale: "en_US",
   },
 };
+
 export const viewport: Viewport = {
   colorScheme: "light dark",
 };
 
-export default function RootLayout({
+async function requestTenant() {
+  const host = (await headers()).get("host");
+  return { host, tenant: firmSlugFromHost(host) };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { tenant } = await requestTenant();
+  if (!tenant.ok) {
+    return {
+      title: "Unknown firm",
+      description: "This address has no matching firm.",
+      robots: { index: false, follow: false },
+    };
+  }
+  const branding = brandingForKnownSlug(tenant.slug);
+  if (branding.name === productName && branding.logoUrl === null) {
+    return defaultMetadata;
+  }
+  return {
+    ...defaultMetadata,
+    title: { default: `${branding.name} portal`, template: `%s · ${branding.name}` },
+    description: "Upload your audit documents and track their status.",
+    robots: { index: false, follow: false },
+  };
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { host, tenant } = await requestTenant();
+  if (!tenant.ok) {
+    return (
+      <html lang="en" className="h-full">
+        <body className="min-h-full bg-background text-foreground">
+          <UnknownFirm reason={tenant.reason} host={safeHostLabel(host)} />
+        </body>
+      </html>
+    );
+  }
+
+  const branding = brandingForKnownSlug(tenant.slug);
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html
+      lang="en"
+      className="h-full"
+      data-firm-slug={tenant.slug}
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -50,10 +102,12 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <SessionProvider>
-          {children}
-          <Toaster />
-        </SessionProvider>
+        <TenantProvider slug={tenant.slug} branding={branding}>
+          <SessionProvider>
+            {children}
+            <Toaster />
+          </SessionProvider>
+        </TenantProvider>
       </body>
     </html>
   );

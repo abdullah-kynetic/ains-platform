@@ -9,6 +9,8 @@
     "production": {
       "name": "ains-platform",
       "workers_dev": false,
+      // Attach *.kiensolutions.com in Cloudflare as a route. Apex and www stay on the landing Worker.
+      // See web/README.md. A wildcard custom domain is not supported.
       "services": [
         { "binding": "WORKER_SELF_REFERENCE", "service": "ains-platform" }
       ]
