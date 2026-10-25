@@ -261,6 +261,9 @@ function Panel({
         </p>
         <Items items={items} onNavigate={onNavigate} />
       </div>
+      <div className="sidebar-theme shrink-0 pt-3">
+        <ThemeToggle />
+      </div>
       <div className="sidebar-identity mt-3 flex shrink-0 items-center gap-2 border-t border-border px-1 pt-3">
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-xs font-semibold text-muted">
           {initials(who)}
@@ -293,9 +296,6 @@ function Panel({
         >
           <LogOut aria-hidden="true" className="size-3.5" />
         </button>
-      </div>
-      <div className="sidebar-theme shrink-0 pt-3">
-        <ThemeToggle />
       </div>
     </div>
   );
