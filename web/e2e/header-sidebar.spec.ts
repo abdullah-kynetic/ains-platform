@@ -48,10 +48,16 @@ for (const role of ["client", "auditor"] as const) {
         await button.click();
         await expect(button).toHaveAttribute("aria-pressed", "true");
       }
-      if (collapsed)
-        await expect(
-          sidebar.locator(".theme-segment-icon").first(),
-        ).toBeVisible();
+      const control = sidebar.getByRole("group", { name: "Color theme" });
+      const controlBounds = await control.boundingBox();
+      const sidebarBounds = await sidebar.boundingBox();
+      expect(
+        sidebarBounds!.y + sidebarBounds!.height - controlBounds!.y - controlBounds!.height,
+      ).toBeLessThanOrEqual(16);
+      if (collapsed) {
+        await expect(sidebar.locator(".theme-control svg").first()).toBeVisible();
+        await expect(sidebar.locator(".theme-label").first()).toBeHidden();
+      }
     }
     if (role === "auditor") {
       await sidebar.getByRole("link", { name: "Settings" }).click();

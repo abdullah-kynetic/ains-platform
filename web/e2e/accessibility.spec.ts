@@ -389,4 +389,9 @@ test("theme reveal animates effective changes from segment and System origins", 
   await dark.click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   expect(await calls()).toHaveLength(6);
+  expect(
+    await sidebar.locator(".theme-indicator").evaluate(
+      (element) => getComputedStyle(element).transitionProperty,
+    ),
+  ).toBe("none");
 });

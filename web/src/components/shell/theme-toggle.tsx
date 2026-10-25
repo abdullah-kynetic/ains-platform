@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useSyncExternalStore, type CSSProperties } from "react";
+
 import { Sun, Moon, Monitor } from "lucide-react";
-import { useEffect, useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark" | "system";
 type EffectiveTheme = "light" | "dark";
@@ -123,8 +124,14 @@ export function ThemeToggle() {
     <div
       role="group"
       aria-label="Color theme"
-      className="theme-segments flex rounded-md border border-border bg-surface p-1"
+      className="theme-control flex rounded-md border border-border bg-surface p-1"
+      style={
+        {
+          "--theme-index": ["light", "dark", "system"].indexOf(theme),
+        } as CSSProperties
+      }
     >
+      <span aria-hidden="true" className="theme-indicator" />
       {(["light", "dark", "system"] as const).map((value) => (
         <button
           key={value}
@@ -149,25 +156,16 @@ export function ThemeToggle() {
             }
             window.dispatchEvent(new Event("ains-theme-change"));
           }}
-          className={`min-h-8 min-w-0 flex-1 rounded px-2 text-xs capitalize text-foreground hover:bg-hover ${theme === value ? "bg-hover" : ""}`}
+          className="min-h-8 min-w-0 flex-1 rounded px-2 text-xs capitalize text-foreground hover:bg-hover/40"
         >
           {value === "light" ? (
-            <Sun
-              aria-hidden="true"
-              className="theme-segment-icon hidden size-4"
-            />
+            <Sun aria-hidden className="size-3.5 shrink-0" />
           ) : value === "dark" ? (
-            <Moon
-              aria-hidden="true"
-              className="theme-segment-icon hidden size-4"
-            />
+            <Moon aria-hidden className="size-3.5 shrink-0" />
           ) : (
-            <Monitor
-              aria-hidden="true"
-              className="theme-segment-icon hidden size-4"
-            />
+            <Monitor aria-hidden className="size-3.5 shrink-0" />
           )}
-          <span className="theme-segment-label">{value}</span>
+          <span className="theme-label">{value}</span>
         </button>
       ))}
     </div>
