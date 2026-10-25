@@ -22,5 +22,5 @@ test("recovery token form validates matching passwords", async ({ page }) => {
   await expect(page.getByLabel("Confirm password", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Back to sign in" }).click();
   await expect(page).toHaveURL(/\/sign-in$/);
-  await expect(page.getByRole("heading", { name: "Sign in to AINS", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign in to Kien", exact: true })).toBeVisible();
 });
