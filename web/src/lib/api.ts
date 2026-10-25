@@ -171,7 +171,7 @@ export async function startAuditorMFAEnrollment(
     return {
       secret: "SYNTHETICMFAPREVIEWONLY",
       provisioning_uri:
-        "otpauth://totp/AINS:synthetic-auditor?secret=SYNTHETICMFAPREVIEWONLY&issuer=AINS",
+        "otpauth://totp/Kien%20Solutions:synthetic-auditor?secret=SYNTHETICMFAPREVIEWONLY&issuer=Kien%20Solutions",
       expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     };
   return apiRequest<AuditorMFAEnrollment>("/auth/auditor/mfa/enrollment", {
@@ -572,6 +572,19 @@ export async function reviewNotApplicable(
   );
 }
 
+const DRAFT_REPORT_DOWNLOADS = {
+  docx: "kien-draft-report.docx",
+  pdf: "kien-draft-report.pdf",
+} as const;
+
+function draftReportFilename(format: "docx" | "pdf", disposition: string): string {
+  const match = disposition.match(/filename="([^"]+)"/);
+  const fromApi = match?.[1] ?? "";
+  // API names are kien-<id>-draft-report.docx|pdf. CORS may hide that header.
+  if (/^kien-.+-draft-report\.(docx|pdf)$/.test(fromApi)) return fromApi;
+  return DRAFT_REPORT_DOWNLOADS[format];
+}
+
 export async function downloadDraftReport(
   engagementId: string,
   format: "docx" | "pdf",
@@ -582,11 +595,12 @@ export async function downloadDraftReport(
   );
   if (!response.ok) throw await responseError(response);
   const blob = await response.blob();
-  const disposition = response.headers.get("Content-Disposition") ?? "";
-  const match = disposition.match(/filename="([^"]+)"/);
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = match?.[1] ?? `ains-draft-report.${format}`;
+  link.download = draftReportFilename(
+    format,
+    response.headers.get("Content-Disposition") ?? "",
+  );
   link.click();
   URL.revokeObjectURL(link.href);
 }

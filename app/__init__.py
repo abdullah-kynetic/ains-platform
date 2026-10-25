@@ -1,1 +1,1 @@
-"""AINS platform application package."""
+"""Kien Solutions platform application package."""

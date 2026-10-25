@@ -1,6 +1,6 @@
-# AINS Platform
+# Kien Solutions
 
-AINS is an AI-native financial regulatory audit firm. Our software does the legwork; a credentialed auditor (Quinton) makes the calls and signs every report. The first service is the FINRA Rule 3310 independent AML test for broker-dealers; more regulatory audits will follow.
+Kien Solutions (https://kiensolutions.com) is an AI-native financial regulatory audit firm. Our software does the legwork; a credentialed auditor (Quinton) makes the calls and signs every report. The first service is the FINRA Rule 3310 independent AML test for broker-dealers; more regulatory audits will follow.
 
 This repo holds the audit workflow backend (Python 3.12, FastAPI, Pydantic) and the portal
 (Next.js 16 in `web/`). Client documents use S3 by default; Egnyte is an optional, off-by-default connector.
@@ -35,6 +35,10 @@ uv run pytest
 uv run ruff check .
 ```
 
+`.env.example` sets `CORS_ORIGINS=http://localhost:3000` so the portal on that origin can call
+the API at `http://localhost:8000`. That localhost origin is for local development. Production
+sets its public HTTPS portal origins and does not include localhost.
+
 The backend owns authentication and uses an HTTP-only `ains_session` cookie. There is no public
 sign-up endpoint. Assigned auditors create firm-bound client invitations, and clients set a
 password while accepting the single-use, expiring token. Invitations can be rotated or revoked;
@@ -50,8 +54,8 @@ Tenant-owned database records carry an explicit `firm_id`. API queries scope cli
 and auditors to assigned engagements. Run `uv run alembic check` after model changes to confirm a
 migration is present.
 
-Supabase is not part of the planned AINS architecture. FastAPI remains the application,
-authentication and authorization boundary, backed by an AINS-managed PostgreSQL deployment; the
+Supabase is not part of the planned Kien Solutions architecture. FastAPI remains the application,
+authentication and authorization boundary, backed by a Kien Solutions-managed PostgreSQL deployment; the
 browser does not connect directly to the database. The old synthetic hosted-PostgreSQL evaluation
 is retained only as an archived decision record in
 [`docs/supabase-postgres-poc.md`](docs/supabase-postgres-poc.md). Do not provision or configure

@@ -6,7 +6,7 @@ test("auditor can move a synthetic engagement without finalizing a report", asyn
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Example Securities LLC/ }).click();
-  await page.getByRole("button", { name: /AINS Operations/ }).click();
+  await page.getByRole("button", { name: /Kien Operations/ }).click();
   await page.goto("/auditor/pipeline");
 
   await expect(

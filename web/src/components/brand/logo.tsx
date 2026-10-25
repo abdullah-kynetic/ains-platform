@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** Placeholder wordmark until the brand name is chosen. */
+/** Kien Solutions wordmark. */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={cn("size-7", className)} aria-hidden>
@@ -15,7 +15,7 @@ export function Logo({ className, sub }: { className?: string; sub?: string }) {
     <div className={cn("flex items-center gap-2.5", className)}>
       <LogoMark />
       <div className="leading-tight">
-        <div className="text-[15px] font-semibold tracking-[-0.02em]">AINS</div>
+        <div className="text-[15px] font-semibold tracking-[-0.02em]">Kien</div>
         {sub ? <div className="text-[10px] uppercase tracking-[0.14em] text-subtle">{sub}</div> : null}
       </div>
     </div>

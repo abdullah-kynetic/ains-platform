@@ -36,9 +36,9 @@ type Workspace = {
 
 const workspaces: Workspace[] = [
   {
-    name: "AINS Operations",
+    name: "Kien Operations",
     type: "Internal workspace",
-    mark: "AI",
+    mark: "KI",
     role: "auditor",
   },
   {
