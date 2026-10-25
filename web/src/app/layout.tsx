@@ -6,8 +6,8 @@ import { SessionProvider } from "@/components/auth/session";
 import { TenantProvider } from "@/components/tenant/tenant-provider";
 import { UnknownFirm } from "@/components/tenant/unknown-firm";
 import {
+  brandingForKnownSlug,
   firmSlugFromHost,
-  getTenantBranding,
   safeHostLabel,
 } from "@/lib/tenant";
 
@@ -33,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
       robots: { index: false, follow: false },
     };
   }
-  const branding = await getTenantBranding(tenant.slug);
+  const branding = brandingForKnownSlug(tenant.slug);
   return {
     title: { default: `${branding.name} portal`, template: `%s · ${branding.name}` },
     description: "Upload your audit documents and track their status.",
@@ -57,7 +57,7 @@ export default async function RootLayout({
     );
   }
 
-  const branding = await getTenantBranding(tenant.slug);
+  const branding = brandingForKnownSlug(tenant.slug);
   return (
     <html
       lang="en"

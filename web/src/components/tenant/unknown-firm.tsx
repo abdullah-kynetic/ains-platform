@@ -4,13 +4,13 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import type { TenantResolution } from "@/lib/tenant";
+import type { TenantRejection } from "@/lib/tenant";
 
 export function UnknownFirm({
   reason,
   host,
 }: {
-  reason: Extract<TenantResolution, { ok: false }>["reason"];
+  reason: TenantRejection;
   host: string;
 }) {
   const detail =
@@ -18,7 +18,9 @@ export function UnknownFirm({
       ? "Add the firm name in front of this domain. Firm portals open at an address like yourfirm.kiensolutions.com."
       : reason === "www"
         ? "www is the public site. Firm portals open at an address like yourfirm.kiensolutions.com."
-        : "Firm portals open at an address like yourfirm.kiensolutions.com. In local development, use yourfirm.localhost:3000.";
+        : reason === "unlisted"
+          ? "This address is not a firm portal we recognize. Use the link from your invitation."
+          : "Firm portals open at an address like yourfirm.kiensolutions.com. In local development, use yourfirm.localhost:3000.";
 
   return (
     <main

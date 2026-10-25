@@ -14,7 +14,14 @@ The portal reads the firm slug from the request host. Production hosts are
 `<firm>.kiensolutions.com`. Local hosts are `<firm>.localhost:3000`
 (`kynetic.localhost:3000`). `kiensolutions.com`, `www`, and a host with no firm
 slug render the unknown-firm page. `*.localhost` already points at this machine.
-API calls stay on `NEXT_PUBLIC_API_URL` with `credentials: "include"`.
+
+With mocks off, the browser loads `GET <NEXT_PUBLIC_API_URL>/tenant/branding`
+(`credentials: "include"`). The API resolves the firm from `Origin`. A 200
+`{name, logoUrl}` replaces the Kien mark (`logoUrl` null keeps that mark). A
+404 `{detail: "Unknown firm portal"}` shows the unknown-firm page. Network
+errors keep the Kien defaults. `NEXT_PUBLIC_USE_MOCKS=true` skips that request.
+A 403 whose detail says the session firm does not match this portal shows the
+wrong-portal screen and a sign-out action. There is no `/api` proxy.
 
 - `src/lib/checklist.ts`: client statuses (same values as `app/checklist.ClientStatus`), labels, progress helpers.
 - `src/lib/api.ts`: typed API client for backend sessions, engagements, questionnaire answers, uploads, auditor review, and draft report downloads.
