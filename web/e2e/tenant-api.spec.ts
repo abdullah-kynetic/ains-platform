@@ -74,7 +74,7 @@ test("branding 404 shows the unknown firm page", async ({ page }) => {
     "data-tenant-reason",
     "unlisted",
   );
-  await expect(page.getByRole("heading", { name: "Sign in to AINS" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Sign in to Kien", exact: true })).toHaveCount(0);
   expectDirectApiBranding(page, branding);
 });
 
@@ -104,6 +104,6 @@ test("a 403 for another firm's session shows wrong portal and signs out", async 
     return route.fulfill({ status: 204, body: "" });
   });
   await page.getByRole("button", { name: "Sign out" }).click();
-  await expect(page.getByRole("heading", { name: "Sign in to AINS" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign in to Kien", exact: true })).toBeVisible();
   expectDirectApiBranding(page, branding);
 });

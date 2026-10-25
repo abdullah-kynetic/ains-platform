@@ -14,7 +14,7 @@ async function expectUnknownFirm(page: Page, reason: "apex" | "www" | "missing")
   await expect(main).toHaveAttribute("data-tenant-reason", reason);
   await expect(page.getByRole("heading", { name: "Unknown firm" })).toBeVisible();
   await expect(page.locator("html")).not.toHaveAttribute("data-firm-slug", /.+/);
-  await expect(page.getByRole("heading", { name: "Sign in to AINS" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Sign in to Kien", exact: true })).toHaveCount(0);
 }
 
 test("tenant host exposes the firm slug and mock branding", async ({ page }, testInfo) => {
@@ -35,7 +35,7 @@ test("tenant host exposes the firm slug and mock branding", async ({ page }, tes
 test("a dev firm without mock branding uses Kien defaults", async ({ page }) => {
   await page.goto(`${serverOrigin("northwind.localhost")}/sign-in`);
   await expect(page.locator("html")).toHaveAttribute("data-firm-slug", "northwind");
-  await expect(page.getByRole("heading", { name: "Sign in to AINS" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign in to Kien", exact: true })).toBeVisible();
   await expect(page.getByText("Kien", { exact: true }).first()).toBeVisible();
   await expect(page.locator('img[src="/brand/kien-mark.svg"]').first()).toBeVisible();
 });

@@ -45,7 +45,7 @@ test("engagement drawer contains a timeline, traps focus and keeps full workspac
 
 test("client dashboard presents simple action cards and neutral intake state", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle("Kien by Kien Solutions");
+  await expect(page).toHaveTitle("Kynetic portal");
   const footer = page.getByRole("contentinfo");
   await expect(footer).toContainText("Kien by Kien Solutions");
   await expect(footer.getByRole("link", { name: "kiensolutions.com" })).toHaveAttribute(
