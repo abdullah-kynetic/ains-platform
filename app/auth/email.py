@@ -25,7 +25,10 @@ class ResendSender:
         self.purpose = purpose
 
     def send(self, *, email: str, token: str, expires_at: datetime) -> None:
-        if not self.settings.resend_api_key.get_secret_value() or not self.settings.email_from:
+        email_from = self.settings.email_from
+        if self.purpose == "invitation" and self.settings.invite_email_from:
+            email_from = self.settings.invite_email_from
+        if not self.settings.resend_api_key.get_secret_value() or not email_from:
             raise HTTPException(status_code=503, detail="Email delivery is not configured")
         routes = {
             "magic-link": "sign-in",
@@ -42,7 +45,7 @@ class ResendSender:
                     "Authorization": f"Bearer {self.settings.resend_api_key.get_secret_value()}"
                 },
                 json={
-                    "from": self.settings.email_from,
+                    "from": email_from,
                     "to": [email],
                     "subject": _SUBJECTS[self.purpose],
                     "text": (

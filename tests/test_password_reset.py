@@ -145,6 +145,28 @@ def test_resend_magic_and_invitation_links(reset_backend):
 
 
 @respx.mock
+@pytest.mark.parametrize(
+    ("purpose", "invite_email_from", "expected_from"),
+    [
+        ("invitation", "invites@example.test", "invites@example.test"),
+        ("invitation", "", "synthetic@example.test"),
+        ("reset", "invites@example.test", "synthetic@example.test"),
+        ("magic-link", "invites@example.test", "synthetic@example.test"),
+    ],
+)
+def test_resend_sender_address(reset_backend, purpose, invite_email_from, expected_from):
+    import json
+
+    _, _, settings = reset_backend
+    settings.invite_email_from = invite_email_from
+    send = respx.post("https://api.resend.com/emails").mock(return_value=httpx.Response(200))
+    ResendSender(settings, purpose).send(
+        email="synthetic@example.test", token="synthetic", expires_at=datetime.now(UTC)
+    )
+    assert json.loads(send.calls[-1].request.content)["from"] == expected_from
+
+
+@respx.mock
 def test_ip_throttle_applies_across_email_addresses(reset_backend):
     client, factory, _ = reset_backend
     send = respx.post("https://api.resend.com/emails").mock(return_value=httpx.Response(200))

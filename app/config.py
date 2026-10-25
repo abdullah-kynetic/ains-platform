@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     s3_retention_mode: Literal["COMPLIANCE", "GOVERNANCE"] = "GOVERNANCE"
     resend_api_key: SecretStr = SecretStr("")
     email_from: str = ""
+    invite_email_from: str = ""
     portal_url: str = "http://localhost:3000"
     password_reset_ttl_minutes: int = Field(default=15, ge=1, le=60)
 
