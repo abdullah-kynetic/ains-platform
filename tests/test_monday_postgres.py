@@ -13,6 +13,7 @@ def test_monday_additive_schema_preserves_rows(postgres_engine):
     engine = postgres_engine
     Base.metadata.create_all(engine)
     with engine.begin() as connection:
+        connection.execute(text('DROP TABLE engagement_reports'))
         connection.execute(text(
             'ALTER TABLE checklist_item_instances DROP COLUMN na_previous_state'
         ))

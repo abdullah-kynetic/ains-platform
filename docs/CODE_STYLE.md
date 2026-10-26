@@ -72,3 +72,21 @@ Undo restores a nullable JSON `na_previous_state` snapshot (revision `a113_check
 ClientStatus is non-native VARCHAR, so no PostgreSQL enum alteration is needed.
 Set/unset appends to the existing immutable audit chain in the same transaction.
 No audit rubric or restricted content is added.
+
+
+## Editable auditor reports
+
+The existing report template, approved finding drafts, legacy DOCX/PDF generator and
+hash-attestation sign-off remain in place. `/auditor/reports` adds persisted editing
+per assigned engagement in `engagement_reports` (additive `a114_engagement_reports`).
+Firm/period/scope and 34 request statuses are snapshotted server-side on create/save.
+Approved findings prefill the narrative; auditors enter per-item report findings.
+Restricted items allow metadata only. The native rich-text editor accepts text paste;
+the server keeps only formatting tags with no attributes, scripts, URLs or embedded content.
+Version checks and row locks prevent lost updates. Finalization requires explicit human
+attestation, freezes content and records its SHA-256. Audited reopening permits edits;
+prior final hashes remain in the immutable audit chain. Final status does not complete
+the engagement, deliver a report, establish a clean opinion or create a cryptographic
+signature. Clients receive 403 and have no report navigation; unassigned auditors get 404.
+Print view uses the invoice-style browser print/save PDF flow. The idempotent
+`python -m app.report_seed` seeds one existing explicitly synthetic demo engagement.
