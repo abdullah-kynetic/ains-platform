@@ -114,6 +114,8 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     invited_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    onboarding_state: Mapped[str | None] = mapped_column(String(12))
+    onboarding_finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     firm: Mapped[Firm | None] = relationship(back_populates="users")

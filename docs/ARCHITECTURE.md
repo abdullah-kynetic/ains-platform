@@ -123,3 +123,18 @@ the engagement, deliver a report, establish a clean opinion or create a cryptogr
 signature. Clients receive 403 and have no report navigation; unassigned auditors get 404.
 Print view uses the invoice-style browser print/save PDF flow. The idempotent
 `python -m app.report_seed` seeds one existing explicitly synthetic demo engagement.
+
+
+## First sign-in walkthrough
+
+`GET/POST /auth/onboarding` reads/finishes only the authenticated user's preference.
+Nullable `users.onboarding_state` and `onboarding_finished_at` are added by
+`a115_user_onboarding`; null means pending. Completed/skipped states are terminal
+through the public endpoint and audited once. Each role has a three-step skippable
+modal using the existing dialog, focus handling, tokens and reduced-motion behavior.
+The app has auditor/client roles and no distinct firm-admin role; the auditor flow
+explains the workspace management auditors already have permission to use.
+`python -m app.onboarding_seed --reset-demo` resets only the two exact existing
+synthetic demo identities, preserves credentials and records demo reset events.
+Demo users are left pending after verification. Static browser mocks have no sign-in;
+set `kien-synthetic-onboarding-enabled=1` to exercise their local walkthrough state.
