@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import * as Icons from "lucide-react";
+import { getClients, type ClientSummary } from "@/lib/workflow-api";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { Sheet } from "@/components/ui/dialog";
@@ -59,6 +60,23 @@ function WorkspaceSwitcher({
   onNavigate?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [assigned, setAssigned] = useState<ClientSummary[] | null>(null);
+  const [error, setError] = useState(false);
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!auditor || onWorkspaceChange) return;
+    let cancelled = false;
+    getClients()
+      .then((clients) => {
+        if (!cancelled) setAssigned(clients);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [auditor, onWorkspaceChange]);
   const active = workspaces[auditor ? 0 : 1];
 
   if (!auditor)
@@ -75,6 +93,81 @@ function WorkspaceSwitcher({
         </span>
       </div>
     );
+
+  if (!onWorkspaceChange) {
+    const current = assigned?.find(
+      (client) => pathname === `/auditor/engagements/${client.id}`,
+    );
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          aria-label="Assigned workspaces"
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+          className="flex min-h-[var(--control-height)] w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface p-2 text-left text-sm font-semibold shadow-card hover:bg-hover"
+        >
+          <span className="break-words">
+            {current?.firmName ?? "Kien Operations"}
+          </span>
+          <ChevronsUpDown className="size-3.5 shrink-0 text-subtle" />
+        </button>
+        {open && (
+          <div className="absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-lg border border-border bg-surface p-1.5 shadow-pop">
+            <p className="px-2 py-1.5 text-xs font-semibold text-subtle">
+              Assigned workspaces
+            </p>
+            <Link
+              href="/auditor"
+              onClick={() => {
+                setOpen(false);
+                onNavigate?.();
+              }}
+              className="block rounded-md px-2 py-2 text-sm hover:bg-hover"
+            >
+              All client audits
+            </Link>
+            {assigned?.map((client) => (
+              <Link
+                key={client.id}
+                href={`/auditor/engagements/${client.id}`}
+                aria-current={current?.id === client.id ? "page" : undefined}
+                onClick={() => {
+                  setOpen(false);
+                  onNavigate?.();
+                }}
+                className="block break-words rounded-md px-2 py-2 text-sm hover:bg-hover"
+              >
+                {client.firmName}
+              </Link>
+            ))}
+            {!assigned && (
+              <p role="status" className="px-2 py-2 text-xs text-muted">
+                {error
+                  ? "Could not load workspaces. Open all client audits to retry."
+                  : "Loading workspaces…"}
+              </p>
+            )}
+            {assigned?.length === 0 && (
+              <p className="px-2 py-2 text-xs text-muted">
+                No assigned engagements.
+              </p>
+            )}
+            <Link
+              href="/auditor/workspaces/new"
+              onClick={() => {
+                setOpen(false);
+                onNavigate?.();
+              }}
+              className="block border-t border-border px-2 py-2 text-xs text-muted"
+            >
+              Add client workspace
+            </Link>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
@@ -182,8 +275,8 @@ function Items({
           item.href === "/auditor" && pathname === "/"
             ? true
             : item.exact || item.href === "/" || item.href === "/auditor"
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(`${item.href}/`);
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
         return (
           <Link

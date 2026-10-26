@@ -20,14 +20,26 @@ export default function ChecklistPage() {
   if (error || !data) return <LoadState error={error} retry={reload} />;
 
   const progress = progressOf(data);
-  const items = data.sections.flatMap(section => section.items).filter(item =>
-    `${item.requestId} ${item.title}`.toLowerCase().includes(search.toLowerCase())
-  ).sort(requestOrder);
+  const items = data.sections
+    .flatMap((section) => section.items)
+    .filter((item) =>
+      `${item.requestId} ${item.title}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+    )
+    .sort(requestOrder);
   const sections = [
-    {id: "active", title: "Document requests", items: items.filter(item => item.status !== "not_applicable")},
-    {id: "na", title: "Does not apply", items: items.filter(item => item.status === "not_applicable")},
-  ].filter(section => section.items.length);
-
+    {
+      id: "active",
+      title: "Document requests",
+      items: items.filter((item) => item.status !== "not_applicable"),
+    },
+    {
+      id: "na",
+      title: "Does not apply",
+      items: items.filter((item) => item.status === "not_applicable"),
+    },
+  ].filter((section) => section.items.length);
 
   return (
     <>
@@ -45,7 +57,8 @@ export default function ChecklistPage() {
         <div className="flex flex-wrap justify-between gap-2 text-sm">
           <span className="font-medium">Document collection</span>
           <span className="text-muted">
-            {progress.done} of {progress.total} requests resolved (receipts or N/A)
+            {progress.done} of {progress.total} requests resolved (receipts or
+            N/A)
           </span>
         </div>
         <Progress value={progress.pct} />
@@ -95,7 +108,12 @@ export default function ChecklistPage() {
             </summary>
             <div className="mt-3">
               {section.items.map((item) => (
-                <ChecklistItemRow key={item.id} item={item} />
+                <ChecklistItemRow
+                  key={item.id}
+                  item={item}
+                  engagementId={data.id}
+                  onChanged={reload}
+                />
               ))}
             </div>
           </details>

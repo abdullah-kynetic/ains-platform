@@ -36,6 +36,7 @@ from app.database.models import (
     FindingDraft,
     Firm,
     MFARecoveryCode,
+    NAReviewState,
     ReviewState,
     TaskPriority,
     User,
@@ -1126,7 +1127,7 @@ def test_representation_is_tenant_scoped_and_requires_confirmation(backend):
     assert client.post(path, json={"kind": "no_activity", "confirmed": True}).status_code == 200
     with factory() as db:
         item = db.get(ChecklistItemInstance, ids["item_a"])
-        assert item.representation == "no_activity" and item.na_review_state.value == "pending"
+        assert item.representation == "no_activity" and item.status == ClientStatus.NOT_APPLICABLE
 
 
 def test_no_activity_question_requires_explicit_representation(backend):
@@ -1178,7 +1179,7 @@ def test_auditor_follow_up_and_document_replacement_feedback(backend):
     )
 
 
-def test_questionnaire_no_answer_remains_visible_pending_auditor_review(backend) -> None:
+def test_questionnaire_no_answer_directly_marks_na_and_remains_visible(backend) -> None:
     client, factory, ids, _, _ = backend
     sign_in_client(client)
     questionnaire = client.get(f"/engagements/{ids['engagement_a']}/questionnaire")
@@ -1200,7 +1201,7 @@ def test_questionnaire_no_answer_remains_visible_pending_auditor_review(backend)
         json={"answers": [{"itemId": ids["item_a"], "applies": False}]},
     )
     assert answered.status_code == 200
-    assert answered.json()["questions"][0]["naReviewState"] == "pending"
+    assert answered.json()["questions"][0]["naReviewState"] == "approved"
     visible_ids = {
         item["id"]
         for section in client.get("/engagements/current").json()["sections"]
@@ -1209,16 +1210,18 @@ def test_questionnaire_no_answer_remains_visible_pending_auditor_review(backend)
     assert ids["item_a"] in visible_ids
     with factory() as db:
         item = db.get(ChecklistItemInstance, ids["item_a"])
-        assert item and not item.applicable and item.na_review_state.value == "pending"
+        assert item and not item.applicable and item.status == ClientStatus.NOT_APPLICABLE
 
 
 def test_only_assigned_auditor_can_reject_na_and_restore_item(backend) -> None:
     client, factory, ids, _, _ = backend
     sign_in_client(client)
-    client.post(
-        f"/engagements/{ids['engagement_a']}/questionnaire/answers",
-        json={"answers": [{"itemId": ids["item_a"], "applies": False}]},
-    )
+    with factory() as db:
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        item.na_review_state = NAReviewState.PENDING
+        item.applicable = False
+        item.status = ClientStatus.WITH_AUDITOR
+        db.commit()
     forbidden = client.post(
         f"/engagements/{ids['engagement_a']}/questionnaire/items/{ids['item_a']}/na-review",
         json={"decision": "reject"},
@@ -1252,10 +1255,12 @@ def test_questionnaire_answers_are_tenant_scoped(backend) -> None:
 def test_assigned_auditor_can_approve_na(backend) -> None:
     client, factory, ids, _, _ = backend
     sign_in_client(client)
-    client.post(
-        f"/engagements/{ids['engagement_a']}/questionnaire/answers",
-        json={"answers": [{"itemId": ids["item_a"], "applies": False}]},
-    )
+    with factory() as db:
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        item.na_review_state = NAReviewState.PENDING
+        item.applicable = False
+        item.status = ClientStatus.WITH_AUDITOR
+        db.commit()
     client.cookies.clear()
     sign_in_auditor(client)
     response = client.post(

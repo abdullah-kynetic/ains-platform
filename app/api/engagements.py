@@ -56,6 +56,7 @@ class ItemView(APIModel):
     restricted: bool
     allowed_evidence_types: list[str]
     can_upload: bool
+    na_marked_by_role: UserRole | None
     na_review_state: NAReviewState | None
     representation: str | None
     follow_up: bool
@@ -129,6 +130,11 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
                 restricted=definition.restricted,
                 allowed_evidence_types=definition.allowed_evidence_types,
                 can_upload=item.applicable and not definition.restricted,
+                na_marked_by_role=(
+                    item.na_marked_by.role
+                    if item.status == ClientStatus.NOT_APPLICABLE and item.na_marked_by
+                    else None
+                ),
                 na_review_state=item.na_review_state,
                 representation=item.representation,
                 follow_up=item.follow_up,
@@ -165,10 +171,14 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
         collection_progress={
             "total": sum(not item.restricted for item in engagement.items),
             "done": sum(
-                not item.restricted and item.na_review_state != NAReviewState.PENDING
-                and item.status in {
-                    ClientStatus.CHECKING, ClientStatus.WITH_AUDITOR,
-                    ClientStatus.ACCEPTED_FOR_TESTING, ClientStatus.NOT_APPLICABLE,
+                not item.restricted
+                and item.na_review_state != NAReviewState.PENDING
+                and item.status
+                in {
+                    ClientStatus.CHECKING,
+                    ClientStatus.WITH_AUDITOR,
+                    ClientStatus.ACCEPTED_FOR_TESTING,
+                    ClientStatus.NOT_APPLICABLE,
                 }
                 for item in engagement.items
             ),
@@ -188,6 +198,7 @@ def current_engagement(user: CurrentUser, db: DB) -> EngagementView:
         .options(
             selectinload(Engagement.firm),
             selectinload(Engagement.items).selectinload(ChecklistItemInstance.documents),
+            selectinload(Engagement.items).selectinload(ChecklistItemInstance.na_marked_by),
         )
         .order_by(Engagement.created_at.desc())
         .limit(1)

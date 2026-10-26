@@ -17,7 +17,7 @@ Before release, validate PRD journeys F-01 through F-10, especially server-side 
 | --- | --- | --- | --- | --- |
 | F-01 | Client requests own current engagement | Own firm/allowed fields returned | Integration | Covered in source; this session not run |
 | F-01 / Isolation | Client requests another firm’s engagement/document/questionnaire | Denied with no cross-firm data | Integration | Covered in source; this session not run |
-| F-02 | Client answers applicability / no-activity question | Answer persists; N/A waits for auditor decision | Integration/e2e | Covered in source; this session not run |
+| F-02 | Client answers applicability / no-activity question | Answer persists; N/A applies immediately and can be undone | Integration/e2e | Covered in source; this session not run |
 | F-03 | Client uploads several files without choosing request | Files receive unassigned, firm-scoped receipts | Integration/e2e | Covered in source; this session not run |
 | F-03 / Security | Restricted item, invalid type, zero byte or >100 MB upload | Rejected before storage; safe error | Integration | Invalid type/oversize/restricted covered; this session not run |
 | F-04 | Auditor gives document-level replacement feedback | Client sees neutral message and can re-upload | Integration/e2e | Covered in source; this session not run |
@@ -76,14 +76,18 @@ exact session command results are recorded in the delivery report.
 
 ## Numbered checklist N/A
 
-All 34 catalog requests remain visible in numeric order, with auditor-confirmed
-`not_applicable` items at the bottom and their original numbers retained. N/A counts
-as resolved in collection progress and human review readiness. Only the assigned
-auditor can set or undo N/A; clients retain conditional representations pending review.
-Undo restores a nullable JSON `na_previous_state` snapshot (revision `a113_checklist_na`).
-ClientStatus is non-native VARCHAR, so no PostgreSQL enum alteration is needed.
-Set/unset appends to the existing immutable audit chain in the same transaction.
-No audit rubric or restricted content is added.
+All 34 catalog requests remain visible with their original numbers; N/A sorts last.
+Clients can directly set/undo N/A on their own engagement; its assigned auditor can
+also set/undo it. Questionnaire no answers and the legacy representation endpoint
+now set N/A directly. Existing pending claims remain readable and reviewable for
+compatibility. N/A counts as done; collection still excludes the two restricted items
+(32 ordinary requests). Restricted-content handling and upload prohibitions remain.
+Undo restores `na_previous_state` (revision `a113_checklist_na`). The existing
+`na_approved_by_id` stores the marking actor for both roles; the related user supplies
+`naMarkedByRole`. Each toggle records actor ID and role in the immutable audit chain.
+No schema migration is needed. This collection declaration is not an audit finding.
+Auditor workspace links come from server-authorized assignments rather than a disabled
+synthetic client-role switch. Unassigned auditors and other firms remain denied.
 
 
 ## Editable auditor reports

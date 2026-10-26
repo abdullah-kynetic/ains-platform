@@ -249,6 +249,7 @@ function EngagementWorkspace({ id }: { id: string }) {
                   {request.assessment?.replaceAll("_", " ") ?? "Not assessed"}
                 </span>
               </summary>
+              {request.status === "not_applicable" && request.naMarkedByRole && <p className="mt-2 text-sm text-muted">Marked N/A by {request.naMarkedByRole}</p>}
               <div className="mt-4 grid gap-4">
                 <Button variant="outline" disabled={busy} onClick={() => void act(() => setRequestNA(id, request.id, request.status !== "not_applicable"))}>
                   {request.status === "not_applicable" ? "Undo does not apply" : "Does not apply"}

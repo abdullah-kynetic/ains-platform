@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from app.checklist import ClientStatus
-from app.checklist.applicability import unset_na
+from app.checklist.applicability import record_na_change
 from app.checklist.catalog import load_catalog
 from app.database.models import AuditLog, ChecklistItemInstance, Document, NAReviewState, UserRole
 
@@ -51,36 +51,26 @@ def intake_item(db, user, engagement_id, item_id):
 def represent(engagement_id: str, item_id: str, payload: Representation, user: CurrentUser, db: DB):
     if user.role != UserRole.CLIENT:
         raise HTTPException(403, "Only firm users can make representations")
-    engagement, item = intake_item(db, user, engagement_id, item_id)
+    _, item = intake_item(db, user, engagement_id, item_id)
     definition = load_catalog().get(item.item_key)
-    if item.status == ClientStatus.NOT_APPLICABLE:
-        raise HTTPException(409, "Ask your auditor to reopen this N/A request")
     if definition.restricted or not definition.conditions:
         raise HTTPException(409, "This request requires direct auditor handling")
-    before = {"representation": item.representation, "na_review_state": item.na_review_state}
+    record_na_change(db, item, user, True)
     item.representation = payload.kind
-    item.applicability_decision = None
-    item.assessment = None
-    item.applicability_answer = False
-    item.applicable = False
-    item.na_review_state = NAReviewState.PENDING
-    item.na_approved_by_id = None
-    item.status = ClientStatus.WITH_AUDITOR
-    db.add(
-        AuditLog(
-            firm_id=engagement.firm_id,
-            actor_id=user.id,
-            action="representation.submitted",
-            entity_type="checklist_item_instance",
-            entity_id=item.id,
-            details={
-                "before": before,
-                "after": {"representation": item.representation, "na_review_state": "pending"},
-            },
-        )
-    )
     db.commit()
-    return {"status": "pending_auditor_review"}
+    return {"status": item.status}
+
+
+class NAChange(BaseModel):
+    not_applicable: bool
+
+
+@router.post("/engagements/{engagement_id}/items/{item_id}/na")
+def change_na(engagement_id: str, item_id: str, payload: NAChange, user: CurrentUser, db: DB):
+    _, item = intake_item(db, user, engagement_id, item_id)
+    record_na_change(db, item, user, payload.not_applicable)
+    db.commit()
+    return {"status": item.status}
 
 
 @router.post("/auditor/engagements/{engagement_id}/items/{item_id}/follow-up")
@@ -92,7 +82,8 @@ def follow_up(engagement_id: str, item_id: str, user: CurrentUser, db: DB):
     if definition.restricted:
         raise HTTPException(409, "Restricted requests cannot be released for upload")
     before = {"applicable": item.applicable, "follow_up": item.follow_up}
-    unset_na(item)
+    if item.status == ClientStatus.NOT_APPLICABLE:
+        record_na_change(db, item, user, False)
     item.applicable = True
     item.follow_up = True
     item.assessment = None

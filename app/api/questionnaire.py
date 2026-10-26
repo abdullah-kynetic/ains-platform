@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
 from app.checklist import ClientStatus
-from app.checklist.applicability import set_na, unset_na
+from app.checklist.applicability import record_na_change, unset_na
 from app.checklist.catalog import load_catalog
 from app.database.models import (
     AuditLog,
@@ -90,7 +90,9 @@ def _questionnaire(db: Session, engagement: Engagement) -> QuestionnaireView:
                 item_id=item.id,
                 section_title=section_titles[definition.section],
                 question=definition.conditions.question,
-                answer=item.applicability_answer,
+                answer=False
+                if item.status == ClientStatus.NOT_APPLICABLE
+                else item.applicability_answer,
                 na_review_state=item.na_review_state,
                 when_no=definition.conditions.when_no,
                 representation=item.representation,
@@ -160,18 +162,21 @@ def answer_questionnaire(
             raise HTTPException(422, "Confirm a representation for each no-activity answer")
     for answer in payload.answers:
         item = items[answer.item_id]
-        if item.status == ClientStatus.NOT_APPLICABLE:
-            raise HTTPException(409, "Ask your auditor to reopen this N/A request")
         representation = answer.representation if not answer.applies else None
-        if item.applicability_answer == answer.applies and item.representation == representation:
+        if (
+            (item.status == ClientStatus.NOT_APPLICABLE) == (not answer.applies)
+            and item.applicability_answer == answer.applies
+            and item.representation == representation
+        ):
             continue
         before = {"answer": item.applicability_answer, "representation": item.representation}
-        item.applicability_decision = None
+        record_na_change(db, item, user, not answer.applies)
         item.assessment = None
         item.applicability_answer = answer.applies
         item.representation = answer.representation if not answer.applies else None
-        item.na_approved_by_id = None
         if answer.applies:
+            item.applicability_decision = None
+            item.na_approved_by_id = None
             item.applicable = True
             item.na_review_state = None
             item.na_requested_at = None
@@ -179,10 +184,7 @@ def answer_questionnaire(
                 ClientStatus.RESTRICTED_DO_NOT_UPLOAD if item.restricted else ClientStatus.REQUESTED
             )
         else:
-            item.applicable = False
-            item.na_review_state = NAReviewState.PENDING
             item.na_requested_at = now
-            item.status = ClientStatus.WITH_AUDITOR
         db.add(
             AuditLog(
                 firm_id=engagement.firm_id,
@@ -235,7 +237,7 @@ def review_not_applicable(
 
     before = {"applicable": item.applicable, "na_review_state": item.na_review_state}
     if payload.decision == "approve":
-        set_na(item, user.id)
+        record_na_change(db, item, user, True)
     item.na_approved_by_id = user.id
     item.applicability_decision = (
         "not_applicable" if payload.decision == "approve" else "applicable"
@@ -265,6 +267,7 @@ def review_not_applicable(
             entity_id=item.id,
             details={
                 "before": before,
+                "actor_role": user.role.value,
                 "after": {"applicable": item.applicable, "na_review_state": item.na_review_state},
             },
         )

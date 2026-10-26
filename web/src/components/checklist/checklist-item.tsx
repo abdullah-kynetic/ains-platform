@@ -1,11 +1,46 @@
 "use client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { setRequestNA } from "@/lib/workflow-api";
 import { AlertCircle, FileText, Lock } from "lucide-react";
 import { StatusBadge } from "./status-badge";
 import { STATUS_META, type ChecklistItem } from "@/lib/checklist";
 import { formatBytes, formatDate } from "@/lib/utils";
 
-export function ChecklistItemRow({ item }: { item: ChecklistItem }) {
-  const restricted = item.status === "restricted_do_not_upload";
+export function ChecklistItemRow({
+  item,
+  engagementId,
+  onChanged,
+}: {
+  item: ChecklistItem;
+  engagementId?: string;
+  onChanged?: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function toggleNA() {
+    if (!engagementId) return;
+    setBusy(true);
+    setError("");
+    try {
+      await setRequestNA(
+        engagementId,
+        item.id,
+        item.status !== "not_applicable",
+        "client",
+      );
+      onChanged?.();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not update this request.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  const restricted = item.restricted;
   const needsAction =
     item.status === "action_needed_reupload" ||
     item.status === "action_needed_more";
@@ -19,9 +54,36 @@ export function ChecklistItemRow({ item }: { item: ChecklistItem }) {
             <p className="mt-0.5 text-xs text-muted">{item.description}</p>
           ) : null}
         </div>
-        <StatusBadge status={item.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge status={item.status} />
+          {engagementId && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => void toggleNA()}
+              aria-label={`${item.status === "not_applicable" ? "Undo N/A" : "Mark N/A"} ${item.requestId}`}
+            >
+              {busy
+                ? "Saving…"
+                : item.status === "not_applicable"
+                  ? "Undo N/A"
+                  : "Mark N/A"}
+            </Button>
+          )}
+        </div>
       </div>
 
+      {error && (
+        <p role="alert" className="text-sm text-warning-foreground">
+          {error}
+        </p>
+      )}
+      {item.status === "not_applicable" && item.naMarkedByRole && (
+        <p className="text-xs text-muted">
+          Marked N/A by {item.naMarkedByRole}
+        </p>
+      )}
       {needsAction && item.reason ? (
         <div className="flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/10 px-3 py-2 text-sm text-warning-foreground">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
@@ -35,8 +97,7 @@ export function ChecklistItemRow({ item }: { item: ChecklistItem }) {
       )}
       {item.naReviewState === "pending" && (
         <p className="text-sm text-muted">
-          N/A or no-activity confirmation awaiting auditor review. No upload is
-          required while pending.
+          Legacy N/A response. Use Mark N/A to confirm it directly.
         </p>
       )}
 
