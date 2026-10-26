@@ -248,6 +248,7 @@ class ChecklistItemInstance(Base):
     status: Mapped[ClientStatus] = mapped_column(
         Enum(ClientStatus, native_enum=False), default=ClientStatus.REQUESTED
     )
+    na_previous_state: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     client_reason: Mapped[str | None] = mapped_column(Text)
     restricted: Mapped[bool] = mapped_column(Boolean, default=False)
     is_conditional: Mapped[bool] = mapped_column(Boolean, default=False)

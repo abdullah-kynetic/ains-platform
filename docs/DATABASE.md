@@ -107,3 +107,15 @@ conversion. Fully paid and void invoices are terminal; payments must be positive
 cannot exceed the balance. Paid invoices and partially paid invoices cannot be voided.
 Invoice migration downgrade intentionally refuses deletion of financial history; image
 rollback retains the additive tables. Retention/refund policies remain unresolved.
+
+
+## Numbered checklist N/A
+
+All 34 catalog requests remain visible in numeric order, with auditor-confirmed
+`not_applicable` items at the bottom and their original numbers retained. N/A counts
+as resolved in collection progress and human review readiness. Only the assigned
+auditor can set or undo N/A; clients retain conditional representations pending review.
+Undo restores a nullable JSON `na_previous_state` snapshot (revision `a113_checklist_na`).
+ClientStatus is non-native VARCHAR, so no PostgreSQL enum alteration is needed.
+Set/unset appends to the existing immutable audit chain in the same transaction.
+No audit rubric or restricted content is added.

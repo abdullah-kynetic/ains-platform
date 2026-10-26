@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { buttonVariants } from "@/components/ui/button";
 import { ChecklistItemRow } from "@/components/checklist/checklist-item";
 import { useEngagement } from "@/components/checklist/use-engagement";
-import { progressOf } from "@/lib/checklist";
+import { progressOf, requestOrder } from "@/lib/checklist";
 
 export default function ChecklistPage() {
   const { data, error, reload } = useEngagement();
@@ -20,22 +20,20 @@ export default function ChecklistPage() {
   if (error || !data) return <LoadState error={error} retry={reload} />;
 
   const progress = progressOf(data);
-  const sections = data.sections
-    .map((section) => ({
-      ...section,
-      items: section.items.filter((item) =>
-        `${item.requestId} ${item.title}`
-          .toLowerCase()
-          .includes(search.toLowerCase()),
-      ),
-    }))
-    .filter((section) => section.items.length);
+  const items = data.sections.flatMap(section => section.items).filter(item =>
+    `${item.requestId} ${item.title}`.toLowerCase().includes(search.toLowerCase())
+  ).sort(requestOrder);
+  const sections = [
+    {id: "active", title: "Document requests", items: items.filter(item => item.status !== "not_applicable")},
+    {id: "na", title: "Does not apply", items: items.filter(item => item.status === "not_applicable")},
+  ].filter(section => section.items.length);
+
 
   return (
     <>
       <PageHeader
         title="Document checklist"
-        description="Your applicable requests, grouped into manageable sections. A file receipt is not an audit conclusion."
+        description="Your numbered document requests. A file receipt is not an audit conclusion."
         actions={
           <Link href="/upload" className={buttonVariants()}>
             Go to upload center
@@ -47,7 +45,7 @@ export default function ChecklistPage() {
         <div className="flex flex-wrap justify-between gap-2 text-sm">
           <span className="font-medium">Document collection</span>
           <span className="text-muted">
-            {progress.done} of {progress.total} requests have receipts
+            {progress.done} of {progress.total} requests resolved (receipts or N/A)
           </span>
         </div>
         <Progress value={progress.pct} />

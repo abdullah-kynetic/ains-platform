@@ -60,3 +60,15 @@ Scripts are confirmed in `pyproject.toml`, `web/package.json`, and `.github/work
 Invoice arithmetic uses Decimal quantities and integer cents, half-up per-line rounding,
 and server-derived totals. Web live totals use integer hundredths; browser-supplied totals
 and invoice numbers are not accepted as authoritative inputs. No new dependency is needed.
+
+
+## Numbered checklist N/A
+
+All 34 catalog requests remain visible in numeric order, with auditor-confirmed
+`not_applicable` items at the bottom and their original numbers retained. N/A counts
+as resolved in collection progress and human review readiness. Only the assigned
+auditor can set or undo N/A; clients retain conditional representations pending review.
+Undo restores a nullable JSON `na_previous_state` snapshot (revision `a113_checklist_na`).
+ClientStatus is non-native VARCHAR, so no PostgreSQL enum alteration is needed.
+Set/unset appends to the existing immutable audit chain in the same transaction.
+No audit rubric or restricted content is added.

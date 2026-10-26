@@ -67,3 +67,15 @@ access. Issue-date range, client and status filters include computed overdue (se
 past due in UTC, positive balance). No emails, reminders, tax, conversion or payment
 processing is included. PDF uses the browser print/save flow. Payment and transition
 events provide a base for later follow-up work, which remains unimplemented.
+
+
+## Numbered checklist N/A
+
+All 34 catalog requests remain visible in numeric order, with auditor-confirmed
+`not_applicable` items at the bottom and their original numbers retained. N/A counts
+as resolved in collection progress and human review readiness. Only the assigned
+auditor can set or undo N/A; clients retain conditional representations pending review.
+Undo restores a nullable JSON `na_previous_state` snapshot (revision `a113_checklist_na`).
+ClientStatus is non-native VARCHAR, so no PostgreSQL enum alteration is needed.
+Set/unset appends to the existing immutable audit chain in the same transaction.
+No audit rubric or restricted content is added.

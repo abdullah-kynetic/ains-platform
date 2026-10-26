@@ -50,7 +50,7 @@ def test_additive_invoice_migration_and_concurrent_numbering(postgres_engine):
         config = Config("alembic.ini")
         config.attributes["connection"] = connection
         command.stamp(config, "a111_unassigned_documents")
-        command.upgrade(config, "head")
+        command.upgrade(config, "a112_auditor_invoices")
         assert set(inspect(connection).get_table_names()) - original == {
             "alembic_version",
             "invoice_issuers",

@@ -1,10 +1,11 @@
+import { requestOrder, type ClientStatus } from "./checklist";
 import catalog from "../../.generated/catalog.json";
 import { apiRequest, USE_MOCKS } from "./api";
 import { cloneMockEngagement, saveMockEngagement, invalidateMockDecision } from "./mock-data";
 
 export type Assessment = "supported" | "partial" | "conflicting" | "unable_to_determine";
 export type Decision = { applicability: "applicable" | "not_applicable"; assessment: Assessment | null; notes: string };
-export type ManualRequest = { id: string; requestId: string; title: string; restricted: boolean; stage: string; applicable: boolean; followUp: boolean; naReviewState: string | null; representation: string | null; applicability: Decision["applicability"] | null; assessment: Assessment | null; notes: string; documents: { id: string; name: string; sha256: string; version: string; uploadedAt: string; feedbackCode?: string | null }[] };
+export type ManualRequest = { status?: ClientStatus; id: string; requestId: string; title: string; restricted: boolean; stage: string; applicable: boolean; followUp: boolean; naReviewState: string | null; representation: string | null; applicability: Decision["applicability"] | null; assessment: Assessment | null; notes: string; documents: { id: string; name: string; sha256: string; version: string; uploadedAt: string; feedbackCode?: string | null }[] };
 export type Readiness = { ready: boolean; reviewed: number; total: number; blockers: string[]; meaning: string };
 export type History = { id: string; actor: string; action: string; entityId: string; at: string; details: Record<string, unknown> };
 export type Workspace = { id: string; firmName: string; requests: ManualRequest[]; readiness: Readiness; history: History[] };
@@ -36,7 +37,7 @@ export async function getWorkspace(id: string): Promise<Workspace> {
     const item = data.sections.flatMap((section) => section.items).find((item) => item.id === definition.id);
     const decision = state.decisions[definition.id];
     return { id: definition.id, requestId: definition.id, title: definition.title, restricted: definition.restricted,
-      stage: definition.stage, applicable: item?.canUpload !== false, followUp: item?.followUp ?? false,
+      stage: definition.stage, status: item?.status, applicable: item?.canUpload !== false, followUp: item?.followUp ?? false,
       naReviewState: item?.naReviewState ?? null, representation: item?.representation ?? null,
       applicability: decision?.applicability ?? null, assessment: decision?.assessment ?? null, notes: decision?.notes ?? "",
       documents: (item?.files ?? []).map((file) => ({ ...file, sha256: file.sha256 ?? "", version: "synthetic-1" })) };
@@ -47,7 +48,7 @@ export async function getWorkspace(id: string): Promise<Workspace> {
     ...(request.naReviewState === "pending" ? [`${request.requestId}: client representation awaits review`] : []),
     ...(request.applicability === "applicable" && data.sections.flatMap((section) => section.items).find((item) => item.id === request.id)?.status.startsWith("action_needed") ? [`${request.requestId}: replacement requested`] : []),
   ]);
-  return { id: data.id, firmName: data.firmName, requests, history: state.history,
+  return { id: data.id, firmName: data.firmName, requests: requests.sort(requestOrder), history: state.history,
     readiness: { ready: !blockers.length, reviewed: requests.filter((request) => request.applicability && (request.applicability === "not_applicable" || request.assessment)).length,
       total: 34, blockers, meaning: "Ready for human report drafting, not a clean opinion or signed report." } };
 }
@@ -200,4 +201,25 @@ export async function sendFeedback(id: string, itemId: string, documentId: strin
   file.feedback = reasons[code]; item.reason = reasons[code]; item.status = code === "usable" ? "with_auditor" : "action_needed_reupload";
   invalidateMockDecision(itemId);
   saveMockEngagement(data); event(mockState(), "document.feedback", itemId, null, { documentId, code });
+}
+
+
+export async function setRequestNA(id: string, itemId: string, notApplicable: boolean): Promise<void> {
+  if (!USE_MOCKS) return apiRequest(`/auditor/engagements/${id}/items/${itemId}/na`, {method: "POST", body: JSON.stringify({not_applicable: notApplicable})});
+  const data = cloneMockEngagement();
+  const item = data.sections.flatMap(section => section.items).find(item => item.id === itemId);
+  if (!item) throw new Error("Request not found");
+  const snapshotKey = `ains-na-previous-${itemId}`;
+  const state = mockState();
+  if (notApplicable && item.status !== "not_applicable") {
+    localStorage.setItem(snapshotKey, JSON.stringify({item, decision: state.decisions[itemId]}));
+    item.status = "not_applicable"; item.canUpload = false; item.naReviewState = "approved";
+    state.decisions[itemId] = {applicability: "not_applicable", assessment: null, notes: ""};
+  } else if (!notApplicable && item.status === "not_applicable") {
+    const previous = JSON.parse(localStorage.getItem(snapshotKey) ?? "null");
+    if (previous) { Object.assign(item, previous.item); item.naReviewState = previous.item.naReviewState ?? null; item.canUpload = previous.item.canUpload ?? true; if (previous.decision) state.decisions[itemId] = previous.decision; else delete state.decisions[itemId]; }
+    localStorage.removeItem(snapshotKey);
+  }
+  saveMockEngagement(data);
+  event(state, notApplicable ? "request.na_set" : "request.na_unset", itemId, null, {status: item.status});
 }

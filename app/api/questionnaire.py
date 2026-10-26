@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
 from app.checklist import ClientStatus
+from app.checklist.applicability import set_na, unset_na
 from app.checklist.catalog import load_catalog
 from app.database.models import (
     AuditLog,
@@ -159,6 +160,8 @@ def answer_questionnaire(
             raise HTTPException(422, "Confirm a representation for each no-activity answer")
     for answer in payload.answers:
         item = items[answer.item_id]
+        if item.status == ClientStatus.NOT_APPLICABLE:
+            raise HTTPException(409, "Ask your auditor to reopen this N/A request")
         representation = answer.representation if not answer.applies else None
         if item.applicability_answer == answer.applies and item.representation == representation:
             continue
@@ -231,6 +234,8 @@ def review_not_applicable(
         raise HTTPException(status_code=404, detail="Pending N/A answer not found")
 
     before = {"applicable": item.applicable, "na_review_state": item.na_review_state}
+    if payload.decision == "approve":
+        set_na(item, user.id)
     item.na_approved_by_id = user.id
     item.applicability_decision = (
         "not_applicable" if payload.decision == "approve" else "applicable"
@@ -240,6 +245,7 @@ def review_not_applicable(
         item.na_review_state = NAReviewState.APPROVED
         item.applicable = False
     else:
+        unset_na(item)
         item.na_review_state = NAReviewState.REJECTED
         item.applicable = True
         item.status = (

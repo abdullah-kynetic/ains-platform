@@ -58,6 +58,7 @@ def test_repr_hides_secrets() -> None:
 
 def test_statuses() -> None:
     assert {s.name for s in ClientStatus} == {
+        "NOT_APPLICABLE",
         "REQUESTED",
         "CHECKING",
         "ACTION_NEEDED_REUPLOAD",

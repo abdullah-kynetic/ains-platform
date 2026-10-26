@@ -6,6 +6,7 @@ import { AuthGate } from "@/components/auth/session";
 import { EngagementDrawer } from "@/components/auditor/engagement-drawer";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { requestOrder } from "@/lib/checklist";
 import { USE_MOCKS } from "@/lib/api";
 import { PageHeader, Stat } from "@/components/shell/page";
 import { buttonVariants, Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { AuditorUpcomingTasks } from "@/components/auditor/upcoming-tasks";
 import { ClientInvitations } from "@/components/auditor/client-invitations";
 import { MFARecoveryCodes } from "@/components/auditor/mfa-recovery-codes";
 import {
+  setRequestNA,
   getClients,
   getWorkspace,
   requestFollowUp,
@@ -160,7 +162,7 @@ function EngagementWorkspace({ id }: { id: string }) {
     `${request.requestId} ${request.title}`
       .toLowerCase()
       .includes(search.toLowerCase()),
-  );
+  ).sort(requestOrder);
   return (
     <>
       <PageHeader
@@ -242,11 +244,14 @@ function EngagementWorkspace({ id }: { id: string }) {
               <summary className="cursor-pointer font-medium">
                 {request.requestId} — {request.title}
                 <span className="ml-2 text-xs text-muted">
-                  {request.applicability ?? "Undecided"} ·{" "}
+                  {request.status === "not_applicable" ? "Does not apply" : request.applicability ?? "Undecided"} ·{" "}
                   {request.assessment?.replaceAll("_", " ") ?? "Not assessed"}
                 </span>
               </summary>
               <div className="mt-4 grid gap-4">
+                <Button variant="outline" disabled={busy} onClick={() => void act(() => setRequestNA(id, request.id, request.status !== "not_applicable"))}>
+                  {request.status === "not_applicable" ? "Undo does not apply" : "Does not apply"}
+                </Button>
                 {request.restricted ? (
                   <p className="text-sm text-warning-foreground">
                     Human-only handling. Do not upload or record restricted

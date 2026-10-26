@@ -10,6 +10,7 @@ class ClientStatus(StrEnum):
     is usable for testing, not that the firm passed.
     """
 
+    NOT_APPLICABLE = "not_applicable"
     REQUESTED = "requested"
     CHECKING = "checking"
     ACTION_NEEDED_REUPLOAD = "action_needed_reupload"
