@@ -91,5 +91,5 @@ Runtime/domain assertions supplied by the owner: `live.kiensolutions.com` Worker
 Filters are `status`, `client`, inclusive issue-date `since`/`until`, `limit` (max 200)
 and `offset`. Web pages use `web/src/lib/invoice-api.ts`; mock mode persists synthetic
 invoice metadata locally. Payment recording does not contact a payment or mail service.
-The printable detail uses browser print/save as PDF. Invoice data is owned by its issuer
-and creating auditor and requires a current matching client/engagement assignment.
+The printable detail uses browser print/save as PDF. Invoice data is shared by the issuing auditor firm and requires a current matching
+client/engagement assignment to an auditor in that firm. Unbound issuers stay private.

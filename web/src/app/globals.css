@@ -402,6 +402,7 @@ input[type="file"] {
   transform: translateY(calc(var(--theme-index) * 100%));
 }
 .theme-control button {
+  color: var(--color-foreground);
   display: flex;
   align-items: center;
   justify-content: center;

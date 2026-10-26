@@ -357,7 +357,7 @@ export function Sidebar(props: {
         data-collapsed={collapsed}
         data-dragging={dragging}
         style={{ width: collapsed ? 76 : width }}
-        className="desktop-sidebar sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-sidebar lg:flex lg:flex-col"
+        className="desktop-sidebar sticky top-0 hidden h-dvh min-h-screen self-start w-64 shrink-0 border-r border-border bg-sidebar lg:flex lg:flex-col"
       >
         <div className="flex items-center justify-between gap-1 p-3">
           {!collapsed ? <Logo sub={props.sub} className="min-w-0" /> : null}

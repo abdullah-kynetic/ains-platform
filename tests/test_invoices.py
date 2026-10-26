@@ -173,7 +173,7 @@ def test_numbering_shared_firm_and_independent_firms(invoices):
     assert create(client, ids, engagementId=ids["engagements"][2])["number"] == 1
 
 
-@pytest.mark.parametrize("who", [1, 2, 3])
+@pytest.mark.parametrize("who", [2, 3])
 def test_every_endpoint_denies_other_auditor_or_client(invoices, who):
     client, _, ids, current = invoices
     invoice = create(client, ids)
@@ -204,7 +204,7 @@ def test_assignment_removal_and_forged_client_engagement(invoices):
     )
     invoice = create(client, ids)
     with factory() as db:
-        db.get(Engagement, ids["engagements"][0]).auditor_id = ids["users"][1]
+        db.get(Engagement, ids["engagements"][0]).auditor_id = ids["users"][2]
         db.commit()
     assert client.get(f"/auditor/invoices/{invoice['id']}").status_code == 404
     assert client.get("/auditor/invoices").json() == []
@@ -257,3 +257,18 @@ def test_seed_is_synthetic_only_idempotent_and_preserves_credentials(invoices, m
     with factory() as db:
         assert len(db.scalars(select(Invoice)).all()) == 4
         assert db.get(User, ids["users"][0]).password_hash == "synthetic-unchanged-hash"
+
+
+def test_whole_issuer_firm_shares_invoice_and_assignment(invoices):
+    client, _, ids, current = invoices
+    invoice = create(client, ids)
+    current[0] = ids["users"][1]
+    path = f"/auditor/invoices/{invoice['id']}"
+    assert client.get(path).status_code == 200
+    assert [i["id"] for i in client.get("/auditor/invoices").json()] == [invoice["id"]]
+    assert client.patch(path, json=payload(ids, notes="Shared synthetic draft")).status_code == 200
+    assert client.post(path + "/sent").status_code == 200
+    response = client.post(
+        path + "/paid", json={"paidDate": str(date.today()), "amountCents": 1}
+    )
+    assert response.status_code == 200
