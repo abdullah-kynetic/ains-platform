@@ -103,7 +103,7 @@ export function Onboarding() {
           />
         ))}
       </div>
-      <p className="mb-6 text-sm leading-relaxed text-muted">{current.text}</p>
+      <p className="mb-4 text-sm leading-relaxed text-muted">{current.text}</p>
       <p className="mb-4 text-xs text-subtle">{step + 1} of 3</p>
       {error && (
         <p role="alert" className="mb-4 text-sm text-danger-foreground">

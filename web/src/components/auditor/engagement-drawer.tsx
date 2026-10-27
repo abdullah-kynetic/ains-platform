@@ -10,7 +10,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { getAuditorActivity, type AuditorActivity, type ClientSummary } from "@/lib/workflow-api";
 
 export function EngagementDrawer({ client, onClose }: { client: ClientSummary | null; onClose: () => void }) {
-  return <Sheet open={Boolean(client)} onOpenChange={(open) => { if (!open) onClose(); }} side="right" label="Engagement details" className="w-[580px] max-w-[100vw] bg-surface p-6 pt-16">
+  return <Sheet open={Boolean(client)} onOpenChange={(open) => { if (!open) onClose(); }} side="right" label="Engagement details" className="w-[580px] max-w-[100vw] bg-surface p-4 pt-16">
     {client && <RecordDetails key={client.id} client={client} />}
   </Sheet>;
 }

@@ -83,7 +83,7 @@ export function AuditorPipelineBoard() {
         badge={<Badge variant="brand">Synthetic preview</Badge>}
       />
 
-      <div className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-3)] md:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Stat
           label="Active engagements"
           value={active.length}

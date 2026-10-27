@@ -7,7 +7,7 @@ test("sidebar drag, keyboard and persistence", async ({ page }) => {
   const handle = page.getByRole("separator", { name: "Resize sidebar" });
   async function dragTo(width: number) {
     const collapsed = await sidebar.getAttribute("data-collapsed") === "true";
-    const current = collapsed ? 76 : Number(await handle.getAttribute("aria-valuenow"));
+    const current = collapsed ? 48 : Number(await handle.getAttribute("aria-valuenow"));
     await expect(sidebar).toHaveCSS("width", `${current}px`);
     const box = await handle.boundingBox();
     const side = await sidebar.boundingBox();

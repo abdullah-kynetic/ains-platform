@@ -240,7 +240,7 @@ function EngagementWorkspace({ id }: { id: string }) {
           return (
             <details
               key={request.id}
-              className="rounded-xl border border-border bg-surface p-4"
+              className="rounded-xl bg-card ring-1 ring-foreground/10 p-4"
             >
               <summary className="cursor-pointer font-medium">
                 {request.requestId} — {request.title}

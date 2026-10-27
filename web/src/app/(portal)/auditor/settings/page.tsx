@@ -24,7 +24,7 @@ function Settings() {
           e.preventDefault();
           setSaved(true);
         }}
-        className="grid gap-[var(--space-6)] md:grid-cols-[11rem_minmax(0,1fr)]"
+        className="grid gap-4 md:grid-cols-[11rem_minmax(0,1fr)]"
       >
         <nav
           aria-label="Settings sections"
@@ -40,11 +40,11 @@ function Settings() {
             </a>
           ))}
         </nav>
-        <div className="grid max-w-3xl gap-5">
+        <div className="grid max-w-3xl gap-4">
           {" "}
           <section
             id="settings-profile"
-            className="scroll-mt-24 rounded-xl border border-border bg-surface p-6"
+            className="scroll-mt-24 rounded-xl bg-card ring-1 ring-foreground/10 p-4"
           >
             <h2 className="text-lg font-semibold">Profile</h2>
             <p className="mb-5 text-sm text-muted">
@@ -70,7 +70,7 @@ function Settings() {
           </section>
           <section
             id="settings-mfa"
-            className="scroll-mt-24 rounded-xl border border-border bg-surface p-6"
+            className="scroll-mt-24 rounded-xl bg-card ring-1 ring-foreground/10 p-4"
           >
             <h2 className="text-lg font-semibold">MFA</h2>
             <p className="mt-2 text-sm text-muted">
@@ -84,7 +84,7 @@ function Settings() {
           </section>
           <section
             id="settings-firm"
-            className="scroll-mt-24 rounded-xl border border-border bg-surface p-6"
+            className="scroll-mt-24 rounded-xl bg-card ring-1 ring-foreground/10 p-4"
           >
             <h2 className="mb-4 text-lg font-semibold">Firm</h2>
             <label className="grid gap-2 text-sm">
@@ -98,7 +98,7 @@ function Settings() {
           </section>
           <section
             id="settings-notifications"
-            className="scroll-mt-24 rounded-xl border border-border bg-surface p-6"
+            className="scroll-mt-24 rounded-xl bg-card ring-1 ring-foreground/10 p-4"
           >
             <h2 className="mb-2 text-lg font-semibold">Notifications</h2>
             <p className="mb-4 text-sm text-muted">

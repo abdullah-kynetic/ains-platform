@@ -101,7 +101,7 @@ export default function AuditorUploadCenter() {
       />
       <ol
         aria-label="Upload steps"
-        className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-3)] text-sm leading-snug sm:grid-cols-3"
+        className="mb-4 grid grid-cols-1 gap-[var(--space-3)] text-sm leading-snug sm:grid-cols-3"
       >
         {["Choose request", "Confirm files", "Keep receipts"].map(
           (step, index) => (
@@ -130,7 +130,7 @@ export default function AuditorUploadCenter() {
           description="Pending N/A and restricted requests do not accept portal files. Review your checklist or contact your auditor."
         />
       ) : (
-        <div className="grid max-w-4xl gap-5 rounded-2xl border border-border bg-surface p-4 sm:p-6">
+        <div className="grid max-w-4xl gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
           <label className="grid gap-2">
             Search requests
             <Input

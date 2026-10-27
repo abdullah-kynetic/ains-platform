@@ -135,7 +135,7 @@ export function InvoiceList() {
           <CardTitle>Invoice register</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Field label="Status">
               <Select
                 value={filters.status ?? ""}
@@ -428,7 +428,7 @@ export function InvoiceForm({ id }: { id?: string }) {
         <p role="alert">Only draft invoices can be edited.</p>
       ) : (
         <form onSubmit={submit}>
-          <fieldset disabled={busy} className="space-y-5">
+          <fieldset disabled={busy} className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Client & dates</CardTitle>
@@ -791,16 +791,16 @@ export function InvoiceDetail({ id }: { id: string }) {
               <caption className="sr-only">Invoice line items</caption>
               <thead>
                 <tr className="border-b border-border text-xs text-muted">
-                  <th scope="col" className="py-3 pr-4 font-medium">
+                  <th scope="col" className="h-10 px-2 font-medium">
                     Description
                   </th>
-                  <th scope="col" className="px-2 py-3 text-right font-medium">
+                  <th scope="col" className="h-10 px-2 text-right font-medium">
                     Qty
                   </th>
-                  <th scope="col" className="px-2 py-3 text-right font-medium">
+                  <th scope="col" className="h-10 px-2 text-right font-medium">
                     Rate
                   </th>
-                  <th scope="col" className="py-3 pl-2 text-right font-medium">
+                  <th scope="col" className="h-10 px-2 text-right font-medium">
                     Amount
                   </th>
                 </tr>

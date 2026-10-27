@@ -10,6 +10,7 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  ChevronRight,
   Plus,
   ShieldCheck,
   type LucideIcon,
@@ -113,7 +114,7 @@ function WorkspaceSwitcher({
           <ChevronsUpDown className="size-3.5 shrink-0 text-subtle" />
         </button>
         {open && (
-          <div className="absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-lg border border-border bg-surface p-1.5 shadow-pop">
+          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 min-w-56 rounded-lg border border-border bg-surface p-1.5 shadow-pop">
             <p className="px-2 py-1.5 text-xs font-semibold text-subtle">
               Assigned workspaces
             </p>
@@ -192,7 +193,7 @@ function WorkspaceSwitcher({
       </button>
 
       {open ? (
-        <div className="absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-lg border border-border bg-surface p-1.5 shadow-pop">
+        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 min-w-56 rounded-lg border border-border bg-surface p-1.5 shadow-pop">
           <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-subtle">
             Workspaces
           </p>
@@ -287,10 +288,10 @@ function Items({
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex min-h-[var(--control-height)] items-center gap-[var(--space-2)] rounded-md px-[var(--space-3)] py-[var(--space-2)] text-sm font-medium leading-snug transition-colors",
+              "flex h-8 items-center gap-2 rounded-md p-2 text-sm leading-snug transition-colors",
               active
-                ? "bg-hover text-foreground"
-                : "text-muted hover:bg-hover hover:text-foreground",
+                ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                : "text-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
             )}
           >
             <Icon
@@ -338,27 +339,29 @@ function Panel({
   return (
     <div
       className={cn(
-        "sidebar-panel flex min-h-0 flex-1 flex-col overflow-hidden p-3",
+        "sidebar-panel flex min-h-0 flex-1 flex-col p-2",
         !desktop && "h-full",
       )}
     >
-      <div className="sidebar-navigation min-h-0 flex-1 overflow-y-auto">
+      <div className="sidebar-workspace shrink-0">
         {!desktop ? <Logo sub={sub} className="px-2 pt-2 pb-5" /> : null}
         <WorkspaceSwitcher
           auditor={auditor}
           onWorkspaceChange={onWorkspaceChange}
           onNavigate={onNavigate}
         />
-        <p className="mt-7 mb-2 px-2.5 text-xs font-semibold uppercase tracking-[0.13em] text-subtle">
+      </div>
+      <div className="sidebar-navigation min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+        <p className="mt-2 flex h-8 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/80">
           {auditor ? "Review" : "Engagement"}
         </p>
         <Items items={items} onNavigate={onNavigate} />
       </div>
-      <div className="sidebar-theme shrink-0 pt-3">
+      <div className="sidebar-theme shrink-0 pt-2">
         <ThemeToggle />
       </div>
-      <div className="sidebar-identity mt-3 flex shrink-0 items-center gap-2 border-t border-border px-1 pt-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-elevated text-xs font-semibold text-muted">
+      <div className="sidebar-identity mt-2 flex shrink-0 items-center gap-2 border-t border-sidebar-border px-0 pt-2">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-elevated text-xs font-semibold text-muted">
           {initials(who)}
         </span>
         <div className="min-w-0 flex-1">
@@ -402,6 +405,7 @@ export function Sidebar(props: {
   onSignOut?: () => void;
   onWorkspaceChange?: (workspace: "auditor" | "client") => void;
 }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [width, setWidth] = useState(256);
@@ -444,15 +448,21 @@ export function Sidebar(props: {
     }
   }, [width, collapsed, restored]);
 
+  useEffect(() => {
+    const toggle = () => setCollapsed((value) => !value);
+    window.addEventListener("kien-toggle-sidebar", toggle);
+    return () => window.removeEventListener("kien-toggle-sidebar", toggle);
+  }, []);
+
   return (
     <>
       <aside
         data-collapsed={collapsed}
         data-dragging={dragging}
-        style={{ width: collapsed ? 76 : width }}
-        className="desktop-sidebar sticky top-0 hidden h-dvh min-h-screen self-start w-64 shrink-0 border-r border-border bg-sidebar lg:flex lg:flex-col"
+        style={{ width: collapsed ? 48 : width }}
+        className="desktop-sidebar sticky top-0 hidden h-dvh min-h-screen self-start w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col"
       >
-        <div className="flex items-center justify-between gap-1 p-3">
+        <div className="flex items-center justify-between gap-1 p-2">
           {!collapsed ? <Logo sub={props.sub} className="min-w-0" /> : null}
           <button
             type="button"
@@ -508,7 +518,7 @@ export function Sidebar(props: {
             drag.current = {
               pointer: event.pointerId,
               start: event.clientX,
-              width: collapsed ? 76 : width,
+              width: collapsed ? 48 : width,
             };
             setDragging(true);
           }}
@@ -538,19 +548,20 @@ export function Sidebar(props: {
       <div
         role="region"
         aria-label="Mobile workspace controls"
-        className="sticky top-0 z-30 flex items-center justify-between gap-[var(--space-3)] border-b border-border bg-surface/90 px-[var(--space-4)] py-[var(--space-2)] backdrop-blur lg:hidden"
+        className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 bg-background/60 px-4 backdrop-blur-md md:h-14 lg:hidden"
       >
-        <Logo sub={props.sub} />
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            aria-label="Open menu"
-            onClick={() => setOpen(true)}
-            className="grid size-[var(--control-height)] place-items-center rounded-[var(--control-radius)] text-muted hover:bg-hover"
-          >
-            <Menu className="size-5" />
-          </button>
-        </div>
+        <button
+          type="button"
+          aria-label="Open menu"
+          onClick={() => setOpen(true)}
+          className="-ml-1 grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-hover"
+        >
+          <Menu aria-hidden className="size-4" />
+        </button>
+        <span aria-hidden className="mr-2 h-4 border-r border-border" />
+        <span className="text-sm text-muted">{props.sub}</span>
+        <ChevronRight aria-hidden className="size-3.5 shrink-0 text-subtle" />
+        <span className="truncate text-sm">{props.items.find((item) => item.href === pathname)?.label ?? "Workspace"}</span>
       </div>
       <Sheet open={open} onOpenChange={setOpen} label="Navigation">
         <Panel {...props} onNavigate={() => setOpen(false)} />
