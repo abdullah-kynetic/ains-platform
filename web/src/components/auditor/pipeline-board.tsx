@@ -124,7 +124,7 @@ export function AuditorPipelineBoard() {
 
       {!loading ? <div
         aria-label="Audit pipeline stages"
-        className="-mx-[var(--space-4)] overflow-x-auto px-[var(--space-4)] pb-[var(--space-5)] sm:-mx-[var(--space-6)] sm:px-[var(--space-6)] xl:-mx-[var(--space-7)] xl:px-[var(--space-7)]"
+        className="-mx-4 overflow-x-auto px-4 pb-4 md:-mx-6 md:px-6"
       >
         <div className="grid min-w-[1800px] grid-cols-6 items-start gap-4">
           {stages.map((stage) => {

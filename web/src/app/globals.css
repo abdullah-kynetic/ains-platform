@@ -319,10 +319,8 @@ dialog::backdrop {
   background: var(--color-selection);
 }
 
-label,
-.grid,
-.grid > * {
-  min-width: 0;
+@layer base {
+  label, .grid, .grid > * { min-width: 0; }
 }
 
 /* Thin, quiet scrollbars */
