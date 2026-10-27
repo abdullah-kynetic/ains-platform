@@ -1,5 +1,15 @@
 # Design System
 
+Root [DESIGN.md](../DESIGN.md) records the incumbent Kien/shadcn visual system in
+Impeccable's machine-readable and narrative format; [PRODUCT.md](../PRODUCT.md)
+records confirmed product truth. `.impeccable/review.md` records the refinement
+assessment. These preserve the historical context below. Shared heading/prose
+roles now protect long tokens, balance headings and limit explanatory copy to
+75ch without narrowing data tables. Reduced motion explicitly removes transitions
+and animations while retaining visible final states; the original normal-motion
+theme control is unchanged. Sidebar pointer ownership and blur cleanup keep
+interrupted drags recoverable without changing widths, thresholds or persistence.
+
 ## Layout preview (`feat/shadcn-layout`)
 
 This owner-requested preview adapts the MIT Kiranism dashboard starter's layout
