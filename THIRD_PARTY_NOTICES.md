@@ -10,6 +10,14 @@ Revision: 9084ffd954d24591d9b1d279c4b18e119b02b34e
 
 Adaptation: App shell: header/content/footer separation, icon-collapse sidebar, page containers and filtered/sorted/paginated table toolbar.
 
+### Layout preview adaptation (`feat/shadcn-layout`)
+
+The shared cards, buttons, badges, tables, tabs and inputs additionally adapt
+the geometry of this starter's UI primitives. Portal pages and the resizable
+sidebar use its compact spacing, icon rail, group labels, and frosted navigation
+header. Kien retains its palette, font stack, theme controller, authentication
+and workflows; no starter authentication or demo features are included.
+
 MIT License
 
 Copyright (c) 2023 Kiranism

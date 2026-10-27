@@ -81,7 +81,7 @@
   --text-3xl: 1.75rem;
   --text-3xl--line-height: 2.25rem;
 
-  --radius-card: 10px;
+  --radius-card: 12px;
   --radius-control: 8px;
   --animate-fade-in: fade-in 160ms ease-out;
   --animate-slide-in: slide-in 200ms ease-out;
@@ -137,8 +137,46 @@
   --leading-snug: 1.375;
   --leading-normal: 1.5;
   --leading-relaxed: 1.625;
-  --control-height: 2.75rem;
+  --control-height: 2rem;
   --control-radius: var(--radius-control);
+}
+
+/* Starter geometry uses Kien's existing hues. Keep legacy text-muted semantics. */
+:root {
+  --background: var(--color-background);
+  --foreground: var(--color-foreground);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-foreground);
+  --primary: var(--color-brand);
+  --primary-foreground: var(--color-background);
+  --muted: var(--color-elevated);
+  --muted-foreground: var(--color-muted);
+  --sidebar: var(--color-sidebar);
+  --sidebar-foreground: var(--color-foreground);
+  --sidebar-accent: var(--color-hover);
+  --sidebar-accent-foreground: var(--color-foreground);
+  --sidebar-border: var(--color-border);
+  --sidebar-primary: var(--color-brand);
+  --sidebar-primary-foreground: var(--color-background);
+  --sidebar-ring: var(--color-focus);
+  --ring: var(--color-focus);
+  --border: var(--color-border);
+  --input: var(--color-border-strong);
+  --radius: 0.5rem;
+}
+@theme inline {
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
 }
 
 /* Dark theme: deepened Ink Blue field, deeper and lighter ink for surfaces and borders, Ochre accent.
@@ -247,10 +285,9 @@ body {
     min-height: var(--control-height);
   }
 }
-input,
-select,
-textarea {
-  max-width: 100%;
+@layer base {
+  input, select, textarea { max-width: 100%; }
+  select, input[type="file"] { width: 100%; min-width: 0; }
 }
 select {
   text-overflow: ellipsis;
@@ -285,11 +322,6 @@ dialog::backdrop {
 label,
 .grid,
 .grid > * {
-  min-width: 0;
-}
-select,
-input[type="file"] {
-  width: 100%;
   min-width: 0;
 }
 
@@ -417,20 +449,21 @@ input[type="file"] {
 }
 
 /* Icon rail follows the MIT dashboard starter composition. Mobile uses the existing focus-managed sheet. */
-.desktop-sidebar { transition: width 180ms ease; }
+.desktop-sidebar { transition: width 200ms linear; }
 .desktop-sidebar[data-dragging="true"] { transition: none; user-select: none; }
 .desktop-sidebar[data-collapsed="true"] .nav-label,
+.desktop-sidebar[data-collapsed="true"] .sidebar-workspace,
 .desktop-sidebar[data-collapsed="true"] .sidebar-navigation > :not(nav),
 .desktop-sidebar[data-collapsed="true"] .sidebar-identity { display: none; }
-.desktop-sidebar[data-collapsed="true"] nav a { justify-content: center; padding-inline: 8px; }
-.desktop-sidebar[data-collapsed="true"] .sidebar-panel { padding-top: 24px; }
+.desktop-sidebar[data-collapsed="true"] nav a { width: 32px; justify-content: center; padding-inline: 8px; }
+.desktop-sidebar[data-collapsed="true"] .sidebar-panel { padding-top: 8px; }
 @media (prefers-reduced-motion: reduce) { .desktop-sidebar { transition: none; } }
 
 .type-display {
   font-size: var(--text-2xl-size);
   line-height: var(--leading-tight);
   letter-spacing: -0.03em;
-  font-weight: 600;
+  font-weight: 700;
 }
 .type-title {
   font-size: var(--text-xl-size);
@@ -517,3 +550,8 @@ input[type="file"] {
   .report-print .text-muted { color: #444; }
   .report-request { break-inside: avoid; }
 }
+
+.stat-card { container-type: inline-size; background-image: linear-gradient(to top, color-mix(in srgb, var(--primary) 5%, var(--card)), var(--card)); }
+@container (min-width: 250px) { .stat-card .type-metric { font-size: 1.875rem; } }
+:is(.dark, [data-theme="dark"]) .stat-card { background-image: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stat-card { background-image: none; } }

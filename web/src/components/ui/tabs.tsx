@@ -18,7 +18,7 @@ export function LinkTabs({
       className={cn("-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0", className)}
       aria-label="Tabs"
     >
-      <div className="flex min-w-max gap-1 border-b border-border">
+      <div className="inline-flex h-8 min-w-max items-center gap-1 rounded-lg bg-elevated p-[3px]">
         {tabs.map((t) => {
           const active = t.exact
             ? pathname === t.href
@@ -29,14 +29,11 @@ export function LinkTabs({
               href={t.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative px-3 py-2.5 text-sm font-medium transition-colors",
-                active ? "text-foreground" : "text-muted hover:text-foreground",
+                "relative rounded-md px-1.5 py-0.5 text-sm font-medium transition-colors",
+                active ? "bg-background text-foreground shadow-sm" : "text-muted hover:text-foreground",
               )}
             >
               {t.label}
-              {active ? (
-                <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-brand" />
-              ) : null}
             </Link>
           );
         })}
@@ -61,7 +58,7 @@ export function Tabs({
     <div className={className}>
       <div
         role="tablist"
-        className="inline-flex rounded-lg border border-border bg-surface p-1"
+        className="inline-flex h-8 items-center rounded-lg bg-elevated p-[3px]"
       >
         {items.map((i, index) => (
           <button
@@ -86,9 +83,9 @@ export function Tabs({
             }}
             onClick={() => setValue(i.value)}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer",
+              "min-h-0 rounded-md px-1.5 py-0.5 text-sm font-medium transition-colors cursor-pointer",
               value === i.value
-                ? "bg-elevated text-foreground"
+                ? "bg-background text-foreground shadow-sm"
                 : "text-muted hover:text-foreground",
             )}
           >

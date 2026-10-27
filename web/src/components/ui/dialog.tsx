@@ -69,13 +69,13 @@ export function Dialog({
         if (dismissible) onOpenChange(false);
       }}
       className={cn(
-        "fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-var(--space-6))] max-w-lg overflow-y-auto rounded-xl border border-border bg-surface p-[var(--space-5)] text-foreground shadow-overlay",
+        "fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-var(--space-6))] max-w-lg overflow-y-auto rounded-xl border border-border bg-surface p-4 text-foreground shadow-overlay",
         className,
       )}
     >
       <div className="mb-[var(--space-4)] flex items-start justify-between gap-[var(--space-4)]">
         <div>
-          <h2 className="text-lg font-semibold leading-snug">{title}</h2>
+          <h2 className="text-base font-medium leading-snug">{title}</h2>
           {description && (
             <p className="mt-[var(--space-2)] text-sm leading-normal text-muted">
               {description}
