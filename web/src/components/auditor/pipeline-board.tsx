@@ -160,7 +160,7 @@ export function AuditorPipelineBoard() {
                     >
                       <div className="flex items-start gap-2">
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-semibold leading-5 text-foreground">
+                          <h3 className="content-heading text-sm font-semibold leading-5 text-foreground">
                             {engagement.firm}
                           </h3>
                           <p className="mt-1 text-xs text-subtle">

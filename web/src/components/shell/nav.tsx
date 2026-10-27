@@ -411,9 +411,12 @@ export function Sidebar(props: {
   const [width, setWidth] = useState(256);
   const [dragging, setDragging] = useState(false);
   const [restored, setRestored] = useState(false);
-  const drag = useRef<{ pointer: number; start: number; width: number } | null>(
-    null,
-  );
+  const drag = useRef<{
+    pointer: number;
+    start: number;
+    width: number;
+    handle: HTMLDivElement;
+  } | null>(null);
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       try {
@@ -447,6 +450,20 @@ export function Sidebar(props: {
       }
     }
   }, [width, collapsed, restored]);
+
+  useEffect(() => {
+    const cancelDrag = () => {
+      const active = drag.current;
+      if (!active) return;
+      drag.current = null;
+      setDragging(false);
+      if (active.handle.hasPointerCapture(active.pointer)) {
+        active.handle.releasePointerCapture(active.pointer);
+      }
+    };
+    window.addEventListener("blur", cancelDrag);
+    return () => window.removeEventListener("blur", cancelDrag);
+  }, []);
 
   useEffect(() => {
     const toggle = () => setCollapsed((value) => !value);
@@ -509,6 +526,7 @@ export function Sidebar(props: {
           }}
           onPointerDown={(event) => {
             if (
+              drag.current !== null ||
               event.button !== 0 ||
               !window.matchMedia("(min-width: 1024px)").matches
             )
@@ -519,6 +537,7 @@ export function Sidebar(props: {
               pointer: event.pointerId,
               start: event.clientX,
               width: collapsed ? 48 : width,
+              handle: event.currentTarget,
             };
             setDragging(true);
           }}
@@ -533,13 +552,17 @@ export function Sidebar(props: {
             if (drag.current?.pointer !== event.pointerId) return;
             drag.current = null;
             setDragging(false);
-            event.currentTarget.releasePointerCapture(event.pointerId);
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
           }}
-          onPointerCancel={() => {
+          onPointerCancel={(event) => {
+            if (drag.current?.pointer !== event.pointerId) return;
             drag.current = null;
             setDragging(false);
           }}
-          onLostPointerCapture={() => {
+          onLostPointerCapture={(event) => {
+            if (drag.current?.pointer !== event.pointerId) return;
             drag.current = null;
             setDragging(false);
           }}

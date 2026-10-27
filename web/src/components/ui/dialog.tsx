@@ -74,10 +74,10 @@ export function Dialog({
       )}
     >
       <div className="mb-[var(--space-4)] flex items-start justify-between gap-[var(--space-4)]">
-        <div>
-          <h2 className="text-base font-medium leading-snug">{title}</h2>
+        <div className="min-w-0">
+          <h2 className="content-heading text-base font-medium leading-snug">{title}</h2>
           {description && (
-            <p className="mt-[var(--space-2)] text-sm leading-normal text-muted">
+            <p className="reading-prose mt-[var(--space-2)] text-sm leading-normal text-muted">
               {description}
             </p>
           )}
@@ -86,7 +86,7 @@ export function Dialog({
           <button
             aria-label="Close"
             onClick={() => onOpenChange(false)}
-            className="rounded-lg p-2"
+            className="shrink-0 rounded-lg p-2"
           >
             <X aria-hidden className="size-5" />
           </button>

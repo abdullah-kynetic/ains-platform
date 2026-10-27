@@ -83,11 +83,11 @@ export function PageHeader({
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-[var(--space-3)]">
-          <h1 className="type-display text-foreground">{title}</h1>
+          <h1 className="content-heading type-display text-foreground">{title}</h1>
           {badge}
         </div>
         {description ? (
-          <p className="mt-1 max-w-3xl text-sm leading-normal text-muted">
+          <p className="reading-prose mt-1 text-sm leading-normal text-muted">
             {description}
           </p>
         ) : null}

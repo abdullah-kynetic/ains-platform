@@ -309,8 +309,8 @@ dialog::backdrop {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
     scroll-behavior: auto !important;
   }
 }
@@ -556,3 +556,10 @@ dialog::backdrop {
 @container (min-width: 250px) { .stat-card .type-metric { font-size: 1.875rem; } }
 :is(.dark, [data-theme="dark"]) .stat-card { background-image: none; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stat-card { background-image: none; } }
+
+/* Impeccable Operate refinements: preserve data density while protecting prose. */
+.content-heading { overflow-wrap: anywhere; text-wrap: balance; }
+.reading-prose { max-inline-size: 75ch; overflow-wrap: anywhere; text-wrap: pretty; }
+.report-rich { overflow-wrap: anywhere; text-wrap: pretty; }
+.report-rich > :is(p, ul, ol) { max-inline-size: 75ch; }
+.report-request { overflow-wrap: anywhere; }
