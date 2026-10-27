@@ -1,6 +1,6 @@
 mock_provider "aws" {
   mock_data "aws_availability_zones" {
-    defaults = { names = ["us-east-2a", "us-east-2b"] }
+    defaults = { names = ["us-east-1a", "us-east-1b"] }
   }
   mock_data "aws_caller_identity" {
     defaults = { account_id = "123456789012" }
@@ -14,6 +14,7 @@ mock_provider "aws" {
 }
 variables {
   bucket_name = "synthetic-ains-documents"
+  environment = "testing"
   api_domain  = "api.example.test"
   app_image   = "ghcr.io/synthetic/ains@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   portal_url  = "https://portal.example.test"
@@ -44,6 +45,14 @@ run "lean_single_host" {
   assert {
     condition     = aws_s3_bucket.documents.object_lock_enabled && aws_s3_bucket_versioning.documents.versioning_configuration[0].status == "Enabled"
     error_message = "Document storage must support immutable versions."
+  }
+  assert {
+    condition     = aws_s3_bucket_versioning.ops.versioning_configuration[0].status == "Enabled"
+    error_message = "Operational storage must retain versioned recovery artifacts."
+  }
+  assert {
+    condition     = aws_instance.app.tags.Environment == "testing"
+    error_message = "The test fixture must be visibly tagged as testing."
   }
   assert {
     condition     = length(aws_cloudtrail.main.event_selector) == 0

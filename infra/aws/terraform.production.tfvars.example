@@ -1,0 +1,17 @@
+# Production environment. Keep this state, bucket, domain and parameter prefix
+# separate from testing. Do not place secrets in this file.
+region      = "us-east-1"
+environment = "production"
+name        = "kien-production"
+bucket_name = "kien-docs-ACCOUNT_ID-use1-production"
+api_domain  = "api.example.com"
+portal_url  = "https://portal.example.com"
+email_from  = "noreply@example.com"
+# Prefer a reviewed, immutable ARM64 image digest for production. The source
+# bundle path is retained as the low-cost fallback when app_image is empty.
+# app_image = "ghcr.io/example/kien-api@sha256:REPLACE_WITH_REVIEWED_DIGEST"
+source_bundle_path = "/path/to/kien-production-source.tar.gz"
+s3_sse = "aws:kms"
+retention_days = 365
+retention_mode = "COMPLIANCE"
+trail_document_data_events = false

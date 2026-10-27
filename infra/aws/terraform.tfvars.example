@@ -1,5 +1,7 @@
-region      = "us-east-2"
-bucket_name = "ains-docs-ACCOUNT_ID-use2"
+region      = "us-east-1"
+environment = "production" # Use "testing" in a separate state file and with a different bucket/name.
+name        = "kien-production"
+bucket_name = "kien-docs-ACCOUNT_ID-use1-production"
 # Empty api_domain uses <elastic-ip>.sslip.io; set to api.example.com once DNS points at api_ip.
 api_domain  = ""
 portal_url  = "https://portal.example.com"

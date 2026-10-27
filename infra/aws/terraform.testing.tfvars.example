@@ -1,0 +1,14 @@
+# Synthetic testing environment. Keep this state, bucket, domain and parameter
+# prefix separate from production. Do not place secrets in this file.
+region      = "us-east-1"
+environment = "testing"
+name        = "kien-testing"
+bucket_name = "kien-docs-ACCOUNT_ID-use1-testing"
+api_domain  = "api-testing.example.com"
+portal_url  = "https://testing.example.com"
+email_from  = "testing@example.com"
+# Empty app_image builds the checked-out git archive on the host.
+source_bundle_path = "/path/to/kien-testing-source.tar.gz"
+s3_sse = "AES256"
+retention_days = 0
+trail_document_data_events = false

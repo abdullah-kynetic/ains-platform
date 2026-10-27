@@ -1,12 +1,18 @@
-# AWS deployment runbook (lean single-host profile)
+# AWS deployment runbook (lean single-host environment profile)
 
-Low-volume, single-region production for Kien Solutions (https://kiensolutions.com). Not a certification
-or high-availability service. Quinton must approve control evidence, retention policy
-and release before client use. Use synthetic documents for every smoke test.
+Low-volume, single-region AWS hosting for Kien Solutions (https://kiensolutions.com).
+This profile supports separate testing and production environments from the same
+application commit. It is not a certification or high-availability service.
+Quentin must approve control evidence, retention policy and release before client
+use. Use synthetic documents for every smoke test.
+
+This is an infrastructure target and runbook, not proof that AWS is currently
+deployed. Apply it only after reviewing the Terraform plan in the intended
+account and environment.
 
 ## Design and tradeoffs
 
-`infra/aws` runs everything on **one ARM64 EC2 t4g.micro** (1 GB RAM, 2 GB swap,
+`infra/aws` runs each environment on **one ARM64 EC2 t4g.micro** (1 GB RAM, 2 GB swap,
 20 GB encrypted gp3): Caddy (HTTPS), the API, the receipt worker and **PostgreSQL 16
 on localhost** (tuned for 1 GB: 128 MB shared_buffers, 30 connections). There is no
 RDS, NAT gateway, load balancer, Secrets Manager or customer KMS key. The security
@@ -14,10 +20,10 @@ group opens only 80/443; Postgres and the API bind loopback; administration is v
 SSM Session Manager (no SSH). Burst credits use `standard` mode so CPU can never bill
 surplus credits.
 
-- **Secrets**: SSM Parameter Store SecureStrings under `/ains-prod/` (free standard
-  tier, AWS-managed key). The instance generates `SESSION_SECRET` and `DB_PASSWORD`
+- **Secrets**: SSM Parameter Store SecureStrings under the configured `/<name>/`
+  prefix (free standard tier, AWS-managed key). The instance generates `SESSION_SECRET` and `DB_PASSWORD`
   on first boot, so no secret value is in Terraform state or user-data. Add
-  `/ains-prod/RESEND_API_KEY` yourself to enable email, then
+  `/<name>/RESEND_API_KEY` yourself to enable email, then
   `sudo systemctl restart ains ains-worker`. Without it email endpoints return 503.
 - **Storage**: documents bucket (AES256, versioning, Object Lock enabled with no
   default retention; noncurrent versions expire after 365 days) and one `-ops`
@@ -40,10 +46,12 @@ Move Postgres to RDS and add redundancy once client volume justifies ~$15+/month
 
 1. AWS CLI v2 + Terraform >= 1.7, authenticated to the target account. Keep the
    monthly budget alarm (currently `kien-monthly-15`, $15) in place.
-2. Use a fresh per-account local state path; never reuse another account's state:
+2. Choose `environment = "testing"` or `"production"`, then use a fresh
+   per-account, per-environment local state path. Never reuse another
+   environment's state:
 
    ```sh
-   D=$HOME/ains-state/<account-id>
+   D=$HOME/ains-state/<account-id>/<environment>
    git archive --format=tar.gz -o $D/ains-source.tar.gz HEAD
    cd infra/aws
    terraform init -backend-config=path=$D/terraform.tfstate
@@ -112,8 +120,7 @@ Wrangler runtime vars cannot change it after build. Use Node 22:
 ```sh
 cd web
 npm ci
-NEXT_PUBLIC_API_URL=https://api.example.com npm run build:cloudflare:production
-npx opennextjs-cloudflare deploy --env production
+NEXT_PUBLIC_API_URL=https://api.example.com npm run deploy:production
 ```
 
 Set the production Worker's custom domain to `portal.example.com` in Cloudflare.
@@ -127,7 +134,17 @@ Do not use `deploy:demo` for production: it intentionally builds synthetic mocks
 Reset links lead to `/reset-password`; magic links lead to `/sign-in?token=...`.
 Disable query-string logging/analytics on all authentication pages at the edge.
 
-## Monthly budget (USD, us-east-2 on-demand, low traffic)
+For testing, use the separate `testing` Worker and the isolated AWS testing API:
+
+```sh
+cd web
+NEXT_PUBLIC_API_URL=https://api-testing.example.com npm run deploy:testing
+```
+
+Testing must use synthetic data only. Promote the same reviewed commit to the
+production Worker after the complete testing API workflow passes.
+
+## Monthly budget (USD, us-east-1 on-demand, low traffic)
 
 | Item | Approx/month |
 | --- | ---: |
@@ -138,7 +155,7 @@ Disable query-string logging/analytics on all authentication pages at the edge.
 | CloudTrail first management trail | $0.00 |
 | SSM Parameter Store standard SecureStrings | $0.00 |
 | Data transfer out (first 100 GB/month free) | $0.00 |
-| **Total** | **~$11.50–12.00** |
+| **Total** | **~$11.50–12.00 per environment** |
 
 Excludes tax, domain and Cloudflare. If 1 GB is too tight, `instance_type =
 "t4g.small"` adds ~$6. A 1-year Savings Plan roughly halves the instance line.

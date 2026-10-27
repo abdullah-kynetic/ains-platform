@@ -1,8 +1,9 @@
-# Lean single-host production profile: one EC2 t4g.micro runs Caddy, the API,
-# the receipt worker and PostgreSQL 16. No RDS, NAT, load balancer, KMS CMK or
-# Secrets Manager. Runtime secrets live in SSM Parameter Store SecureStrings that
-# the instance generates itself on first boot, so no secret value enters
-# Terraform state.
+# Lean single-host environment profile: one EC2 t4g.micro runs Caddy, the API,
+# the receipt worker and PostgreSQL 16. Use a separate name, bucket and state
+# file for testing and production; never point both environments at the same
+# resources. No RDS, NAT, load balancer or Secrets Manager is provisioned by
+# this low-cost profile. Runtime secrets live in SSM Parameter Store
+# SecureStrings; no secret value enters Terraform state.
 terraform {
   required_version = ">= 1.7"
   # Local state; pass a per-account path at init, e.g.
@@ -14,7 +15,12 @@ terraform {
 }
 provider "aws" {
   region = var.region
-  default_tags { tags = { Project = "AINS", Environment = "production" } }
+  default_tags {
+    tags = {
+      Project     = "Kien"
+      Environment = var.environment
+    }
+  }
 }
 data "aws_caller_identity" "current" {}
 data "aws_availability_zones" "available" { state = "available" }
@@ -27,7 +33,7 @@ locals {
   build_from_source = var.app_image == ""
   image             = local.build_from_source ? "ains-api:local" : var.app_image
   api_domain        = var.api_domain != "" ? var.api_domain : "${replace(aws_eip.app.public_ip, ".", "-")}.sslip.io"
-  bundle_key        = local.build_from_source ? "releases/${filemd5(var.source_bundle_path)}.tar.gz" : ""
+  bundle_key        = local.build_from_source && var.source_bundle_path != "" ? "releases/${filemd5(var.source_bundle_path)}.tar.gz" : ""
   trail_arn         = "arn:aws:cloudtrail:${var.region}:${local.account_id}:trail/${var.name}"
 }
 
@@ -83,11 +89,10 @@ resource "aws_security_group" "app" {
 resource "aws_s3_bucket" "documents" {
   bucket              = var.bucket_name
   object_lock_enabled = true # free; no default retention rule is set
-  lifecycle { prevent_destroy = false }
 }
 resource "aws_s3_bucket" "ops" {
   bucket        = local.ops_bucket
-  force_destroy = true
+  force_destroy = false
 }
 locals {
   buckets = { documents = aws_s3_bucket.documents.id, ops = aws_s3_bucket.ops.id }
@@ -104,9 +109,13 @@ resource "aws_s3_bucket_versioning" "documents" {
   bucket = aws_s3_bucket.documents.id
   versioning_configuration { status = "Enabled" }
 }
+resource "aws_s3_bucket_versioning" "ops" {
+  bucket = aws_s3_bucket.ops.id
+  versioning_configuration { status = "Enabled" }
+}
 resource "aws_kms_key" "documents" {
   count                   = var.s3_sse == "aws:kms" ? 1 : 0
-  description             = "AINS document encryption"
+  description             = "Kien document encryption"
   enable_key_rotation     = true
   deletion_window_in_days = 30
 }
@@ -209,7 +218,7 @@ resource "aws_cloudtrail" "main" {
 
 # --- Release bundle (built on the instance; no registry) ---------------------
 resource "aws_s3_object" "source" {
-  count  = local.build_from_source ? 1 : 0
+  count  = local.build_from_source && var.source_bundle_path != "" ? 1 : 0
   bucket = aws_s3_bucket.ops.id
   key    = local.bundle_key
   source = var.source_bundle_path
@@ -265,11 +274,17 @@ resource "aws_instance" "app" {
     param_prefix = local.param_prefix
     ops_bucket   = aws_s3_bucket.ops.id
     source_uri   = local.build_from_source ? "s3://${aws_s3_bucket.ops.id}/${local.bundle_key}" : ""
-    environment  = jsonencode({ STORAGE_BACKEND = "s3", S3_BUCKET = var.bucket_name, AWS_REGION = var.region, S3_SSE = var.s3_sse, S3_KMS_KEY_ID = var.s3_sse == "aws:kms" ? aws_kms_key.documents[0].arn : "", S3_RETENTION_DAYS = tostring(var.retention_days), S3_RETENTION_MODE = var.retention_mode, SESSION_COOKIE_SECURE = "true", CORS_ORIGINS = var.portal_url, PORTAL_URL = var.portal_url, EMAIL_FROM = var.email_from })
+    environment  = jsonencode({ STORAGE_BACKEND = "s3", S3_BUCKET = var.bucket_name, AWS_REGION = var.region, S3_SSE = var.s3_sse, S3_KMS_KEY_ID = var.s3_sse == "aws:kms" ? aws_kms_key.documents[0].arn : "", S3_RETENTION_DAYS = tostring(var.retention_days), S3_RETENTION_MODE = var.retention_mode, SESSION_COOKIE_SECURE = "true", CORS_ORIGINS = var.portal_url, PORTAL_URL = var.portal_url, EMAIL_FROM = var.email_from, SENTRY_ENVIRONMENT = var.environment })
   })
   user_data_replace_on_change = true
   tags                        = { Name = var.name }
   depends_on                  = [aws_iam_role_policy.app, aws_s3_object.source]
+  lifecycle {
+    precondition {
+      condition     = var.app_image != "" || var.source_bundle_path != ""
+      error_message = "Set app_image or provide a .tar.gz source_bundle_path when building on the instance."
+    }
+  }
 }
 resource "aws_eip_association" "app" {
   instance_id   = aws_instance.app.id

@@ -1,13 +1,26 @@
 variable "region" {
   type    = string
-  default = "us-east-2"
+  default = "us-east-1"
+}
+variable "environment" {
+  description = "Deployment environment. Use separate names, buckets and Terraform state for testing and production."
+  type        = string
+  default     = "production"
+  validation {
+    condition     = contains(["testing", "production"], var.environment)
+    error_message = "environment must be testing or production."
+  }
 }
 variable "name" {
   type    = string
-  default = "ains-prod"
+  default = "kien-production"
 }
 variable "bucket_name" {
   type = string
+  validation {
+    condition     = can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", var.bucket_name)) && !strcontains(var.bucket_name, "..")
+    error_message = "bucket_name must be a valid globally unique S3 bucket name."
+  }
 }
 variable "api_domain" {
   description = "API hostname. Empty uses <elastic-ip>.sslip.io so Caddy can obtain a certificate before DNS exists."

@@ -6,6 +6,13 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "env": {
+    "testing": {
+      "name": "ains-platform-testing",
+      "workers_dev": false,
+      "services": [
+        { "binding": "WORKER_SELF_REFERENCE", "service": "ains-platform-testing" }
+      ]
+    },
     "production": {
       "name": "ains-platform",
       "workers_dev": false,

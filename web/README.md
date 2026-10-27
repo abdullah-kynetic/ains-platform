@@ -99,14 +99,28 @@ treats portal and API as the same site.
 
 ```sh
 export PATH="$HOME/.local/node22/bin:$PATH"
-NEXT_PUBLIC_API_URL=https://api.kiensolutions.com npm run build:cloudflare:production
-npx opennextjs-cloudflare deploy --env production
+NEXT_PUBLIC_API_URL=https://api.kiensolutions.com npm run deploy:production
 ```
 
 Production disables `workers.dev`. The production build forces mocks off; demo
 builds retain their existing synthetic behavior. Do not use `deploy:demo` for
 production. See [the AWS deployment runbook](../docs/deploy-aws.md) for backend
 CORS, cookies, DNS and secrets.
+
+### Testing on Cloudflare Workers
+
+Testing uses the same application build with mocks disabled, but points at the
+isolated AWS testing API and database. Use synthetic users and files only. Build
+with the testing API URL and deploy the testing Worker; never point it at the
+production API:
+
+```sh
+NEXT_PUBLIC_API_URL=https://api-testing.example.com npm run deploy:testing
+```
+
+The testing and production Workers have separate names and service bindings.
+Promote the same reviewed commit to production only after the testing API,
+database, storage, email, authentication, and worker receipt checks pass.
 
 ## Optional Sentry error monitoring
 
