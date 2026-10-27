@@ -115,5 +115,12 @@ The app has auditor/client roles and no distinct firm-admin role; the auditor fl
 explains the workspace management auditors already have permission to use.
 `python -m app.onboarding_seed --reset-demo` resets only the two exact existing
 synthetic demo identities, preserves credentials and records demo reset events.
-Demo users are left pending after verification. Static browser mocks have no sign-in;
+Demo walkthroughs stay finished after verification; reset only for an explicit demo run.
+`UserView` includes nullable `onboarding_state` in sign-in, invitation acceptance and
+`GET /auth/session`. Both roles open the tour only for null state, with no extra GET
+required. Completing, skipping, Close and Escape save through the same idempotent
+POST; the session updates only after a successful save. Failed saves stay visible
+with a retryable error. Live mode never uses localStorage for onboarding state.
+New users start null; existing pending users are not backfilled. No new migration
+is needed beyond `a115`. Static browser mocks have no sign-in;
 set `kien-synthetic-onboarding-enabled=1` to exercise their local walkthrough state.

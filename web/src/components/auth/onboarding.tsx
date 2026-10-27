@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useSession } from "./session";
-import { getOnboarding, finishOnboarding } from "@/lib/onboarding-api";
+import { finishOnboarding } from "@/lib/onboarding-api";
+import type { SessionUser } from "@/lib/api";
 const flows = {
   auditor: [
     {
@@ -37,37 +38,25 @@ const flows = {
 export function Onboarding() {
   const { session } = useSession();
   const user = session?.user;
-  const [open, setOpen] = useState(false);
+  return user ? <Walkthrough key={`${user.id}:${user.role}`} user={user} /> : null;
+}
+
+function Walkthrough({ user }: { user: SessionUser }) {
+  const { finishOnboarding: updateSession } = useSession();
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  useEffect(() => {
-    let active = true;
-    if (user)
-      getOnboarding(user.role)
-        .then((state) => {
-          if (active) {
-            setStep(0);
-            setOpen(state.state === "pending");
-          }
-        })
-        .catch(() => {
-          /* A temporary preference failure never blocks sign-in; retry on the next visit. */
-        });
-    return () => {
-      active = false;
-    };
-  }, [user?.id, user?.role, user]);
-  if (!user) return null;
   const flow = flows[user.role];
   const current = flow[step];
   async function finish(action: "completed" | "skipped") {
-    if (!user || busy) return;
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
-      await finishOnboarding(user.role, action);
-      setOpen(false);
+      const saved = await finishOnboarding(user.role, action);
+      if (saved.state === "pending")
+        throw new Error("Could not save your preference. Please retry.");
+      updateSession(user.id, saved.state);
     } catch (e) {
       setError(
         e instanceof Error
@@ -80,7 +69,7 @@ export function Onboarding() {
   }
   return (
     <Dialog
-      open={open}
+      open={user.onboarding_state === null}
       onOpenChange={(value) => {
         if (!value) void finish("skipped");
       }}
