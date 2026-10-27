@@ -761,7 +761,7 @@ export function InvoiceDetail({ id }: { id: string }) {
       </div>
       {!dialog && <ErrorNote error={error} />}
       <Card className="invoice-print">
-        <CardContent className="p-5 sm:p-8">
+        <CardContent className="px-4">
           <div className="flex flex-wrap justify-between gap-6 border-b border-border pb-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-subtle">
@@ -808,16 +808,16 @@ export function InvoiceDetail({ id }: { id: string }) {
               <tbody>
                 {invoice.lineItems.map((l, index) => (
                   <tr key={index} className="border-b border-border">
-                    <td className="min-w-32 break-words py-4 pr-4">
+                    <td className="min-w-32 break-words p-2">
                       {l.description}
                     </td>
-                    <td className="px-2 py-4 text-right tabular-nums">
+                    <td className="p-2 text-right tabular-nums">
                       {l.quantity}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-4 text-right tabular-nums">
+                    <td className="whitespace-nowrap p-2 text-right tabular-nums">
                       {money(l.rateCents, invoice.currency)}
                     </td>
-                    <td className="whitespace-nowrap py-4 pl-2 text-right tabular-nums">
+                    <td className="whitespace-nowrap p-2 text-right tabular-nums">
                       {money(l.amountCents, invoice.currency)}
                     </td>
                   </tr>

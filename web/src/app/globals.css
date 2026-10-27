@@ -524,6 +524,7 @@ label,
   body:has(.invoice-print) aside,
   body:has(.invoice-print) nav,
   body:has(.invoice-print) header,
+  body:has(.invoice-print) [aria-label="Mobile workspace controls"],
   body:has(.invoice-print) footer,
   body:has(.invoice-print) .invoice-controls,
   body:has(.invoice-print) dialog,
@@ -543,8 +544,10 @@ label,
   body:has(.report-print) { background: white; color: #1a1a1a; }
   body:has(.report-print) aside, body:has(.report-print) nav,
   body:has(.report-print) header, body:has(.report-print) footer,
+  body:has(.report-print) [aria-label="Mobile workspace controls"],
   body:has(.report-print) .report-controls, body:has(.report-print) dialog,
   body:has(.report-print) nextjs-portal { display: none !important; }
+  body:has(.report-print) #main-content { background: white; }
   body:has(.report-print) main > div { max-width: none; padding: 0; }
   .report-print { color: #1a1a1a; background: white; border: 0; box-shadow: none; padding: 0; }
   .report-print .text-muted { color: #444; }

@@ -47,7 +47,7 @@ function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
       <div className="rounded-xl bg-card ring-1 ring-foreground/10 p-4">
         <div className="flex justify-between">
           <div>
-            <h2 className="font-semibold">Engagement distribution</h2>
+            <h2 className="text-base font-medium">Engagement distribution</h2>
             <p className="mt-1 text-xs text-muted">
               Current assigned portfolio · engagements by review state
             </p>
@@ -111,7 +111,7 @@ function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
         </svg>
       </div>
       <div className="rounded-xl bg-card ring-1 ring-foreground/10 p-4">
-        <h2 className="font-semibold">Request review coverage</h2>
+        <h2 className="text-base font-medium">Request review coverage</h2>
         <p className="mt-1 text-xs text-muted">
           Recorded human reviews across assigned engagements
         </p>
@@ -204,7 +204,7 @@ export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
     >
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-4">
         <div>
-          <h2 id="engagement-table-title" className="font-semibold">
+          <h2 id="engagement-table-title" className="text-base font-medium">
             Assigned engagements
           </h2>
           <p className="mt-1 text-xs text-muted">
@@ -457,7 +457,7 @@ function Portfolio({ tableOnly }: { tableOnly: boolean }) {
       )}
       <EngagementTable clients={clients} />
       {!tableOnly && (
-        <div className="mt-6 grid items-start gap-4 xl:grid-cols-2">
+        <div className="mt-4 grid items-start gap-4 xl:grid-cols-2">
           <AuditorActivityFeed />
           <AuditorUpcomingTasks engagements={clients} />
         </div>
