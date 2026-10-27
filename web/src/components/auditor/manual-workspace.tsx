@@ -8,6 +8,8 @@ import { AuthGate } from "@/components/auth/session";
 import { EngagementDrawer } from "@/components/auditor/engagement-drawer";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { requestOrder } from "@/lib/checklist";
 import { USE_MOCKS } from "@/lib/api";
 import { PageHeader, Stat } from "@/components/shell/page";
@@ -217,8 +219,7 @@ function EngagementWorkspace({ id }: { id: string }) {
       )}
       <label className="mb-5 grid gap-2">
         Search audit requests
-        <input
-          className="rounded-lg border border-border bg-surface p-3"
+        <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -287,9 +288,8 @@ function EngagementWorkspace({ id }: { id: string }) {
                     </p>
                     <label className="grid gap-2 text-sm">
                       Intake feedback for {doc.name}
-                      <select
+                      <Select
                         aria-label={`Intake feedback for ${doc.name}`}
-                        className="rounded-lg border border-border bg-surface p-2"
                         disabled={busy}
                         value=""
                         onChange={(event) => {
@@ -320,15 +320,14 @@ function EngagementWorkspace({ id }: { id: string }) {
                         <option value="usable">
                           File usable — clear replacement request
                         </option>
-                      </select>
+                      </Select>
                     </label>
                   </div>
                 ))}
                 <label className="grid gap-2">
                   Applicability
-                  <select
+                  <Select
                     aria-label={`Applicability ${request.requestId}`}
-                    className="rounded-lg border border-border bg-surface p-2"
                     value={draft.applicability}
                     disabled={busy}
                     onChange={(event) => {
@@ -345,14 +344,13 @@ function EngagementWorkspace({ id }: { id: string }) {
                   >
                     <option value="applicable">Applicable</option>
                     <option value="not_applicable">Not applicable</option>
-                  </select>
+                  </Select>
                 </label>
                 {draft.applicability === "applicable" && (
                   <label className="grid gap-2">
                     Evidence assessment
-                    <select
+                    <Select
                       aria-label={`Evidence assessment ${request.requestId}`}
-                      className="rounded-lg border border-border bg-surface p-2"
                       value={draft.assessment ?? "unable_to_determine"}
                       disabled={busy}
                       onChange={(event) =>
@@ -365,7 +363,7 @@ function EngagementWorkspace({ id }: { id: string }) {
                       <option value="unable_to_determine">
                         Unable to determine
                       </option>
-                    </select>
+                    </Select>
                   </label>
                 )}
                 <label className="grid gap-2">
