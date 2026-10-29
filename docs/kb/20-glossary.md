@@ -1,0 +1,36 @@
+# Glossary (plain English)
+
+- **AML** — Anti-Money Laundering. Rules that make firms watch for and report dirty money.
+- **FINRA Rule 3310** — The rule requiring broker-dealers to run an AML program, including an **independent test** (usually yearly). Kien supports that test.
+- **CAB / CAB Rule 331** — Capital Acquisition Broker: a limited broker-dealer type that tests every two years.
+- **Broker-dealer (BD)** — A firm that buys/sells securities or helps raise capital. Kien's clients.
+- **BSA** — Bank Secrecy Act, the US law behind AML rules. **FinCEN** enforces it.
+- **SAR** — Suspicious Activity Report. Confidential filing to FinCEN. Kien never lets SAR material near AI and doesn't accept SAR uploads.
+- **Reg S-P** — SEC rule on protecting customer personal information.
+- **SOC 2** — An outside audit proving a company's security controls. Kien is preparing, not certified.
+- **Engagement** — One AML test for one client firm over a review period.
+- **Workspace** — The screens for one client firm's engagement.
+- **N/A** — "Not applicable": the item doesn't apply to this firm. Counts as done.
+- **Restricted item** — Checklist item clients must not upload (SAR-related).
+- **Finding** — An audit problem the auditor identifies. Drafts until a human approves.
+- **Tenant / firm_id** — Each client firm's data is walled off; `firm_id` is the label used to check.
+- **Frontend** — The website people click (Next.js on Cloudflare).
+- **Backend / API** — The server that does the work and checks permissions (FastAPI on OVH).
+- **Database** — Where everything is saved (PostgreSQL).
+- **R2 / S3** — Cloud file storage for uploads (R2 is Cloudflare's, S3 is Amazon's).
+- **Worker (Cloudflare)** — A small app running on Cloudflare's network; each of Kien's web addresses is one.
+- **Worker (backend)** — Background process that checks uploads were stored correctly.
+- **Docker / container** — A sealed box that runs the server the same way everywhere.
+- **Caddy** — Web server that handles HTTPS in front of the API.
+- **Migration (Alembic)** — A script that changes the database structure safely.
+- **Branch / PR / merge** — A draft copy of the code / a request to add it / adding it to the main version.
+- **Preview / live** — Test address you review / the real address users use.
+- **Rollback** — Going back to the previous working version.
+- **MFA / TOTP** — Second sign-in step with a 6-digit code from an authenticator app.
+- **Audit log (hash chain)** — Tamper-evident history of who did what.
+- **pgvector** — Postgres add-on to search text by meaning (for the chatbot).
+- **Embedding** — Turning text into numbers so similar meanings can be found.
+- **RAG / retrieval** — Finding the right rule passages first, then letting AI answer only from them.
+- **Terraform** — Code that builds cloud servers automatically.
+- **Codex / Claude Code** — AI coding agents that build Kien.
+- **Impeccable** — A design-quality skill the agents use to polish UI.
