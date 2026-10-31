@@ -34,3 +34,13 @@ See [Code Style](docs/CODE_STYLE.md) and [Testing](docs/TESTING.md) for commands
 3. Make the smallest scoped change in existing structures.
 4. Run relevant verified checks. UI work needs browser/accessibility coverage and before/after screenshots in desktop light, desktop dark, and phone sizes.
 5. Review the full diff for secrets, real client data, scope creep, and inaccurate docs; report changes, exact checks and results, and limitations.
+
+## Design rules
+
+- Read [DESIGN.md](DESIGN.md) first for design work.
+- Use only shadcn registry components, shadcn charts, and Lucide icons for new UI work; preserve working existing components until intentionally replaced.
+- Never change palette tokens: ink blue #33405C, ochre #B8924A, cream background, and dark #242D40.
+- After any UI change, screenshot the pages with Playwright and run the axe test (`cd web && npx playwright test --config playwright.a11y.config.ts`).
+- Use $impeccable critique before calling design work done.
+- Use the unslop skill for single-screen redesign passes; it must follow DESIGN.md, never change palette tokens (#33405C, #B8924A, cream, dark #242D40), never generate images or videos, and must show its audit + direction before editing.
+- Unslop by Damir Sokolovsky, CC BY 4.0: https://github.com/heydamir/unslop.
