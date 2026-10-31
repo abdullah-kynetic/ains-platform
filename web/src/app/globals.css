@@ -24,9 +24,10 @@
   --color-border-strong: color-mix(in srgb, var(--color-ink) 28%, white);
   --color-focus: var(--color-ink);
 
-  --color-brand: var(--color-ink);
-  --color-brand-hover: color-mix(in srgb, var(--color-ink) 82%, black);
-  --color-brand-tint: color-mix(in srgb, var(--color-ink) 8%, white);
+  --color-maroon: #6B2A3D;
+  --color-brand: var(--color-maroon);
+  --color-brand-hover: #55202F;
+  --color-brand-tint: #F3E9EB;
   --color-accent: var(--color-ink);
   --color-accent-hover: color-mix(in srgb, var(--color-ink) 82%, black);
   --color-on-accent: color-mix(in srgb, var(--color-ochre) 8%, white);
@@ -37,8 +38,8 @@
   --color-success-foreground: color-mix(in srgb, var(--color-ink) 78%, black);
   --color-warning: color-mix(in srgb, var(--color-ochre) 72%, black);
   --color-warning-foreground: color-mix(in srgb, var(--color-ochre) 45%, black);
-  --color-danger: color-mix(in srgb, var(--color-ochre) 58%, black);
-  --color-danger-foreground: color-mix(in srgb, var(--color-ochre) 35%, black);
+  --color-danger: var(--color-maroon);
+  --color-danger-foreground: #4A1B29;
   --color-info: var(--color-ink);
   --color-info-foreground: color-mix(in srgb, var(--color-ink) 80%, black);
 
@@ -157,21 +158,22 @@
     --color-subtle: color-mix(in srgb, var(--color-ink) 18%, white);
     --color-border: color-mix(in srgb, var(--color-ink-deep) 72%, white);
     --color-border-strong: color-mix(in srgb, var(--color-ink-deep) 60%, white);
-    --color-focus: color-mix(in srgb, var(--color-ochre) 35%, white);
-    --color-brand: color-mix(in srgb, var(--color-ochre) 32%, white);
-    --color-brand-hover: color-mix(in srgb, var(--color-ochre) 25%, white);
-    --color-brand-tint: color-mix(in srgb, var(--color-ink-deep) 82%, white);
-    --color-accent: var(--color-ochre);
-    --color-accent-hover: color-mix(in srgb, var(--color-ochre) 88%, white);
-    --color-on-accent: color-mix(in srgb, var(--color-ink-deep) 58%, black);
+    --color-focus: #E0AEBB;
+    --color-maroon: #E0AEBB;
+    --color-brand: var(--color-maroon);
+    --color-brand-hover: #EBC4CE;
+    --color-brand-tint: #4a3a4c;
+    --color-accent: #EDE6D8;
+    --color-accent-hover: #F8F4ED;
+    --color-on-accent: #242D40;
     --color-chart-primary: color-mix(in srgb, var(--color-ink) 16%, white);
     --color-chart-secondary: color-mix(in srgb, var(--color-ochre) 80%, white);
     --color-success: color-mix(in srgb, var(--color-ink) 40%, white);
     --color-success-foreground: color-mix(in srgb, var(--color-ink) 14%, white);
     --color-warning: color-mix(in srgb, var(--color-ochre) 70%, black);
     --color-warning-foreground: color-mix(in srgb, var(--color-ochre) 30%, white);
-    --color-danger: color-mix(in srgb, var(--color-ochre) 55%, black);
-    --color-danger-foreground: color-mix(in srgb, var(--color-ochre) 22%, white);
+    --color-danger: #B5566F;
+    --color-danger-foreground: #F0CBD5;
     --color-info: color-mix(in srgb, var(--color-ochre) 66%, white);
     --color-info-foreground: color-mix(in srgb, var(--color-ochre) 32%, white);
     --color-shadow: color-mix(in srgb, black 42%, transparent);
@@ -195,21 +197,22 @@
   --color-subtle: color-mix(in srgb, var(--color-ink) 18%, white);
   --color-border: color-mix(in srgb, var(--color-ink-deep) 72%, white);
   --color-border-strong: color-mix(in srgb, var(--color-ink-deep) 60%, white);
-  --color-focus: color-mix(in srgb, var(--color-ochre) 35%, white);
-  --color-brand: color-mix(in srgb, var(--color-ochre) 32%, white);
-  --color-brand-hover: color-mix(in srgb, var(--color-ochre) 25%, white);
-  --color-brand-tint: color-mix(in srgb, var(--color-ink-deep) 82%, white);
-  --color-accent: var(--color-ochre);
-  --color-accent-hover: color-mix(in srgb, var(--color-ochre) 88%, white);
-  --color-on-accent: color-mix(in srgb, var(--color-ink-deep) 58%, black);
+  --color-focus: #E0AEBB;
+  --color-maroon: #E0AEBB;
+  --color-brand: var(--color-maroon);
+  --color-brand-hover: #EBC4CE;
+  --color-brand-tint: #4a3a4c;
+  --color-accent: #EDE6D8;
+  --color-accent-hover: #F8F4ED;
+  --color-on-accent: #242D40;
   --color-chart-primary: color-mix(in srgb, var(--color-ink) 16%, white);
   --color-chart-secondary: color-mix(in srgb, var(--color-ochre) 80%, white);
   --color-success: color-mix(in srgb, var(--color-ink) 40%, white);
   --color-success-foreground: color-mix(in srgb, var(--color-ink) 14%, white);
   --color-warning: color-mix(in srgb, var(--color-ochre) 70%, black);
   --color-warning-foreground: color-mix(in srgb, var(--color-ochre) 30%, white);
-  --color-danger: color-mix(in srgb, var(--color-ochre) 55%, black);
-  --color-danger-foreground: color-mix(in srgb, var(--color-ochre) 22%, white);
+  --color-danger: #B5566F;
+  --color-danger-foreground: #F0CBD5;
   --color-info: color-mix(in srgb, var(--color-ochre) 66%, white);
   --color-info-foreground: color-mix(in srgb, var(--color-ochre) 32%, white);
   --color-shadow: color-mix(in srgb, black 42%, transparent);
@@ -302,8 +305,8 @@ input[type="file"] {
 .bg-brand-gradient {
   background-image: linear-gradient(
     135deg,
-    var(--color-accent),
-    var(--color-accent-hover)
+    var(--color-brand),
+    var(--color-brand-hover)
   );
 }
 .bg-glow {
