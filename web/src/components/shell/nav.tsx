@@ -465,11 +465,6 @@ export function Sidebar(props: {
     return () => window.removeEventListener("blur", cancelDrag);
   }, []);
 
-  useEffect(() => {
-    const toggle = () => setCollapsed((value) => !value);
-    window.addEventListener("kien-toggle-sidebar", toggle);
-    return () => window.removeEventListener("kien-toggle-sidebar", toggle);
-  }, []);
 
   return (
     <>

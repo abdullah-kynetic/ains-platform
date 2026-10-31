@@ -8,7 +8,6 @@ import {
   Clock3,
   FileUp,
   ListTodo,
-  MessageSquare,
 } from "lucide-react";
 import { PageHeader, Stat } from "@/components/shell/page";
 import {
@@ -62,21 +61,6 @@ export default function OverviewPage() {
           Synthetic demonstration workspace
         </div>
       ) : null}
-
-      <section aria-label="Quick actions" className="mb-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { href: "/upload", icon: FileUp, title: "Upload documents", detail: "Add files or replacements" },
-          { href: "/checklist", icon: ListTodo, title: "View requests", detail: "See what to send next" },
-          { href: "/messages", icon: MessageSquare, title: "Messages", detail: "Document follow-ups" },
-          { href: "/progress", icon: CheckCircle2, title: "Report status", detail: "Engagement milestones" },
-        ].map(({ href, icon: Icon, title, detail }) => (
-          <Link key={href} href={href} className="group flex min-w-0 items-center gap-3 rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-colors hover:bg-hover focus-visible:outline-brand">
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-elevated"><Icon aria-hidden="true" className="size-4 text-brand" /></span>
-            <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{title}</span><span className="mt-1 block text-xs text-muted">{detail}</span></span>
-            <ArrowUpRight aria-hidden="true" className="size-4 shrink-0 text-subtle" />
-          </Link>
-        ))}
-      </section>
 
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Stat

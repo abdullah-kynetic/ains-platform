@@ -119,14 +119,13 @@ test("engagement table searches, filters, sorts and paginates assigned records",
   await axe(page);
 });
 
-test("client home has four actions, messages and desktop screenshot; auditor routes remain gated", async ({
+test("client home uses sidebar navigation, messages and desktop screenshot; auditor routes remain gated", async ({
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
-  await expect(
-    page.getByRole("region", { name: "Quick actions" }).getByRole("link"),
-  ).toHaveCount(4);
+  await expect(page.getByRole("region", { name: "Quick actions" })).toHaveCount(0);
+  await expect(page.locator("aside.desktop-sidebar").getByRole("link", { name: "Upload", exact: true })).toBeVisible();
   await axe(page);
   await page.screenshot({ path: testInfo.outputPath("client-home.png") });
   await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Messages", exact: true }).click();

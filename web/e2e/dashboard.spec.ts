@@ -43,7 +43,7 @@ test("engagement drawer contains a timeline, traps focus and keeps full workspac
   await expect(page.getByRole("heading", { name: "Report readiness" })).toBeVisible();
 });
 
-test("client dashboard presents simple action cards and neutral intake state", async ({ page }) => {
+test("client dashboard uses sidebar navigation and neutral intake state", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle("Kynetic portal");
   const footer = page.getByRole("contentinfo");
@@ -53,12 +53,11 @@ test("client dashboard presents simple action cards and neutral intake state", a
     "https://kiensolutions.com",
   );
   await expect(page.getByText("Synthetic demonstration workspace")).toBeVisible();
-  const actions = page.getByRole("region", { name: "Quick actions" });
-  await expect(actions.getByRole("link")).toHaveCount(4);
+  await expect(page.getByRole("region", { name: "Quick actions" })).toHaveCount(0);
   await expect(page.getByRole("table")).toHaveCount(0);
   await expect(page.getByText("Internal finding drafts")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "View engagement details" })).toHaveCount(0);
-  await actions.getByRole("link", { name: "Upload your documents", exact: false }).click();
+  await page.locator("aside.desktop-sidebar").getByRole("link", { name: "Upload", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Upload center" })).toBeVisible();
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/");
