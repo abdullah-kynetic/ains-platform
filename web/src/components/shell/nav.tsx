@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Check,
   ChevronsUpDown,
   LogOut,
   Menu,
-  PanelLeftClose,
-  PanelLeftOpen,
   ChevronRight,
   Plus,
   ShieldCheck,
@@ -407,183 +405,41 @@ export function Sidebar(props: {
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
-  const [width, setWidth] = useState(256);
-  const [dragging, setDragging] = useState(false);
-  const [restored, setRestored] = useState(false);
-  const drag = useRef<{
-    pointer: number;
-    start: number;
-    width: number;
-    handle: HTMLDivElement;
-  } | null>(null);
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      try {
-        const saved = JSON.parse(
-          localStorage.getItem("kien-sidebar") ?? "null",
-        );
-        if (
-          saved &&
-          typeof saved.width === "number" &&
-          Number.isFinite(saved.width)
-        ) {
-          setWidth(Math.max(200, Math.min(360, saved.width)));
-          setCollapsed(saved.collapsed === true);
-        }
-      } catch {
-        /* Use defaults if storage is unavailable. */
-      }
-      setRestored(true);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, []);
-  useEffect(() => {
-    if (restored) {
-      try {
-        localStorage.setItem(
-          "kien-sidebar",
-          JSON.stringify({ width, collapsed }),
-        );
-      } catch {
-        /* Resizing works without storage. */
-      }
-    }
-  }, [width, collapsed, restored]);
-
-  useEffect(() => {
-    const cancelDrag = () => {
-      const active = drag.current;
-      if (!active) return;
-      drag.current = null;
-      setDragging(false);
-      if (active.handle.hasPointerCapture(active.pointer)) {
-        active.handle.releasePointerCapture(active.pointer);
-      }
-    };
-    window.addEventListener("blur", cancelDrag);
-    return () => window.removeEventListener("blur", cancelDrag);
-  }, []);
-
-
+  const auditor = props.sub.toLowerCase().includes("auditor");
   return (
     <>
-      <aside
-        data-collapsed={collapsed}
-        data-dragging={dragging}
-        style={{ width: collapsed ? 48 : width }}
-        className="desktop-sidebar glass-sidebar sticky top-0 hidden h-dvh min-h-screen self-start w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col"
-      >
-        <div className="flex items-center justify-between gap-1 p-2">
-          {!collapsed ? <Logo sub={props.sub} className="min-w-0" /> : null}
-          <button
-            type="button"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-expanded={!collapsed}
-            onClick={() => setCollapsed(!collapsed)}
-            className="grid size-8 shrink-0 place-items-center rounded-md text-muted hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-          >
-            {collapsed ? (
-              <PanelLeftOpen className="size-4" />
-            ) : (
-              <PanelLeftClose className="size-4" />
-            )}
-          </button>
+      <header className="workspace-topbar-wrap sticky top-0 z-30 hidden px-4 pt-3 lg:block">
+        <div className="workspace-topbar flex items-center gap-4 rounded-2xl px-4 py-2">
+          <Logo className="shrink-0" />
+          <nav aria-label="Main navigation" className="topbar-links flex min-w-0 flex-1 items-center justify-center gap-1 overflow-x-auto">
+            {props.items.filter((item) => item.href !== "/auditor/settings").map((item) => {
+              const active = item.exact || item.href === "/" || item.href === "/auditor"
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("shrink-0 rounded-full px-3 py-2 text-sm transition-colors", active ? "bg-elevated font-medium text-foreground" : "text-muted hover:bg-hover hover:text-foreground")}>{item.label}</Link>;
+            })}
+          </nav>
+          <div className="topbar-theme shrink-0"><ThemeToggle /></div>
+          <details className="profile-menu relative shrink-0" onKeyDown={(event) => { if (event.key === "Escape") { event.currentTarget.open = false; event.currentTarget.querySelector("summary")?.focus(); } }}>
+            <summary aria-label={`Profile and settings ${initials(props.who)}`} className="grid size-9 cursor-pointer list-none place-items-center rounded-full border border-border bg-elevated text-xs font-semibold text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"><span aria-hidden="true">{initials(props.who)}</span></summary>
+            <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-64 rounded-xl border border-border bg-surface p-3 shadow-pop">
+              <p className="truncate text-sm font-medium" title={props.who}>{props.who}</p>
+              <p className="mt-1 text-xs text-muted">{props.sub}</p>
+              <div className="mt-3 border-t border-border pt-3"><WorkspaceSwitcher auditor={auditor} onWorkspaceChange={props.onWorkspaceChange} /></div>
+              {auditor && <Link href="/auditor/settings" className="mt-2 block rounded-lg px-2 py-2 text-sm text-muted hover:bg-hover hover:text-foreground">Settings</Link>}
+              <button type="button" onClick={props.onSignOut} disabled={!props.onSignOut} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm text-muted hover:bg-hover hover:text-foreground disabled:opacity-60">Sign out</button>
+            </div>
+          </details>
         </div>
-        <Panel {...props} desktop />
-        <div
-          role="separator"
-          aria-label="Resize sidebar"
-          aria-orientation="vertical"
-          aria-valuemin={200}
-          aria-valuemax={360}
-          aria-valuenow={width}
-          aria-valuetext={collapsed ? "Collapsed" : `${width} pixels`}
-          tabIndex={0}
-          className="absolute inset-y-0 -right-1 z-40 w-2 cursor-col-resize touch-none hover:bg-brand/20 focus-visible:bg-brand/20 focus-visible:outline-2 focus-visible:outline-brand"
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === "Home") {
-              event.preventDefault();
-              setCollapsed((value) => !value);
-            } else if (
-              event.key === "ArrowLeft" ||
-              event.key === "ArrowRight"
-            ) {
-              event.preventDefault();
-              setCollapsed(false);
-              setWidth((value) =>
-                Math.max(
-                  200,
-                  Math.min(360, value + (event.key === "ArrowLeft" ? -16 : 16)),
-                ),
-              );
-            }
-          }}
-          onPointerDown={(event) => {
-            if (
-              drag.current !== null ||
-              event.button !== 0 ||
-              !window.matchMedia("(min-width: 1024px)").matches
-            )
-              return;
-            event.preventDefault();
-            event.currentTarget.setPointerCapture(event.pointerId);
-            drag.current = {
-              pointer: event.pointerId,
-              start: event.clientX,
-              width: collapsed ? 48 : width,
-              handle: event.currentTarget,
-            };
-            setDragging(true);
-          }}
-          onPointerMove={(event) => {
-            const current = drag.current;
-            if (!current || current.pointer !== event.pointerId) return;
-            const next = current.width + event.clientX - current.start;
-            setCollapsed(next < 140);
-            if (next >= 140) setWidth(Math.max(200, Math.min(360, next)));
-          }}
-          onPointerUp={(event) => {
-            if (drag.current?.pointer !== event.pointerId) return;
-            drag.current = null;
-            setDragging(false);
-            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-              event.currentTarget.releasePointerCapture(event.pointerId);
-            }
-          }}
-          onPointerCancel={(event) => {
-            if (drag.current?.pointer !== event.pointerId) return;
-            drag.current = null;
-            setDragging(false);
-          }}
-          onLostPointerCapture={(event) => {
-            if (drag.current?.pointer !== event.pointerId) return;
-            drag.current = null;
-            setDragging(false);
-          }}
-        />
-      </aside>
-      <div
-        role="region"
-        aria-label="Mobile workspace controls"
-        className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 bg-background/60 px-4 backdrop-blur-md md:h-14 lg:hidden"
-      >
-        <button
-          type="button"
-          aria-label="Open menu"
-          onClick={() => setOpen(true)}
-          className="-ml-1 grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-hover"
-        >
-          <Menu aria-hidden className="size-4" />
-        </button>
+      </header>
+      <div role="region" aria-label="Mobile workspace controls" className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 bg-background/60 px-4 backdrop-blur-md md:h-14 lg:hidden">
+        <button type="button" aria-label="Open menu" onClick={() => setOpen(true)} className="-ml-1 grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-hover"><Menu aria-hidden className="size-4" /></button>
         <span aria-hidden className="mr-2 h-4 border-r border-border" />
         <span className="text-sm text-muted">{props.sub}</span>
         <ChevronRight aria-hidden className="size-3.5 shrink-0 text-subtle" />
         <span className="truncate text-sm">{props.items.find((item) => item.href === pathname)?.label ?? "Workspace"}</span>
       </div>
-      <Sheet open={open} onOpenChange={setOpen} label="Navigation">
-        <Panel {...props} onNavigate={() => setOpen(false)} />
-      </Sheet>
+      <Sheet open={open} onOpenChange={setOpen} label="Navigation"><Panel {...props} onNavigate={() => setOpen(false)} /></Sheet>
     </>
   );
 }

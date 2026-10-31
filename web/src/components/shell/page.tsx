@@ -1,9 +1,6 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "./nav";
 import { CommandPalette } from "./command-palette";
@@ -23,22 +20,13 @@ export function Shell({
   auditor: boolean;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const activeItem = items.find((item) => item.href === pathname) ?? [...items].reverse().find((item) => item.href !== "/" && pathname.startsWith(`${item.href}/`));
   const [searchHost, setSearchHost] = useState<HTMLDivElement | null>(null);
   return (
     <SearchHostContext.Provider value={setSearchHost}>
       <CommandPalette items={items} triggerHost={searchHost} />
-      <div className="workspace-shell flex min-h-screen flex-col lg:flex-row">
+      <div className="workspace-shell flex min-h-screen flex-col">
         {sidebar}
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <header className="workspace-header sticky top-0 z-20 hidden h-14 shrink-0 items-center justify-center px-4 lg:flex">
-            <nav aria-label="Breadcrumb" className="glass-breadcrumb flex min-w-0 items-center justify-center gap-2 rounded-full px-5 py-2 text-sm">
-              <Link href={items[0]?.href ?? "/"} className="text-muted hover:text-foreground">{items[0]?.href === "/auditor" ? "Auditor workspace" : "Client portal"}</Link>
-              <ChevronRight aria-hidden className="size-3.5 shrink-0 text-subtle" />
-              <span aria-current="page" className="truncate">{activeItem?.label ?? "Overview"}</span>
-            </nav>
-          </header>
           <main
             id="main-content"
             tabIndex={-1}

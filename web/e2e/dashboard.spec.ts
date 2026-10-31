@@ -57,7 +57,7 @@ test("client dashboard uses sidebar navigation and neutral intake state", async 
   await expect(page.getByRole("table")).toHaveCount(0);
   await expect(page.getByText("Internal finding drafts")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "View engagement details" })).toHaveCount(0);
-  await page.locator("aside.desktop-sidebar").getByRole("link", { name: "Upload", exact: true }).click();
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Upload", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Upload center" })).toBeVisible();
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/");
