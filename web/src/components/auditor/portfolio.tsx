@@ -58,7 +58,7 @@ function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
           role="img"
           aria-labelledby="distribution-title"
           viewBox="0 0 560 160"
-          className="mt-5 w-full"
+          className="mt-3 w-full"
         >
           <title id="distribution-title">
             {groups.map((g) => `${g.name}: ${g.value}`).join(". ")}
@@ -208,12 +208,12 @@ export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
             Assigned engagements
           </h2>
           <p className="mt-1 text-xs text-muted">
-            Open a record to review activity and continue your work.
+            Review progress or open an engagement workspace.
           </p>
         </div>
         <Badge>{clients.length} engagements</Badge>
       </div>
-      <div className="m-3 flex flex-wrap items-start gap-2 p-1">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-3">
         <Input
           aria-label="Search engagements"
           placeholder="Search firms…"
@@ -408,7 +408,7 @@ function Portfolio({ tableOnly }: { tableOnly: boolean }) {
         description={
           tableOnly
             ? "Manage your assigned engagements and review progress."
-            : "Your audit operations, at a glance. Every review moves the work forward."
+            : "Track assigned engagements and the work ready for review."
         }
         actions={
           <Link href="/auditor/workspaces/new" className={buttonVariants()}>

@@ -63,27 +63,17 @@ export default function OverviewPage() {
         </div>
       ) : null}
 
-      <section aria-label="Quick actions" className="mb-4 grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Quick actions" className="mb-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { href: "/upload", icon: FileUp, title: "Upload your documents", detail: "Add files or send a replacement" },
+          { href: "/upload", icon: FileUp, title: "Upload documents", detail: "Add files or replacements" },
           { href: "/checklist", icon: ListTodo, title: "View requests", detail: "See what to send next" },
-          { href: "/messages", icon: MessageSquare, title: "Messages", detail: "Document follow-ups from your auditor" },
-          { href: "/progress", icon: CheckCircle2, title: "Report status", detail: "View your engagement milestones" },
+          { href: "/messages", icon: MessageSquare, title: "Messages", detail: "Document follow-ups" },
+          { href: "/progress", icon: CheckCircle2, title: "Report status", detail: "Engagement milestones" },
         ].map(({ href, icon: Icon, title, detail }) => (
-          <Link
-            key={href}
-            href={href}
-            className="group rounded-xl bg-card ring-1 ring-foreground/10 p-4 transition-colors hover:ring-brand/30 focus-visible:outline-brand"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <Icon aria-hidden="true" className="size-6 text-brand" />
-              <ArrowUpRight
-                aria-hidden="true"
-                className="size-5 shrink-0 text-brand"
-              />
-            </div>
-            <span className="mt-3 block text-base font-semibold">{title}</span>
-            <span className="mt-1 block text-sm text-muted">{detail}</span>
+          <Link key={href} href={href} className="group flex min-w-0 items-center gap-3 rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-colors hover:bg-hover focus-visible:outline-brand">
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-elevated"><Icon aria-hidden="true" className="size-4 text-brand" /></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{title}</span><span className="mt-1 block text-xs text-muted">{detail}</span></span>
+            <ArrowUpRight aria-hidden="true" className="size-4 shrink-0 text-subtle" />
           </Link>
         ))}
       </section>
@@ -132,7 +122,7 @@ export default function OverviewPage() {
             <Progress value={progress.pct} className="h-2.5" />
             <div className="mt-[var(--space-5)] grid grid-cols-1 divide-y divide-border rounded-lg border border-border bg-background sm:grid-cols-3 sm:divide-x sm:divide-y-0">
               <div className="px-[var(--space-4)] py-[var(--space-3)]">
-                <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted">
+                <p className="text-xs font-medium text-muted">
                   Received
                 </p>
                 <p className="mt-1 text-lg font-semibold tabular-nums">
@@ -140,7 +130,7 @@ export default function OverviewPage() {
                 </p>
               </div>
               <div className="px-[var(--space-4)] py-[var(--space-3)]">
-                <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted">
+                <p className="text-xs font-medium text-muted">
                   Total
                 </p>
                 <p className="mt-1 text-lg font-semibold tabular-nums">
@@ -148,7 +138,7 @@ export default function OverviewPage() {
                 </p>
               </div>
               <div className="px-[var(--space-4)] py-[var(--space-3)]">
-                <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted">
+                <p className="text-xs font-medium text-muted">
                   Remaining
                 </p>
                 <p className="mt-1 text-lg font-semibold tabular-nums">
@@ -209,12 +199,12 @@ export default function OverviewPage() {
               View all <ArrowUpRight />
             </Link>
           </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
+          <CardContent className="grid gap-2 sm:grid-cols-2">
             {actions.length ? (
               actions.slice(0, 4).map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background p-4"
+                  className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background px-4 py-3"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
