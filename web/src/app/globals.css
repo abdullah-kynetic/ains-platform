@@ -566,9 +566,6 @@ dialog::backdrop {
 
 /* Frosted workspace surfaces, derived from Kien's existing Ink and Ochre tokens. */
 .workspace-shell {
-  background: var(--color-background);
-}
-.workspace-canvas {
   background-color: var(--color-background);
   background-image:
     radial-gradient(ellipse at 92% 3%, color-mix(in srgb, var(--color-ochre) 20%, transparent), transparent 42%),
@@ -576,6 +573,7 @@ dialog::backdrop {
     linear-gradient(145deg, transparent 38%, color-mix(in srgb, var(--color-ochre) 10%, transparent));
   background-attachment: fixed;
 }
+.workspace-canvas { background: transparent; }
 .glass-panel,
 .workspace-canvas .stat-card {
   background: color-mix(in srgb, var(--color-surface) 86%, transparent);
@@ -614,14 +612,14 @@ dialog::backdrop {
 
 /* Floating desktop navigation, with the mobile sheet retained for narrow screens. */
 .workspace-topbar-wrap {
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--color-background) 88%, transparent), transparent);
+  background: transparent;
 }
 .workspace-topbar {
-  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
-  box-shadow: 0 1px 0 color-mix(in srgb, white 35%, transparent) inset, 0 12px 30px -22px var(--color-shadow-strong);
-  backdrop-filter: blur(22px) saturate(115%);
-  -webkit-backdrop-filter: blur(22px) saturate(115%);
+  background: linear-gradient(135deg, color-mix(in srgb, white 22%, transparent), transparent 48%), color-mix(in srgb, var(--color-surface) 67%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 60%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--color-ink) 8%, transparent), 0 12px 32px -18px var(--color-shadow-strong);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
 }
 .profile-menu summary::-webkit-details-marker { display: none; }
 .topbar-theme .theme-control { min-width: 175px; }
@@ -631,4 +629,11 @@ dialog::backdrop {
   .topbar-links a { padding-inline: 0.5rem; }
   .topbar-theme .theme-control { min-width: 0; }
   .topbar-theme .theme-label { display: none; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .workspace-topbar { background: var(--color-surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .workspace-topbar { background: var(--color-surface); }
 }
