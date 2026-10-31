@@ -185,7 +185,7 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
     --color-ink-deep: #242D40;
-    --color-background: var(--color-ink-deep);
+    --color-background: color-mix(in srgb, var(--color-ink-deep) 55%, black);
     --color-surface: color-mix(in srgb, var(--color-ink-deep) 93%, white);
     --color-sidebar: color-mix(in srgb, var(--color-ink-deep) 78%, black);
     --color-elevated: color-mix(in srgb, var(--color-ink-deep) 88%, white);
@@ -199,8 +199,8 @@
     --color-brand: color-mix(in srgb, var(--color-ochre) 32%, white);
     --color-brand-hover: color-mix(in srgb, var(--color-ochre) 25%, white);
     --color-brand-tint: color-mix(in srgb, var(--color-ink-deep) 82%, white);
-    --color-accent: var(--color-ochre);
-    --color-accent-hover: color-mix(in srgb, var(--color-ochre) 88%, white);
+    --color-accent: color-mix(in srgb, var(--color-ochre) 45%, white);
+    --color-accent-hover: color-mix(in srgb, var(--color-ochre) 35%, white);
     --color-on-accent: color-mix(in srgb, var(--color-ink-deep) 58%, black);
     --color-chart-primary: color-mix(in srgb, var(--color-ink) 16%, white);
     --color-chart-secondary: color-mix(in srgb, var(--color-ochre) 80%, white);
@@ -223,7 +223,7 @@
 :is(.dark, [data-theme="dark"]) {
   color-scheme: dark;
   --color-ink-deep: #242D40;
-  --color-background: var(--color-ink-deep);
+  --color-background: color-mix(in srgb, var(--color-ink-deep) 55%, black);
   --color-surface: color-mix(in srgb, var(--color-ink-deep) 93%, white);
   --color-sidebar: color-mix(in srgb, var(--color-ink-deep) 78%, black);
   --color-elevated: color-mix(in srgb, var(--color-ink-deep) 88%, white);
@@ -237,8 +237,8 @@
   --color-brand: color-mix(in srgb, var(--color-ochre) 32%, white);
   --color-brand-hover: color-mix(in srgb, var(--color-ochre) 25%, white);
   --color-brand-tint: color-mix(in srgb, var(--color-ink-deep) 82%, white);
-  --color-accent: var(--color-ochre);
-  --color-accent-hover: color-mix(in srgb, var(--color-ochre) 88%, white);
+  --color-accent: color-mix(in srgb, var(--color-ochre) 45%, white);
+  --color-accent-hover: color-mix(in srgb, var(--color-ochre) 35%, white);
   --color-on-accent: color-mix(in srgb, var(--color-ink-deep) 58%, black);
   --color-chart-primary: color-mix(in srgb, var(--color-ink) 16%, white);
   --color-chart-secondary: color-mix(in srgb, var(--color-ochre) 80%, white);
