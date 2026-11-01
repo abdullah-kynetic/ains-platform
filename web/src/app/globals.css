@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* AINS: quiet, high-trust dashboard foundations. */
+/* Kien: neutral, calm, serious dashboard foundations. */
 @theme {
   --font-sans:
     -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
@@ -8,52 +8,58 @@
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Source hues. Every other color is a white tint or black shade of these two. */
+  /* Neutral base. Ink Blue and Ochre are the only brand hues and each has one narrow job:
+     Ink: logo mark, primary buttons, active navigation, focus rings.
+     Ochre: deadline and "needs attention" badges.
+     Red / amber / green appear only as small soft-tinted status pills. */
   --color-ink: #33405C;
   --color-ochre: #B8924A;
 
-  --color-background: color-mix(in srgb, var(--color-ochre) 10%, white);
-  --color-surface: color-mix(in srgb, var(--color-ochre) 4%, white);
-  --color-sidebar: color-mix(in srgb, var(--color-ink) 7%, white);
-  --color-elevated: color-mix(in srgb, var(--color-ink) 10%, white);
-  --color-hover: color-mix(in srgb, var(--color-ink) 14%, white);
-  --color-foreground: var(--color-ink);
-  --color-muted: color-mix(in srgb, var(--color-ink) 88%, white);
-  --color-subtle: color-mix(in srgb, var(--color-ink) 82%, white);
-  --color-border: color-mix(in srgb, var(--color-ink) 18%, white);
-  --color-border-strong: color-mix(in srgb, var(--color-ink) 28%, white);
+  --color-background: #F7F7F8;
+  --color-surface: #FFFFFF;
+  --color-sidebar: #F7F7F8;
+  --color-elevated: #F3F4F6;
+  --color-hover: #ECEDEF;
+  --color-foreground: #0A0A0A;
+  --color-muted: #636A77;
+  --color-subtle: #656C79;
+  --color-border: #E5E7EB;
+  --color-border-strong: #868D99;
   --color-focus: var(--color-ink);
 
-  --color-brand: var(--color-ink);
-  --color-brand-hover: color-mix(in srgb, var(--color-ink) 82%, black);
-  --color-brand-tint: color-mix(in srgb, var(--color-ink) 8%, white);
+  --color-brand: #0A0A0A;
+  --color-brand-hover: #262626;
+  --color-brand-tint: #F3F4F6;
   --color-accent: var(--color-ink);
-  --color-accent-hover: color-mix(in srgb, var(--color-ink) 82%, black);
-  --color-on-accent: color-mix(in srgb, var(--color-ochre) 8%, white);
-  --color-chart-primary: var(--color-ink);
-  --color-chart-secondary: color-mix(in srgb, var(--color-ochre) 72%, black);
+  --color-accent-hover: #28334A;
+  --color-accent-border: var(--color-ink);
+  --color-on-accent: #FFFFFF;
+  --color-nav-active: var(--color-ink);
+  --color-chart-primary: #374151;
+  --color-chart-secondary: #9CA3AF;
 
-  --color-success: color-mix(in srgb, var(--color-ink) 92%, black);
-  --color-success-foreground: color-mix(in srgb, var(--color-ink) 78%, black);
-  --color-warning: color-mix(in srgb, var(--color-ochre) 72%, black);
-  --color-warning-foreground: color-mix(in srgb, var(--color-ochre) 45%, black);
-  --color-danger: color-mix(in srgb, var(--color-ochre) 58%, black);
-  --color-danger-foreground: color-mix(in srgb, var(--color-ochre) 35%, black);
-  --color-info: var(--color-ink);
-  --color-info-foreground: color-mix(in srgb, var(--color-ink) 80%, black);
+  --color-success: #16A34A;
+  --color-success-foreground: #166534;
+  --color-warning: #D97706;
+  --color-warning-foreground: #92400E;
+  --color-danger: #DC2626;
+  --color-danger-foreground: #B91C1C;
+  --color-info: #6B7280;
+  --color-info-foreground: #374151;
+  --color-deadline: var(--color-ochre);
+  --color-deadline-foreground: #6B4E16;
 
-  --color-shadow: color-mix(in srgb, var(--color-ink) 8%, transparent);
-  --color-shadow-strong: color-mix(in srgb, var(--color-ink) 18%, transparent);
-  --color-overlay: color-mix(in srgb, var(--color-ink) 72%, transparent);
-  --color-selection: color-mix(in srgb, var(--color-ochre) 28%, transparent);
-  --color-glow: color-mix(in srgb, var(--color-ochre) 16%, transparent);
-  --color-scrollbar: color-mix(in srgb, var(--color-ink) 28%, transparent);
+  --color-shadow: rgb(10 10 10 / 0.06);
+  --color-shadow-strong: rgb(10 10 10 / 0.12);
+  --color-overlay: rgb(10 10 10 / 0.5);
+  --color-selection: rgb(51 64 92 / 0.18);
+  --color-scrollbar: rgb(10 10 10 / 0.25);
 
   --shadow-card: 0 1px 2px var(--color-shadow);
-  --shadow-button: 0 1px 2px var(--color-shadow-strong);
-  --shadow-pop: 0 16px 40px var(--color-shadow-strong);
-  --shadow-overlay: 0 24px 48px var(--color-shadow-strong);
-  --shadow-featured: 0 10px 30px -18px var(--color-shadow-strong);
+  --shadow-button: 0 1px 2px var(--color-shadow);
+  --shadow-pop: 0 8px 24px -8px var(--color-shadow-strong);
+  --shadow-overlay: 0 16px 40px -12px var(--color-shadow-strong);
+  --shadow-featured: 0 1px 2px var(--color-shadow);
 
   /* Spacing scale: 4, 8, 12, 16, 24, 32, 40, 48, 64. Utilities: p-s1 … p-s9. */
   --spacing-s1: 0.25rem;
@@ -141,14 +147,14 @@
   --control-radius: var(--radius-control);
 }
 
-/* Starter geometry uses Kien's existing hues. Keep legacy text-muted semantics. */
+/* shadcn semantic aliases resolve from the neutral theme tokens. Legacy text-muted means muted foreground text. */
 :root {
   --background: var(--color-background);
   --foreground: var(--color-foreground);
   --card: var(--color-surface);
   --card-foreground: var(--color-foreground);
-  --primary: var(--color-brand);
-  --primary-foreground: var(--color-background);
+  --primary: var(--color-accent);
+  --primary-foreground: var(--color-on-accent);
   --muted: var(--color-elevated);
   --muted-foreground: var(--color-muted);
   --sidebar: var(--color-sidebar);
@@ -156,8 +162,8 @@
   --sidebar-accent: var(--color-hover);
   --sidebar-accent-foreground: var(--color-foreground);
   --sidebar-border: var(--color-border);
-  --sidebar-primary: var(--color-brand);
-  --sidebar-primary-foreground: var(--color-background);
+  --sidebar-primary: var(--color-accent);
+  --sidebar-primary-foreground: var(--color-on-accent);
   --sidebar-ring: var(--color-focus);
   --ring: var(--color-focus);
   --border: var(--color-border);
@@ -179,83 +185,86 @@
   --color-input: var(--input);
 }
 
-/* Dark theme: deepened Ink Blue field, deeper and lighter ink for surfaces and borders, Ochre accent.
+/* Dark theme: neutral near-black, same rules as light. Ink stays the primary button fill; lifted Ink tints
+   (--color-focus, --color-nav-active, --color-accent-border) keep focus rings and active items legible on black.
    prefers-color-scheme applies until data-theme or the .dark toggle overrides it. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --color-ink-deep: #242D40;
-    --color-background: var(--color-ink-deep);
-    --color-surface: color-mix(in srgb, var(--color-ink-deep) 93%, white);
-    --color-sidebar: color-mix(in srgb, var(--color-ink-deep) 78%, black);
-    --color-elevated: color-mix(in srgb, var(--color-ink-deep) 88%, white);
-    --color-hover: color-mix(in srgb, var(--color-ink-deep) 84%, white);
-    --color-foreground: color-mix(in srgb, var(--color-ink) 10%, white);
-    --color-muted: color-mix(in srgb, var(--color-ink) 16%, white);
-    --color-subtle: color-mix(in srgb, var(--color-ink) 18%, white);
-    --color-border: color-mix(in srgb, var(--color-ink-deep) 72%, white);
-    --color-border-strong: color-mix(in srgb, var(--color-ink-deep) 60%, white);
-    --color-focus: color-mix(in srgb, var(--color-ochre) 35%, white);
-    --color-brand: color-mix(in srgb, var(--color-ochre) 32%, white);
-    --color-brand-hover: color-mix(in srgb, var(--color-ochre) 25%, white);
-    --color-brand-tint: color-mix(in srgb, var(--color-ink-deep) 82%, white);
-    --color-accent: var(--color-ochre);
-    --color-accent-hover: color-mix(in srgb, var(--color-ochre) 88%, white);
-    --color-on-accent: color-mix(in srgb, var(--color-ink-deep) 58%, black);
-    --color-chart-primary: color-mix(in srgb, var(--color-ink) 16%, white);
-    --color-chart-secondary: color-mix(in srgb, var(--color-ochre) 80%, white);
-    --color-success: color-mix(in srgb, var(--color-ink) 40%, white);
-    --color-success-foreground: color-mix(in srgb, var(--color-ink) 14%, white);
-    --color-warning: color-mix(in srgb, var(--color-ochre) 70%, black);
-    --color-warning-foreground: color-mix(in srgb, var(--color-ochre) 30%, white);
-    --color-danger: color-mix(in srgb, var(--color-ochre) 55%, black);
-    --color-danger-foreground: color-mix(in srgb, var(--color-ochre) 22%, white);
-    --color-info: color-mix(in srgb, var(--color-ochre) 66%, white);
-    --color-info-foreground: color-mix(in srgb, var(--color-ochre) 32%, white);
-    --color-shadow: color-mix(in srgb, black 42%, transparent);
-    --color-shadow-strong: color-mix(in srgb, black 55%, transparent);
-    --color-overlay: color-mix(in srgb, black 68%, transparent);
-    --color-selection: color-mix(in srgb, var(--color-ochre) 35%, transparent);
-    --color-glow: color-mix(in srgb, var(--color-ochre) 18%, transparent);
-    --color-scrollbar: color-mix(in srgb, white 32%, transparent);
+    --color-background: #0A0A0A;
+    --color-surface: #111113;
+    --color-sidebar: #0A0A0A;
+    --color-elevated: #18181B;
+    --color-hover: #1F1F23;
+    --color-foreground: #FAFAFA;
+    --color-muted: #A1A1AA;
+    --color-subtle: #A1A1AA;
+    --color-border: #26262B;
+    --color-border-strong: #71717A;
+    --color-focus: #8E9FC7;
+    --color-brand: #FAFAFA;
+    --color-brand-hover: #E4E4E7;
+    --color-brand-tint: #18181B;
+    --color-accent: var(--color-ink);
+    --color-accent-hover: #3E4D70;
+    --color-accent-border: #5B6B91;
+    --color-on-accent: #FFFFFF;
+    --color-nav-active: #AEBBDB;
+    --color-chart-primary: #D4D4D8;
+    --color-chart-secondary: #71717A;
+    --color-success: #22C55E;
+    --color-success-foreground: #4ADE80;
+    --color-warning: #F59E0B;
+    --color-warning-foreground: #FBBF24;
+    --color-danger: #EF4444;
+    --color-danger-foreground: #F87171;
+    --color-info: #A1A1AA;
+    --color-info-foreground: #D4D4D8;
+    --color-deadline-foreground: #D8B878;
+    --color-shadow: rgb(0 0 0 / 0.5);
+    --color-shadow-strong: rgb(0 0 0 / 0.6);
+    --color-overlay: rgb(0 0 0 / 0.65);
+    --color-selection: rgb(142 159 199 / 0.3);
+    --color-scrollbar: rgb(255 255 255 / 0.28);
   }
 }
 :is(.dark, [data-theme="dark"]) {
   color-scheme: dark;
-  --color-ink-deep: #242D40;
-  --color-background: var(--color-ink-deep);
-  --color-surface: color-mix(in srgb, var(--color-ink-deep) 93%, white);
-  --color-sidebar: color-mix(in srgb, var(--color-ink-deep) 78%, black);
-  --color-elevated: color-mix(in srgb, var(--color-ink-deep) 88%, white);
-  --color-hover: color-mix(in srgb, var(--color-ink-deep) 84%, white);
-  --color-foreground: color-mix(in srgb, var(--color-ink) 10%, white);
-  --color-muted: color-mix(in srgb, var(--color-ink) 16%, white);
-  --color-subtle: color-mix(in srgb, var(--color-ink) 18%, white);
-  --color-border: color-mix(in srgb, var(--color-ink-deep) 72%, white);
-  --color-border-strong: color-mix(in srgb, var(--color-ink-deep) 60%, white);
-  --color-focus: color-mix(in srgb, var(--color-ochre) 35%, white);
-  --color-brand: color-mix(in srgb, var(--color-ochre) 32%, white);
-  --color-brand-hover: color-mix(in srgb, var(--color-ochre) 25%, white);
-  --color-brand-tint: color-mix(in srgb, var(--color-ink-deep) 82%, white);
-  --color-accent: var(--color-ochre);
-  --color-accent-hover: color-mix(in srgb, var(--color-ochre) 88%, white);
-  --color-on-accent: color-mix(in srgb, var(--color-ink-deep) 58%, black);
-  --color-chart-primary: color-mix(in srgb, var(--color-ink) 16%, white);
-  --color-chart-secondary: color-mix(in srgb, var(--color-ochre) 80%, white);
-  --color-success: color-mix(in srgb, var(--color-ink) 40%, white);
-  --color-success-foreground: color-mix(in srgb, var(--color-ink) 14%, white);
-  --color-warning: color-mix(in srgb, var(--color-ochre) 70%, black);
-  --color-warning-foreground: color-mix(in srgb, var(--color-ochre) 30%, white);
-  --color-danger: color-mix(in srgb, var(--color-ochre) 55%, black);
-  --color-danger-foreground: color-mix(in srgb, var(--color-ochre) 22%, white);
-  --color-info: color-mix(in srgb, var(--color-ochre) 66%, white);
-  --color-info-foreground: color-mix(in srgb, var(--color-ochre) 32%, white);
-  --color-shadow: color-mix(in srgb, black 42%, transparent);
-  --color-shadow-strong: color-mix(in srgb, black 55%, transparent);
-  --color-overlay: color-mix(in srgb, black 68%, transparent);
-  --color-selection: color-mix(in srgb, var(--color-ochre) 35%, transparent);
-  --color-glow: color-mix(in srgb, var(--color-ochre) 18%, transparent);
-  --color-scrollbar: color-mix(in srgb, white 32%, transparent);
+  --color-background: #0A0A0A;
+  --color-surface: #111113;
+  --color-sidebar: #0A0A0A;
+  --color-elevated: #18181B;
+  --color-hover: #1F1F23;
+  --color-foreground: #FAFAFA;
+  --color-muted: #A1A1AA;
+  --color-subtle: #A1A1AA;
+  --color-border: #26262B;
+  --color-border-strong: #71717A;
+  --color-focus: #8E9FC7;
+  --color-brand: #FAFAFA;
+  --color-brand-hover: #E4E4E7;
+  --color-brand-tint: #18181B;
+  --color-accent: var(--color-ink);
+  --color-accent-hover: #3E4D70;
+  --color-accent-border: #5B6B91;
+  --color-on-accent: #FFFFFF;
+  --color-nav-active: #AEBBDB;
+  --color-chart-primary: #D4D4D8;
+  --color-chart-secondary: #71717A;
+  --color-success: #22C55E;
+  --color-success-foreground: #4ADE80;
+  --color-warning: #F59E0B;
+  --color-warning-foreground: #FBBF24;
+  --color-danger: #EF4444;
+  --color-danger-foreground: #F87171;
+  --color-info: #A1A1AA;
+  --color-info-foreground: #D4D4D8;
+  --color-deadline-foreground: #D8B878;
+  --color-shadow: rgb(0 0 0 / 0.5);
+  --color-shadow-strong: rgb(0 0 0 / 0.6);
+  --color-overlay: rgb(0 0 0 / 0.65);
+  --color-selection: rgb(142 159 199 / 0.3);
+  --color-scrollbar: rgb(255 255 255 / 0.28);
 }
 
 html,
@@ -329,31 +338,6 @@ dialog::backdrop {
   scrollbar-color: var(--color-scrollbar) transparent;
 }
 
-.bg-brand-gradient {
-  background-image: linear-gradient(
-    135deg,
-    var(--color-accent),
-    var(--color-accent-hover)
-  );
-}
-.bg-glow {
-  background-image: radial-gradient(
-    ellipse at top,
-    var(--color-glow) 0%,
-    transparent 55%
-  );
-}
-.text-brand-gradient {
-  background-image: linear-gradient(
-    135deg,
-    var(--color-brand),
-    var(--color-brand-hover)
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 /* The incoming theme radiates from the toggle's click point. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
@@ -411,7 +395,7 @@ dialog::backdrop {
   border-radius: 4px;
   background: var(--color-hover);
   transform: translateX(calc(var(--theme-index) * 100%));
-  transition: transform 320ms cubic-bezier(0.22, 1.3, 0.36, 1);
+  transition: transform 320ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 .desktop-sidebar[data-collapsed="true"] .theme-control {
   flex-direction: column;
@@ -450,6 +434,7 @@ dialog::backdrop {
 .desktop-sidebar { transition: width 200ms linear; }
 .desktop-sidebar[data-dragging="true"] { transition: none; user-select: none; }
 .desktop-sidebar[data-collapsed="true"] .nav-label,
+.desktop-sidebar[data-collapsed="true"] .nav-count,
 .desktop-sidebar[data-collapsed="true"] .sidebar-workspace,
 .desktop-sidebar[data-collapsed="true"] .sidebar-navigation > :not(nav),
 .desktop-sidebar[data-collapsed="true"] .sidebar-identity { display: none; }
@@ -552,10 +537,8 @@ dialog::backdrop {
   .report-request { break-inside: avoid; }
 }
 
-.stat-card { container-type: inline-size; background-image: linear-gradient(to top, color-mix(in srgb, var(--primary) 5%, var(--card)), var(--card)); }
+.stat-card { container-type: inline-size; }
 @container (min-width: 250px) { .stat-card .type-metric { font-size: 1.875rem; } }
-:is(.dark, [data-theme="dark"]) .stat-card { background-image: none; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stat-card { background-image: none; } }
 
 /* Impeccable Operate refinements: preserve data density while protecting prose. */
 .content-heading { overflow-wrap: anywhere; text-wrap: balance; }

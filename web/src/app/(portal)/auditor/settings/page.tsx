@@ -44,7 +44,7 @@ function Settings() {
           {" "}
           <section
             id="settings-profile"
-            className="scroll-mt-24 rounded-xl bg-card ring-1 ring-foreground/10 p-4"
+            className="scroll-mt-24 rounded-xl bg-card border border-border shadow-card p-4"
           >
             <h2 className="text-lg font-semibold">Profile</h2>
             <p className="mb-5 text-sm text-muted">
@@ -70,7 +70,7 @@ function Settings() {
           </section>
           <section
             id="settings-mfa"
-            className="scroll-mt-24 rounded-xl bg-card ring-1 ring-foreground/10 p-4"
+            className="scroll-mt-24 rounded-xl bg-card border border-border shadow-card p-4"
           >
             <h2 className="text-lg font-semibold">MFA</h2>
             <p className="mt-2 text-sm text-muted">
@@ -84,7 +84,7 @@ function Settings() {
           </section>
           <section
             id="settings-firm"
-            className="scroll-mt-24 rounded-xl bg-card ring-1 ring-foreground/10 p-4"
+            className="scroll-mt-24 rounded-xl bg-card border border-border shadow-card p-4"
           >
             <h2 className="mb-4 text-lg font-semibold">Firm</h2>
             <label className="grid gap-2 text-sm">
@@ -98,7 +98,7 @@ function Settings() {
           </section>
           <section
             id="settings-notifications"
-            className="scroll-mt-24 rounded-xl bg-card ring-1 ring-foreground/10 p-4"
+            className="scroll-mt-24 rounded-xl bg-card border border-border shadow-card p-4"
           >
             <h2 className="mb-2 text-lg font-semibold">Notifications</h2>
             <p className="mb-4 text-sm text-muted">

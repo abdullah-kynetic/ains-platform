@@ -3,7 +3,7 @@
 import { createContext, useContext, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, PanelLeft } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "./nav";
 import { CommandPalette } from "./command-palette";
@@ -32,17 +32,8 @@ export function Shell({
       <div className="flex min-h-screen flex-col lg:flex-row">
         {sidebar}
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 hidden h-14 shrink-0 items-center gap-2 bg-background/60 px-4 backdrop-blur-md lg:flex">
-            <button
-              type="button"
-              aria-label="Toggle sidebar"
-              onClick={() => window.dispatchEvent(new Event("kien-toggle-sidebar"))}
-              className="-ml-1 grid size-8 place-items-center rounded-lg text-muted hover:bg-hover"
-            >
-              <PanelLeft aria-hidden className="size-4" />
-            </button>
-            <span aria-hidden className="mr-2 h-4 border-r border-border" />
-            <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-sm">
+          <header className="sticky top-0 z-20 hidden h-10 shrink-0 items-center justify-center border-b border-border bg-background/95 px-4 lg:flex">
+            <nav aria-label="Breadcrumb" className="flex min-w-0 items-center justify-center gap-2 text-sm">
               <Link href={items[0]?.href ?? "/"} className="text-muted hover:text-foreground">{items[0]?.href === "/auditor" ? "Auditor workspace" : "Client portal"}</Link>
               <ChevronRight aria-hidden className="size-3.5 shrink-0 text-subtle" />
               <span aria-current="page" className="truncate">{activeItem?.label ?? "Overview"}</span>
@@ -116,7 +107,7 @@ export function Stat({
   return (
     <div
       className={cn(
-        "stat-card rounded-xl bg-card p-4 shadow-card ring-1 ring-foreground/10",
+        "stat-card rounded-xl bg-card p-5 shadow-card border border-border shadow-card",
         className,
       )}
     >

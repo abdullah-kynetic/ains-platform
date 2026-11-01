@@ -27,6 +27,10 @@ export type NavItem = {
   label: string;
   icon: keyof typeof Icons;
   exact?: boolean;
+  /** Sidebar section label. Items with the same group are listed together, in first-seen order. */
+  group?: string;
+  /** Optional count badge, derived from data the page already loads. */
+  count?: number;
 };
 
 type Workspace = {
@@ -267,10 +271,23 @@ function Items({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname().replace(/\/+$/, "") || "/";
+  const groups: { label?: string; items: NavItem[] }[] = [];
+  for (const item of items) {
+    const existing = groups.find((group) => group.label === item.group);
+    if (existing) existing.items.push(item);
+    else groups.push({ label: item.group, items: [item] });
+  }
 
   return (
-    <nav aria-label="Main navigation" className="grid gap-1">
-      {items.map((item) => {
+    <nav aria-label="Main navigation" className="grid gap-4">
+      {groups.map((group, index) => (
+        <div key={group.label ?? index} className="grid gap-0.5">
+          {group.label ? (
+            <p className="nav-label px-2 pb-1 text-xs font-medium text-subtle">
+              {group.label}
+            </p>
+          ) : null}
+      {group.items.map((item) => {
         const Icon = Icons[item.icon] as LucideIcon;
         const active =
           item.href === "/auditor" && pathname === "/"
@@ -284,23 +301,31 @@ function Items({
             key={item.href}
             href={item.href}
             title={item.label}
-            aria-label={item.label}
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex h-8 items-center gap-2 rounded-md p-2 text-sm leading-snug transition-colors",
+              "flex h-8 items-center gap-2 rounded-md border p-2 text-sm leading-snug transition-colors",
               active
-                ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                : "text-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                ? "border-border bg-surface font-medium text-nav-active shadow-card"
+                : "border-transparent text-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
             )}
           >
             <Icon
-              className={cn("size-4", active ? "text-brand" : "text-subtle")}
+              className={cn("size-4", active ? "text-nav-active" : "text-subtle")}
             />
             <span className="nav-label">{item.label}</span>
+            {item.count !== undefined ? (
+              <span
+                className="nav-count ml-auto min-w-5 rounded-full bg-elevated px-1.5 text-center text-xs font-medium tabular-nums leading-5 text-muted"
+              >
+                {item.count}
+              </span>
+            ) : null}
           </Link>
         );
       })}
+        </div>
+      ))}
     </nav>
   );
 }
@@ -352,9 +377,7 @@ function Panel({
         />
       </div>
       <div className="sidebar-navigation min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-        <p className="mt-2 flex h-8 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/80">
-          {auditor ? "Review" : "Engagement"}
-        </p>
+        <div className="mt-3" />
         <Items items={items} onNavigate={onNavigate} />
       </div>
       <div className="sidebar-theme shrink-0 pt-2">
@@ -465,11 +488,6 @@ export function Sidebar(props: {
     return () => window.removeEventListener("blur", cancelDrag);
   }, []);
 
-  useEffect(() => {
-    const toggle = () => setCollapsed((value) => !value);
-    window.addEventListener("kien-toggle-sidebar", toggle);
-    return () => window.removeEventListener("kien-toggle-sidebar", toggle);
-  }, []);
 
   return (
     <>

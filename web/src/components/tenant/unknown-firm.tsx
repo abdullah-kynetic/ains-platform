@@ -27,7 +27,7 @@ export function UnknownFirm({
       id="main-content"
       data-tenant-state="unknown"
       data-tenant-reason={reason}
-      className="min-h-screen bg-glow px-4 py-16"
+      className="min-h-screen px-4 py-16"
     >
       <div className="mx-auto grid w-full max-w-lg gap-6">
         <p className="text-center text-sm font-semibold tracking-[-0.02em]">

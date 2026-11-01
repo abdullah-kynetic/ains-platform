@@ -8,10 +8,10 @@ import { cn } from "@/lib/utils";
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={cn("size-7", className)} aria-hidden>
-      <rect width="32" height="32" rx="7" className="fill-foreground" />
+      <rect width="32" height="32" rx="7" className="fill-accent" />
       <path
         d="M10 7.5v17M10 16h7.2M17.2 16 23.5 7.5M17.2 16 23.5 24.5"
-        className="stroke-background"
+        className="stroke-on-accent"
         strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"

@@ -24,7 +24,7 @@ export function Progress({
       <div
         className={cn(
           "h-full rounded-full transition-[width] duration-500",
-          tone === "brand" && "bg-brand-gradient",
+          tone === "brand" && "bg-foreground",
           tone === "warning" && "bg-warning",
           tone === "danger" && "bg-danger",
         )}
