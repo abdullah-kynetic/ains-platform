@@ -102,7 +102,7 @@ function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () =
         </div>
         <CardDescription>{item.firmName}</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-5">
+      <CardContent className="grid gap-4">
         {item.naReviewState === "pending" ? (
           <div className="rounded-lg border border-warning/30 bg-warning/5 p-4">
             <p className="text-sm text-foreground">The firm answered that this item does not apply. Quentin must approve or reject that answer.</p>
@@ -194,7 +194,7 @@ export function AuditorWorkspace({ engagementId }: { engagementId?: string }) {
       />
       {error ? <p className="status-note mb-[var(--space-4)]" data-tone="danger">{error}</p> : null}
       {!items ? <Skeleton className="h-72 w-full" /> : engagementId ? (
-        <div className="grid gap-5">
+        <div className="grid gap-4">
           <Link href="/auditor" className={buttonVariants({ variant: "link" })}>← Back to queue</Link>
           {visible.length ? visible.map((item) => <ItemCard key={item.itemId} item={item} onChanged={load} />) : <Card><CardContent className="pt-5 text-sm text-muted">No pending work for this engagement.</CardContent></Card>}
         </div>

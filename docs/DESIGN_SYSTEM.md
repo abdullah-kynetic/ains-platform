@@ -1,5 +1,45 @@
 # Design System
 
+Root [DESIGN.md](../DESIGN.md) records the incumbent Kien/shadcn visual system in
+Impeccable's machine-readable and narrative format; [PRODUCT.md](../PRODUCT.md)
+records confirmed product truth. `.impeccable/review.md` records the refinement
+assessment. These preserve the historical context below. Shared heading/prose
+roles now protect long tokens, balance headings and limit explanatory copy to
+75ch without narrowing data tables. Reduced motion explicitly removes transitions
+and animations while retaining visible final states; the original normal-motion
+theme control is unchanged. Sidebar pointer ownership and blur cleanup keep
+interrupted drags recoverable without changing widths, thresholds or persistence.
+
+## Layout preview (`feat/shadcn-layout`)
+
+This owner-requested preview adapts the MIT Kiranism dashboard starter's layout
+geometry into Kien's existing components (see `THIRD_PARTY_NOTICES.md`). It keeps
+the Ink/Ochre palette and system font stack, workflow copy, role gates, routes,
+N/A interactions, report approval, and synthetic labels. It adds no backend or
+model processing. The historical main/design-branch comparison below describes
+the baseline, not the current preview geometry.
+
+The preview uses a full-width inset with 16px phone / 24px desktop horizontal
+padding, 8px / 16px top padding, and 16px section spacing. A frosted sticky header
+is 56px on desktop and 64px on phones; it contains navigation controls and
+breadcrumbs. Workspace search stays beside the page action, including Open
+checklist. Sidebar default width remains 256px with the existing 200–360px drag
+range and saved state; the icon rail is now 48px. Phone navigation retains its
+focus-managed 288px sheet. Group labels and menu links are 32px high.
+
+Cards use a 12px radius, a subtle foreground ring, 16px spacing, 16px medium
+weight titles and tinted divided footers. Stat cards use the same 16px grid,
+24px values (30px at card widths of at least 250px), and a restrained primary
+tint in light mode. Shared controls are 32px high (small buttons 28px, large
+36px), badges are 20px pills, tabs are 32px with 3px inset, and table frames
+use an 8px radius with 40px headers and 8px cell padding. The Light/Dark/System
+switch remains above the identity block with the original sliding indicator,
+circular reveal, OS synchronization, persistence and reduced-motion behavior.
+Focus remains Ink in light mode and pale Ochre in dark mode. Semantic
+`--background`, `--card`, `--primary`, `--sidebar-*`, `--ring`, `--border`, and
+`--input` aliases resolve from Kien's existing theme colors; legacy `text-muted`
+continues to mean muted text. Print layouts keep their white paper surface.
+
 ## Design direction
 
 - **Brand attributes:** Calm, precise, trustworthy.
@@ -10,7 +50,7 @@
 
 Verified against `origin/main` and `origin/feat/apple-polish` at documentation time. Main already contains Ink/Ochre tokens, cream light surfaces, dark mode, reduced-motion overrides, focus-visible outlines, circular theme-reveal, a Light/Dark/System control, draggable/resizable and collapsible desktop sidebar with saved width/state, mobile navigation sheet, and active navigation styling. The theme choice persists in `ains-theme`; sidebar width/collapse in `kien-sidebar`. The branch adds locally served Inter variable font, an expanded type/token system and additional surface/card motion/polish. Those branch-only visual refinements are not approved for production. The branch must not be treated as an approval to replace the current look.
 
-Owner-required design rules to preserve: sidebar theme switch sits directly above the user/firm/logout block; collapsed sidebar is icon-only; sidebar becomes a pop-out sheet on phones; keep a firm card for clients and firm switching/add-workspace auditor-only. Search belongs inline beside “Open checklist” with no global top bar. A keyboard-only Ochre focus ring is an intended design rule; current main has a generic focus-visible outline tied to `--color-focus` (Ink in light mode), so the explicit keyboard-only/Ochre behavior is unresolved against live code.
+Owner-required design rules to preserve: sidebar theme switch sits directly above the user/firm/logout block; collapsed sidebar is icon-only; sidebar becomes a pop-out sheet on phones; keep a firm card for clients and firm switching/add-workspace auditor-only. Search belongs inline beside “Open checklist” with search outside the navigation header. A keyboard-only Ochre focus ring is an intended design rule; current main has a generic focus-visible outline tied to `--color-focus` (Ink in light mode), so the explicit keyboard-only/Ochre behavior is unresolved against live code.
 
 ## UI tokens
 
@@ -32,16 +72,16 @@ Values below are sourced from `web/src/app/globals.css` on main. Mix-based value
 | `font.scale` | 12/14/16/18/20/24/28px with line heights 16/20/24/28/28/32/36px | Tailwind xs through 3xl tokens in main |
 | `space.unit` | 4px | 8px base grid; actual scale 4, 8, 12, 16, 24, 32, 40, 48, 64px |
 | `radius.control` | 8px | Inputs and buttons |
-| `radius.card` | 10px | Cards |
+| `radius.card` | 12px in the layout preview | Cards |
 | `shadow.card` | `0 1px 2px var(--color-shadow)` | Cards |
-| `control.height` | 44px | Buttons, inputs, selects, summary, file inputs |
+| `control.height` | 32px in the layout preview | Buttons, inputs, selects, summary, file inputs |
 
 The requested Apple-style scale (28/22/17/15/13/11px) is not the token scale currently in main. `origin/feat/apple-polish` contains matching values: `--text-3xl` 28px, `--text-xl` and `--text-2xl` 22px, `--text-base` and `--text-lg` 17px, `--text-sm` 15px, `--text-xs` 13px, and `--text-label` 11px. Main instead has 28/24/20/18/16/14/12px for 3xl/2xl/xl/lg/base/sm/xs. The branch also ships an Inter variable font file and additional surface/card polish. Those changes are unapproved and not live on main; retain as documented design direction pending design-owner approval.
 
 ## Layout rules
 
-- **Container widths, gutters, breakpoints:** Main CSS has no single fixed content max-width token. Desktop sidebar activates at Tailwind `lg` (1024px); mobile navigation is a focus-managed sheet below that. Sidebar default width 256px; persisted drag width clamped 200–360px; collapsed rail 76px. The exact snap/collapse threshold is implemented in `web/src/components/shell/nav.tsx` and should be preserved there.
-- **Grid, spacing, alignment:** Use the existing 4px-derived spacing tokens; group related content with 8px multiples. Use hairline `--color-border` borders and existing soft shadows. Prefer compact tiles with the primary action at top right. Avoid adding a global top bar.
+- **Container widths, gutters, breakpoints:** Main CSS has no single fixed content max-width token. Desktop sidebar activates at Tailwind `lg` (1024px); mobile navigation is a focus-managed sheet below that. Sidebar default width 256px; persisted drag width clamped 200–360px; collapsed rail 48px in the layout preview. The exact snap/collapse threshold is implemented in `web/src/components/shell/nav.tsx` and should be preserved there.
+- **Grid, spacing, alignment:** Use the existing 4px-derived spacing tokens; group related content with 8px multiples. Use hairline `--color-border` borders and existing soft shadows. Prefer compact tiles with the primary action at top right. The layout preview adds the navigation-only header described above.
 - **Mobile behavior:** Sidebar is replaced with a sheet; preserve focus entry/return and keyboard close behavior. Ensure content and file controls fit narrow screens without horizontal overflow.
 - **Shell:** Desktop sidebar can resize and collapse, remembers state, and shows icons only when collapsed. Theme control is directly above identity/firm/logout content. Client firm identity is a plain firm card; workspace switching and add-workspace are auditor-only.
 - **Checklist:** Search is inline next to the “Open checklist” action where that combined view exists; checklist filtering remains local to the checklist screen.

@@ -171,7 +171,7 @@ export function AuditorUpcomingTasks({ engagements }: { engagements: ClientSumma
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start gap-2">
-                      <p className={cn("min-w-0 flex-1 text-sm font-medium leading-5 text-foreground", isComplete && "text-subtle line-through")}>{task.title}</p>
+                      <p className={cn("content-heading min-w-0 flex-1 text-sm font-medium leading-5 text-foreground", isComplete && "text-subtle line-through")}>{task.title}</p>
                       <Button variant="ghost" size="icon-sm" aria-label={`Edit ${task.title}`} onClick={() => startEdit(task)}>
                         <Pencil aria-hidden="true" />
                       </Button>

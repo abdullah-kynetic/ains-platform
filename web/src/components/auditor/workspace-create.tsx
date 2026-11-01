@@ -60,7 +60,7 @@ export function WorkspaceCreate() {
               <CardTitle>Workspace details</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={submit} className="grid gap-5">
+              <form onSubmit={submit} className="grid gap-4">
                 <Field label="Firm name" htmlFor="firm-name" hint="Use the legal or operating name for this client workspace.">
                   <Input id="firm-name" value={firmName} onChange={(event) => setFirmName(event.target.value)} minLength={2} maxLength={255} required autoFocus />
                 </Field>

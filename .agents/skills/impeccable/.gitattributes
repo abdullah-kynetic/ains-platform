@@ -1,0 +1,2 @@
+# Preserve native Windows launcher checkout while storing normalized source.
+scripts/impeccable.cmd text eol=crlf

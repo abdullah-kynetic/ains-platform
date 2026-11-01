@@ -83,7 +83,7 @@ export function AuditorPipelineBoard() {
         badge={<Badge variant="brand">Synthetic preview</Badge>}
       />
 
-      <div className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-3)] md:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Stat
           label="Active engagements"
           value={active.length}
@@ -124,7 +124,7 @@ export function AuditorPipelineBoard() {
 
       {!loading ? <div
         aria-label="Audit pipeline stages"
-        className="-mx-[var(--space-4)] overflow-x-auto px-[var(--space-4)] pb-[var(--space-5)] sm:-mx-[var(--space-6)] sm:px-[var(--space-6)] xl:-mx-[var(--space-7)] xl:px-[var(--space-7)]"
+        className="-mx-4 overflow-x-auto px-4 pb-4 md:-mx-6 md:px-6"
       >
         <div className="grid min-w-[1800px] grid-cols-6 items-start gap-4">
           {stages.map((stage) => {
@@ -160,7 +160,7 @@ export function AuditorPipelineBoard() {
                     >
                       <div className="flex items-start gap-2">
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-semibold leading-5 text-foreground">
+                          <h3 className="content-heading text-sm font-semibold leading-5 text-foreground">
                             {engagement.firm}
                           </h3>
                           <p className="mt-1 text-xs text-subtle">

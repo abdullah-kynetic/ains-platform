@@ -49,9 +49,9 @@ export function ChecklistItemRow({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs font-mono text-brand-hover">{item.requestId}</p>
-          <p className="text-sm font-medium">{item.title}</p>
+          <p className="content-heading text-sm font-medium">{item.title}</p>
           {item.description ? (
-            <p className="mt-0.5 text-xs text-muted">{item.description}</p>
+            <p className="reading-prose mt-0.5 text-xs text-muted">{item.description}</p>
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">

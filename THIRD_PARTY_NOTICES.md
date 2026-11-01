@@ -10,6 +10,14 @@ Revision: 9084ffd954d24591d9b1d279c4b18e119b02b34e
 
 Adaptation: App shell: header/content/footer separation, icon-collapse sidebar, page containers and filtered/sorted/paginated table toolbar.
 
+### Layout preview adaptation (`feat/shadcn-layout`)
+
+The shared cards, buttons, badges, tables, tabs and inputs additionally adapt
+the geometry of this starter's UI primitives. Portal pages and the resizable
+sidebar use its compact spacing, icon rail, group labels, and frosted navigation
+header. Kien retains its palette, font stack, theme controller, authentication
+and workflows; no starter authentication or demo features are included.
+
 MIT License
 
 Copyright (c) 2023 Kiranism
@@ -95,3 +103,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
+
+## Paul Bakaus / Impeccable
+
+Source: https://github.com/pbakaus/impeccable
+
+The project-local Impeccable skill (4.8.0) and pinned detector launcher/engine
+(0.1.18) guide frontend layout, typography, audit, hardening and polish. Upstream
+skill/reference/script files are retained under `.agents/skills/impeccable/`;
+the Codex hook manifest lives in `.codex/hooks.json`. The platform engine is
+installed locally and excluded from git; its launcher verifies the pinned
+checksum on download. These development tools add no runtime model processing.
+
+Licensed under Apache License 2.0. The full license is preserved in
+`.agents/skills/impeccable/LICENSE`; upstream file notices are retained.

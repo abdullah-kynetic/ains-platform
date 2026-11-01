@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-27T08:14:06.962191+00:00",
+  "title": "Design System: Kien",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink Blue",
+        "canonical": "#33405C",
+        "tonalRamp": [
+          "color-mix(in srgb, #33405C 25%, black)",
+          "color-mix(in srgb, #33405C 50%, black)",
+          "color-mix(in srgb, #33405C 75%, black)",
+          "color-mix(in srgb, #33405C 100%, black)",
+          "color-mix(in srgb, #33405C 75%, white)",
+          "color-mix(in srgb, #33405C 50%, white)",
+          "color-mix(in srgb, #33405C 25%, white)",
+          "color-mix(in srgb, #33405C 10%, white)"
+        ]
+      },
+      "ochre": {
+        "role": "secondary",
+        "displayName": "Ochre",
+        "canonical": "#B8924A",
+        "tonalRamp": [
+          "color-mix(in srgb, #B8924A 25%, black)",
+          "color-mix(in srgb, #B8924A 50%, black)",
+          "color-mix(in srgb, #B8924A 75%, black)",
+          "color-mix(in srgb, #B8924A 100%, black)",
+          "color-mix(in srgb, #B8924A 75%, white)",
+          "color-mix(in srgb, #B8924A 50%, white)",
+          "color-mix(in srgb, #B8924A 25%, white)",
+          "color-mix(in srgb, #B8924A 10%, white)"
+        ]
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 1px 2px var(--color-shadow)",
+        "purpose": "Quiet metric/control elevation."
+      },
+      {
+        "name": "overlay",
+        "value": "0 24px 48px var(--color-shadow-strong)",
+        "purpose": "Protected modal focus."
+      }
+    ],
+    "motion": [
+      {
+        "name": "theme-reveal",
+        "value": "400ms ease-in-out",
+        "purpose": "Original owner-required circular theme change."
+      },
+      {
+        "name": "theme-indicator",
+        "value": "320ms cubic-bezier(0.22, 1.3, 0.36, 1)",
+        "purpose": "Original owner-required sliding selection."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action using the existing Kien theme tokens.",
+      "html": "<button class=\"ds-primary\">Open checklist</button>",
+      "css": ".ds-primary{height:32px;padding:0 10px;border:0;border-radius:8px;background:var(--color-accent);color:var(--color-on-accent);font:500 14px var(--font-sans)}.ds-primary:hover{background:var(--color-accent-hover)}.ds-primary:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action using the existing Kien theme tokens.",
+      "html": "<button class=\"ds-outline\">View engagement</button>",
+      "css": ".ds-outline{height:32px;padding:0 10px;border:1px solid var(--color-border-strong);border-radius:8px;background:var(--color-surface);color:var(--color-foreground);font:500 14px var(--font-sans)}.ds-outline:hover{background:var(--color-hover)}.ds-outline:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Text field using the existing Kien theme tokens.",
+      "html": "<label class=\"ds-label\">Search requests<input class=\"ds-field\" placeholder=\"Request ID or title\"></label>",
+      "css": ".ds-label{display:grid;gap:8px;font:500 14px var(--font-sans);color:var(--color-foreground)}.ds-field{height:32px;padding:4px 10px;border:1px solid var(--color-border-strong);border-radius:8px;background:var(--color-surface);color:var(--color-foreground);font:400 14px var(--font-sans)}.ds-field:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}.ds-field:hover{border-color:var(--color-foreground)}"
+    },
+    {
+      "name": "Active navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Active navigation using the existing Kien theme tokens.",
+      "html": "<a class=\"ds-nav\" href=\"#\">Checklist</a>",
+      "css": ".ds-nav{display:flex;align-items:center;height:32px;padding:0 8px;border-radius:6px;background:var(--color-hover);color:var(--color-foreground);font:500 14px var(--font-sans);text-decoration:none}.ds-nav:hover{background:var(--color-elevated)}.ds-nav:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Status badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Status badge using the existing Kien theme tokens.",
+      "html": "<span class=\"ds-badge\">With auditor</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;height:20px;padding:2px 8px;border:1px solid var(--color-border);border-radius:9999px;background:var(--color-elevated);color:var(--color-muted);font:500 12px var(--font-sans)}.ds-badge:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Workflow card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Workflow card using the existing Kien theme tokens.",
+      "html": "<section class=\"ds-card\"><h2>Document readiness</h2><p>Current collection status</p></section>",
+      "css": ".ds-card{padding:16px;border-radius:12px;background:var(--color-surface);color:var(--color-foreground);box-shadow:0 0 0 1px color-mix(in srgb,var(--color-foreground) 10%,transparent);font:400 14px var(--font-sans)}.ds-card h2{margin:0 0 4px;font-size:16px;font-weight:500}.ds-card p{margin:0;color:var(--color-muted)}.ds-card:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Precise audit workspace",
+    "overview": "The incumbent Kien system combines Ink Blue, Ochre and warm light surfaces with\nthe compact geometry of the Kiranism shadcn dashboard starter. Refinement keeps\nthat identity. Familiar navigation, quiet state treatments and stable information\ndensity support repeated client and auditor work.\n\nBrand expression comes from consistent type, spacing and controls rather than new\nimagery or decoration. This document records implemented visual rules; PRODUCT.md\nowns durable product truth and docs/DESIGN_SYSTEM.md keeps the historical design\ncontext. The source tokens in `web/src/app/globals.css` govern runtime themes.",
+    "keyCharacteristics": [
+      "Compact, task-oriented hierarchy with restrained color.",
+      "Familiar controls and server-authorized client/auditor workspaces.",
+      "Warm light surfaces and deep ink dark surfaces.",
+      "Responsive structure, visible focus and deliberate reduced motion."
+    ],
+    "rules": [
+      {
+        "name": "Existing Palette",
+        "body": "Preserve the frontmatter's source hues and mixes. Focus uses Ink in light mode and the existing pale Ochre focus token in dark mode. Status colors remain existing ink/ochre shades and always accompany text.",
+        "section": "colors"
+      },
+      {
+        "name": "Theme Placement",
+        "body": "Light/Dark/System remains directly above the account block. Preserve its sliding selection highlight, original circle reveal, OS synchronization and persistence. Reduced motion skips the reveal and shows the selected state immediately. Resizing, keyboard adjustment, collapse and the phone pop-out menu stay available; interruption must release drag state.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do preserve the incumbent palette, typefaces, compact geometry and assets.",
+      "Do use shared components for repeated controls across both roles.",
+      "Do keep long content, empty/error/loading states, zoom and focus usable.",
+      "Do preserve synthetic labels and the distinction between receipt and audit."
+    ],
+    "donts": [
+      "Don't move theme controls into the header or separate search from its action.",
+      "Don't replace sidebar resizing or the phone sheet with a parallel system.",
+      "Don't change copy, business rules, authorization or backend processing for polish.",
+      "Don't treat a detector preference as authority over an explicit owner decision."
+    ]
+  }
+}

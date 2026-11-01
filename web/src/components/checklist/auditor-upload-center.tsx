@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/shell/page";
 import { useEngagement } from "@/components/checklist/use-engagement";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { LoadState } from "@/components/ui/load-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Files } from "lucide-react";
@@ -101,7 +102,7 @@ export default function AuditorUploadCenter() {
       />
       <ol
         aria-label="Upload steps"
-        className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-3)] text-sm leading-snug sm:grid-cols-3"
+        className="mb-4 grid grid-cols-1 gap-[var(--space-3)] text-sm leading-snug sm:grid-cols-3"
       >
         {["Choose request", "Confirm files", "Keep receipts"].map(
           (step, index) => (
@@ -130,7 +131,7 @@ export default function AuditorUploadCenter() {
           description="Pending N/A and restricted requests do not accept portal files. Review your checklist or contact your auditor."
         />
       ) : (
-        <div className="grid max-w-4xl gap-5 rounded-2xl border border-border bg-surface p-4 sm:p-6">
+        <div className="grid max-w-4xl gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
           <label className="grid gap-2">
             Search requests
             <Input
@@ -145,9 +146,8 @@ export default function AuditorUploadCenter() {
           </label>
           <label className="grid gap-2">
             Request
-            <select
+            <Select
               aria-label="Request"
-              className="rounded-lg border border-border bg-surface p-3"
               value={selected}
               onChange={(event) => setSelected(event.target.value)}
               disabled={busy}
@@ -158,7 +158,7 @@ export default function AuditorUploadCenter() {
                   {item.requestId} — {item.title}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           {!filtered.length && (
             <p role="status">No matching requests. Try another search.</p>
@@ -217,9 +217,9 @@ export default function AuditorUploadCenter() {
                   <p className="break-all font-medium">{pending.file.name}</p>
                   <label className="grid gap-1 text-sm">
                     Destination for {pending.file.name}
-                    <select
+                    <Select
                       aria-label={`Destination for ${pending.file.name}`}
-                      className="max-w-full rounded-lg border border-border bg-surface p-2"
+                      className="max-w-full"
                       value={pending.itemId}
                       disabled={busy || pending.state === "received"}
                       onChange={(event) => {
@@ -236,7 +236,7 @@ export default function AuditorUploadCenter() {
                           {item.requestId} — {item.title}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </label>
                   <p role="status">
                     {pending.state === "received"

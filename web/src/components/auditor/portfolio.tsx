@@ -42,12 +42,12 @@ function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
   return (
     <section
       aria-label="Overview charts"
-      className="mb-7 grid gap-5 lg:grid-cols-[1.6fr_1fr]"
+      className="mb-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]"
     >
-      <div className="rounded-xl border border-border bg-surface p-6">
+      <div className="rounded-xl bg-card ring-1 ring-foreground/10 p-4">
         <div className="flex justify-between">
           <div>
-            <h2 className="font-semibold">Engagement distribution</h2>
+            <h2 className="text-base font-medium">Engagement distribution</h2>
             <p className="mt-1 text-xs text-muted">
               Current assigned portfolio · engagements by review state
             </p>
@@ -110,8 +110,8 @@ function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
           </text>
         </svg>
       </div>
-      <div className="rounded-xl border border-border bg-surface p-6">
-        <h2 className="font-semibold">Request review coverage</h2>
+      <div className="rounded-xl bg-card ring-1 ring-foreground/10 p-4">
+        <h2 className="text-base font-medium">Request review coverage</h2>
         <p className="mt-1 text-xs text-muted">
           Recorded human reviews across assigned engagements
         </p>
@@ -200,11 +200,11 @@ export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
   return (
     <section
       aria-labelledby="engagement-table-title"
-      className="rounded-xl border border-border bg-surface"
+      className="rounded-xl bg-card ring-1 ring-foreground/10"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-4">
         <div>
-          <h2 id="engagement-table-title" className="font-semibold">
+          <h2 id="engagement-table-title" className="text-base font-medium">
             Assigned engagements
           </h2>
           <p className="mt-1 text-xs text-muted">
@@ -213,7 +213,7 @@ export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
         </div>
         <Badge>{clients.length} engagements</Badge>
       </div>
-      <div className="flex flex-wrap gap-3 p-5">
+      <div className="m-3 flex flex-wrap items-start gap-2 p-1">
         <Input
           aria-label="Search engagements"
           placeholder="Search firms…"
@@ -423,7 +423,7 @@ function Portfolio({ tableOnly }: { tableOnly: boolean }) {
       )}
       {!tableOnly && (
         <>
-          <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Stat
               label="Assigned engagements"
               value={clients.length}
@@ -457,7 +457,7 @@ function Portfolio({ tableOnly }: { tableOnly: boolean }) {
       )}
       <EngagementTable clients={clients} />
       {!tableOnly && (
-        <div className="mt-6 grid items-start gap-5 xl:grid-cols-2">
+        <div className="mt-4 grid items-start gap-4 xl:grid-cols-2">
           <AuditorActivityFeed />
           <AuditorUpcomingTasks engagements={clients} />
         </div>

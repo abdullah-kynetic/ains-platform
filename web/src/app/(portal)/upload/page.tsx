@@ -100,7 +100,7 @@ function ClientUploadCenter() {
       />
       <ol
         aria-label="Upload steps"
-        className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-3)] text-sm leading-snug sm:grid-cols-3"
+        className="mb-4 grid grid-cols-1 gap-[var(--space-3)] text-sm leading-snug sm:grid-cols-3"
       >
         {["Add files", "Confirm files", "Keep receipts"].map((step, index) => (
           <li
@@ -136,7 +136,7 @@ function ClientUploadCenter() {
         </section>
       )}
       <div
-        className="grid max-w-4xl gap-5 rounded-2xl border border-border bg-surface p-4 sm:p-6"
+        className="grid max-w-4xl gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10"
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault();

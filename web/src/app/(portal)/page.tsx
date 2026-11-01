@@ -63,7 +63,7 @@ export default function OverviewPage() {
         </div>
       ) : null}
 
-      <section aria-label="Quick actions" className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Quick actions" className="mb-4 grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2 xl:grid-cols-4">
         {[
           { href: "/upload", icon: FileUp, title: "Upload your documents", detail: "Add files or send a replacement" },
           { href: "/checklist", icon: ListTodo, title: "View requests", detail: "See what to send next" },
@@ -73,7 +73,7 @@ export default function OverviewPage() {
           <Link
             key={href}
             href={href}
-            className="group rounded-xl border border-border bg-surface p-5 transition-colors hover:border-brand focus-visible:outline-brand"
+            className="group rounded-xl bg-card ring-1 ring-foreground/10 p-4 transition-colors hover:ring-brand/30 focus-visible:outline-brand"
           >
             <div className="flex items-center justify-between gap-3">
               <Icon aria-hidden="true" className="size-6 text-brand" />
@@ -88,7 +88,7 @@ export default function OverviewPage() {
         ))}
       </section>
 
-      <div className="mb-[var(--space-6)] grid grid-cols-1 gap-[var(--space-3)] md:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Stat
           label="To upload"
           value={counts.requested}
@@ -115,7 +115,7 @@ export default function OverviewPage() {
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
         <Card>
           <CardHeader className="flex-row items-start justify-between gap-4">
             <div>

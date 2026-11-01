@@ -135,7 +135,7 @@ export function InvoiceList() {
           <CardTitle>Invoice register</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Field label="Status">
               <Select
                 value={filters.status ?? ""}
@@ -428,7 +428,7 @@ export function InvoiceForm({ id }: { id?: string }) {
         <p role="alert">Only draft invoices can be edited.</p>
       ) : (
         <form onSubmit={submit}>
-          <fieldset disabled={busy} className="space-y-5">
+          <fieldset disabled={busy} className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Client & dates</CardTitle>
@@ -761,7 +761,7 @@ export function InvoiceDetail({ id }: { id: string }) {
       </div>
       {!dialog && <ErrorNote error={error} />}
       <Card className="invoice-print">
-        <CardContent className="p-5 sm:p-8">
+        <CardContent className="px-4">
           <div className="flex flex-wrap justify-between gap-6 border-b border-border pb-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-subtle">
@@ -791,16 +791,16 @@ export function InvoiceDetail({ id }: { id: string }) {
               <caption className="sr-only">Invoice line items</caption>
               <thead>
                 <tr className="border-b border-border text-xs text-muted">
-                  <th scope="col" className="py-3 pr-4 font-medium">
+                  <th scope="col" className="h-10 px-2 font-medium">
                     Description
                   </th>
-                  <th scope="col" className="px-2 py-3 text-right font-medium">
+                  <th scope="col" className="h-10 px-2 text-right font-medium">
                     Qty
                   </th>
-                  <th scope="col" className="px-2 py-3 text-right font-medium">
+                  <th scope="col" className="h-10 px-2 text-right font-medium">
                     Rate
                   </th>
-                  <th scope="col" className="py-3 pl-2 text-right font-medium">
+                  <th scope="col" className="h-10 px-2 text-right font-medium">
                     Amount
                   </th>
                 </tr>
@@ -808,16 +808,16 @@ export function InvoiceDetail({ id }: { id: string }) {
               <tbody>
                 {invoice.lineItems.map((l, index) => (
                   <tr key={index} className="border-b border-border">
-                    <td className="min-w-32 break-words py-4 pr-4">
+                    <td className="min-w-32 break-words p-2">
                       {l.description}
                     </td>
-                    <td className="px-2 py-4 text-right tabular-nums">
+                    <td className="p-2 text-right tabular-nums">
                       {l.quantity}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-4 text-right tabular-nums">
+                    <td className="whitespace-nowrap p-2 text-right tabular-nums">
                       {money(l.rateCents, invoice.currency)}
                     </td>
-                    <td className="whitespace-nowrap py-4 pl-2 text-right tabular-nums">
+                    <td className="whitespace-nowrap p-2 text-right tabular-nums">
                       {money(l.amountCents, invoice.currency)}
                     </td>
                   </tr>

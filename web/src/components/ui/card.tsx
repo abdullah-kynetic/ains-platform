@@ -8,11 +8,12 @@ export function Card({
 }: React.HTMLAttributes<HTMLDivElement> & { featured?: boolean }) {
   return (
     <div
+      data-slot="card"
       className={cn(
-        "rounded-card border bg-surface shadow-card",
+        "flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-card-foreground ring-1 ring-foreground/10 has-[[data-slot=card-footer]]:pb-0",
         featured
-          ? "border-brand/30 shadow-featured"
-          : "border-border",
+          ? "ring-brand/30"
+          : "",
         className,
       )}
       {...props}
@@ -26,7 +27,7 @@ export function CardHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-[var(--space-2)] px-[var(--space-5)] pt-[var(--space-5)] pb-[var(--space-3)]",
+        "flex flex-col gap-1 px-4",
         className,
       )}
       {...props}
@@ -40,7 +41,7 @@ export function CardTitle({
   return (
     <h2
       className={cn(
-        "text-sm font-semibold leading-snug tracking-[-0.01em] text-foreground",
+        "content-heading text-base font-medium leading-snug text-foreground",
         className,
       )}
       {...props}
@@ -52,7 +53,7 @@ export function CardDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn("text-sm leading-normal text-muted", className)} {...props} />
+    <p className={cn("reading-prose text-sm leading-normal text-muted", className)} {...props} />
   );
 }
 export function CardContent({
@@ -61,7 +62,7 @@ export function CardContent({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("px-[var(--space-5)] pb-[var(--space-5)]", className)}
+      className={cn("px-4", className)}
       {...props}
     />
   );
@@ -72,8 +73,9 @@ export function CardFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
+      data-slot="card-footer"
       className={cn(
-        "flex items-center gap-[var(--space-2)] border-t border-border px-[var(--space-5)] py-[var(--space-3)]",
+        "flex items-center gap-2 rounded-b-xl border-t border-border bg-elevated/50 p-4",
         className,
       )}
       {...props}
