@@ -82,3 +82,14 @@ Runtime/domain assertions supplied by the owner: `live.kiensolutions.com` Worker
 - Confirm active runtime provider/host, domain and Worker names, object bucket/account, email sender addresses and environment bindings. Code verifies integrations, not deployed resource existence.
 - Confirm storage retention and deletion, backup frequency/restore target, job retry/recovery, production monitoring, and cryptographic report signing expectations.
 - AI intake and SAR pre-screen are planned only. Any future classification requires auditor confirmation; SAR data must never reach model inference.
+
+## Invoicing boundary
+
+`app/invoicing.py` owns exact financial arithmetic, numbering and transitions;
+`app/api/invoices.py` exposes `/auditor/invoices` list/get/create/PATCH and POST
+`/{id}/sent`, `/{id}/paid`, `/{id}/void`, plus assignment-scoped `/options`.
+Filters are `status`, `client`, inclusive issue-date `since`/`until`, `limit` (max 200)
+and `offset`. Web pages use `web/src/lib/invoice-api.ts`; mock mode persists synthetic
+invoice metadata locally. Payment recording does not contact a payment or mail service.
+The printable detail uses browser print/save as PDF. Invoice data is owned by its issuer
+and creating auditor and requires a current matching client/engagement assignment.

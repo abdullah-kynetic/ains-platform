@@ -56,3 +56,14 @@
 ## Definition of ready
 
 Feature scope and journey acceptance criteria are implementation-grounded; blockers are named above. Readiness does not mean that unresolved operational decisions are approved or that this workflow establishes regulatory compliance.
+
+## Auditor invoicing (v1)
+
+F-13: Only authenticated auditors can list, create and view invoices for their assigned
+client firms. Drafts are editable. Auditors manually mark a draft sent, record dated
+payments against a sent invoice, or void an unpaid draft/sent invoice. Partial payments
+keep the balance open; full payment sets paid status. Clients have no navigation or API
+access. Issue-date range, client and status filters include computed overdue (sent,
+past due in UTC, positive balance). No emails, reminders, tax, conversion or payment
+processing is included. PDF uses the browser print/save flow. Payment and transition
+events provide a base for later follow-up work, which remains unimplemented.

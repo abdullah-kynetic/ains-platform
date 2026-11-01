@@ -56,3 +56,7 @@ Directory responsibilities are defined in [Architecture](ARCHITECTURE.md#project
 - **Local database:** `docker compose up -d` (PostgreSQL 16).
 
 Scripts are confirmed in `pyproject.toml`, `web/package.json`, and `.github/workflows/ci.yml`. A command being documented does not imply it was run in this session; session results are in [Testing](TESTING.md#results).
+
+Invoice arithmetic uses Decimal quantities and integer cents, half-up per-line rounding,
+and server-derived totals. Web live totals use integer hundredths; browser-supplied totals
+and invoice numbers are not accepted as authoritative inputs. No new dependency is needed.

@@ -119,7 +119,7 @@ def test_unassigned_document_migration(postgres_engine):
         connection.execute(text("ALTER TABLE documents DROP COLUMN engagement_id"))
         connection.execute(text("ALTER TABLE documents ALTER COLUMN item_instance_id SET NOT NULL"))
         command.stamp(config, "a110_audit_chain")
-        command.upgrade(config, "head")
+        command.upgrade(config, "a111_unassigned_documents")
         columns = {
             column["name"]: column for column in inspect(connection).get_columns("documents")
         }

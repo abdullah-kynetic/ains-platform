@@ -61,3 +61,14 @@ Required: applicable CI jobs pass; new endpoints have permission-denial and firm
 - **Passed:** `uv run pytest tests/test_workflow_boundary.py -q` — 1 passed in 0.07s.
 - **Failed:** None.
 - **Not run:** Full backend suite, Ruff, web lint/type/unit/build/e2e, accessibility screenshots, production service checks, and all other commands. Documentation-only changes do not alter application code.
+
+### Auditor invoice coverage
+
+`tests/test_invoices.py` covers draft CRUD, totals/rounding, per-issuer numbering,
+status/date/client filters, partial/full payments and transitions, invalid input,
+assignment revocation, cross-firm and client denial, and idempotent synthetic seeding.
+`tests/test_invoice_postgres.py` applies the additive migration to a populated old schema,
+checks model parity and races eight invoice creations against one issuer. Browser tests
+in `web/e2e/invoices.spec.ts` cover create/edit/send/pay persistence, filters/void, print,
+phone overflow, accessibility and direct client-route denial. Live deployment evidence and
+exact session command results are recorded in the delivery report.
