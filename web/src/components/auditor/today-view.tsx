@@ -45,6 +45,10 @@ function daysUntil(due: string) {
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / DAY);
 }
 
+function shortDate(due: string) {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(due));
+}
+
 function dueLabel(due: string) {
   const days = daysUntil(due);
   if (days < 0) return `Overdue ${Math.abs(days)}d`;
@@ -174,10 +178,42 @@ export function TodayView({ clients }: { clients: ClientSummary[] }) {
   const reviewed = clients.reduce((n, c) => n + c.readiness.reviewed, 0);
   const remaining = clients.reduce((n, c) => n + c.readiness.total - c.readiness.reviewed, 0);
   const loading = tasks === null || pipeline === null;
+  const total = clients.reduce((n, c) => n + c.readiness.total, 0);
+
+  // Next deadline: the earliest future date across open tasks and engagements still in flight.
+  const next = [
+    ...openTasks.filter((task) => task.due !== null && daysUntil(task.due) >= 0).map((task) => ({ due: task.due as string, who: names.get(task.engagementId) ?? "Engagement" })),
+    ...(pipeline ?? []).filter((entry) => entry.stage !== "complete" && entry.due !== null && daysUntil(entry.due) >= 0).map((entry) => ({ due: entry.due as string, who: entry.firm })),
+  ].sort((a, b) => daysUntil(a.due) - daysUntil(b.due))[0];
+
+  // Remaining requests, split by what the engagement is waiting on. Uses only portfolio and pipeline data.
+  const blockedIds = new Set((pipeline ?? []).filter((entry) => entry.blockers > 0 && entry.stage !== "complete").map((entry) => entry.id));
+  const remainingBlocked = clients.filter((c) => blockedIds.has(c.id)).reduce((n, c) => n + c.readiness.total - c.readiness.reviewed, 0);
+  const remainingOther = remaining - remainingBlocked;
+  const segments = [
+    { key: "reviewed", label: "Reviewed", value: reviewed, className: "bg-success" },
+    { key: "blocked", label: "Remaining, engagement blocked", value: remainingBlocked, className: "bg-warning" },
+    { key: "other", label: "Remaining", value: remainingOther, className: "bg-border-strong" },
+  ];
 
   return (
     <>
-      <section aria-label="Today at a glance" className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Today at a glance" className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat
+          label="Next deadline"
+          value={loading ? "–" : next ? shortDate(next.due) : "None"}
+          icon={<CalendarClock className="size-4" />}
+          hint={
+            next ? (
+              <span className="flex flex-wrap items-center gap-2">
+                <Badge variant="deadline">{daysUntil(next.due) === 0 ? "Due today" : `${daysUntil(next.due)} ${daysUntil(next.due) === 1 ? "day" : "days"} left`}</Badge>
+                <span className="text-xs text-muted">{next.who}</span>
+              </span>
+            ) : (
+              <span className="text-xs text-muted">{loading ? "Loading…" : "No dated work ahead"}</span>
+            )
+          }
+        />
         <Stat
           label="Needs you today"
           value={loading ? "–" : rows.length}
@@ -186,15 +222,13 @@ export function TodayView({ clients }: { clients: ClientSummary[] }) {
         />
         <Stat
           label="Requests reviewed"
-          value={reviewed}
+          value={
+            <>
+              {reviewed} <span className="text-base font-normal text-muted">of {total}</span>
+            </>
+          }
           icon={<ClipboardCheck className="size-4" />}
           hint={<Change value={recent("review")} label="in the last 24 hours" good="up" />}
-        />
-        <Stat
-          label="Requests remaining"
-          value={remaining}
-          icon={<ListChecks className="size-4" />}
-          hint={<Change value={recent("upload")} label="uploads in the last 24 hours" good="up" />}
         />
         <Stat
           label="Ready for drafting"
@@ -202,6 +236,47 @@ export function TodayView({ clients }: { clients: ClientSummary[] }) {
           icon={<Building2 className="size-4" />}
           hint={<span className="text-xs text-muted">Auditor sign-off still required</span>}
         />
+      </section>
+
+      <section aria-labelledby="still-to-review-title" className="mb-4">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <span className="grid size-8 shrink-0 place-items-center rounded-md bg-elevated text-muted">
+                <ListChecks aria-hidden="true" className="size-4" />
+              </span>
+              <div>
+                <CardTitle id="still-to-review-title">Still to review</CardTitle>
+                <CardDescription>
+                  Requests across your {clients.length} assigned {clients.length === 1 ? "engagement" : "engagements"}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap items-baseline gap-3">
+              <span className="type-metric text-5xl">{remaining}</span>
+              <Change value={recent("upload")} label="uploads in the last 24 hours" good="up" />
+            </div>
+            <div
+              role="img"
+              aria-label={segments.map((segment) => `${segment.label}: ${segment.value}`).join(". ")}
+              className="my-4 flex h-3 gap-0.5 overflow-hidden rounded-full bg-elevated"
+            >
+              {segments.filter((segment) => segment.value > 0).map((segment) => (
+                <span key={segment.key} className={cn("block h-full", segment.className)} style={{ width: `${(segment.value / Math.max(total, 1)) * 100}%` }} />
+              ))}
+            </div>
+            <ul className="grid gap-2 text-xs text-muted sm:grid-cols-3">
+              {segments.map((segment) => (
+                <li key={segment.key} className="flex items-center gap-2">
+                  <span aria-hidden="true" className={cn("size-2 rounded-sm", segment.className)} />
+                  {segment.label} <span className="font-medium tabular-nums text-foreground">{segment.value}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       </section>
 
       <div className="mb-6 grid items-start gap-4 xl:grid-cols-[minmax(0,2.3fr)_minmax(300px,1fr)]">

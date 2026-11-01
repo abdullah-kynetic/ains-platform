@@ -20,6 +20,7 @@ test("auditor overview, sidebar rail and desktop screenshot", async ({
     page.getByRole("heading", { name: "Today", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("region", { name: "Today at a glance" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Still to review", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Needs you today", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Upcoming deadlines", exact: true })).toBeVisible();
   await axe(page);
