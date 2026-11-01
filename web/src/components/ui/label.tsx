@@ -23,10 +23,13 @@ export function Field({
   children: React.ReactNode;
   className?: string;
 }) {
+  const generated = React.useId();
+  const only = React.Children.count(children) === 1 && React.isValidElement<{ id?: string }>(children) ? children : null;
+  const id = htmlFor ?? only?.props.id ?? generated;
   return (
     <div className={cn("grid gap-[var(--space-2)]", className)}>
-      <Label htmlFor={htmlFor}>{label}</Label>
-      {children}
+      <Label htmlFor={id}>{label}</Label>
+      {only && !only.props.id && !htmlFor ? React.cloneElement(only, { id }) : children}
       {hint ? <p className="type-caption text-muted">{hint}</p> : null}
     </div>
   );
