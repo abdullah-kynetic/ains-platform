@@ -131,7 +131,7 @@ export default function AuditorUploadCenter() {
           description="Pending N/A and restricted requests do not accept portal files. Review your checklist or contact your auditor."
         />
       ) : (
-        <div className="grid max-w-4xl gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+        <div className="grid max-w-4xl gap-4 rounded-xl bg-card p-4 border border-border shadow-card">
           <label className="grid gap-2">
             Search requests
             <Input

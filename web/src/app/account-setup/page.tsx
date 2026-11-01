@@ -84,7 +84,7 @@ function AccountSetupForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-glow">
+    <div className="flex min-h-screen flex-col">
       <main
         id="main-content"
         className="flex-1 px-[var(--space-4)] py-[var(--space-8)] sm:py-[var(--space-9)]"

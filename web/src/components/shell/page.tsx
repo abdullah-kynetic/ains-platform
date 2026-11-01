@@ -107,7 +107,7 @@ export function Stat({
   return (
     <div
       className={cn(
-        "stat-card rounded-xl bg-card p-4 shadow-card ring-1 ring-foreground/10",
+        "stat-card rounded-xl bg-card p-5 shadow-card border border-border shadow-card",
         className,
       )}
     >

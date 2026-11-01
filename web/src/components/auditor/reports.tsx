@@ -294,7 +294,7 @@ export function ReportEditor({
         </p>
       )}
       <article
-        className="report-print grid gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10"
+        className="report-print grid gap-4 rounded-xl bg-card p-4 border border-border shadow-card"
         aria-label="Independent AML test report"
       >
         <div className="grid gap-2 border-b border-border pb-5">

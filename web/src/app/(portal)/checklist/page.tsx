@@ -53,7 +53,7 @@ export default function ChecklistPage() {
         }
       />
 
-      <div className="mb-4 grid gap-[var(--space-3)] rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+      <div className="mb-4 grid gap-[var(--space-3)] rounded-xl bg-card p-4 border border-border shadow-card">
         <div className="flex flex-wrap justify-between gap-2 text-sm">
           <span className="font-medium">Document collection</span>
           <span className="text-muted">
@@ -97,7 +97,7 @@ export default function ChecklistPage() {
           <details
             open
             key={section.id}
-            className="rounded-xl bg-card p-4 ring-1 ring-foreground/10"
+            className="rounded-xl bg-card p-4 border border-border shadow-card"
           >
             <summary className="cursor-pointer text-base font-medium">
               {section.title}

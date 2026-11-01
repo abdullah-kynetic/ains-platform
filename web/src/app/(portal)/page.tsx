@@ -104,8 +104,8 @@ export default function OverviewPage() {
           </CardHeader>
           <CardContent>
             <Progress value={progress.pct} className="h-2.5" />
-            <div className="mt-[var(--space-5)] grid grid-cols-1 divide-y divide-border rounded-lg border border-border bg-background sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-              <div className="px-[var(--space-4)] py-[var(--space-3)]">
+            <div className="mt-[var(--space-5)] grid grid-cols-1 divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              <div className="px-[var(--space-4)] py-[var(--space-3)] first:pl-0">
                 <p className="text-xs font-medium text-muted">
                   Received
                 </p>
@@ -113,7 +113,7 @@ export default function OverviewPage() {
                   {progress.done}
                 </p>
               </div>
-              <div className="px-[var(--space-4)] py-[var(--space-3)]">
+              <div className="px-[var(--space-4)] py-[var(--space-3)] first:pl-0">
                 <p className="text-xs font-medium text-muted">
                   Total
                 </p>
@@ -121,7 +121,7 @@ export default function OverviewPage() {
                   {progress.total}
                 </p>
               </div>
-              <div className="px-[var(--space-4)] py-[var(--space-3)]">
+              <div className="px-[var(--space-4)] py-[var(--space-3)] first:pl-0">
                 <p className="text-xs font-medium text-muted">
                   Remaining
                 </p>
@@ -131,13 +131,13 @@ export default function OverviewPage() {
               </div>
             </div>
             <div className="mt-5 grid gap-2 text-sm">
-              <Link href="/questionnaire" className="text-brand-hover hover:underline">
+              <Link href="/questionnaire" className="text-foreground underline underline-offset-4 hover:text-muted">
                 1. Complete questionnaire
               </Link>
-              <Link href="/checklist" className="text-brand-hover hover:underline">
+              <Link href="/checklist" className="text-foreground underline underline-offset-4 hover:text-muted">
                 2. Review requests and mark anything that does not apply
               </Link>
-              <Link href="/upload" className="text-brand-hover hover:underline">
+              <Link href="/upload" className="text-foreground underline underline-offset-4 hover:text-muted">
                 3. Upload documents or replacements
               </Link>
             </div>
@@ -161,7 +161,7 @@ export default function OverviewPage() {
                 </p>
               </div>
             </div>
-            <div className="rounded-lg border border-border bg-background px-[var(--space-3)] py-[var(--space-3)] text-xs leading-normal text-muted">
+            <div className="rounded-lg bg-elevated/70 px-[var(--space-3)] py-[var(--space-3)] text-xs leading-normal text-muted">
               The auditor will review submitted materials after intake checks
               are complete.
             </div>
@@ -183,12 +183,12 @@ export default function OverviewPage() {
               View all <ArrowUpRight />
             </Link>
           </CardHeader>
-          <CardContent className="grid gap-2 sm:grid-cols-2">
+          <CardContent className="grid divide-y divide-border">
             {actions.length ? (
               actions.slice(0, 4).map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background px-4 py-3"
+                  className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">

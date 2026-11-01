@@ -4,12 +4,20 @@ description: Independent AML testing workspace
 colors:
   ink: "#33405C"
   ochre: "#B8924A"
-  background: "color-mix(in srgb, #B8924A 10%, white)"
-  card: "color-mix(in srgb, #B8924A 4%, white)"
-  sidebar: "color-mix(in srgb, #33405C 7%, white)"
-  dark-background: "#242D40"
-  dark-card: "color-mix(in srgb, #242D40 93%, white)"
-  dark-brand: "color-mix(in srgb, #B8924A 32%, white)"
+  canvas: "#F7F7F8"
+  card: "#FFFFFF"
+  sidebar: "#F7F7F8"
+  foreground: "#0A0A0A"
+  muted: "#636A77"
+  border: "#E5E7EB"
+  success: "#16A34A"
+  warning: "#D97706"
+  danger: "#DC2626"
+  dark-canvas: "#0A0A0A"
+  dark-card: "#111113"
+  dark-foreground: "#FAFAFA"
+  dark-muted: "#A1A1AA"
+  dark-border: "#26262B"
 typography:
   headline:
     fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
@@ -52,12 +60,13 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.ink}"
+    textColor: "#FFFFFF"
     rounded: "{rounded.control}"
     height: "32px"
     padding: "0 10px"
   button-outline:
     backgroundColor: "{colors.card}"
-    textColor: "{colors.ink}"
+    textColor: "{colors.foreground}"
     rounded: "{rounded.control}"
     height: "32px"
     padding: "0 10px"
@@ -73,7 +82,7 @@ components:
   card:
     backgroundColor: "{colors.card}"
     rounded: "{rounded.card}"
-    padding: "16px"
+    padding: "20px"
   badge:
     rounded: "{rounded.badge}"
     height: "20px"
@@ -84,34 +93,71 @@ components:
 
 ## Overview
 
-**Creative North Star: "Precise audit workspace"**
+**Creative North Star: "The audit work is the hero"**
 
-The incumbent Kien system combines Ink Blue, Ochre and warm light surfaces with
-the compact geometry of the Kiranism shadcn dashboard starter. Refinement keeps
-that identity. Familiar navigation, quiet state treatments and stable information
-density support repeated client and auditor work.
+Kien is a clean, neutral black-and-white SaaS workspace in the family of Linear,
+Stripe and Vercel: mostly white, restrained color, calm and serious. The design gets
+out of the way so the audit work, not the chrome, is what people see. Brand stays
+present but quiet.
 
-Brand expression comes from consistent type, spacing and controls rather than new
-imagery or decoration. This document records implemented visual rules; PRODUCT.md
-owns durable product truth and docs/DESIGN_SYSTEM.md keeps the historical design
-context. The source tokens in `web/src/app/globals.css` govern runtime themes.
+This document records implemented visual rules; PRODUCT.md owns durable product
+truth and docs/DESIGN_SYSTEM.md keeps the historical design context. The source
+tokens in `web/src/app/globals.css` govern runtime themes. Never hardcode one-off
+colors in components; add or change a token.
+
+### Why this design (use these as principles for every decision)
+
+- Compliance buyers (broker-dealers, auditors) trust calm, serious tools; loud color
+  reads as a startup toy.
+- Kien is priced premium; the best-in-class SaaS apps (Linear, Stripe, Vercel) are
+  mostly white with restrained color.
+- On a neutral page, color carries meaning: red, amber and green findings stand out
+  instantly so auditors see what needs them.
+- Fewer colors means fewer mistakes, less design drift and faster building.
+- Kien will expand into many audit verticals (AML, SOC 2, financial audits); a neutral
+  base fits all of them without redesign.
+- Partner testing firms may add their own logo; a neutral base will not clash.
+- Brand stays present but quiet: ink blue on the logo and primary actions, ochre for
+  deadlines.
 
 **Key Characteristics:**
 
-- Compact, task-oriented hierarchy with restrained color.
+- Neutral white and light-gray surfaces; near-black text; thin gray borders.
+- Compact, task-oriented hierarchy with generous card padding.
 - Familiar controls and server-authorized client/auditor workspaces.
-- Warm light surfaces and deep ink dark surfaces.
 - Responsive structure, visible focus and deliberate reduced motion.
 
 ## Colors
 
-Primary Ink serves light-theme brand text and primary actions. Ochre supplies the
-accent vocabulary and the pale dark-theme brand. Neutral surfaces are mixes of
-these two established source hues, not a separate gray palette.
+The base is neutral. Two brand hues have one narrow job each, and status colors
+appear only where they mean something.
 
-**The Existing Palette Rule.** Preserve the frontmatter's source hues and mixes.
-Focus uses Ink in light mode and the existing pale Ochre focus token in dark mode.
-Status colors remain existing ink/ochre shades and always accompany text.
+| Role | Light | Dark |
+| --- | --- | --- |
+| Page surfaces (cards, inputs, menus) | `#FFFFFF` | `#111113` |
+| App canvas and sidebar | `#F7F7F8` | `#0A0A0A` |
+| Primary text | `#0A0A0A` | `#FAFAFA` |
+| Secondary text | `#636A77` (`#6B7280`, darkened one step so it holds AA on gray fills) | `#A1A1AA` |
+| Borders | `#E5E7EB` | `#26262B` |
+| Control borders (inputs, outline buttons) | `#868D99` (3:1 on white) | `#71717A` |
+
+**The Ink Rule.** Ink Blue `#33405C` is used ONLY for the logo mark, primary buttons,
+the active navigation item and focus rings. In dark mode the primary button stays
+Ink with a lifted-ink border; focus rings and the active nav label use lighter
+ink tints (`--color-focus`, `--color-nav-active`) so they stay legible on black.
+Links and icons are neutral near-black, never Ink.
+
+**The Ochre Rule.** Ochre `#B8924A` is used ONLY for deadline and "needs attention"
+badges (`Badge variant="deadline"`). Its text color is a darkened ochre
+(`--color-deadline-foreground`) so the pill passes AA.
+
+**The Status Rule.** Red means fail or fix, amber means partial or waiting, green
+means pass or improved. They appear as small soft-tinted pills (`Badge` success,
+warning, danger) and change indicators, always with a word. Do not use them for
+decoration or emphasis. Info and brand badges are neutral gray.
+
+**No cream, no gradients, no glows.** Backgrounds are white or light gray only.
+Shadows are soft and low. Progress bars are solid near-black.
 
 Semantic aliases (`--background`, `--card`, `--primary`, `--sidebar-*`, `--ring`,
 `--border`, `--input`) resolve from the same theme tokens. Legacy `text-muted`
@@ -142,8 +188,12 @@ and collapses to a (48px) icon rail. Sidebar links and group labels are (32px)
 high. The phone sheet is (288px) wide, capped by the viewport; the desktop sidebar
 appears at (1024px). The existing native modal supplies focus containment/return.
 
-The frosted navigation header is (56px) on desktop and (64px) on phones, with the
-existing tablet header adaptation. Main content has no global maximum width:
+Sidebar navigation is grouped under small gray section labels (for example
+Workspace, Deliverables, Administration for auditors; Engagement, Updates for
+clients). An item may carry a count badge computed from data its page already
+loads; zero counts are hidden. The active item is a white pill with an Ink label
+and icon. The thin breadcrumb header is (40px) on desktop and (64px) on phones.
+Main content has no global maximum width:
 horizontal padding is (16px) on phones and (24px) at the medium breakpoint; top
 padding is (8px) and (16px), with (16px) bottom padding. Section/card gaps are
 normally (16px), with (4–8px) relationships for labels and small control groups.
@@ -155,10 +205,9 @@ reading order aligned with DOM and keyboard order.
 
 ## Elevation & Depth
 
-Cards use a subtle (1px) foreground ring. Low shadows support metrics and controls;
-floating menus and overlays use the existing larger shadow tokens. The sticky
-header's frosting distinguishes navigation from scrolling content. Avoid adding
-heavy shadows or glass decoration to ordinary cards.
+Cards are white with a (1px) `#E5E7EB` border and a soft one-pixel shadow. Floating
+menus and overlays use the larger soft shadow tokens. Avoid heavy shadows, glass,
+translucency and decorative depth.
 
 ## Shapes
 
@@ -171,7 +220,7 @@ new brand motifs.
 
 ### Buttons and fields
 
-Primary actions retain existing Ink/light and Ochre/dark behavior. Standard
+Primary actions are Ink with white text in both themes. Standard
 controls are (32px) high; small buttons are (28px), large buttons (36px). Shared
 fields have visible labels, invalid/disabled states and a theme-aware focus ring.
 Multiline editors and file controls retain their appropriate natural size.
@@ -180,11 +229,24 @@ layout solely to satisfy a generic touch-size preference.
 
 ### Cards, badges, tables and tabs
 
-Cards have (16px) internal spacing, title/description hierarchy and tinted divided
-footers where present. Stats use a restrained light-theme primary tint and solid
-dark-theme cards. Badges are (20px) high. Table headers are (40px), cells use (8px)
-padding, toolbars use compact gaps, and pagination stays below the table. Tabs
-are (32px) high with a (3px) inset and a quiet selected surface.
+Cards are white, (12px) radius, with (20px) internal spacing, title/description
+hierarchy and light divided footers where present. Do not nest bordered cards;
+separate inside a card with dividers and spacing (tables inside cards use `Table
+bare`). Stats are plain white cards. Badges are (20px) pill silhouettes. Tables
+have light row dividers, a pale header row (40px), (12px) cell padding, and an icon
+plus label in the first column; toolbars use compact gaps and pagination stays
+below the table. Tabs are (32px) high with a (3px) inset and a quiet selected
+surface.
+
+### Auditor Today view
+
+The auditor landing page leads with Today: "What needs your attention." It shows
+four stat cards with change indicators, a "Needs you today" table (overdue and
+due-today tasks, blocked engagements, work ready for sign-off), and upcoming
+deadlines with ochre badges. It uses existing endpoints only (clients, pipeline,
+tasks, activity). Change indicators are counts from the last 24 hours of
+activity, never invented history. The assigned-engagement table and latest
+activity follow.
 
 ### Sidebar, theme selection and overlays
 
@@ -202,7 +264,8 @@ wrap without widening the page. Do not truncate away the only route to task data
 
 ### Do:
 
-- **Do** preserve the incumbent palette, typefaces, compact geometry and assets.
+- **Do** keep the page neutral; let status color mean something.
+- **Do** keep typefaces, compact geometry and assets.
 - **Do** use shared components for repeated controls across both roles.
 - **Do** keep long content, empty/error/loading states, zoom and focus usable.
 - **Do** preserve synthetic labels and the distinction between receipt and audit.
@@ -213,3 +276,4 @@ wrap without widening the page. Do not truncate away the only route to task data
 - **Don't** replace sidebar resizing or the phone sheet with a parallel system.
 - **Don't** change copy, business rules, authorization or backend processing for polish.
 - **Don't** treat a detector preference as authority over an explicit owner decision.
+- **Don't** use Ink or Ochre outside the roles above, or add gradients, glows or cream.

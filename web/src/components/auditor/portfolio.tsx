@@ -2,15 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  ArrowDownUp,
-  Building2,
-  ClipboardCheck,
-  FileCheck2,
-  ListChecks,
-} from "lucide-react";
+import { ArrowDownUp, Building2 } from "lucide-react";
 import { AuthGate } from "@/components/auth/session";
-import { PageHeader, Stat } from "@/components/shell/page";
+import { PageHeader } from "@/components/shell/page";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -20,154 +14,10 @@ import { LoadState } from "@/components/ui/load-state";
 import { Progress } from "@/components/ui/progress";
 import { USE_MOCKS } from "@/lib/api";
 import { getClients, type ClientSummary } from "@/lib/workflow-api";
+import { TodayView } from "./today-view";
 import { EngagementDrawer } from "./engagement-drawer";
 import { AuditorActivityFeed } from "./activity-feed";
 import { AuditorUpcomingTasks } from "./upcoming-tasks";
-
-// Native, labelled SVG charts keep the portfolio usable without animation or pointer interaction.
-function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
-  const reviewed = clients.reduce((n, c) => n + c.readiness.reviewed, 0);
-  const total = clients.reduce((n, c) => n + c.readiness.total, 0);
-  const pct = total ? Math.round((reviewed / total) * 100) : 0;
-  const groups = [
-    {
-      name: "In review",
-      value: clients.filter((c) => !c.readiness.ready).length,
-    },
-    {
-      name: "Ready for drafting",
-      value: clients.filter((c) => c.readiness.ready).length,
-    },
-  ];
-  return (
-    <section
-      aria-label="Overview charts"
-      className="mb-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]"
-    >
-      <div className="rounded-xl bg-card ring-1 ring-foreground/10 p-4">
-        <div className="flex justify-between">
-          <div>
-            <h2 className="text-base font-medium">Engagement distribution</h2>
-            <p className="mt-1 text-xs text-muted">
-              Current assigned portfolio · engagements by review state
-            </p>
-          </div>
-          <Badge variant="brand">Live snapshot</Badge>
-        </div>
-        <svg
-          role="img"
-          aria-labelledby="distribution-title"
-          viewBox="0 0 560 160"
-          className="mt-3 w-full"
-        >
-          <title id="distribution-title">
-            {groups.map((g) => `${g.name}: ${g.value}`).join(". ")}
-          </title>
-          {[0, 1, 2, 3, 4].map((n) => (
-            <line
-              key={n}
-              x1={155 + n * 90}
-              x2={155 + n * 90}
-              y1="10"
-              y2="125"
-              stroke="var(--color-border)"
-              strokeDasharray="3 5"
-            />
-          ))}
-          {groups.map((g, i) => (
-            <g key={g.name}>
-              <text
-                x="0"
-                y={43 + i * 65}
-                fill="var(--color-muted)"
-                fontSize="13"
-              >
-                {g.name}
-              </text>
-              <rect
-                x="155"
-                y={22 + i * 65}
-                width={(g.value / Math.max(clients.length, 1)) * 320}
-                height="32"
-                rx="5"
-                fill={i ? "var(--color-chart-secondary)" : "var(--color-chart-primary)"}
-              />
-              <text
-                x={165 + (g.value / Math.max(clients.length, 1)) * 320}
-                y={43 + i * 65}
-                fill="var(--color-foreground)"
-                fontSize="13"
-              >
-                {g.value}
-              </text>
-            </g>
-          ))}
-          <text x="155" y="153" fill="var(--color-muted)" fontSize="11">
-            0
-          </text>
-          <text x="475" y="153" fill="var(--color-muted)" fontSize="11">
-            {clients.length} total
-          </text>
-        </svg>
-      </div>
-      <div className="rounded-xl bg-card ring-1 ring-foreground/10 p-4">
-        <h2 className="text-base font-medium">Request review coverage</h2>
-        <p className="mt-1 text-xs text-muted">
-          Recorded human reviews across assigned engagements
-        </p>
-        <div className="mt-4 flex items-center gap-6">
-          <svg
-            role="img"
-            aria-label={`${pct}% reviewed: ${reviewed} of ${total} requests`}
-            viewBox="0 0 120 120"
-            className="size-36 shrink-0"
-          >
-            <circle
-              cx="60"
-              cy="60"
-              r="46"
-              fill="none"
-              stroke="var(--color-elevated)"
-              strokeWidth="12"
-            />
-            <circle
-              cx="60"
-              cy="60"
-              r="46"
-              fill="none"
-              stroke="var(--color-brand)"
-              strokeWidth="12"
-              strokeDasharray={`${pct * 2.89} 289`}
-              transform="rotate(-90 60 60)"
-            />
-            <text
-              x="60"
-              y="65"
-              textAnchor="middle"
-              fill="var(--color-foreground)"
-              fontSize="23"
-              fontWeight="600"
-            >
-              {pct}%
-            </text>
-          </svg>
-          <div className="grid gap-4 text-sm">
-            <p>
-              <span className="block text-xl font-semibold">{reviewed}</span>
-              <span className="text-muted">Reviewed</span>
-            </p>
-            <p>
-              <span className="block text-xl font-semibold">
-                {total - reviewed}
-              </span>
-              <span className="text-muted">Remaining</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
   const [query, setQuery] = useState("");
@@ -200,7 +50,7 @@ export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
   return (
     <section
       aria-labelledby="engagement-table-title"
-      className="rounded-xl bg-card ring-1 ring-foreground/10"
+      className="rounded-xl bg-card border border-border shadow-card"
     >
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-4">
         <div>
@@ -249,7 +99,7 @@ export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
           </Button>
         )}
       </div>
-      <Table>
+      <Table bare>
         <caption className="sr-only">Assigned engagement records</caption>
         <THead>
           <TR>
@@ -293,13 +143,20 @@ export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
           {filtered.slice(current * size, (current + 1) * size).map((c) => (
             <TR key={c.id}>
               <TD>
-                <span className="font-medium">{c.firmName}</span>
-                <span className="mt-1 block text-xs text-muted">
-                  Independent AML test
+                <span className="flex items-center gap-2.5">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-md bg-elevated text-muted">
+                    <Building2 aria-hidden="true" className="size-4" />
+                  </span>
+                  <span>
+                    <span className="block font-medium">{c.firmName}</span>
+                    <span className="block text-xs text-muted">
+                      Independent AML test
+                    </span>
+                  </span>
                 </span>
               </TD>
               <TD>
-                <Badge variant={c.readiness.ready ? "brand" : "default"}>
+                <Badge variant={c.readiness.ready ? "success" : "default"} dot>
                   {c.readiness.ready ? "Ready for drafting" : "In review"}
                 </Badge>
               </TD>
@@ -323,7 +180,7 @@ export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
                     View engagement details
                   </Button>
                   <Link
-                    className="text-xs text-brand hover:underline"
+                    className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
                     href={`/auditor/engagements/${c.id}`}
                   >
                     Open audit workspace
@@ -404,11 +261,11 @@ function Portfolio({ tableOnly }: { tableOnly: boolean }) {
   return (
     <>
       <PageHeader
-        title={tableOnly ? "Engagements" : "Overview"}
+        title={tableOnly ? "Engagements" : "Today"}
         description={
           tableOnly
             ? "Manage your assigned engagements and review progress."
-            : "Track assigned engagements and the work ready for review."
+            : "What needs your attention."
         }
         actions={
           <Link href="/auditor/workspaces/new" className={buttonVariants()}>
@@ -421,40 +278,7 @@ function Portfolio({ tableOnly }: { tableOnly: boolean }) {
           Synthetic demonstration workspace
         </p>
       )}
-      {!tableOnly && (
-        <>
-          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Stat
-              label="Assigned engagements"
-              value={clients.length}
-              hint="Your active review portfolio"
-              icon={<Building2 className="size-4" />}
-            />
-            <Stat
-              label="Requests reviewed"
-              value={clients.reduce((n, c) => n + c.readiness.reviewed, 0)}
-              hint="Human review recorded"
-              icon={<ClipboardCheck className="size-4" />}
-            />
-            <Stat
-              label="Requests remaining"
-              value={clients.reduce(
-                (n, c) => n + c.readiness.total - c.readiness.reviewed,
-                0,
-              )}
-              hint="Across assigned engagements"
-              icon={<ListChecks className="size-4" />}
-            />
-            <Stat
-              label="Ready for drafting"
-              value={clients.filter((c) => c.readiness.ready).length}
-              hint="Auditor sign-off still required"
-              icon={<FileCheck2 className="size-4" />}
-            />
-          </div>
-          <PortfolioCharts clients={clients} />
-        </>
-      )}
+      {!tableOnly && <TodayView clients={clients} />}
       <EngagementTable clients={clients} />
       {!tableOnly && (
         <div className="mt-4 grid items-start gap-4 xl:grid-cols-2">

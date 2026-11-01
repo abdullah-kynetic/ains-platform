@@ -136,7 +136,7 @@ function ClientUploadCenter() {
         </section>
       )}
       <div
-        className="grid max-w-4xl gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10"
+        className="grid max-w-4xl gap-4 rounded-xl bg-card p-4 border border-border shadow-card"
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault();

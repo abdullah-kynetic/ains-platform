@@ -47,7 +47,7 @@ test("client and auditor screens meet automated accessibility basics", async ({
   );
   await page.goto("/auditor");
   await expect(
-    page.getByRole("heading", { name: "Overview", exact: true }),
+    page.getByRole("heading", { name: "Today", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Latest activity" }),

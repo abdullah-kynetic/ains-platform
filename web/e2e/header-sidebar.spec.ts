@@ -29,9 +29,9 @@ for (const role of ["client", "auditor"] as const) {
       })
       .toBe(true);
     const sidebar = page.locator(".desktop-sidebar");
+    // Sidebar items may carry a count badge, so match the label as a prefix.
     const overview = sidebar.getByRole("link", {
-      name: "Overview",
-      exact: true,
+      name: role === "auditor" ? /^Today/ : /^Overview/,
     });
     await expect(overview).toHaveAttribute("aria-current", "page");
     if (role === "auditor") {

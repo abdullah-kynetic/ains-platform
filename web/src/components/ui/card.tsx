@@ -10,9 +10,9 @@ export function Card({
     <div
       data-slot="card"
       className={cn(
-        "flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-card-foreground ring-1 ring-foreground/10 has-[[data-slot=card-footer]]:pb-0",
+        "flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-5 text-card-foreground border border-border shadow-card has-[[data-slot=card-footer]]:pb-0",
         featured
-          ? "ring-brand/30"
+          ? "border-border-strong"
           : "",
         className,
       )}
@@ -27,7 +27,7 @@ export function CardHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-1 px-4",
+        "flex flex-col gap-1.5 px-5",
         className,
       )}
       {...props}
@@ -62,7 +62,7 @@ export function CardContent({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("px-4", className)}
+      className={cn("px-5", className)}
       {...props}
     />
   );
@@ -75,7 +75,7 @@ export function CardFooter({
     <div
       data-slot="card-footer"
       className={cn(
-        "flex items-center gap-2 rounded-b-xl border-t border-border bg-elevated/50 p-4",
+        "flex items-center gap-2 rounded-b-xl border-t border-border bg-elevated/60 px-5 py-3",
         className,
       )}
       {...props}
