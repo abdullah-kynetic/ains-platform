@@ -9,6 +9,7 @@ import { getEngagement } from "@/lib/api";
 import { countByStatus } from "@/lib/checklist";
 import { getAuditorTasks, getPipeline } from "@/lib/workflow-api";
 import { listClientProfiles, listEngagementSummaries, listNotifications, unreadCount } from "@/lib/api/index";
+import { currentAudience } from "@/lib/audience";
 import { Onboarding } from "@/components/auth/onboarding";
 
 const clientItems: NavItem[] = [
@@ -101,7 +102,11 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                 ? "Kien Solutions independent review"
                 : "Example Securities LLC (synthetic)"
             }
-            onWorkspaceChange={(workspace) => void handleWorkspaceChange(workspace)}
+            onWorkspaceChange={
+              currentAudience() === "both"
+                ? (workspace) => void handleWorkspaceChange(workspace)
+                : undefined
+            }
           />
         }
       >
