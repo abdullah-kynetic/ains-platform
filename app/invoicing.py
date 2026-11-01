@@ -80,9 +80,18 @@ def issuer_key(user: User) -> str:
     return user.firm_id or user.id
 
 
+def assignment_owner(user: User):
+    """Billing is shared by the issuer firm; legacy unbound auditors stay private."""
+    if user.firm_id:
+        return Engagement.auditor_id.in_(
+            select(User.id).where(User.firm_id == user.firm_id, User.role == "auditor")
+        )
+    return Engagement.auditor_id == user.id
+
+
 def assigned(db: Session, user: User, firm_id: str, engagement_id: str | None) -> None:
     query = select(Engagement.id).where(
-        Engagement.firm_id == firm_id, Engagement.auditor_id == user.id
+        Engagement.firm_id == firm_id, assignment_owner(user)
     )
     if engagement_id:
         query = query.where(Engagement.id == engagement_id)
@@ -94,15 +103,13 @@ def visible(user: User) -> Select[tuple[Invoice]]:
     assigned_client = (
         select(Engagement.id)
         .where(
-            Engagement.auditor_id == user.id,
+            assignment_owner(user),
             Engagement.firm_id == Invoice.firm_id,
             (Invoice.engagement_id.is_(None) | (Engagement.id == Invoice.engagement_id)),
         )
         .exists()
     )
-    return select(Invoice).where(
-        Invoice.issuer_id == issuer_key(user), Invoice.auditor_id == user.id, assigned_client
-    )
+    return select(Invoice).where(Invoice.issuer_id == issuer_key(user), assigned_client)
 
 
 def record(

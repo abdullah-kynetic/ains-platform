@@ -61,10 +61,9 @@ See [TESTING.md](TESTING.md) for permission-denial, firm-isolation, malformed/ov
 ## Invoice access
 
 All `/auditor/invoices` endpoints require the auditor role. Invoice reads and mutations
-require the issuer scope, creating auditor and current matching engagement assignment;
-firm-only invoices require a current assignment in the billed client firm. Numbering is
-shared within the auditor firm; invoice access is not implicitly shared with its other
-auditors. Unbound legacy auditors receive an individual issuer scope. Client-side route
+require the issuer scope and a current matching engagement assignment to an auditor
+in the issuing firm; firm-only invoices require a matching client-firm assignment.
+Invoice reads, edits, transitions and numbering are shared within the auditor firm. Unbound legacy auditors receive an individual issuer scope. Client-side route
 and sidebar gates supplement server checks. Invoice audit entries belong to the issuer
 firm (or system chain for an unbound auditor), so billed clients cannot read invoice
 notes or amounts through their activity endpoints. Concurrent mutations lock the invoice
