@@ -161,7 +161,7 @@ export default function OverviewPage() {
                 1. Complete questionnaire
               </Link>
               <Link href="/checklist" className="text-brand-hover hover:underline">
-                2. Review applicable requests and pending N/A answers
+                2. Review requests and mark anything that does not apply
               </Link>
               <Link href="/upload" className="text-brand-hover hover:underline">
                 3. Upload documents or replacements

@@ -493,7 +493,10 @@ export async function getQuestionnaire(
     const saved = localStorage.getItem("ains-synthetic-questionnaire-v1");
     return {
       engagementId,
-      questions: saved ? JSON.parse(saved) : structuredClone(mockQuestions),
+      questions: (saved ? JSON.parse(saved) as Question[] : structuredClone(mockQuestions)).map(question => {
+        const item = cloneMockEngagement().sections.flatMap(section => section.items).find(item => item.id === question.itemId);
+        return {...question, answer: item?.status === "not_applicable" ? false : question.answer, naReviewState: item?.naReviewState ?? null};
+      }),
     };
   }
   return apiRequest<Questionnaire>(
@@ -507,7 +510,7 @@ export async function saveQuestionnaire(
 ): Promise<Questionnaire> {
   if (USE_MOCKS) {
     const current = await getQuestionnaire(engagementId);
-    const data = cloneMockEngagement();
+    const { setRequestNA } = await import("./workflow-api");
     for (const answer of answers) {
       const question = current.questions.find(
         (question) => question.itemId === answer.itemId,
@@ -527,25 +530,17 @@ export async function saveQuestionnaire(
         continue;
       invalidateMockDecision(answer.itemId, true);
       question.answer = answer.applies;
-      question.naReviewState = answer.applies ? null : "pending";
+      await setRequestNA(engagementId, answer.itemId, !answer.applies, "client");
+      question.naReviewState = answer.applies ? null : "approved";
       question.representation = answer.applies
         ? null
         : (answer.representation ?? null);
-      const item = data.sections
-        .flatMap((section) => section.items)
-        .find((item) => item.id === answer.itemId);
-      if (item) {
-        item.canUpload = answer.applies;
-        item.naReviewState = question.naReviewState;
-        item.representation = question.representation;
-        item.status = answer.applies ? "requested" : "with_auditor";
-      }
+
     }
     localStorage.setItem(
       "ains-synthetic-questionnaire-v1",
       JSON.stringify(current.questions),
     );
-    saveMockEngagement(data);
     return current;
   }
   return apiRequest<Questionnaire>(

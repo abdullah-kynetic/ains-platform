@@ -29,7 +29,7 @@
 | ID | User need | Behavior | Acceptance criteria | Priority |
 | --- | --- | --- | --- | --- |
 | F-01 | Client needs a private firm workspace | Firm-bound user sees only own firm and engagement | Given a client session, another firm’s records and APIs are denied server-side | Must |
-| F-02 | Client needs to describe applicable activity | Questionnaire maps answers to checklist applicability; N/A needs auditor review | Client response is persisted; client cannot approve its own N/A; auditor decision is recorded | Must |
+| F-02 | Client needs to describe applicable activity | Questionnaire and checklist directly record client applicability declarations | Own-engagement client and assigned auditor can set/undo N/A; actor and role are audited | Must |
 | F-03 | Client needs to submit evidence simply | Multi-file drag/drop and file picker, confirm before transfer, server validates file and firm | Upload is attached only to authorized firm/engagement, receipt includes hash/metadata, limits/errors are visible; no request-selection step is required | Must |
 | F-04 | Client needs status and correction | Show neutral checklist status and accepted document-level feedback | Client APIs/UI do not expose findings or internal notes; replacements are supported | Must |
 | F-05 | Auditor needs assigned-work queue | Portfolio and engagement workspace show assigned engagements, evidence, status, tasks | Unassigned engagements are denied by API regardless of UI route | Must |
@@ -71,14 +71,18 @@ events provide a base for later follow-up work, which remains unimplemented.
 
 ## Numbered checklist N/A
 
-All 34 catalog requests remain visible in numeric order, with auditor-confirmed
-`not_applicable` items at the bottom and their original numbers retained. N/A counts
-as resolved in collection progress and human review readiness. Only the assigned
-auditor can set or undo N/A; clients retain conditional representations pending review.
-Undo restores a nullable JSON `na_previous_state` snapshot (revision `a113_checklist_na`).
-ClientStatus is non-native VARCHAR, so no PostgreSQL enum alteration is needed.
-Set/unset appends to the existing immutable audit chain in the same transaction.
-No audit rubric or restricted content is added.
+All 34 catalog requests remain visible with their original numbers; N/A sorts last.
+Clients can directly set/undo N/A on their own engagement; its assigned auditor can
+also set/undo it. Questionnaire no answers and the legacy representation endpoint
+now set N/A directly. Existing pending claims remain readable and reviewable for
+compatibility. N/A counts as done; collection still excludes the two restricted items
+(32 ordinary requests). Restricted-content handling and upload prohibitions remain.
+Undo restores `na_previous_state` (revision `a113_checklist_na`). The existing
+`na_approved_by_id` stores the marking actor for both roles; the related user supplies
+`naMarkedByRole`. Each toggle records actor ID and role in the immutable audit chain.
+No schema migration is needed. This collection declaration is not an audit finding.
+Auditor workspace links come from server-authorized assignments rather than a disabled
+synthetic client-role switch. Unassigned auditors and other firms remain denied.
 
 
 ## Editable auditor reports

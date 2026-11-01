@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.checklist import ClientStatus
-from app.checklist.applicability import set_na, unset_na
+from app.checklist.applicability import record_na_change
 from app.checklist.catalog import initialize_engagement, load_catalog
 from app.database.models import (
     AuditLog,
@@ -171,7 +171,13 @@ ACTIVITY_COPY: dict[str, tuple[str, str, str]] = {
     "questionnaire.answered": (
         "questionnaire",
         "updated a representation for",
-        "Response is waiting for human review",
+        "Applicability response saved",
+    ),
+    "request.na_set": (
+        "questionnaire", "marked N/A for", "Applicability declaration recorded; no audit finding",
+    ),
+    "request.na_unset": (
+        "questionnaire", "undid N/A for", "Previous request state restored",
     ),
     "representation.submitted": (
         "questionnaire",
@@ -659,8 +665,11 @@ def initialize(engagement_id: str, user: CurrentUser, db: DB):
             action="engagement.initialized",
             entity_type="engagement",
             entity_id=engagement.id,
-            details={"before": {"requests": 0}, "after": {"requests": 34},
-                     "checklist_version": engagement.checklist_version},
+            details={
+                "before": {"requests": 0},
+                "after": {"requests": 34},
+                "checklist_version": engagement.checklist_version,
+            },
         )
     )
     db.commit()
@@ -678,7 +687,10 @@ def workspace(engagement_id: str, user: CurrentUser, db: DB):
             ChecklistItemInstance.engagement_id == engagement.id,
             ChecklistItemInstance.firm_id == engagement.firm_id,
         )
-        .options(selectinload(ChecklistItemInstance.documents))
+        .options(
+            selectinload(ChecklistItemInstance.documents),
+            selectinload(ChecklistItemInstance.na_marked_by),
+        )
     ).all()
     instances = {item.item_key: item for item in items}
     requests = []
@@ -696,6 +708,11 @@ def workspace(engagement_id: str, user: CurrentUser, db: DB):
                 "status": item.status,
                 "applicable": item.applicable,
                 "followUp": item.follow_up,
+                "naMarkedByRole": (
+                    item.na_marked_by.role
+                    if item.status == ClientStatus.NOT_APPLICABLE and item.na_marked_by
+                    else None
+                ),
                 "naReviewState": item.na_review_state,
                 "representation": item.representation,
                 "applicability": item.applicability_decision,
@@ -757,9 +774,9 @@ def workspace(engagement_id: str, user: CurrentUser, db: DB):
     return {
         "id": engagement.id,
         "firmName": engagement.firm.name,
-        "requests": sorted(requests, key=lambda r: (
-            r["status"] == ClientStatus.NOT_APPLICABLE, r["requestId"]
-        )),
+        "requests": sorted(
+            requests, key=lambda r: (r["status"] == ClientStatus.NOT_APPLICABLE, r["requestId"])
+        ),
         "readiness": readiness(engagement),
         "history": [
             {
@@ -785,10 +802,7 @@ def decide(engagement_id: str, item_id: str, payload: ManualDecision, user: Curr
         "assessment": item.assessment,
         "notes": item.internal_notes,
     }
-    if payload.applicability == "not_applicable":
-        set_na(item, user.id)
-    else:
-        unset_na(item)
+    record_na_change(db, item, user, payload.applicability == "not_applicable")
     item.applicability_decision = payload.applicability
     item.assessment = payload.assessment
     item.internal_notes = payload.notes
@@ -828,16 +842,6 @@ class NAChange(BaseModel):
 def change_na(engagement_id: str, item_id: str, payload: NAChange, user: CurrentUser, db: DB):
     require_auditor(user)
     engagement, item = intake_item(db, user, engagement_id, item_id)
-    # Lock the item so concurrent toggles cannot overwrite the undo snapshot.
-    db.refresh(item, with_for_update=True)
-    before = item.status
-    if payload.not_applicable:
-        set_na(item, user.id)
-    else:
-        unset_na(item)
-    db.add(AuditLog(firm_id=engagement.firm_id, actor_id=user.id,
-                    action="request.na_set" if payload.not_applicable else "request.na_unset",
-                    entity_type="checklist_item_instance", entity_id=item.id,
-                    details={"before": before, "after": item.status}))
+    record_na_change(db, item, user, payload.not_applicable)
     db.commit()
     return {"status": item.status, "readiness": readiness(engagement)}

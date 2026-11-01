@@ -15,7 +15,7 @@ export const STATUS_META: Record<
   ClientStatus,
   { label: string; help: string; tone: StatusTone }
 > = {
-  not_applicable: { label: "Does not apply", help: "Your auditor marked this request as not applicable.", tone: "default" },
+  not_applicable: { label: "Does not apply", help: "This request is marked as not applicable.", tone: "default" },
   requested: {
     label: "Requested",
     help: "Please upload this document.",
@@ -74,6 +74,7 @@ export type ChecklistItem = {
   restricted: boolean;
   allowedEvidenceTypes: string[];
   canUpload?: boolean;
+  naMarkedByRole?: "client" | "auditor" | null;
   naReviewState?: "pending" | "approved" | "rejected" | null;
   representation?: string | null;
   followUp?: boolean;

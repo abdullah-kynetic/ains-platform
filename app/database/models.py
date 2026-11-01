@@ -262,6 +262,8 @@ class ChecklistItemInstance(Base):
     )
     na_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     na_approved_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    # Legacy column also records the actor for direct client N/A declarations.
+    na_marked_by: Mapped[User | None] = relationship(foreign_keys=[na_approved_by_id])
     representation: Mapped[str | None] = mapped_column(String(50))
     follow_up: Mapped[bool] = mapped_column(Boolean, default=False)
     applicability_decision: Mapped[str | None] = mapped_column(String(30))

@@ -5,7 +5,7 @@ import { cloneMockEngagement, saveMockEngagement, invalidateMockDecision } from 
 
 export type Assessment = "supported" | "partial" | "conflicting" | "unable_to_determine";
 export type Decision = { applicability: "applicable" | "not_applicable"; assessment: Assessment | null; notes: string };
-export type ManualRequest = { status?: ClientStatus; id: string; requestId: string; title: string; restricted: boolean; stage: string; applicable: boolean; followUp: boolean; naReviewState: string | null; representation: string | null; applicability: Decision["applicability"] | null; assessment: Assessment | null; notes: string; documents: { id: string; name: string; sha256: string; version: string; uploadedAt: string; feedbackCode?: string | null }[] };
+export type ManualRequest = { status?: ClientStatus; id: string; requestId: string; title: string; restricted: boolean; stage: string; applicable: boolean; followUp: boolean; naMarkedByRole?: "client" | "auditor" | null; naReviewState: string | null; representation: string | null; applicability: Decision["applicability"] | null; assessment: Assessment | null; notes: string; documents: { id: string; name: string; sha256: string; version: string; uploadedAt: string; feedbackCode?: string | null }[] };
 export type Readiness = { ready: boolean; reviewed: number; total: number; blockers: string[]; meaning: string };
 export type History = { id: string; actor: string; action: string; entityId: string; at: string; details: Record<string, unknown> };
 export type Workspace = { id: string; firmName: string; requests: ManualRequest[]; readiness: Readiness; history: History[] };
@@ -25,8 +25,8 @@ const pipelineKey = "ains-synthetic-pipeline-v1";
 const tasksKey = "ains-synthetic-tasks-v2";
 const workspacesKey = "ains-synthetic-workspaces-v1";
 function mockState(): MockState { return JSON.parse(localStorage.getItem(key) ?? '{"decisions":{},"history":[]}'); }
-function event(state: MockState, action: string, entityId: string, before: unknown, after: unknown) {
-  state.history.push({ id: crypto.randomUUID(), actor: "Synthetic Auditor", action, entityId, at: new Date().toISOString(), details: { before, after } });
+function event(state: MockState, action: string, entityId: string, before: unknown, after: unknown, role: "client" | "auditor" = "auditor") {
+  state.history.push({ id: crypto.randomUUID(), actor: role === "client" ? "Synthetic Client" : "Synthetic Auditor", action, entityId, at: new Date().toISOString(), details: { before, after, actor_role: role } });
   localStorage.setItem(key, JSON.stringify(state));
 }
 
@@ -38,7 +38,7 @@ export async function getWorkspace(id: string): Promise<Workspace> {
     const decision = state.decisions[definition.id];
     return { id: definition.id, requestId: definition.id, title: definition.title, restricted: definition.restricted,
       stage: definition.stage, status: item?.status, applicable: item?.canUpload !== false, followUp: item?.followUp ?? false,
-      naReviewState: item?.naReviewState ?? null, representation: item?.representation ?? null,
+      naMarkedByRole: item?.naMarkedByRole, naReviewState: item?.naReviewState ?? null, representation: item?.representation ?? null,
       applicability: decision?.applicability ?? null, assessment: decision?.assessment ?? null, notes: decision?.notes ?? "",
       documents: (item?.files ?? []).map((file) => ({ ...file, sha256: file.sha256 ?? "", version: "synthetic-1" })) };
   });
@@ -204,8 +204,8 @@ export async function sendFeedback(id: string, itemId: string, documentId: strin
 }
 
 
-export async function setRequestNA(id: string, itemId: string, notApplicable: boolean): Promise<void> {
-  if (!USE_MOCKS) return apiRequest(`/auditor/engagements/${id}/items/${itemId}/na`, {method: "POST", body: JSON.stringify({not_applicable: notApplicable})});
+export async function setRequestNA(id: string, itemId: string, notApplicable: boolean, role: "client" | "auditor" = "auditor"): Promise<void> {
+  if (!USE_MOCKS) return apiRequest(`${role === "auditor" ? "/auditor" : ""}/engagements/${encodeURIComponent(id)}/items/${encodeURIComponent(itemId)}/na`, {method: "POST", body: JSON.stringify({not_applicable: notApplicable})});
   const data = cloneMockEngagement();
   const item = data.sections.flatMap(section => section.items).find(item => item.id === itemId);
   if (!item) throw new Error("Request not found");
@@ -213,13 +213,13 @@ export async function setRequestNA(id: string, itemId: string, notApplicable: bo
   const state = mockState();
   if (notApplicable && item.status !== "not_applicable") {
     localStorage.setItem(snapshotKey, JSON.stringify({item, decision: state.decisions[itemId]}));
-    item.status = "not_applicable"; item.canUpload = false; item.naReviewState = "approved";
+    item.status = "not_applicable"; item.canUpload = false; item.naReviewState = "approved"; item.naMarkedByRole = role;
     state.decisions[itemId] = {applicability: "not_applicable", assessment: null, notes: ""};
   } else if (!notApplicable && item.status === "not_applicable") {
     const previous = JSON.parse(localStorage.getItem(snapshotKey) ?? "null");
-    if (previous) { Object.assign(item, previous.item); item.naReviewState = previous.item.naReviewState ?? null; item.canUpload = previous.item.canUpload ?? true; if (previous.decision) state.decisions[itemId] = previous.decision; else delete state.decisions[itemId]; }
+    if (previous) { Object.assign(item, previous.item); item.naMarkedByRole = previous.item.naMarkedByRole ?? null; item.naReviewState = previous.item.naReviewState ?? null; item.canUpload = previous.item.canUpload ?? true; if (previous.decision) state.decisions[itemId] = previous.decision; else delete state.decisions[itemId]; }
     localStorage.removeItem(snapshotKey);
   }
   saveMockEngagement(data);
-  event(state, notApplicable ? "request.na_set" : "request.na_unset", itemId, null, {status: item.status});
+  event(state, notApplicable ? "request.na_set" : "request.na_unset", itemId, null, {status: item.status}, role);
 }

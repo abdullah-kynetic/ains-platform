@@ -115,7 +115,7 @@ export default function QuestionnairePage() {
     <>
       <PageHeader
         title="Firm questionnaire"
-        description="Answer these yes-or-no questions so we only request documents that apply to your firm. Quentin reviews every N/A answer."
+        description="Answer these yes-or-no questions so we only request documents that apply to your firm. No answers mark the request N/A directly; you can undo this on your checklist."
       />
       <div className="grid gap-4">
         {data.questions.length === 0 ? (
@@ -131,10 +131,10 @@ export default function QuestionnairePage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <CardTitle>{question.question}</CardTitle>
                   {question.naReviewState === "pending" ? (
-                    <Badge variant="warning">N/A awaiting Quentin</Badge>
+                    <Badge variant="warning">Legacy N/A response</Badge>
                   ) : null}
                   {question.naReviewState === "approved" ? (
-                    <Badge variant="success">N/A approved</Badge>
+                    <Badge variant="success">Marked N/A</Badge>
                   ) : null}
                   {question.naReviewState === "rejected" ? (
                     <Badge variant="danger">Applies — upload required</Badge>
@@ -173,7 +173,7 @@ export default function QuestionnairePage() {
                     }));
                   }}
                 >
-                  No — auditor review
+                  No — mark N/A
                 </Button>
                 {answers[question.itemId] === false &&
                   question.whenNo === "representation_required" && (
