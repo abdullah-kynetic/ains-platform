@@ -546,3 +546,9 @@ dialog::backdrop {
 .report-rich { overflow-wrap: anywhere; text-wrap: pretty; }
 .report-rich > :is(p, ul, ol) { max-inline-size: 75ch; }
 .report-request { overflow-wrap: anywhere; }
+
+@media print {
+  body * { visibility: hidden; }
+  .report-print-area, .report-print-area * { visibility: visible; }
+  .report-print-area { position: absolute; inset: 0 auto auto 0; width: 100%; background: #fff; color: #000; }
+}
