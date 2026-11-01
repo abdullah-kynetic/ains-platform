@@ -81,6 +81,7 @@ class EngagementView(APIModel):
     due_date: str | None
     sections: list[SectionView]
     unassigned_documents: list[FileView] = Field(default_factory=list)
+    collection_progress: dict[str, int] = Field(default_factory=dict)
 
 
 class DocumentView(APIModel):
@@ -111,9 +112,7 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
     section_titles = {section.id: section.title for section in catalog.sections}
     for item in engagement.items:
         definition = catalog.get(item.item_key)
-        if definition is None or (
-            not item.applicable and item.na_review_state != NAReviewState.PENDING
-        ):
+        if definition is None:
             continue
         section = sections.setdefault(
             definition.section,
@@ -163,6 +162,17 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
         ),
         due_date=engagement.due_date.isoformat() if engagement.due_date else None,
         sections=list(sections.values()),
+        collection_progress={
+            "total": sum(not item.restricted for item in engagement.items),
+            "done": sum(
+                not item.restricted and item.na_review_state != NAReviewState.PENDING
+                and item.status in {
+                    ClientStatus.CHECKING, ClientStatus.WITH_AUDITOR,
+                    ClientStatus.ACCEPTED_FOR_TESTING, ClientStatus.NOT_APPLICABLE,
+                }
+                for item in engagement.items
+            ),
+        },
     )
 
 

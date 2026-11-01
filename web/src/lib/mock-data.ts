@@ -9,9 +9,10 @@ export const MOCK_ENGAGEMENT: Engagement = {
   dueDate: "2026-12-15",
   sections: catalog.sections.map((section) => ({
     ...section,
-    items: catalog.requests.filter((request) => request.section === section.id && request.stage === "initial").map((request) => ({
+    items: catalog.requests.filter((request) => request.section === section.id).map((request) => ({
       id: request.id, requestId: request.id,
       title: request.title, description: request.client_description,
+      canUpload: request.stage === "initial" && !request.restricted,
       restricted: request.restricted, allowedEvidenceTypes: request.allowed_evidence_types,
       status: request.restricted ? "restricted_do_not_upload" as const : "requested" as const,
       files: [],

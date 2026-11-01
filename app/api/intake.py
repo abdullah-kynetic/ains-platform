@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from app.checklist import ClientStatus
+from app.checklist.applicability import unset_na
 from app.checklist.catalog import load_catalog
 from app.database.models import AuditLog, ChecklistItemInstance, Document, NAReviewState, UserRole
 
@@ -52,6 +53,8 @@ def represent(engagement_id: str, item_id: str, payload: Representation, user: C
         raise HTTPException(403, "Only firm users can make representations")
     engagement, item = intake_item(db, user, engagement_id, item_id)
     definition = load_catalog().get(item.item_key)
+    if item.status == ClientStatus.NOT_APPLICABLE:
+        raise HTTPException(409, "Ask your auditor to reopen this N/A request")
     if definition.restricted or not definition.conditions:
         raise HTTPException(409, "This request requires direct auditor handling")
     before = {"representation": item.representation, "na_review_state": item.na_review_state}
@@ -89,6 +92,7 @@ def follow_up(engagement_id: str, item_id: str, user: CurrentUser, db: DB):
     if definition.restricted:
         raise HTTPException(409, "Restricted requests cannot be released for upload")
     before = {"applicable": item.applicable, "follow_up": item.follow_up}
+    unset_na(item)
     item.applicable = True
     item.follow_up = True
     item.assessment = None

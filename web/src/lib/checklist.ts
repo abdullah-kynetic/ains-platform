@@ -1,4 +1,5 @@
 export type ClientStatus =
+  | "not_applicable"
   | "requested"
   | "checking"
   | "action_needed_reupload"
@@ -14,6 +15,7 @@ export const STATUS_META: Record<
   ClientStatus,
   { label: string; help: string; tone: StatusTone }
 > = {
+  not_applicable: { label: "Does not apply", help: "Your auditor marked this request as not applicable.", tone: "default" },
   requested: {
     label: "Requested",
     help: "Please upload this document.",
@@ -125,11 +127,11 @@ export function progressOf(engagement: Engagement): {
 } {
   const items = engagement.sections
     .flatMap((section) => section.items)
-    .filter((item) => item.status !== "restricted_do_not_upload");
+    .filter((item) => !item.restricted);
   const done = items.filter(
     (item) =>
       item.naReviewState !== "pending" &&
-      ["checking", "with_auditor", "accepted_for_testing"].includes(
+      ["checking", "with_auditor", "accepted_for_testing", "not_applicable"].includes(
         item.status,
       ),
   ).length;
@@ -138,4 +140,10 @@ export function progressOf(engagement: Engagement): {
     total: items.length,
     pct: items.length ? (done / items.length) * 100 : 0,
   };
+}
+
+
+/** Stable catalog numbers, with resolved N/A requests after active requests. */
+export function requestOrder(a: { requestId: string; status?: string }, b: { requestId: string; status?: string }): number {
+  return Number(a.status === "not_applicable") - Number(b.status === "not_applicable") || a.requestId.localeCompare(b.requestId, undefined, { numeric: true });
 }

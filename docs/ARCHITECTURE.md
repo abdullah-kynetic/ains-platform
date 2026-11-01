@@ -93,3 +93,15 @@ and `offset`. Web pages use `web/src/lib/invoice-api.ts`; mock mode persists syn
 invoice metadata locally. Payment recording does not contact a payment or mail service.
 The printable detail uses browser print/save as PDF. Invoice data is shared by the issuing auditor firm and requires a current matching
 client/engagement assignment to an auditor in that firm. Unbound issuers stay private.
+
+
+## Numbered checklist N/A
+
+All 34 catalog requests remain visible in numeric order, with auditor-confirmed
+`not_applicable` items at the bottom and their original numbers retained. N/A counts
+as resolved in collection progress and human review readiness. Only the assigned
+auditor can set or undo N/A; clients retain conditional representations pending review.
+Undo restores a nullable JSON `na_previous_state` snapshot (revision `a113_checklist_na`).
+ClientStatus is non-native VARCHAR, so no PostgreSQL enum alteration is needed.
+Set/unset appends to the existing immutable audit chain in the same transaction.
+No audit rubric or restricted content is added.

@@ -20,7 +20,7 @@ export default function ClientProgressPage() {
       actions={<Link href="/checklist" className={buttonVariants()}>Upload documents</Link>} />
     <Card className="mb-5"><CardHeader><CardTitle>Report status</CardTitle></CardHeader><CardContent><p className="text-sm text-muted">Your auditor will share report availability separately. Document collection progress does not indicate report approval or signature.</p></CardContent></Card>
     <div className="mb-[var(--space-5)] grid grid-cols-1 gap-[var(--space-3)] md:grid-cols-3">
-      <Stat label="Documents received" value={`${progress.done} / ${progress.total}`} />
+      <Stat label="Requests resolved" value={`${progress.done} / ${progress.total}`} />
       <Stat label="Being checked" value={counts.checking} />
       <Stat label="Needs your attention" value={counts.requested + counts.action_needed_more + counts.action_needed_reupload} />
     </div>
@@ -30,7 +30,7 @@ export default function ClientProgressPage() {
         <CardHeader><CardTitle>{section.title}</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
           <Progress value={p.pct} label={`${section.title} document collection progress`} />
-          <p className="text-xs text-muted">{p.done} of {p.total} uploadable requests received</p>
+          <p className="text-xs text-muted">{p.done} of {p.total} requests resolved (receipts or N/A)</p>
           {section.items.map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 text-sm">
             <span>{item.title}</span><StatusBadge status={item.status} />
           </div>)}

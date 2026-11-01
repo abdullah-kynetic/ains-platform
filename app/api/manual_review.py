@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.checklist import ClientStatus
+from app.checklist.applicability import set_na, unset_na
 from app.checklist.catalog import initialize_engagement, load_catalog
 from app.database.models import (
     AuditLog,
@@ -224,6 +225,9 @@ def readiness(engagement, items=None):
         item = instances.get(definition.id)
         if not item:
             blockers.append(f"{definition.id}: workflow instance missing")
+            continue
+        if item.status == ClientStatus.NOT_APPLICABLE:
+            reviewed += 1
             continue
         if not item.applicability_decision:
             blockers.append(f"{definition.id}: applicability undecided")
@@ -689,6 +693,7 @@ def workspace(engagement_id: str, user: CurrentUser, db: DB):
                 "title": definition.title,
                 "restricted": definition.restricted,
                 "stage": definition.stage,
+                "status": item.status,
                 "applicable": item.applicable,
                 "followUp": item.follow_up,
                 "naReviewState": item.na_review_state,
@@ -752,7 +757,9 @@ def workspace(engagement_id: str, user: CurrentUser, db: DB):
     return {
         "id": engagement.id,
         "firmName": engagement.firm.name,
-        "requests": requests,
+        "requests": sorted(requests, key=lambda r: (
+            r["status"] == ClientStatus.NOT_APPLICABLE, r["requestId"]
+        )),
         "readiness": readiness(engagement),
         "history": [
             {
@@ -778,6 +785,10 @@ def decide(engagement_id: str, item_id: str, payload: ManualDecision, user: Curr
         "assessment": item.assessment,
         "notes": item.internal_notes,
     }
+    if payload.applicability == "not_applicable":
+        set_na(item, user.id)
+    else:
+        unset_na(item)
     item.applicability_decision = payload.applicability
     item.assessment = payload.assessment
     item.internal_notes = payload.notes
@@ -807,3 +818,26 @@ def decide(engagement_id: str, item_id: str, payload: ManualDecision, user: Curr
     )
     db.commit()
     return {"status": "saved", "readiness": readiness(engagement)}
+
+
+class NAChange(BaseModel):
+    not_applicable: bool
+
+
+@router.post("/engagements/{engagement_id}/items/{item_id}/na")
+def change_na(engagement_id: str, item_id: str, payload: NAChange, user: CurrentUser, db: DB):
+    require_auditor(user)
+    engagement, item = intake_item(db, user, engagement_id, item_id)
+    # Lock the item so concurrent toggles cannot overwrite the undo snapshot.
+    db.refresh(item, with_for_update=True)
+    before = item.status
+    if payload.not_applicable:
+        set_na(item, user.id)
+    else:
+        unset_na(item)
+    db.add(AuditLog(firm_id=engagement.firm_id, actor_id=user.id,
+                    action="request.na_set" if payload.not_applicable else "request.na_unset",
+                    entity_type="checklist_item_instance", entity_id=item.id,
+                    details={"before": before, "after": item.status}))
+    db.commit()
+    return {"status": item.status, "readiness": readiness(engagement)}

@@ -667,7 +667,7 @@ export async function getEngagement(): Promise<Engagement> {
     const data = cloneMockEngagement();
     data.sections = data.sections.map((section) => ({
       ...section,
-      items: section.items.filter((item) => item.naReviewState !== "approved"),
+      items: section.items.filter((item) => item.naReviewState !== "approved" || item.status === "not_applicable"),
     }));
     return data;
   }
