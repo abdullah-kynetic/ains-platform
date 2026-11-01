@@ -1,12 +1,14 @@
 # Testing
 
+> **Demo-phase status (frontend):** web sign-in and auth are removed so the product can be built and verified end to end on synthetic data. Every web visitor is a synthetic user; the role comes from the sidebar workspace switcher on demo hosts and from the hostname on real hosts (`web/src/lib/audience.ts`). **The backend still enforces authentication, MFA, firm isolation and assignment; none of that changed.** Restore the web side before any real data by turning off `AUTH_REMOVED` in `web/src/lib/api.ts` (search `TODO(auth)`). Screens and mocked calls are listed in [frontend-inventory.md](frontend-inventory.md).
+
 ## Goals and scope
 
 Before release, validate PRD journeys F-01 through F-10, especially server-side role checks, firm isolation, assigned auditor access, upload safety, neutral client feedback, and human-only findings/sign-off. Planned F-11/F-12 are not implemented and must not be reported as covered. CI contains backend and web jobs; see `.github/workflows/ci.yml`.
 
 ## Test layers
 
-- **Unit:** pytest backend rules/helpers; web Node tests for tenant host and sign-in redirect utility. Synthetic storage providers and fixtures are used.
+- **Unit:** pytest backend rules/helpers; web Node tests for tenant host and hostname-to-audience mapping (the sign-in redirect utility went with web sign-in). Synthetic storage providers and fixtures are used.
 - **Integration:** FastAPI API tests with test database/storage fixtures; auth/MFA, invitation, firm/engagement isolation, upload, worker, report, and audit-log behavior. Postgres-specific audit-chain coverage may depend on local PostgreSQL binaries and can skip where unavailable.
 - **End-to-end:** Playwright browser journeys in `web/e2e/`, using the synthetic web mock mode and synthetic files. E2E is not proof of live backend, cloud storage, or email behavior.
 - **Manual:** Review screenshots and actual keyboard/focus/motion behavior for UI changes. Full human accessibility review and contrast certification are not automated.

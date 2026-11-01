@@ -20,7 +20,7 @@ Repo: `abdullah-kynetic/ains-platform`. Stack: Next.js 16 / React 19 / Tailwind 
 5. **Shared OVH server:** never touch n8n, Twenty CRM or the client portal. Kien lives only in `/opt/kien`, compose project `kien`.
 6. **Git:** commit as `abdullah-kynetic <211030198+abdullah-kynetic@users.noreply.github.com>`. Real merge commits only. No rebase, no squash, no force-push.
 7. **Preview first.** New features deploy to preview; live (`kien-demo-live`) only after Abdullah approves the visuals. Design experiments go on their own separate address.
-8. **Don't redesign the look.** Abdullah loves it: ink blue `#33405C`, ochre `#B8924A`, cream light background, `#242D40` dark. No generic "AI slop".
+8. **Keep the approved look.** Clean neutral black-and-white SaaS style (see `DESIGN.md`): white and `#F7F7F8` surfaces, near-black text, ink blue `#33405C` only for logo, primary buttons, active nav and focus, ochre `#B8924A` only for deadlines, status colours only as small pills, `#0A0A0A` dark. No gradients, glass or cream. No generic "AI slop".
 9. **Costs as low as possible.** Prefer free tiers and existing infrastructure.
 10. **AI features come last** (intake file sorting, then FINRA chatbot). No vendor lock-in; pick the cheapest model that benchmarks well from an approved vendor (attorney verbally approved Anthropic and OpenAI).
 11. Never claim AWS's certifications (SOC 2, etc.) as Kien's. Kien's SOC 2 is only groundwork.
@@ -33,7 +33,10 @@ Repo: `abdullah-kynetic/ains-platform`. Stack: Next.js 16 / React 19 / Tailwind 
 - Tell Abdullah what needs his decision; don't decide product or spending questions for him.
 
 ## Branch status: `main` vs preview (important)
-`main` is at PR #52 (Alembic head `a111`). **PRs #53–#60 are open and not merged** — invoicing, reversible/direct N/A, editable reports, the first-sign-in walkthrough, the shadcn layout/Impeccable files, and the preview Worker configs exist only on that stack (top branch `fix/onboarding-once`) and on preview.kiensolutions.com / layout.kiensolutions.com. The shared OVH backend already runs that stacked code (DB at `a115`). Details: [`docs/kb/00-INDEX.md`](docs/kb/00-INDEX.md). Don't assume a feature is on `main` because the knowledge base describes it; check its **Live / Preview (#NN)** tag.
+PRs #53–#60 (invoicing, reversible/direct N/A, editable reports, first-sign-in walkthrough, shadcn layout, preview Worker configs) and the nine-part design series #64–#72 (neutral style, Today view, engagement workspace, firm settings, client Responses requested, host audiences, removed web sign-in, docs) are merged into `main`. Check each feature's **Live / Preview** tag in [`docs/kb/00-INDEX.md`](docs/kb/00-INDEX.md); some knowledge-base pages still describe the earlier cream/ochre look and the old PR state.
+
+## Frontend state
+Web sign-in is removed for the demo phase (`AUTH_REMOVED` in `web/src/lib/api.ts`; `TODO(auth)` marks what to restore). **Restore it before any live deploy or real data.** Backend auth, MFA and tenant isolation are unchanged. Screens without a backend route use a typed mock layer in `web/src/lib/api/*` (`TODO(backend)`), listed in `docs/frontend-inventory.md`. Clients never see findings: they see only auditor-released "Responses requested".
 
 ## Repo rules for coding agents (also in AGENTS.md)
 - Never read, print, log or commit `.env` or any secret; use `.env.example` for variable names. Load config only through `app/config.py`. No secrets in `NEXT_PUBLIC_*` vars (they ship to the browser).

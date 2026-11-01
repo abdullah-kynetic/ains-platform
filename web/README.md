@@ -27,9 +27,7 @@ wrong-portal screen and a sign-out action. There is no `/api` proxy.
 - `src/lib/api.ts`: typed API client for backend sessions, engagements, questionnaire answers, uploads, auditor review, and draft report downloads.
 - `src/lib/mock-data.ts`: synthetic engagement only.
 - `src/components/ui`: shared UI primitives; `src/components/checklist`: checklist, status badge, drag-and-drop upload with progress.
-- `/sign-in`: email, then password, then MFA only when required by the API. Safe local `next` paths return users to their requested page. Existing magic-link tokens can still be verified here.
-- `/accept-invitation`: invitation acceptance and initial password creation.
-- `/account-setup`: first-time auditor MFA enrollment and recovery codes.
+- `/sign-in` redirects to `/`. The sign-in, invitation, account-setup and password-reset pages are removed for the demo phase (restore from git history before real data).
 - `/questionnaire`: client yes/no applicability questions. N/A answers remain pending until Quentin decides them.
 - `/auditor`: auditor-only engagement queue, evidence/check results, cited finding review, and unsigned report drafts.
 
@@ -38,9 +36,7 @@ at `NEXT_PUBLIC_API_URL`, with an invited user in Postgres and `SESSION_SECRET` 
 Magic-link delivery still requires an approved backend email adapter; password sign-in works
 without that adapter. Never place credentials in a `NEXT_PUBLIC_*` variable.
 
-In mock mode, sign in with `client@example.invalid` or `auditor@example.invalid`,
-password `synthetic-only-password`; the auditor code is `123456`. These fixed
-synthetic identities only affect browser demo state. Never enter real credentials.
+There is no sign-in. Every visitor is a synthetic user (`AUTH_REMOVED` in `src/lib/api.ts`). On demo hosts (preview, localhost, workers.dev) the sidebar workspace switcher flips between auditor and client. On `<firm>.kiensolutions.com` the app shows the client portal only, and on the auditor host (`NEXT_PUBLIC_AUDITOR_HOST`, default `auditor.kiensolutions.com`) the auditor portal only (`src/lib/audience.ts`). The host narrows the UI and is not authorization. Screens with no API route yet use `src/lib/api/*` over `src/lib/mock/*` (see `docs/frontend-inventory.md`).
 
 ## Cloudflare synthetic demo
 

@@ -152,8 +152,7 @@ not a clean audit opinion, completed rubric, or signed report.
 
 For an assigned, empty engagement, `POST /auditor/engagements/{id}/initialize` creates all
 34 instances from the YAML. Existing legacy instances are rejected rather than remapped.
-The synthetic demo includes an explicitly labeled client/auditor view switch; production
-still requires backend authentication, auditor MFA, and engagement assignment.
+The synthetic demo includes an explicitly labeled client/auditor view switch and, for now, no web sign-in. The backend still requires authentication, auditor MFA and engagement assignment; web sign-in is restored before real data (see `docs/frontend-inventory.md`).
 
 Auditors use `GET /auditor/queue` to see only their assigned engagements, including evidence,
 check timings, draft findings, and page citations. `PATCH /auditor/findings/{id}` accepts, edits,

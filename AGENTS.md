@@ -18,10 +18,14 @@ Read [PRD](docs/PRD.md), [Design System](docs/DESIGN_SYSTEM.md), [Architecture](
 - Egnyte is optional and off by default. During development, access only `/Shared/AINS-Dev` through `EgnyteClient`; use `uv run python -m app.egnyte_client <command>`. Never read `.env` or request/print tokens.
 - Do not touch n8n, the client portal, or Twenty on the shared OVH VPS `40.160.150.91`. Kien lives in `/opt/kien`, compose project `kien`. This restriction does not authorize deployment or server access.
 - Use real merge commits; do not rebase, squash-merge, or force-push. Keep costs minimal. Preserve unrelated changes.
-- Do not redesign the look the owner loves. Avoid generic filler copy and generic visuals. Prefer compact tiles with the primary action at top right. For UI changes, capture before/after screenshots at desktop light, desktop dark, and phone sizes; preserve accessibility, keyboard flow, reduced-motion behavior, and synthetic-demo labels.
+- The owner approved the neutral black-and-white style (see DESIGN.md); keep to it and do not reintroduce cream, gradients or glass. Avoid generic filler copy and generic visuals. Prefer compact tiles with the primary action at top right. For UI changes, capture before/after screenshots at desktop light, desktop dark, and phone sizes; preserve accessibility, keyboard flow, reduced-motion behavior, and synthetic-demo labels.
 - Keep changes small, typed, and tested. Report exactly which commands were run and their results. Never claim unrun checks passed.
 - Git commit identity: `abdullah-kynetic <211030198+abdullah-kynetic@users.noreply.github.com>`.
 - Do not deploy, delete data, run production migrations, or send external messages unless specifically authorized.
+
+## Frontend demo phase
+
+Web sign-in is removed for now. See [docs/frontend-inventory.md](docs/frontend-inventory.md) for screens, routes and every mocked `TODO(backend)` call, and `AUTH_REMOVED` in `web/src/lib/api.ts` to restore it. Clients never see findings: they see only auditor-released response requests. Backend authentication, MFA and tenant isolation are unchanged and still required.
 
 ## Verified commands
 
