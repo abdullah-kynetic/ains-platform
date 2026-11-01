@@ -17,7 +17,7 @@ const flows = {
     },
     {
       title: "Prepare and approve",
-      text: "Draft the engagement report and review every finding. Finalize the version you approve; manage invoices from your sidebar.",
+      text: "Record workpapers, samples and findings in each engagement, assemble the report from approved findings, then send it through second review and partner sign-off. Manage invoices from your sidebar.",
     },
   ],
   client: [
@@ -31,7 +31,7 @@ const flows = {
     },
     {
       title: "Keep track",
-      text: "Check your checklist for document feedback and your progress for resolved requests. Your auditor handles findings and report approval separately.",
+      text: "Check your checklist for document feedback and your progress for resolved requests. Findings your auditor formally issues appear under Findings, where you add a management response; signed reports and invoices are listed under Report and Invoices.",
     },
   ],
 };

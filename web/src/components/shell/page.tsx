@@ -17,6 +17,7 @@ export function Shell({
   sidebar,
   children,
   items,
+  auditor,
 }: {
   sidebar: React.ReactNode;
   items: NavItem[];
@@ -28,7 +29,7 @@ export function Shell({
   const [searchHost, setSearchHost] = useState<HTMLDivElement | null>(null);
   return (
     <SearchHostContext.Provider value={setSearchHost}>
-      <CommandPalette items={items} triggerHost={searchHost} />
+      <CommandPalette items={items} triggerHost={searchHost} auditor={auditor} />
       <div className="flex min-h-screen flex-col lg:flex-row">
         {sidebar}
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">

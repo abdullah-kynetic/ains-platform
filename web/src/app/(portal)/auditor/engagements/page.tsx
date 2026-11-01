@@ -1,2 +1,2 @@
-import { AuditorPortfolio } from "@/components/auditor/portfolio";
-export default function EngagementsPage() { return <AuditorPortfolio tableOnly />; }
+import { EngagementsList } from "@/components/auditor/engagements-list";
+export default function EngagementsPage() { return <EngagementsList />; }

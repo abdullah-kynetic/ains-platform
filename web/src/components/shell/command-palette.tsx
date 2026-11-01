@@ -7,13 +7,16 @@ import { Search, ArrowUpRight, Sun, Moon } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { NavItem } from "./nav";
+import { searchAll, type SearchHit } from "@/lib/api/index";
 
 export function CommandPalette({
   items,
   triggerHost,
+  auditor = false,
 }: {
   items: NavItem[];
   triggerHost: HTMLElement | null;
+  auditor?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -23,6 +26,16 @@ export function CommandPalette({
     (theme) => `${theme} theme`.includes(query.toLowerCase()) || !query,
   );
   const router = useRouter();
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  useEffect(() => {
+    // Global search across clients, engagements, findings, requests and documents (auditor only).
+    // TODO(backend): server-side search scoped to assigned engagements.
+    if (!auditor || !open || !query.trim()) return;
+    let live = true;
+    const timer = setTimeout(() => void searchAll(query).then((found) => { if (live) setHits(found); }), 120);
+    return () => { live = false; clearTimeout(timer); };
+  }, [auditor, open, query]);
+  const shownHits = query.trim() ? hits : [];
   const results = items.filter((item) =>
     item.label.toLowerCase().includes(query.toLowerCase()),
   );
@@ -73,8 +86,8 @@ export function CommandPalette({
       <Dialog
         open={open}
         onOpenChange={setOpen}
-        title="Go to workspace"
-        description="Find a page or change appearance. Use arrow keys or Tab to choose, then Enter to open."
+        title={auditor ? "Search Kien" : "Go to workspace"}
+        description={auditor ? "Find a client, engagement, finding, request or document. Use arrow keys or Tab to choose, then Enter to open." : "Find a page or change appearance. Use arrow keys or Tab to choose, then Enter to open."}
       >
         <div
           ref={commands}
@@ -108,13 +121,26 @@ export function CommandPalette({
           <Input
             ref={input}
             aria-label="Search pages"
-            placeholder="Where would you like to go?"
+            placeholder={auditor ? "Search clients, findings, documents…" : "Where would you like to go?"}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
           <p className="mt-4 text-xs text-subtle" role="status">
-            {results.length + themes.length} matching commands
+            {results.length + themes.length + shownHits.length} matching commands
           </p>
+          {shownHits.length > 0 && (
+            <>
+              <p className="mt-[var(--space-4)] text-xs font-semibold uppercase tracking-[0.08em] text-muted">Results</p>
+              <div className="mt-2 grid gap-1">
+                {shownHits.map((hit) => (
+                  <button data-command key={`${hit.kind}-${hit.id}`} onClick={() => navigate(hit.href)} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-brand-tint hover:text-brand">
+                    <span className="min-w-0"><span className="block truncate">{hit.title}</span><span className="block truncate text-xs text-muted">{hit.detail}</span></span>
+                    <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted">{hit.kind}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           <p className="mt-[var(--space-4)] text-xs font-semibold uppercase tracking-[0.08em] text-muted">
             Workspace pages
           </p>
@@ -163,7 +189,7 @@ export function CommandPalette({
               ))}
             </div>
           </div>
-          {!results.length && !themes.length && (
+          {!results.length && !themes.length && !shownHits.length && (
             <p className="py-5 text-sm text-muted">
               No pages match. Try another search.
             </p>

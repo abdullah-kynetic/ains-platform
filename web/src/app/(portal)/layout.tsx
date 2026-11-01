@@ -7,8 +7,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getEngagement } from "@/lib/api";
 import { countByStatus } from "@/lib/checklist";
-import { getAuditorTasks, getClients, getPipeline } from "@/lib/workflow-api";
-import { listClientProfiles, listNotifications, unreadCount } from "@/lib/api/index";
+import { getAuditorTasks, getPipeline } from "@/lib/workflow-api";
+import { listClientProfiles, listEngagementSummaries, listNotifications, unreadCount } from "@/lib/api/index";
 import { Onboarding } from "@/components/auth/onboarding";
 import { USE_MOCKS } from "@/lib/api";
 
@@ -46,7 +46,7 @@ function useNavCounts(isAuditor: boolean, enabled: boolean) {
     if (!enabled) return;
     let active = true;
     const load = isAuditor
-      ? Promise.all([getClients(), getPipeline(), getAuditorTasks(), listClientProfiles(), listNotifications()]).then(
+      ? Promise.all([listEngagementSummaries(), getPipeline(), getAuditorTasks(), listClientProfiles(), listNotifications()]).then(
           ([clients, pipeline, tasks, profiles, notifications]) => ({
             "/auditor/clients": profiles.length,
             "/auditor/notifications": unreadCount(notifications),
