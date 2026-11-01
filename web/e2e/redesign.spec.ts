@@ -145,7 +145,7 @@ test("client sidebar lists every route and supports collapse, mobile navigation 
   await page.goto("/");
   const sidebar = page.locator(".desktop-sidebar");
   const links = sidebar.getByRole("navigation", { name: "Main navigation" }).getByRole("link");
-  await expect(links).toHaveText([/^Overview/, /^Upload/, /^Checklist/, /^Questionnaire/, /^Messages/, /^Progress/]);
+  await expect(links).toHaveText([/^Overview/, /^Upload/, /^Checklist/, /^Questionnaire/, /^Messages/, /^Progress/, /^Responses requested/, /^Report/, /^Invoices/]);
   const routes = ["/", "/upload", "/checklist", "/questionnaire", "/messages", "/progress"];
   for (let i = 0; i < routes.length; i++) {
     await expect(links.nth(i)).toHaveAttribute("href", routes[i]);
@@ -163,12 +163,8 @@ test("client sidebar lists every route and supports collapse, mobile navigation 
   await page.setViewportSize({ width: 375, height: 812 });
   await page.getByRole("button", { name: "Open menu" }).click();
   const sheet = page.getByRole("dialog", { name: "Navigation" });
-  await expect(sheet.getByRole("navigation").getByRole("link")).toHaveText([/^Overview/, /^Upload/, /^Checklist/, /^Questionnaire/, /^Messages/, /^Progress/]);
+  await expect(sheet.getByRole("navigation").getByRole("link")).toHaveText([/^Overview/, /^Upload/, /^Checklist/, /^Questionnaire/, /^Messages/, /^Progress/, /^Responses requested/, /^Report/, /^Invoices/]);
   await sheet.getByRole("link", { name: "Messages", exact: true }).click();
   await expect(page).toHaveURL(/\/messages$/);
   await expect(sheet).not.toBeVisible();
-  await page.getByRole("button", { name: "Open menu" }).click();
-  await sheet.getByRole("button", { name: "Sign out", exact: true }).click();
-  await expect(page).toHaveURL(/\/sign-in$/);
-  await expect(page.getByRole("heading", { name: "Sign in to Kien", exact: true })).toBeVisible();
 });

@@ -10,7 +10,6 @@ import { countByStatus } from "@/lib/checklist";
 import { getAuditorTasks, getPipeline } from "@/lib/workflow-api";
 import { listClientProfiles, listEngagementSummaries, listNotifications, unreadCount } from "@/lib/api/index";
 import { Onboarding } from "@/components/auth/onboarding";
-import { USE_MOCKS } from "@/lib/api";
 
 const clientItems: NavItem[] = [
   { href: "/", label: "Overview", icon: "LayoutDashboard", exact: true, group: "Engagement" },
@@ -70,7 +69,7 @@ function useNavCounts(isAuditor: boolean, enabled: boolean) {
 }
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
-  const { session, logOut, refresh } = useSession();
+  const { session, refresh } = useSession();
   const router = useRouter();
   const user = session?.user;
   const isAuditor = user?.role === "auditor";
@@ -79,13 +78,8 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     !counts[item.href] ? item : { ...item, count: counts[item.href] },
   );
 
-  async function handleSignOut() {
-    await logOut();
-    router.replace("/sign-in");
-  }
-
   async function handleWorkspaceChange(workspace: "auditor" | "client") {
-    if (!USE_MOCKS || workspace === user?.role) return;
+    if (workspace === user?.role) return;
     localStorage.setItem("ains-synthetic-role", workspace);
     await refresh();
     router.push(workspace === "auditor" ? "/auditor" : "/");
@@ -107,12 +101,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                 ? "Kien Solutions independent review"
                 : "Example Securities LLC (synthetic)"
             }
-            onSignOut={() => void handleSignOut()}
-            onWorkspaceChange={
-              USE_MOCKS
-                ? (workspace) => void handleWorkspaceChange(workspace)
-                : undefined
-            }
+            onWorkspaceChange={(workspace) => void handleWorkspaceChange(workspace)}
           />
         }
       >

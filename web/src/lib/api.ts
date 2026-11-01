@@ -181,20 +181,28 @@ const mockSession: SessionData = {
   },
 };
 
+/**
+ * Authentication is removed for the demo phase: every visitor is a synthetic user.
+ * Role comes from the sidebar workspace switcher (default: auditor).
+ * TODO(auth): restore real sign-in (see git history before "Remove sign-in") and the /auth/* API calls.
+ */
+export const AUTH_REMOVED = true;
+
 export async function getSession(): Promise<SessionData> {
-  if (!clientMocksEnabled()) return apiRequest<SessionData>("/auth/session");
-  if (localStorage.getItem("ains-synthetic-signed-out") === "true")
-    throw new Error("Demo signed out");
-  const role = localStorage.getItem("ains-synthetic-role") === "auditor" ? "auditor" : "client";
-  const savedOnboarding = localStorage.getItem(`kien-synthetic-onboarding-${role}`);
+  if (!AUTH_REMOVED && !clientMocksEnabled()) return apiRequest<SessionData>("/auth/session");
+  let stored: string | null = null;
+  try { stored = localStorage.getItem("ains-synthetic-role"); } catch { /* storage blocked */ }
+  const role = stored === "client" ? "client" : "auditor";
+  let onboarding: string | null = null;
+  try { onboarding = localStorage.getItem(`kien-synthetic-onboarding-${role}`); } catch { /* storage blocked */ }
   return {
     user: {
       ...mockSession.user,
+      id: `demo-${role}`,
       role,
-      // Static synthetic demos opt in to exercising the first-sign-in tour.
-      onboarding_state: localStorage.getItem("kien-synthetic-onboarding-enabled") !== "1"
-        ? "completed"
-        : savedOnboarding === "completed" || savedOnboarding === "skipped" ? savedOnboarding : null,
+      name: role === "auditor" ? "Demo Auditor" : "Demo Client",
+      email: role === "auditor" ? "auditor@example.invalid" : "client@example.invalid",
+      onboarding_state: onboarding === "completed" || onboarding === "skipped" ? onboarding : "completed",
     },
   };
 }
@@ -308,7 +316,7 @@ export async function verifyMagicLink(
 }
 
 export async function signOut(): Promise<void> {
-  if (clientMocksEnabled()) {
+  if (AUTH_REMOVED || clientMocksEnabled()) {
     localStorage.setItem("ains-synthetic-signed-out", "true");
     return;
   }
