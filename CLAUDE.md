@@ -32,6 +32,9 @@ templates/report/    Swappable draft-report layout and required notices
 .github/workflows/   CI: backend ruff + pytest; web lint + typecheck + build
 ```
 
+## Frontend state
+Web auth is removed for the demo phase (`AUTH_REMOVED` in `web/src/lib/api.ts`; `TODO(auth)` marks what to restore). New screens use a typed mock layer in `web/src/lib/api/*` (`TODO(backend)`), listed in `docs/frontend-inventory.md`. The backend is unchanged and still enforces auth.
+
 ## Rules
 - **Never read, print, log, or commit `.env` or any secret.** Use `.env.example` for variable names. Load config only through `app/config.py`.
 - **Egnyte: only touch paths under `/Shared/AINS-Dev` (`EGNYTE_DEV_ROOT`) during development.** Always go through `EgnyteClient` (it enforces the path guard).

@@ -52,8 +52,8 @@ from real authentication, authorization, email, storage or payment operations.
 
 ## Brand Commitments
 
-Keep the Kien name, current brand assets, Ink Blue and Ochre identity, cream light
-surfaces and deep ink dark theme. The approved compact dashboard geometry is
+Keep the Kien name, current brand assets, Ink Blue and Ochre identity on a clean
+neutral black-and-white style (white and light-gray surfaces, near-black dark theme). The approved compact dashboard geometry is
 recorded in DESIGN.md and docs/DESIGN_SYSTEM.md. The sidebar remains resizable,
 phone navigation remains a sheet, theme selection stays above the account block
 with its sliding highlight and original circular reveal, and workspace search
