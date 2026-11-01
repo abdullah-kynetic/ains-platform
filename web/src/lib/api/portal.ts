@@ -1,28 +1,51 @@
 import { delay, readStore, updateStore } from "../mock/store";
 import { seedFindings } from "../mock/seed";
-import type { ClientPortalFinding, ClientPortalInvoice, ClientPortalReport, Finding } from "./types";
+import type { ClientPortalInvoice, ClientPortalReport, Finding, ResponseRequest } from "./types";
 import { logActivity } from "./log";
 
 const findingsKey = "kien-mock-findings-v1";
-/** Clients only ever see findings the auditor has formally issued. Drafts and approved-but-unissued findings never leave the auditor side. */
-const visible = (f: Finding) => f.status === "issued" || f.status === "responded" || f.status === "closed";
+const requestsKey = "kien-mock-response-requests-v1";
+export type StoredRequest = ResponseRequest & { engagementId: string; findingId: string };
+export const seedResponseRequests = (): StoredRequest[] => [
+  { id: "rr-1", engagementId: "eng-synthetic-001", findingId: "fnd-1", title: "Alert-closure documentation", requestText: "Please describe how your team documents the reason for closing a transaction-monitoring alert, and confirm what changes you plan to make.", status: "open", response: "", respondedAt: null, releasedAt: "2026-10-29T12:00:00.000Z" },
+  { id: "rr-2", engagementId: "eng-synthetic-001", findingId: "fnd-2", title: "Risk assessment refresh", requestText: "Please confirm when your AML risk assessment was last refreshed and when the next refresh is planned.", status: "responded", response: "We agree. The assessment will be refreshed by 12/31 and added to the compliance calendar.", respondedAt: "2026-10-30T09:40:00.000Z", releasedAt: "2026-10-29T12:00:00.000Z" },
+];
+const strip = (r: StoredRequest): ResponseRequest => ({ id: r.id, title: r.title, requestText: r.requestText, status: r.status, response: r.response, respondedAt: r.respondedAt, releasedAt: r.releasedAt });
 
-// TODO(backend): GET /client/findings -> ClientPortalFinding[] (server filters to issued findings for the caller's firm)
-export async function listPortalFindings(): Promise<ClientPortalFinding[]> {
-  return delay(readStore<Finding[]>(findingsKey, seedFindings).filter((f) => f.engagementId === "eng-synthetic-001" && visible(f)).map(({ id, title, rule, condition, recommendation, severity, managementResponse, respondedAt, status }) => ({ id, title, rule, condition, recommendation, severity, managementResponse, respondedAt, status })));
+/** Auditor action: release one item to the client with text the auditor wrote. TODO(backend): POST /auditor/findings/{id}/response-request {title, requestText}; only for approved findings. */
+export async function releaseResponseRequest(findingId: string, title: string, requestText: string): Promise<void> {
+  if (!title.trim() || !requestText.trim()) throw new Error("Write a title and the request for the client.");
+  let engagementId = "";
+  updateStore<Finding[]>(findingsKey, seedFindings, (rows) => {
+    const f = rows.find((r) => r.id === findingId);
+    if (!f || f.status !== "approved") throw new Error("Approve the finding before requesting a response.");
+    f.status = "issued"; f.updatedAt = new Date().toISOString(); engagementId = f.engagementId;
+  });
+  updateStore<StoredRequest[]>(requestsKey, seedResponseRequests, (rows) => [...rows, { id: `rr-${Date.now()}`, engagementId, findingId, title: title.trim(), requestText: requestText.trim(), status: "open", response: "", respondedAt: null, releasedAt: new Date().toISOString() }]);
+  logActivity(engagementId, `Requested a management response: “${title.trim()}”.`);
+  return delay(undefined, 0);
 }
 
-// TODO(backend): POST /client/findings/{id}/response {text}; only allowed while status is "issued"
-export async function respondToFinding(id: string, text: string): Promise<ClientPortalFinding[]> {
+// TODO(backend): GET /client/response-requests -> ResponseRequest[] (only items an auditor explicitly released for the caller's firm)
+export async function listResponseRequests(): Promise<ResponseRequest[]> {
+  return delay(readStore<StoredRequest[]>(requestsKey, seedResponseRequests).filter((r) => r.engagementId === "eng-synthetic-001").map(strip));
+}
+
+// TODO(backend): POST /client/response-requests/{id}/response {text}; only while status is "open"
+export async function respondToRequest(id: string, text: string): Promise<ResponseRequest[]> {
   if (!text.trim()) throw new Error("Write a response before submitting.");
-  let engagementId = "eng-synthetic-001";
+  let engagementId = "eng-synthetic-001"; let findingId = "";
+  updateStore<StoredRequest[]>(requestsKey, seedResponseRequests, (rows) => {
+    const r = rows.find((x) => x.id === id);
+    if (!r || r.status !== "open") throw new Error("This item is not open for a response.");
+    r.response = text.trim(); r.respondedAt = new Date().toISOString(); r.status = "responded"; engagementId = r.engagementId; findingId = r.findingId;
+  });
   updateStore<Finding[]>(findingsKey, seedFindings, (rows) => {
-    const f = rows.find((r) => r.id === id);
-    if (!f || f.status !== "issued") throw new Error("This finding is not open for a response.");
-    f.managementResponse = text.trim(); f.respondedAt = new Date().toISOString(); f.status = "responded"; engagementId = f.engagementId;
+    const f = rows.find((x) => x.id === findingId);
+    if (f) { f.managementResponse = text.trim(); f.respondedAt = new Date().toISOString(); f.status = "responded"; }
   });
   logActivity(engagementId, "Client submitted a management response.", "Maya Okafor (client)");
-  return listPortalFindings();
+  return listResponseRequests();
 }
 
 // TODO(backend): GET /client/reports -> ClientPortalReport[]; only signed reports are `available`

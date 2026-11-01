@@ -31,7 +31,7 @@ export async function saveFinding(engagementId: string, input: FindingInput, id?
   return delay(saved);
 }
 
-const allowed: Record<FindingStatus, FindingStatus[]> = { draft: ["approved"], approved: ["issued", "draft"], issued: ["closed"], responded: ["closed"], closed: [] };
+const allowed: Record<FindingStatus, FindingStatus[]> = { draft: ["approved"], approved: ["draft"], issued: ["closed"], responded: ["closed"], closed: [] };
 
 // TODO(backend): POST /auditor/findings/{id}/status {status}. Server enforces transitions, citations and that only an auditor acts.
 export async function setFindingStatus(id: string, status: FindingStatus): Promise<Finding> {

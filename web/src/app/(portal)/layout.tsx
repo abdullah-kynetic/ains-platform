@@ -19,7 +19,7 @@ const clientItems: NavItem[] = [
   { href: "/questionnaire", label: "Questionnaire", icon: "ClipboardCheck", group: "Engagement" },
   { href: "/messages", label: "Messages", icon: "MessagesSquare", group: "Updates" },
   { href: "/progress", label: "Progress", icon: "ChartNoAxesCombined", group: "Updates" },
-  { href: "/findings", label: "Findings", icon: "FileWarning", group: "Results" },
+  { href: "/responses", label: "Responses requested", icon: "MessageSquareReply", group: "Results" },
   { href: "/report", label: "Report", icon: "FileText", group: "Results" },
   { href: "/invoices", label: "Invoices", icon: "Receipt", group: "Results" },
 ];

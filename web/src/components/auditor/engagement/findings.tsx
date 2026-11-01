@@ -11,7 +11,7 @@ import { Field } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { deleteDraftFinding, findingBlockers, listDocuments, listFindings, saveFinding, setFindingStatus, type Citation, type Finding, type FindingInput, type Severity } from "@/lib/api/index";
+import { releaseResponseRequest, deleteDraftFinding, findingBlockers, listDocuments, listFindings, saveFinding, setFindingStatus, type Citation, type Finding, type FindingInput, type Severity } from "@/lib/api/index";
 import { FindingStatusBadge, Loading, MockNotice, SeverityBadge, fmtDate, useAsync } from "../kit";
 
 const RULES = ["FINRA Rule 3310(a): risk-based AML program", "FINRA Rule 3310(b): suspicious activity detection and reporting", "FINRA Rule 3310(c): independent testing", "FINRA Rule 3310(d): AML compliance person", "FINRA Rule 3310(e): ongoing training", "BSA: Customer Identification Program pillar", "BSA: Customer due diligence pillar", "BSA: suspicious activity monitoring pillar", "BSA: OFAC / sanctions screening"];
@@ -54,9 +54,26 @@ function FindingForm({ id, existing, docs, onClose, onSaved }: { id: string; exi
   );
 }
 
+function ReleaseDialog({ finding, onClose, onDone }: { finding: Finding; onClose: () => void; onDone: () => void }) {
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const [problem, setProblem] = useState("");
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()} title="Request a management response" description={`For “${finding.title}”. The client sees only the title and request below.`}>
+      <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); try { await releaseResponseRequest(finding.id, title, text); onDone(); onClose(); } catch (err) { setProblem((err as Error).message); } }}>
+        <Field label="Title for the client"><Input value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
+        <Field label="Request" hint="Do not include severity, cause, effect or other findings detail."><Textarea value={text} onChange={(e) => setText(e.target.value)} /></Field>
+        {problem && <p role="alert" className="status-note" data-tone="warning">{problem}</p>}
+        <div className="flex justify-end gap-2"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" disabled={!title.trim() || !text.trim()}>Release to client</Button></div>
+      </form>
+    </Dialog>
+  );
+}
+
 export function FindingsTab({ id }: { id: string }) {
   const { data, error, reload } = useAsync(async () => ({ findings: await listFindings(id), docs: (await listDocuments(id)).map((d) => d.name) }), [id]);
   const [editing, setEditing] = useState<Finding | "new" | null>(null);
+  const [releasing, setReleasing] = useState<Finding | null>(null);
   const [problem, setProblem] = useState("");
   async function move(f: Finding, status: Finding["status"]) {
     setProblem("");
@@ -64,7 +81,7 @@ export function FindingsTab({ id }: { id: string }) {
   }
   return (
     <>
-      <PageHeader title="Findings" description="Drafts stay on your side. Only issued findings reach the client, who then submits a management response."
+      <PageHeader title="Findings" description="Findings stay on your side. To get a management response, release a short request you write; the client never sees the finding itself."
         actions={<Button onClick={() => setEditing("new")}><Plus aria-hidden />New finding</Button>} />
       <MockNotice />
       {problem && <p role="alert" className="status-note mb-4" data-tone="warning">{problem}</p>}
@@ -84,12 +101,12 @@ export function FindingsTab({ id }: { id: string }) {
                 </dl>
                 <p className="text-xs text-muted">Cited: {f.citations.length ? f.citations.map((c) => `${c.document}, p.${c.page}`).join("; ") : "none yet"}</p>
                 {(f.managementResponse || f.status === "issued") && (
-                  <div className="rounded-lg bg-elevated p-3"><p className="text-xs font-medium text-muted">Management response {f.respondedAt ? `· ${fmtDate(f.respondedAt)}` : ""}</p><p className="mt-1">{f.managementResponse || "Awaiting the client’s response."}</p></div>
+                  <div className="rounded-lg bg-elevated p-3"><p className="text-xs font-medium text-muted">Management response {f.respondedAt ? `· ${fmtDate(f.respondedAt)}` : ""}</p><p className="mt-1">{f.managementResponse || "Requested from the client; awaiting their response."}</p></div>
                 )}
                 <div className="flex flex-wrap gap-2 border-t border-border pt-3">
                   <Button size="sm" variant="outline" onClick={() => setEditing(f)}>Edit</Button>
                   {f.status === "draft" && <><Button size="sm" onClick={() => void move(f, "approved")}>Approve</Button><Button size="sm" variant="destructive" onClick={async () => { await deleteDraftFinding(f.id); reload(); }}>Delete draft</Button></>}
-                  {f.status === "approved" && <><Button size="sm" onClick={() => void move(f, "issued")}>Issue to client</Button><Button size="sm" variant="ghost" onClick={() => void move(f, "draft")}>Return to draft</Button></>}
+                  {f.status === "approved" && <><Button size="sm" onClick={() => setReleasing(f)}>Request response</Button><Button size="sm" variant="ghost" onClick={() => void move(f, "draft")}>Return to draft</Button></>}
                   {(f.status === "responded" || f.status === "issued") && <Button size="sm" variant="secondary" onClick={() => void move(f, "closed")}>Close finding</Button>}
                 </div>
               </CardContent>
@@ -97,6 +114,7 @@ export function FindingsTab({ id }: { id: string }) {
           ))}
         </div>
       )}
+      {releasing && <ReleaseDialog finding={releasing} onClose={() => setReleasing(null)} onDone={reload} />}
       {editing && data && <FindingForm key={editing === "new" ? "new" : editing.id} id={id} existing={editing === "new" ? undefined : editing} docs={data.docs} onClose={() => setEditing(null)} onSaved={reload} />}
     </>
   );
