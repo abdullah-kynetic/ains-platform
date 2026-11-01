@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { getEngagement } from "@/lib/api";
 import { countByStatus } from "@/lib/checklist";
 import { getAuditorTasks, getClients, getPipeline } from "@/lib/workflow-api";
+import { listClientProfiles, listNotifications, unreadCount } from "@/lib/api/index";
 import { Onboarding } from "@/components/auth/onboarding";
 import { USE_MOCKS } from "@/lib/api";
 
@@ -18,16 +19,22 @@ const clientItems: NavItem[] = [
   { href: "/questionnaire", label: "Questionnaire", icon: "ClipboardCheck", group: "Engagement" },
   { href: "/messages", label: "Messages", icon: "MessagesSquare", group: "Updates" },
   { href: "/progress", label: "Progress", icon: "ChartNoAxesCombined", group: "Updates" },
+  { href: "/findings", label: "Findings", icon: "FileWarning", group: "Results" },
+  { href: "/report", label: "Report", icon: "FileText", group: "Results" },
+  { href: "/invoices", label: "Invoices", icon: "Receipt", group: "Results" },
 ];
 
 const auditorItems: NavItem[] = [
   { href: "/auditor", label: "Today", icon: "LayoutDashboard", exact: true, group: "Workspace" },
-  { href: "/auditor/engagements", label: "Engagements", icon: "Building2", group: "Workspace" },
-  { href: "/auditor/pipeline", label: "Audit pipeline", icon: "Columns3", group: "Workspace" },
-  { href: "/auditor/reports", label: "Reports", icon: "ClipboardCheck", group: "Deliverables" },
-  { href: "/auditor/invoices", label: "Invoices", icon: "Receipt", group: "Deliverables" },
-  { href: "/auditor/audit-log", label: "Audit Log", icon: "History", group: "Administration" },
-  { href: "/auditor/settings", label: "Settings", icon: "Settings", group: "Administration" },
+  { href: "/auditor/clients", label: "Clients", icon: "Users", group: "Workspace" },
+  { href: "/auditor/notifications", label: "Notifications", icon: "Bell", group: "Workspace" },
+  { href: "/auditor/engagements", label: "Engagements", icon: "Building2", group: "Engagements" },
+  { href: "/auditor/pipeline", label: "Audit pipeline", icon: "Columns3", group: "Engagements" },
+  { href: "/auditor/reports", label: "Reports", icon: "ClipboardCheck", group: "Engagements" },
+  { href: "/auditor/invoices", label: "Invoices", icon: "Receipt", group: "Engagements" },
+  { href: "/auditor/firm", label: "Firm settings", icon: "Landmark", group: "Firm" },
+  { href: "/auditor/audit-log", label: "Audit Log", icon: "History", group: "Firm" },
+  { href: "/auditor/settings", label: "My account", icon: "Settings", group: "Firm" },
 ];
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -39,8 +46,10 @@ function useNavCounts(isAuditor: boolean, enabled: boolean) {
     if (!enabled) return;
     let active = true;
     const load = isAuditor
-      ? Promise.all([getClients(), getPipeline(), getAuditorTasks()]).then(
-          ([clients, pipeline, tasks]) => ({
+      ? Promise.all([getClients(), getPipeline(), getAuditorTasks(), listClientProfiles(), listNotifications()]).then(
+          ([clients, pipeline, tasks, profiles, notifications]) => ({
+            "/auditor/clients": profiles.length,
+            "/auditor/notifications": unreadCount(notifications),
             "/auditor": tasks.filter((task) => !task.completed && task.due !== null && task.due <= today()).length,
             "/auditor/engagements": clients.length,
             "/auditor/pipeline": pipeline.filter((entry) => entry.stage !== "complete").length,
