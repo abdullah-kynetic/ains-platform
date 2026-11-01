@@ -1,4 +1,4 @@
-import { apiRequest, USE_MOCKS } from "./api";
+import { apiRequest, clientMocksEnabled } from "./api";
 export type OnboardingState = {
   state: "pending" | "completed" | "skipped";
   flow: "client" | "auditor";
@@ -9,7 +9,7 @@ function key(role: string) {
 export async function getOnboarding(
   role: "client" | "auditor",
 ): Promise<OnboardingState> {
-  if (!USE_MOCKS) return apiRequest("/auth/onboarding");
+  if (!clientMocksEnabled()) return apiRequest("/auth/onboarding");
   // Static synthetic demos have no first sign-in; opt in when exercising the walkthrough.
   return {
     flow: role,
@@ -24,7 +24,7 @@ export async function finishOnboarding(
   role: "client" | "auditor",
   action: "completed" | "skipped",
 ): Promise<OnboardingState> {
-  if (!USE_MOCKS)
+  if (!clientMocksEnabled())
     return apiRequest("/auth/onboarding", {
       method: "POST",
       body: JSON.stringify({ action }),

@@ -16,6 +16,7 @@ import {
   signOut,
   ApiError,
   type SessionData,
+  type SessionUser,
   type UserRole,
 } from "@/lib/api";
 import { WrongPortal } from "@/components/tenant/wrong-portal";
@@ -26,6 +27,10 @@ type SessionContextValue = {
   loading: boolean;
   refresh: () => Promise<void>;
   logOut: () => Promise<void>;
+  finishOnboarding: (
+    userId: string,
+    state: NonNullable<SessionUser["onboarding_state"]>,
+  ) => void;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -76,6 +81,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setWrongPortal(false);
   }, []);
 
+  const finishOnboarding = useCallback(
+    (userId: string, state: NonNullable<SessionUser["onboarding_state"]>) => {
+      setSession((current) =>
+        current?.user.id === userId
+          ? { ...current, user: { ...current.user, onboarding_state: state } }
+          : current,
+      );
+    },
+    [],
+  );
+
   async function signOutOfWrongPortal() {
     setSigningOut(true);
     setSignOutError("");
@@ -99,8 +115,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       loading,
       refresh,
       logOut,
+      finishOnboarding,
     }),
-    [session, loading, refresh, logOut],
+    [session, loading, refresh, logOut, finishOnboarding],
   );
 
   if (wrongPortal) {

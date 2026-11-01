@@ -103,6 +103,7 @@ export type SessionUser = {
   name: string;
   role: UserRole;
   firm_id: string | null;
+  onboarding_state: "completed" | "skipped" | null;
 };
 
 export type SessionData = { user: SessionUser };
@@ -176,6 +177,7 @@ const mockSession: SessionData = {
     name: "Synthetic Client",
     role: "client",
     firm_id: "synthetic-firm",
+    onboarding_state: "completed",
   },
 };
 
@@ -183,13 +185,16 @@ export async function getSession(): Promise<SessionData> {
   if (!clientMocksEnabled()) return apiRequest<SessionData>("/auth/session");
   if (localStorage.getItem("ains-synthetic-signed-out") === "true")
     throw new Error("Demo signed out");
+  const role = localStorage.getItem("ains-synthetic-role") === "auditor" ? "auditor" : "client";
+  const savedOnboarding = localStorage.getItem(`kien-synthetic-onboarding-${role}`);
   return {
     user: {
       ...mockSession.user,
-      role:
-        localStorage.getItem("ains-synthetic-role") === "auditor"
-          ? "auditor"
-          : "client",
+      role,
+      // Static synthetic demos opt in to exercising the first-sign-in tour.
+      onboarding_state: localStorage.getItem("kien-synthetic-onboarding-enabled") !== "1"
+        ? "completed"
+        : savedOnboarding === "completed" || savedOnboarding === "skipped" ? savedOnboarding : null,
     },
   };
 }
@@ -456,6 +461,7 @@ export async function acceptClientInvitation(
       name: invitation.name,
       role: "client",
       firm_id: invitation.firmId,
+      onboarding_state: null,
     },
   };
 }

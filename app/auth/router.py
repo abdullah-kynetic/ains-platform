@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import Annotated, Protocol
+from typing import Annotated, Literal, Protocol
 
 import pyotp
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -75,6 +75,7 @@ class UserView(BaseModel):
     name: str
     role: UserRole
     firm_id: str | None
+    onboarding_state: Literal["completed", "skipped"] | None
 
 
 class SessionView(BaseModel):
