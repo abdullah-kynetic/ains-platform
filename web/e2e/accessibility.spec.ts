@@ -245,7 +245,7 @@ test("system theme follows OS changes, persists, and client firm card is static"
 }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/upload");
-  const sidebar = page.locator(".workspace-topbar");
+  const sidebar = page.locator(".desktop-sidebar");
   await expect(
     sidebar.getByRole("button", { name: /Example Securities/ }),
   ).toHaveCount(0);
@@ -305,7 +305,7 @@ test("theme reveal animates effective changes from segment and System origins", 
     };
   });
   await page.goto("/");
-  const sidebar = page.locator(".workspace-topbar");
+  const sidebar = page.locator(".desktop-sidebar");
   const dark = sidebar.getByRole("button", { name: "Dark theme", exact: true });
   const light = sidebar.getByRole("button", {
     name: "Light theme",

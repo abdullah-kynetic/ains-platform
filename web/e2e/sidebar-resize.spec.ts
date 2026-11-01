@@ -1,11 +1,50 @@
 import { expect, test } from "@playwright/test";
 
-test("navigation adapts between desktop and mobile", async ({ page }) => {
+test("sidebar drag, keyboard and persistence", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
-  await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+  const sidebar = page.locator(".desktop-sidebar");
+  const handle = page.getByRole("separator", { name: "Resize sidebar" });
+  async function dragTo(width: number) {
+    const collapsed = await sidebar.getAttribute("data-collapsed") === "true";
+    const current = collapsed ? 48 : Number(await handle.getAttribute("aria-valuenow"));
+    await expect(sidebar).toHaveCSS("width", `${current}px`);
+    const box = await handle.boundingBox();
+    const side = await sidebar.boundingBox();
+    if (!box || !side) throw new Error("Sidebar missing");
+    await page.mouse.move(box.x + box.width / 2, box.y + 100);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + width - current, box.y + 100, { steps: 10 });
+    await page.mouse.up();
+  }
+  await expect(handle).toHaveAttribute("aria-valuenow", "256");
+  await dragTo(320);
+  await expect(handle).toHaveAttribute("aria-valuenow", "320");
+  await handle.focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(handle).toHaveAttribute("aria-valuenow", "304");
+  await page.keyboard.press("ArrowRight");
+  await expect(handle).toHaveAttribute("aria-valuenow", "320");
+  await page.reload();
+  await expect(handle).toHaveAttribute("aria-valuenow", "320");
+  await dragTo(120);
+  await expect(sidebar).toHaveAttribute("data-collapsed", "true");
+  await page.reload();
+  await expect(sidebar).toHaveAttribute("data-collapsed", "true");
+  await dragTo(240);
+  await expect(sidebar).toHaveAttribute("data-collapsed", "false");
+  await expect(handle).toHaveAttribute("aria-valuenow", "240");
+  await handle.focus();
+  await page.keyboard.press("Home");
+  await expect(sidebar).toHaveAttribute("data-collapsed", "true");
+  await page.keyboard.press("Enter");
+  await expect(sidebar).toHaveAttribute("data-collapsed", "false");
+  await dragTo(500);
+  await expect(handle).toHaveAttribute("aria-valuenow", "360");
+  await dragTo(170);
+  await expect(handle).toHaveAttribute("aria-valuenow", "200");
   await page.setViewportSize({ width: 375, height: 812 });
-  await expect(page.getByRole("button", { name: "Open menu" })).toBeVisible();
+  await expect(handle).not.toBeVisible();
   await page.getByRole("button", { name: "Open menu" }).click();
   await expect(page.getByRole("dialog", { name: "Navigation" })).toBeVisible();
 });

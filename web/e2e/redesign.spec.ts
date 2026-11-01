@@ -8,7 +8,7 @@ async function axe(page: import("@playwright/test").Page) {
       .violations,
   ).toEqual([]);
 }
-test("auditor overview, profile settings and desktop screenshot", async ({
+test("auditor overview, sidebar rail and desktop screenshot", async ({
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -28,10 +28,19 @@ test("auditor overview, profile settings and desktop screenshot", async ({
     path: testInfo.outputPath("auditor-overview.png"),
     style: "nextjs-portal { display: none; }",
   });
-  await page.locator('summary[aria-label^="Profile and settings"]').click();
-  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Collapse sidebar" }).click();
+  await expect(
+    page.getByRole("button", { name: "Expand sidebar" }),
+  ).toHaveAttribute("aria-expanded", "false");
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "Settings" })
+    .click();
   await expect(page).toHaveURL(/\/auditor\/settings/, { timeout: 30000 });
-  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Settings", exact: true }),
+  ).toBeVisible({ timeout: 30000 });
+  await page.getByRole("button", { name: "Expand sidebar" }).click();
   await page.getByLabel("Display name").fill("Synthetic Reviewer");
   await page.getByLabel("Weekly engagement digest").uncheck();
   await page.getByRole("button", { name: "Save preview preferences" }).click();
@@ -116,7 +125,7 @@ test("client home uses sidebar navigation, messages and desktop screenshot; audi
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await expect(page.getByRole("region", { name: "Quick actions" })).toHaveCount(0);
-  await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Upload", exact: true })).toBeVisible();
+  await expect(page.locator("aside.desktop-sidebar").getByRole("link", { name: "Upload", exact: true })).toBeVisible();
   await axe(page);
   await page.screenshot({ path: testInfo.outputPath("client-home.png") });
   await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Messages", exact: true }).click();
@@ -131,16 +140,35 @@ test("client home uses sidebar navigation, messages and desktop screenshot; audi
   }
 });
 
-test("client top navigation links and mobile navigation remain available", async ({ page }) => {
+test("client sidebar lists every route and supports collapse, mobile navigation and sign out", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
-  const nav = page.getByRole("navigation", { name: "Main navigation" });
-  for (const name of ["Overview", "Upload", "Checklist", "Questionnaire", "Messages", "Progress"]) await expect(nav.getByRole("link", { name, exact: true })).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 844 });
+  const sidebar = page.locator(".desktop-sidebar");
+  const links = sidebar.getByRole("navigation", { name: "Main navigation" }).getByRole("link");
+  await expect(links).toHaveText(["Overview", "Upload", "Checklist", "Questionnaire", "Messages", "Progress"]);
+  const routes = ["/", "/upload", "/checklist", "/questionnaire", "/messages", "/progress"];
+  for (let i = 0; i < routes.length; i++) {
+    await expect(links.nth(i)).toHaveAttribute("href", routes[i]);
+    await links.nth(i).click();
+    await expect(links.nth(i)).toHaveAttribute("aria-current", "page");
+  }
+  await expect(sidebar.getByTitle("Example Securities LLC", { exact: true })).toBeVisible();
+  await expect(sidebar.getByText("Client workspace · Synthetic")).toHaveCount(0);
+  await sidebar.getByRole("button", { name: "Collapse sidebar" }).click();
+  const expand = sidebar.getByRole("button", { name: "Expand sidebar" });
+  await expect(expand).toBeVisible();
+  await expand.focus();
+  await page.keyboard.press("Enter");
+  await expect(sidebar.getByRole("button", { name: "Collapse sidebar" })).toHaveAttribute("aria-expanded", "true");
+  await page.setViewportSize({ width: 375, height: 812 });
   await page.getByRole("button", { name: "Open menu" }).click();
-  const drawer = page.getByRole("dialog", { name: "Navigation" });
-  await expect(drawer).toBeVisible();
-  await expect(drawer.getByRole("link", { name: "Upload", exact: true })).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("button", { name: "Open menu" })).toBeFocused();
+  const sheet = page.getByRole("dialog", { name: "Navigation" });
+  await expect(sheet.getByRole("navigation").getByRole("link")).toHaveText(["Overview", "Upload", "Checklist", "Questionnaire", "Messages", "Progress"]);
+  await sheet.getByRole("link", { name: "Messages", exact: true }).click();
+  await expect(page).toHaveURL(/\/messages$/);
+  await expect(sheet).not.toBeVisible();
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await sheet.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(page).toHaveURL(/\/sign-in$/);
+  await expect(page.getByRole("heading", { name: "Sign in to Kien", exact: true })).toBeVisible();
 });

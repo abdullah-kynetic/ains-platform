@@ -1,6 +1,9 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "./nav";
 import { CommandPalette } from "./command-palette";
@@ -20,17 +23,26 @@ export function Shell({
   auditor: boolean;
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const activeItem = items.find((item) => item.href === pathname) ?? [...items].reverse().find((item) => item.href !== "/" && pathname.startsWith(`${item.href}/`));
   const [searchHost, setSearchHost] = useState<HTMLDivElement | null>(null);
   return (
     <SearchHostContext.Provider value={setSearchHost}>
       <CommandPalette items={items} triggerHost={searchHost} />
-      <div className="workspace-shell flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col lg:flex-row">
         {sidebar}
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-20 hidden h-10 shrink-0 items-center justify-center border-b border-border bg-background/95 px-4 lg:flex">
+            <nav aria-label="Breadcrumb" className="flex min-w-0 items-center justify-center gap-2 text-sm">
+              <Link href={items[0]?.href ?? "/"} className="text-muted hover:text-foreground">{items[0]?.href === "/auditor" ? "Auditor workspace" : "Client portal"}</Link>
+              <ChevronRight aria-hidden className="size-3.5 shrink-0 text-subtle" />
+              <span aria-current="page" className="truncate">{activeItem?.label ?? "Overview"}</span>
+            </nav>
+          </header>
           <main
             id="main-content"
             tabIndex={-1}
-            className="workspace-canvas flex-1 bg-background"
+            className="flex-1 bg-background"
           >
             <div className="flex w-full flex-col px-4 pt-2 pb-4 md:px-6 md:pt-4">
               {children}

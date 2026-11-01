@@ -44,7 +44,7 @@ function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
       aria-label="Overview charts"
       className="mb-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]"
     >
-      <div className="glass-panel rounded-xl bg-card ring-1 ring-foreground/10 p-4">
+      <div className="rounded-xl bg-card ring-1 ring-foreground/10 p-4">
         <div className="flex justify-between">
           <div>
             <h2 className="text-base font-medium">Engagement distribution</h2>
@@ -110,7 +110,7 @@ function PortfolioCharts({ clients }: { clients: ClientSummary[] }) {
           </text>
         </svg>
       </div>
-      <div className="glass-panel rounded-xl bg-card ring-1 ring-foreground/10 p-4">
+      <div className="rounded-xl bg-card ring-1 ring-foreground/10 p-4">
         <h2 className="text-base font-medium">Request review coverage</h2>
         <p className="mt-1 text-xs text-muted">
           Recorded human reviews across assigned engagements
@@ -200,7 +200,7 @@ export function EngagementTable({ clients }: { clients: ClientSummary[] }) {
   return (
     <section
       aria-labelledby="engagement-table-title"
-      className="glass-panel rounded-xl bg-card ring-1 ring-foreground/10"
+      className="rounded-xl bg-card ring-1 ring-foreground/10"
     >
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-4">
         <div>
