@@ -4,6 +4,7 @@ import { Shell } from "@/components/shell/page";
 import { Sidebar, type NavItem } from "@/components/shell/nav";
 import { AuthGate, useSession } from "@/components/auth/session";
 import { useRouter } from "next/navigation";
+import { Onboarding } from "@/components/auth/onboarding";
 import { USE_MOCKS } from "@/lib/api";
 
 const clientItems: NavItem[] = [
@@ -45,6 +46,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   return (
     <AuthGate>
+      <Onboarding key={user?.id} />
       <Shell
         items={isAuditor ? auditorItems : clientItems}
         auditor={isAuditor}
