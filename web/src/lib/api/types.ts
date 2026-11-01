@@ -200,18 +200,16 @@ export type SearchHit = {
   href: string;
 };
 
-export type ClientPortalFinding = Pick<
-  Finding,
-  | "id"
-  | "title"
-  | "rule"
-  | "condition"
-  | "recommendation"
-  | "severity"
-  | "managementResponse"
-  | "respondedAt"
-  | "status"
->;
+/** What the client sees: only what the auditor chose to write. Never severity, condition, cause, effect or drafts. */
+export type ResponseRequest = {
+  id: string;
+  title: string;
+  requestText: string;
+  status: "open" | "responded";
+  response: string;
+  respondedAt: string | null;
+  releasedAt: string;
+};
 export type ClientPortalReport = {
   id: string;
   period: string;

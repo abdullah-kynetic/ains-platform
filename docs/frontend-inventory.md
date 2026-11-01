@@ -7,12 +7,11 @@ Contracts: [`web/src/lib/api/types.ts`](../web/src/lib/api/types.ts) (camelCase)
 ## Rules the UI already enforces (the server must too)
 
 - A finding cannot be approved or issued without every field and at least one document + page citation. Editing an approved finding returns it to draft.
-- Finding states: `draft → approved → issued → responded → closed`. Only `issued`, `responded` and `closed` findings ever reach the client portal.
+- Finding states: `draft → approved → issued → responded → closed`. A finding moves to `issued` only when an auditor releases a response request for it.
+- **Clients never see findings** (per `CLAUDE.md`). The client portal shows only "Responses requested": a title and request text the auditor wrote, plus the client's reply. No severity, condition, cause, effect, rule, citations or drafts are ever sent to the client.
 - Sign-off order: all blockers clear → second reviewer approves → partner signs (typed name + attestation) → complete. Code never signs on its own; the report fingerprint (SHA-256 of section text) is recorded at signing and flagged if the report changes afterwards.
 - Editing a workpaper's procedure or conclusion clears its review.
 - N/A checklist items sort last and count as resolved.
-
-**Conflict to decide:** `CLAUDE.md` says "never show audit findings in client UI". This build adds a client Findings page because it was asked for explicitly (management responses). It shows only formally issued findings, never drafts, causes, effects or citations. Confirm that is acceptable before wiring the backend, or hide the page behind a flag.
 
 ## Auditor routes
 
@@ -28,7 +27,7 @@ Contracts: [`web/src/lib/api/types.ts`](../web/src/lib/api/types.ts) (camelCase)
 | `…/checklist` | 34-item checklist, Pass / Partial / Fail / Does not apply | `engagement/checklist-workpapers.tsx` |
 | `…/workpapers` | Procedure, linked evidence, conclusion, preparer, reviewer | same file, `WorkpaperDialog` |
 | `…/samples` | Population, sample size, items, results, exceptions | `engagement/samples.tsx` |
-| `…/findings` | Structured findings, management response, status | `engagement/findings.tsx` |
+| `…/findings` | Structured findings, "Request response" release, management response, status | `engagement/findings.tsx` |
 | `…/report` | Report builder, preview, Word/PDF export, fingerprint | `engagement/report-signoff.tsx` `ReportTab` |
 | `…/independence` | Independence / conflict record | `IndependenceTab` |
 | `…/sign-off` | Second review, partner sign-off, mark complete | `SignoffTab` |
@@ -42,6 +41,8 @@ Contracts: [`web/src/lib/api/types.ts`](../web/src/lib/api/types.ts) (camelCase)
 | `/auditor/settings` | My account, MFA recovery (existing) | existing |
 | Cmd/Ctrl-K | Global search (clients, engagements, findings, requests, documents) | `shell/command-palette.tsx` |
 
+Client sidebar Results group: Responses requested, Report, Invoices.
+
 Sidebar groups: **Workspace** (Today, Clients, Notifications), **Engagements** (Engagements, Audit pipeline, Reports, Invoices), **Firm** (Firm settings, Audit Log, My account).
 
 ## Client routes
@@ -51,7 +52,7 @@ Sidebar groups: **Workspace** (Today, Clients, Notifications), **Engagements** (
 | first sign-in | Walkthrough, once ever (server-saved `onboarding_state`) | `auth/onboarding.tsx` (existing, copy updated) |
 | `/` , `/upload`, `/checklist`, `/questionnaire` | Overview, document requests with upload, checklist with document feedback, questionnaire | existing |
 | `/messages`, `/progress` | Feedback on documents, progress | existing |
-| `/findings` | Issued findings needing a management response | `portal/results.tsx` `PortalFindings` |
+| `/responses` | Responses requested: auditor-released title + request text, with a reply box | `portal/results.tsx` `PortalResponses` |
 | `/report` | Signed reports (Word / PDF) with fingerprint | `PortalReport` |
 | `/invoices` | Invoices | `PortalInvoices` |
 
@@ -79,7 +80,8 @@ Sign-in, invitation, reset and MFA screens are unchanged.
 | `listTemplates`, `saveTemplate`, `deleteTemplate` | CRUD `/auditor/firm/request-templates` | `RequestTemplate` (kind, requestIds[]) |
 | `listNotifications`, `markRead`, `markAllRead` (`notifications.ts`) | `GET /auditor/notifications`, `POST …/{id}/read`, `…/read-all` | `Notification` |
 | `searchAll` (`search.ts`) | `GET /auditor/search?q=` | `SearchHit[]`, scoped to assigned engagements |
-| `listPortalFindings`, `respondToFinding` (`portal.ts`) | `GET /client/findings`, `POST /client/findings/{id}/response` | `ClientPortalFinding`; only `issued` can be answered |
+| `releaseResponseRequest` (`portal.ts`, auditor action) | `POST /auditor/findings/{id}/response-request {title, requestText}` | Approved findings only; moves the finding to `issued` and creates a `ResponseRequest` |
+| `listResponseRequests`, `respondToRequest` | `GET /client/response-requests`, `POST /client/response-requests/{id}/response {text}` | `ResponseRequest` = `{id, title, requestText, status, response, respondedAt, releasedAt}` only; the server must never join finding fields into this payload. Reply copies onto the finding's `managementResponse` |
 | `listPortalReports` | `GET /client/reports` | `ClientPortalReport`; `available` only when signed |
 | `listPortalInvoices` | `GET /client/invoices` | `ClientPortalInvoice` |
 

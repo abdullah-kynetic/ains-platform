@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, FileText, FileWarning, Printer, Receipt } from "lucide-react";
+import { Download, FileText, MessageSquareReply, Printer, Receipt } from "lucide-react";
 import { AuthGate } from "@/components/auth/session";
 import { PageHeader } from "@/components/shell/page";
 import { Badge } from "@/components/ui/badge";
@@ -11,42 +11,38 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/label";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { downloadWord, listPortalFindings, listPortalInvoices, listPortalReports, respondToFinding, type ClientPortalFinding } from "@/lib/api/index";
-import { Loading, MockNotice, SeverityBadge, fmtDate, money, useAsync } from "@/components/auditor/kit";
+import { downloadWord, listResponseRequests, listPortalInvoices, listPortalReports, respondToRequest, type ResponseRequest } from "@/lib/api/index";
+import { Loading, MockNotice, fmtDate, money, useAsync } from "@/components/auditor/kit";
 
-function ResponseForm({ finding, onDone }: { finding: ClientPortalFinding; onDone: () => void }) {
+function ResponseForm({ request, onDone }: { request: ResponseRequest; onDone: () => void }) {
   const [text, setText] = useState("");
   const [problem, setProblem] = useState("");
   const [busy, setBusy] = useState(false);
   return (
-    <form className="grid gap-3 border-t border-border pt-4" onSubmit={async (e) => { e.preventDefault(); setBusy(true); setProblem(""); try { await respondToFinding(finding.id, text); onDone(); } catch (err) { setProblem((err as Error).message); } finally { setBusy(false); } }}>
-      <Field label="Management response" hint="Say whether you agree, and what you will do and by when."><Textarea value={text} onChange={(e) => setText(e.target.value)} /></Field>
+    <form className="grid gap-3 border-t border-border pt-4" onSubmit={async (e) => { e.preventDefault(); setBusy(true); setProblem(""); try { await respondToRequest(request.id, text); onDone(); } catch (err) { setProblem((err as Error).message); } finally { setBusy(false); } }}>
+      <Field label="Your response" hint="Say what you will do and by when."><Textarea value={text} onChange={(e) => setText(e.target.value)} /></Field>
       {problem && <p role="alert" className="status-note" data-tone="warning">{problem}</p>}
       <div><Button type="submit" disabled={busy || !text.trim()}>Submit response</Button></div>
     </form>
   );
 }
 
-export function PortalFindings() {
-  const { data, error, reload } = useAsync(listPortalFindings, []);
+export function PortalResponses() {
+  const { data, error, reload } = useAsync(listResponseRequests, []);
   return (
     <AuthGate role="client">
-      <PageHeader title="Findings" description="Your auditor shares a finding here once it is formally issued. Please respond to each one." />
+      <PageHeader title="Responses requested" description="Items your auditor has asked you to respond to. Reply to each one." />
       <MockNotice />
-      {!data ? <Loading error={error} retry={reload} label="Loading findings…" /> : data.length === 0 ? (
-        <EmptyState icon={FileWarning} title="Nothing needs a response" description="When your auditor issues a finding, it will appear here with a place to respond." />
+      {!data ? <Loading error={error} retry={reload} label="Loading requests…" /> : data.length === 0 ? (
+        <EmptyState icon={MessageSquareReply} title="Nothing needs a response" description="When your auditor asks for a response, it will appear here." />
       ) : (
         <div className="grid gap-3">
-          {data.map((f) => (
-            <Card key={f.id}>
-              <CardHeader className="flex-row flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0"><CardTitle>{f.title}</CardTitle><p className="mt-1 text-xs text-muted">{f.rule}</p></div>
-                <div className="flex gap-2"><SeverityBadge value={f.severity} />{f.status === "issued" ? <Badge variant="deadline">Response needed</Badge> : f.status === "closed" ? <Badge variant="success">Closed</Badge> : <Badge variant="brand">Response sent</Badge>}</div>
-              </CardHeader>
+          {data.map((r) => (
+            <Card key={r.id}>
+              <CardHeader className="flex-row flex-wrap items-start justify-between gap-2"><CardTitle>{r.title}</CardTitle>{r.status === "open" ? <Badge variant="deadline">Response needed</Badge> : <Badge variant="brand">Response sent</Badge>}</CardHeader>
               <CardContent className="grid gap-3 text-sm">
-                <div><p className="text-muted">What we found</p><p>{f.condition}</p></div>
-                <div><p className="text-muted">Recommendation</p><p>{f.recommendation}</p></div>
-                {f.managementResponse ? <div className="rounded-lg bg-elevated p-3"><p className="text-xs font-medium text-muted">Your response · {fmtDate(f.respondedAt)}</p><p className="mt-1">{f.managementResponse}</p></div> : <ResponseForm finding={f} onDone={reload} />}
+                <p>{r.requestText}</p>
+                {r.status === "responded" ? <div className="rounded-lg bg-elevated p-3"><p className="text-xs font-medium text-muted">Your response · {fmtDate(r.respondedAt)}</p><p className="mt-1">{r.response}</p></div> : <ResponseForm request={r} onDone={reload} />}
               </CardContent>
             </Card>
           ))}

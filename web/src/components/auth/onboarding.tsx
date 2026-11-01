@@ -31,7 +31,7 @@ const flows = {
     },
     {
       title: "Keep track",
-      text: "Check your checklist for document feedback and your progress for resolved requests. Findings your auditor formally issues appear under Findings, where you add a management response; signed reports and invoices are listed under Report and Invoices.",
+      text: "Check your checklist for document feedback and your progress for resolved requests. When your auditor asks for a management response it appears under Responses requested; signed reports and invoices are listed under Report and Invoices.",
     },
   ],
 };

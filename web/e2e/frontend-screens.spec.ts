@@ -73,11 +73,13 @@ test.describe("auditor workspace (synthetic)", () => {
 });
 
 test.describe("client portal results (synthetic)", () => {
-  test("client answers an issued finding and never sees drafts", async ({ page }) => {
+  test("client sees only released requests, never findings", async ({ page }) => {
     await asRole(page, "client");
-    await page.goto("/findings");
-    await expect(page.getByText("Training records missing for two new hires")).toHaveCount(0);
-    await page.getByLabel("Management response").fill("We agree and will fix this by year end.");
+    await expect(async () => { const r = await page.goto("/findings"); expect(r?.status()).toBe(404); }).toPass();
+    await page.goto("/responses");
+    await expect(page.getByRole("heading", { name: "Responses requested" })).toBeVisible();
+    for (const leaked of ["Training records missing", "Cause", "Condition", "Severity", "FINRA Rule"]) await expect(page.getByText(leaked)).toHaveCount(0);
+    await page.getByLabel("Your response").fill("We agree and will fix this by year end.");
     await page.getByRole("button", { name: "Submit response" }).click();
     await expect(page.getByText("We agree and will fix this by year end.")).toBeVisible();
     await page.goto("/report");
