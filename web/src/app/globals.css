@@ -500,3 +500,20 @@ input[type="file"] {
   .invoice-print .text-muted, .invoice-print .text-subtle { color: #444; }
   .invoice-print tr { break-inside: avoid; }
 }
+
+
+.report-rich p + p { margin-top: 0.75rem; }
+.report-rich ul { list-style: disc; padding-left: 1.5rem; }
+.report-rich ol { list-style: decimal; padding-left: 1.5rem; }
+.report-rich h2, .report-rich h3 { font-weight: 600; margin-block: 0.75rem; }
+@media print {
+  body:has(.report-print) { background: white; color: #1a1a1a; }
+  body:has(.report-print) aside, body:has(.report-print) nav,
+  body:has(.report-print) header, body:has(.report-print) footer,
+  body:has(.report-print) .report-controls, body:has(.report-print) dialog,
+  body:has(.report-print) nextjs-portal { display: none !important; }
+  body:has(.report-print) main > div { max-width: none; padding: 0; }
+  .report-print { color: #1a1a1a; background: white; border: 0; box-shadow: none; padding: 0; }
+  .report-print .text-muted { color: #444; }
+  .report-request { break-inside: avoid; }
+}

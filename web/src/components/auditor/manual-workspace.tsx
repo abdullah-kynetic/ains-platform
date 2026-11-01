@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createReport } from "@/lib/report-api";
 import { useCallback, useEffect, useState } from "react";
 import { AuthGate } from "@/components/auth/session";
 import { EngagementDrawer } from "@/components/auditor/engagement-drawer";
@@ -120,6 +122,7 @@ function Dashboard() {
 }
 
 function EngagementWorkspace({ id }: { id: string }) {
+  const router = useRouter();
   const [data, setData] = useState<Workspace | null>(null);
   const [drafts, setDrafts] = useState<Record<string, Decision>>({});
   const [error, setError] = useState("");
@@ -169,9 +172,7 @@ function EngagementWorkspace({ id }: { id: string }) {
         title={data.firmName}
         description="Internal auditor workspace. Notes and evidence assessments are never shown to clients."
         actions={
-          <Link className="underline" href="/auditor">
-            All client audits
-          </Link>
+          <><Button disabled={busy} onClick={()=>void act(async()=>{const report=await createReport(id);router.push(`/auditor/reports/${report.id}`);})}>Draft report</Button><Link className="underline" href="/auditor">All client audits</Link></>
         }
       />
       <Card className="mb-5">

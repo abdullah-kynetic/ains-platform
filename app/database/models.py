@@ -511,3 +511,27 @@ class InvoiceEvent(Base):
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
     details: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict)
+
+
+class EngagementReport(Base):
+    """Versioned human-authored report; finalization freezes the content snapshot."""
+    __tablename__ = "engagement_reports"
+    __table_args__ = (
+        UniqueConstraint("engagement_id", name="uq_report_engagement"),
+        CheckConstraint("status IN ('draft', 'final')", name="ck_report_status"),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    status: Mapped[str] = mapped_column(String(12), default="draft")
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    content: Mapped[dict[str, Any]] = mapped_column(JSON)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    finalized_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    finalized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    content_sha256: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
