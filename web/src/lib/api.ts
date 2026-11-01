@@ -1,3 +1,4 @@
+import { currentAudience } from "./audience";
 import type { Engagement } from "./checklist";
 import {
   cloneMockEngagement,
@@ -192,7 +193,9 @@ export async function getSession(): Promise<SessionData> {
   if (!AUTH_REMOVED && !clientMocksEnabled()) return apiRequest<SessionData>("/auth/session");
   let stored: string | null = null;
   try { stored = localStorage.getItem("ains-synthetic-role"); } catch { /* storage blocked */ }
-  const role = stored === "client" ? "client" : "auditor";
+  // The host narrows the audience; on demo hosts the sidebar switcher decides.
+  const audience = currentAudience();
+  const role = audience === "client" ? "client" : audience === "auditor" ? "auditor" : stored === "client" ? "client" : "auditor";
   let onboarding: string | null = null;
   try { onboarding = localStorage.getItem(`kien-synthetic-onboarding-${role}`); } catch { /* storage blocked */ }
   return {

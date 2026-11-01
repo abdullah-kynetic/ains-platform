@@ -4,6 +4,6 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src/lib/tenant.test.ts"],
+  "include": ["src/lib/tenant.test.ts", "src/lib/audience.test.ts"],
   "exclude": ["node_modules"]
 }
