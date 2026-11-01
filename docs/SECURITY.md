@@ -1,5 +1,7 @@
 # Security
 
+> **Demo-phase status (frontend):** web sign-in and auth are removed so the product can be built and verified end to end on synthetic data. Every web visitor is a synthetic user; the role comes from the sidebar workspace switcher on demo hosts and from the hostname on real hosts (`web/src/lib/audience.ts`). **The backend still enforces authentication, MFA, firm isolation and assignment; none of that changed.** Restore the web side before any real data by turning off `AUTH_REMOVED` in `web/src/lib/api.ts` (search `TODO(auth)`). Screens and mocked calls are listed in [frontend-inventory.md](frontend-inventory.md).
+
 ## Assets and trust boundaries
 
 - **Protected data:** Client-uploaded AML evidence, identity/email, password hashes, session state, MFA secrets/recovery-code hashes, firm and engagement metadata, questionnaire responses, auditor notes/findings, draft reports, and audit logs.

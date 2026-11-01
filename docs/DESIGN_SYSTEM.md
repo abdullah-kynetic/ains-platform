@@ -10,47 +10,17 @@ and animations while retaining visible final states; the original normal-motion
 theme control is unchanged. Sidebar pointer ownership and blur cleanup keep
 interrupted drags recoverable without changing widths, thresholds or persistence.
 
-## Layout preview (`feat/shadcn-layout`)
+## Current visual system
 
-This owner-requested preview adapts the MIT Kiranism dashboard starter's layout
-geometry into Kien's existing components (see `THIRD_PARTY_NOTICES.md`). It keeps
-the Ink/Ochre palette and system font stack, workflow copy, role gates, routes,
-N/A interactions, report approval, and synthetic labels. It adds no backend or
-model processing. The historical main/design-branch comparison below describes
-the baseline, not the current preview geometry.
+Kien uses a clean neutral black-and-white SaaS style (calm, serious, premium for compliance buyers). [DESIGN.md](../DESIGN.md) holds the tokens, the Ink/Ochre/Status rules and the "Why" principles; this file records components, layout and accessibility. It replaces the earlier cream, ochre-tint, glass and gradient looks.
 
-The preview uses a full-width inset with 16px phone / 24px desktop horizontal
-padding, 8px / 16px top padding, and 16px section spacing. A frosted sticky header
-is 56px on desktop and 64px on phones; it contains navigation controls and
-breadcrumbs. Workspace search stays beside the page action, including Open
-checklist. Sidebar default width remains 256px with the existing 200–360px drag
-range and saved state; the icon rail is now 48px. Phone navigation retains its
-focus-managed 288px sheet. Group labels and menu links are 32px high.
-
-Cards use a 12px radius, a subtle foreground ring, 16px spacing, 16px medium
-weight titles and tinted divided footers. Stat cards use the same 16px grid,
-24px values (30px at card widths of at least 250px), and a restrained primary
-tint in light mode. Shared controls are 32px high (small buttons 28px, large
-36px), badges are 20px pills, tabs are 32px with 3px inset, and table frames
-use an 8px radius with 40px headers and 8px cell padding. The Light/Dark/System
-switch remains above the identity block with the original sliding indicator,
-circular reveal, OS synchronization, persistence and reduced-motion behavior.
-Focus remains Ink in light mode and pale Ochre in dark mode. Semantic
-`--background`, `--card`, `--primary`, `--sidebar-*`, `--ring`, `--border`, and
-`--input` aliases resolve from Kien's existing theme colors; legacy `text-muted`
-continues to mean muted text. Print layouts keep their white paper surface.
-
-## Design direction
-
-- **Brand attributes:** Calm, precise, trustworthy.
-- **Supported devices:** Responsive web on desktop and phone; tablet layouts should remain usable.
-- **References:** Current source of truth is `web/src/app/globals.css` and shared components. `design.kiensolutions.com` on `origin/feat/apple-polish` is an unapproved design exploration; it is not the production reference.
-
-### Main vs. design branch
-
-Verified against `origin/main` and `origin/feat/apple-polish` at documentation time. Main already contains Ink/Ochre tokens, cream light surfaces, dark mode, reduced-motion overrides, focus-visible outlines, circular theme-reveal, a Light/Dark/System control, draggable/resizable and collapsible desktop sidebar with saved width/state, mobile navigation sheet, and active navigation styling. The theme choice persists in `ains-theme`; sidebar width/collapse in `kien-sidebar`. The branch adds locally served Inter variable font, an expanded type/token system and additional surface/card motion/polish. Those branch-only visual refinements are not approved for production. The branch must not be treated as an approval to replace the current look.
-
-Owner-required design rules to preserve: sidebar theme switch sits directly above the user/firm/logout block; collapsed sidebar is icon-only; sidebar becomes a pop-out sheet on phones; keep a firm card for clients and firm switching/add-workspace auditor-only. Search belongs inline beside “Open checklist” with search outside the navigation header. A keyboard-only Ochre focus ring is an intended design rule; current main has a generic focus-visible outline tied to `--color-focus` (Ink in light mode), so the explicit keyboard-only/Ochre behavior is unresolved against live code.
+- **Brand attributes:** calm, precise, trustworthy. Responsive web on desktop and phone; tablet stays usable. Source of truth is `web/src/app/globals.css` and the shared components.
+- **Surfaces:** white cards on a `#F7F7F8` canvas, thin `#E5E7EB` borders, 12px card radius, 32px controls, no gradients or glows. Dark mode uses a `#0A0A0A` canvas and `#111113` surfaces.
+- **Ink `#33405C`** is used only for the logo mark, primary buttons, active navigation and focus rings. **Ochre `#B8924A`** is used only for deadline and needs-attention badges. Red, amber and green appear only as small soft-tinted status pills.
+- **Sidebar:** grouped sections with small gray labels and count badges. Auditor: Workspace (Today, Clients, Notifications), Engagements (Engagements, Audit pipeline, Reports, Invoices), Firm (Firm settings, Audit Log, My account). Client: Engagement, Updates, Results (Responses requested, Report, Invoices). The theme switch stays above the account block, the collapsed rail is icon-only, and phones get a sheet. It is resizable and remembers its width.
+- **Pages:** the auditor home is Today. Engagement workspaces use route tabs (`LinkTabs`). No nested cards: use dividers inside a card.
+- **Components:** shadcn-style primitives in `web/src/components/ui` and Lucide icons only. `Field` associates its label with its control; scrollable tables are keyboard-focusable.
+- **Statuses on new screens:** conclusions (Pass / Partial / Fail / Does not apply), finding status and severity, and sample results use the shared `Badge` variants.
 
 ## UI tokens
 
@@ -60,23 +30,22 @@ Values below are sourced from `web/src/app/globals.css` on main. Mix-based value
 | --- | --- | --- |
 | `color.ink` | `#33405C` | Brand Ink Blue and light foreground |
 | `color.ochre` | `#B8924A` | Brand Ochre accent |
-| `color.background` (light) | `color-mix(in srgb, #B8924A 10%, white)` | Warm cream main canvas, not pure white |
-| `color.surface` (light) | `color-mix(in srgb, #B8924A 4%, white)` | Cards and controls |
-| `color.sidebar` (light) | `color-mix(in srgb, #33405C 7%, white)` | Sidebar |
+| `color.background` (light) | `#F7F7F8` | Neutral canvas |
+| `color.surface` (light) | `#FFFFFF` | Cards and controls |
+| `color.sidebar` (light) | `#F7F7F8` | Sidebar |
 | `color.ink-deep` | `#242D40` | Dark background base |
-| `color.background` (dark) | `#242D40` | Dark canvas |
-| `color.foreground` (light) | `#33405C` | Primary text |
-| `color.error` | `color-mix(in srgb, #B8924A 58%, black)` | Error/status color; pair with text/label |
+| `color.background` (dark) | `#0A0A0A` | Dark canvas |
+| `color.foreground` (light) | `#0A0A0A` | Primary text (Ink is not the text color) |
+| `color.danger` | `#DC2626` (text `#B91C1C`) | Error/status color; always paired with text |
 | `font.sans` | `-apple-system`, `BlinkMacSystemFont`, `Inter`, `Segoe UI`, `Roboto`, `Helvetica Neue`, `Arial`, sans-serif | Main branch system stack; Inter is a fallback, not locally bundled on main |
 | `font.mono` | `ui-monospace`, `SFMono-Regular`, `SF Mono`, `Menlo`, `Consolas`, monospace | Code and identifiers |
 | `font.scale` | 12/14/16/18/20/24/28px with line heights 16/20/24/28/28/32/36px | Tailwind xs through 3xl tokens in main |
 | `space.unit` | 4px | 8px base grid; actual scale 4, 8, 12, 16, 24, 32, 40, 48, 64px |
 | `radius.control` | 8px | Inputs and buttons |
-| `radius.card` | 12px in the layout preview | Cards |
+| `radius.card` | 12px | Cards |
 | `shadow.card` | `0 1px 2px var(--color-shadow)` | Cards |
-| `control.height` | 32px in the layout preview | Buttons, inputs, selects, summary, file inputs |
+| `control.height` | 32px | Buttons, inputs, selects, summary, file inputs |
 
-The requested Apple-style scale (28/22/17/15/13/11px) is not the token scale currently in main. `origin/feat/apple-polish` contains matching values: `--text-3xl` 28px, `--text-xl` and `--text-2xl` 22px, `--text-base` and `--text-lg` 17px, `--text-sm` 15px, `--text-xs` 13px, and `--text-label` 11px. Main instead has 28/24/20/18/16/14/12px for 3xl/2xl/xl/lg/base/sm/xs. The branch also ships an Inter variable font file and additional surface/card polish. Those changes are unapproved and not live on main; retain as documented design direction pending design-owner approval.
 
 ## Layout rules
 
@@ -109,13 +78,13 @@ Shared components live in `web/src/components/ui/`, with shell, checklist, audit
 
 - **Client home/checklist/upload/questionnaire/progress:** populated, empty checklist/activity, loading skeleton/status, recoverable API error with retry, per-file upload validation/error/receipt. Journey F-01–F-04.
 - **Auditor portfolio/engagement/tasks/audit log:** populated and no assigned work, loading, API failure with retry, empty search/filter result, readiness blockers. Journey F-05–F-07.
-- **Sign-in/invitation/reset/MFA:** credentials, conditional MFA step, invalid/expired token, submitting, success, and recovery guidance. Journey F-08–F-09.
+- **Sign-in/invitation/reset/MFA:** removed from the web app for the demo phase (`/sign-in` redirects to `/`). Restore their loading, error and recovery states with auth. Journey F-08–F-09.
 - **Unknown firm/wrong portal:** explicit explanation and safe navigation/sign-out path; do not leak firm records. Journey F-01.
 - **Synthetic demo:** clearly label demo interactions and synthetic data; never represent them as real authentication, storage, email, findings, or sign-off.
 
 ## Approval
 
-Design owner: Unresolved. Source of truth: current main CSS/components. `design.kiensolutions.com` on `origin/feat/apple-polish` remains an unapproved design branch reference.
+Design owner: the product owner approved the neutral style on `design/preview-cleanup`. Source of truth: `web/src/app/globals.css`, the shared components and DESIGN.md.
 
 ## Invoice surfaces
 

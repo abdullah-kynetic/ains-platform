@@ -1,5 +1,7 @@
 # Architecture
 
+> **Demo-phase status (frontend):** web sign-in and auth are removed so the product can be built and verified end to end on synthetic data. Every web visitor is a synthetic user; the role comes from the sidebar workspace switcher on demo hosts and from the hostname on real hosts (`web/src/lib/audience.ts`). **The backend still enforces authentication, MFA, firm isolation and assignment; none of that changed.** Restore the web side before any real data by turning off `AUTH_REMOVED` in `web/src/lib/api.ts` (search `TODO(auth)`). Screens and mocked calls are listed in [frontend-inventory.md](frontend-inventory.md).
+
 ## System purpose
 
 Kien supports evidence collection and independent human AML testing for broker-dealers under FINRA Rule 3310. The browser provides client and auditor workflows; FastAPI authenticates requests, applies role/firm/assignment rules, validates upload metadata, and coordinates PostgreSQL and object storage. Database-backed workflow checks verify storage receipts, not document contents or audit conclusions. No model inference is in `app/`.
@@ -128,6 +130,10 @@ signature. Clients receive 403 and have no report navigation; unassigned auditor
 Print view uses the invoice-style browser print/save PDF flow. The idempotent
 `python -m app.report_seed` seeds one existing explicitly synthetic demo engagement.
 
+
+## Web portals by host
+
+One web app on one Worker serves two audiences. Clients use `<firm>.kiensolutions.com`; auditors use one fixed host (`NEXT_PUBLIC_AUDITOR_HOST`); demo hosts serve both. `audienceForHost()` in `web/src/lib/audience.ts` narrows the UI only. The API must still enforce role and firm. Screens without a backend route call a typed mock layer (`web/src/lib/api/*`, `web/src/lib/mock/*`), documented in `frontend-inventory.md`.
 
 ## First sign-in walkthrough
 

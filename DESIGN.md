@@ -277,3 +277,9 @@ wrap without widening the page. Do not truncate away the only route to task data
 - **Don't** change copy, business rules, authorization or backend processing for polish.
 - **Don't** treat a detector preference as authority over an explicit owner decision.
 - **Don't** use Ink or Ochre outside the roles above, or add gradients, glows or cream.
+
+### Engagement workspace, firm settings and client results
+
+Each engagement opens as a workspace with route tabs: Overview, Requests, Documents, Checklist, Workpapers, Samples, Findings, Report, Independence, Sign-off and Activity. Conclusions use the shared badge variants (Pass green, Partial amber, Fail red, Does not apply neutral and sorted last). Sign-off is a vertical list of four steps, each in a plain card; completed steps get a green check and a "Done" pill. Firm settings (team, branding, rubric, request templates) use top-level route tabs. Every screen that runs on synthetic data carries a one-line "Synthetic preview data" note with an info icon.
+
+The client portal never shows findings. Its Results group lists Responses requested (the auditor's own title and request text plus a reply box), Report (signed reports only) and Invoices.

@@ -4,6 +4,12 @@ Branch `design/preview-cleanup`. Everything below runs on synthetic data. Screen
 
 Contracts: [`web/src/lib/api/types.ts`](../web/src/lib/api/types.ts) (camelCase). Seed data: `web/src/lib/mock/seed.ts`. Persisted in `localStorage` (`kien-mock-*` keys).
 
+## Auth and hosts (demo phase)
+
+- Web auth is removed: every visitor is a synthetic user (`AUTH_REMOVED` in `web/src/lib/api.ts`; `TODO(auth)` marks what to restore). Backend auth is unchanged. Before real data, restore the web side: sign-in, MFA enrolment, invitation and reset pages, sign-out and the `/auth/*` calls.
+- `audienceForHost()` (`web/src/lib/audience.ts`) maps hosts to an audience: `<firm>.kiensolutions.com` is client, `NEXT_PUBLIC_AUDITOR_HOST` (default `auditor.kiensolutions.com`) is auditor, and preview/localhost/workers.dev/apex are both (role switcher). It narrows the UI only; once auth is back, a session whose role does not match the host must be refused.
+- An auditor at `/` is redirected to `/auditor` (Today).
+
 ## Rules the UI already enforces (the server must too)
 
 - A finding cannot be approved or issued without every field and at least one document + page citation. Editing an approved finding returns it to draft.
@@ -56,7 +62,7 @@ Sidebar groups: **Workspace** (Today, Clients, Notifications), **Engagements** (
 | `/report` | Signed reports (Word / PDF) with fingerprint | `PortalReport` |
 | `/invoices` | Invoices | `PortalInvoices` |
 
-Sign-in, invitation, reset and MFA screens are unchanged.
+Sign-in, invitation, reset and MFA screens are removed from the web app for the demo phase; `/sign-in` redirects to `/`.
 
 ## Mocked calls (`TODO(backend)`)
 
