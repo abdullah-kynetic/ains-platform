@@ -4,7 +4,7 @@ import { Shell } from "@/components/shell/page";
 import { Sidebar, type NavItem } from "@/components/shell/nav";
 import { AuthGate, useSession } from "@/components/auth/session";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { getEngagement } from "@/lib/api";
 import { countByStatus } from "@/lib/checklist";
 import { getAuditorTasks, getPipeline } from "@/lib/workflow-api";
@@ -72,8 +72,13 @@ function useNavCounts(isAuditor: boolean, enabled: boolean) {
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const { session, refresh } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const user = session?.user;
   const isAuditor = user?.role === "auditor";
+  // "/" is the client overview; auditors start on Today.
+  useEffect(() => {
+    if (isAuditor && pathname === "/") router.replace("/auditor");
+  }, [isAuditor, pathname, router]);
   const counts = useNavCounts(isAuditor, Boolean(user));
   const items = (isAuditor ? auditorItems : clientItems).map((item) =>
     !counts[item.href] ? item : { ...item, count: counts[item.href] },
