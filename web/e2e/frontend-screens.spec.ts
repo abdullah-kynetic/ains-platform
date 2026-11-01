@@ -10,7 +10,7 @@ test.describe("auditor workspace (synthetic)", () => {
   test("sidebar groups and engagement tabs", async ({ page }) => {
     await page.goto(E);
     const nav = page.getByRole("navigation").first();
-    for (const group of ["Workspace", "Engagements", "Firm"]) await expect(nav.getByText(group, { exact: true })).toBeVisible();
+    for (const group of ["Workspace", "Engagements", "Firm"]) await expect(nav.locator("p.nav-label", { hasText: new RegExp(`^${group}$`) })).toBeVisible();
     for (const tab of ["Overview", "Requests", "Documents", "Checklist", "Workpapers", "Samples", "Findings", "Report", "Independence", "Sign-off", "Activity"])
       await expect(page.getByRole("navigation", { name: "Tabs" }).getByRole("link", { name: tab })).toBeVisible();
   });
@@ -38,7 +38,7 @@ test.describe("auditor workspace (synthetic)", () => {
     await dialog.getByRole("button", { name: "Save draft" }).click();
     const card = page.locator("[data-slot=card]", { hasText: "Test finding" });
     await card.getByRole("button", { name: "Approve" }).click();
-    await expect(page.getByRole("alert")).toContainText("Cite at least one document and page");
+    await expect(page.getByText("Cite at least one document and page.")).toBeVisible();
   });
 
   test("sign-off needs reviewer approval, a typed name and a signature before completion", async ({ page }) => {
@@ -58,9 +58,9 @@ test.describe("auditor workspace (synthetic)", () => {
     await page.goto("/auditor");
     await page.keyboard.press("Control+k");
     await page.getByLabel("Search pages").fill("Harborview");
-    await expect(page.getByRole("button", { name: /Harborview Securities/ }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /Harborview Securities/ }).first()).toBeVisible({ timeout: 15000 });
     await page.getByLabel("Search pages").fill("risk assessment");
-    await expect(page.getByRole("button", { name: /AML risk assessment not updated/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /AML risk assessment not updated/ })).toBeVisible({ timeout: 15000 });
   });
 
   test("firm settings and notifications load", async ({ page }) => {

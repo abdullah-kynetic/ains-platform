@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 /** `bare` drops the frame when the table already sits inside a bordered card or section. */
 export function Table({ className, bare, ...props }: React.TableHTMLAttributes<HTMLTableElement> & { bare?: boolean }) {
   return (
-    <div data-slot="table-frame" className={cn("relative w-full overflow-x-auto", !bare && "rounded-xl border border-border bg-surface")}>
+    <div data-slot="table-frame" tabIndex={0} className={cn("relative w-full overflow-x-auto", !bare && "rounded-xl border border-border bg-surface")}>
       <table className={cn("w-full caption-bottom text-sm", className)} {...props} />
     </div>
   );

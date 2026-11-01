@@ -27,7 +27,7 @@ function FindingForm({ id, existing, docs, onClose, onSaved }: { id: string; exi
     <Dialog open onOpenChange={(o) => !o && onClose()} className="max-w-2xl" title={existing ? "Edit finding" : "New finding"} description="Condition, cause, effect and recommendation. Every finding cites a document and page.">
       <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); if (!f.title.trim()) return; setBusy(true); await saveFinding(id, f, existing?.id); setBusy(false); onSaved(); onClose(); }}>
         <Field label="Title"><Input value={f.title} onChange={(e) => set("title", e.target.value)} required /></Field>
-        <Field label="Rule cited"><Input list="rule-options" value={f.rule} onChange={(e) => set("rule", e.target.value)} placeholder="e.g. FINRA Rule 3310(c)" /><datalist id="rule-options">{RULES.map((r) => <option key={r} value={r} />)}</datalist></Field>
+        <Field label="Rule cited" htmlFor="finding-rule"><Input id="finding-rule" list="rule-options" value={f.rule} onChange={(e) => set("rule", e.target.value)} placeholder="e.g. FINRA Rule 3310(c)" /><datalist id="rule-options">{RULES.map((r) => <option key={r} value={r} />)}</datalist></Field>
         <Field label="Condition" hint="What we found."><Textarea value={f.condition} onChange={(e) => set("condition", e.target.value)} /></Field>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Cause"><Textarea value={f.cause} onChange={(e) => set("cause", e.target.value)} /></Field>
