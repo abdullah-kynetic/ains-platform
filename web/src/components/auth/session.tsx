@@ -99,7 +99,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       await signOut();
       setSession(null);
       setWrongPortal(false);
-      router.replace("/sign-in");
+      router.replace("/");
     } catch {
       setSignOutError(
         "Sign-out could not be completed from this portal. Open your firm's address and sign out there.",
@@ -156,7 +156,7 @@ export function AuthGate({
   useEffect(() => {
     if (loading) return;
     if (!session) {
-      router.replace(`/sign-in?next=${encodeURIComponent(pathname + window.location.search + window.location.hash)}`);
+      router.replace("/");
     } else if (role && session.user.role !== role) {
       router.replace(session.user.role === "auditor" ? "/auditor" : "/");
     }

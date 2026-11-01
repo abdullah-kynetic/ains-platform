@@ -26,7 +26,7 @@ test("portal makes no Sentry requests without a DSN", async ({ page }) => {
   page.on("request", (request) => {
     if (/sentry|\/envelope\//i.test(request.url())) requests.push(request.url());
   });
-  await page.goto("/sign-in");
+  await page.goto("/");
   await expect(page.locator("body")).toBeVisible();
   expect(requests).toEqual([]);
 });

@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   Check,
   ChevronsUpDown,
-  LogOut,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
@@ -346,7 +345,6 @@ function Panel({
   who,
   org,
   onNavigate,
-  onSignOut,
   onWorkspaceChange,
   desktop = false,
 }: {
@@ -356,7 +354,6 @@ function Panel({
   who: string;
   org?: string;
   onNavigate?: () => void;
-  onSignOut?: () => void;
   onWorkspaceChange?: (workspace: "auditor" | "client") => void;
 }) {
   const auditor = sub.toLowerCase().includes("auditor");
@@ -405,16 +402,6 @@ function Panel({
           />
           <span className="sr-only">Workspace access enforced</span>
         </span>
-        <button
-          type="button"
-          aria-label="Sign out"
-          title="Sign out"
-          onClick={onSignOut}
-          disabled={!onSignOut}
-          className="grid size-8 shrink-0 place-items-center rounded-md text-subtle hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
-        >
-          <LogOut aria-hidden="true" className="size-3.5" />
-        </button>
       </div>
     </div>
   );
@@ -425,7 +412,6 @@ export function Sidebar(props: {
   sub: string;
   who: string;
   org?: string;
-  onSignOut?: () => void;
   onWorkspaceChange?: (workspace: "auditor" | "client") => void;
 }) {
   const pathname = usePathname();
