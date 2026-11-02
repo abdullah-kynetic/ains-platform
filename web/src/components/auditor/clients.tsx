@@ -42,7 +42,7 @@ export function ClientsList() {
                   <TR key={c.id}>
                     <TD><Link href={`/auditor/clients/${c.id}`} className="font-medium underline-offset-4 hover:underline">{c.firmName}</Link><div className="text-xs text-muted">{c.crd}</div></TD>
                     <TD>{c.firmType}</TD>
-                    <TD>{c.contacts.find((x) => x.primary)?.name ?? "—"}</TD>
+                    <TD>{c.contacts.find((x) => x.primary)?.name ?? "None"}</TD>
                     <TD>{c.engagements.length}</TD>
                     <TD>{c.engagements[0]?.status === "active" ? <Badge variant="brand">In progress</Badge> : <Badge variant="success">Complete</Badge>}</TD>
                   </TR>

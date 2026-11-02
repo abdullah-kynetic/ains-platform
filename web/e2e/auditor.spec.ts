@@ -38,7 +38,7 @@ test("manual auditor decision stays internal while neutral replacement feedback 
   );
   await page.goto("/auditor");
   await page.getByRole("link", { name: "Open audit workspace" }).click();
-  await page.locator("summary").filter({ hasText: "AML-BD-001 —" }).click();
+  await page.locator("summary").filter({ hasText: "AML-BD-001:" }).click();
   await expect(page.getByText("synthetic.txt", { exact: true })).toBeVisible();
   await page
     .getByLabel("Evidence assessment AML-BD-001", { exact: true })

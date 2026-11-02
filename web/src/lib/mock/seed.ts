@@ -154,7 +154,7 @@ const finding = (n: number, f: Partial<Finding> & Pick<Finding, "title" | "rule"
 });
 export const seedFindings = (): Finding[] => [
   finding(1, {
-    title: "Transaction-monitoring alerts closed without documented rationale", rule: "FINRA Rule 3310(a); BSA — suspicious activity monitoring pillar",
+    title: "Transaction-monitoring alerts closed without documented rationale", rule: "FINRA Rule 3310(a); BSA: suspicious activity monitoring pillar",
     condition: "Two of 25 sampled alerts were closed without a documented rationale; one review exceeded the firm’s 30-day escalation limit.",
     cause: "The alert-closure template does not require a free-text rationale before closing.", effect: "Reviewers cannot evidence why activity was judged not suspicious, weakening the firm’s monitoring record.",
     recommendation: "Make the rationale field mandatory and add a monthly supervisory review of aged alerts.", severity: "high",
@@ -162,14 +162,14 @@ export const seedFindings = (): Finding[] => [
     status: "issued", managementResponse: "",
   }),
   finding(2, {
-    title: "AML risk assessment not updated for the review period", rule: "FINRA Rule 3310(a); FinCEN CDD rule — risk-based procedures",
+    title: "AML risk assessment not updated for the review period", rule: "FINRA Rule 3310(a); FinCEN CDD rule: risk-based procedures",
     condition: "The risk assessment provided covers 2024 and does not reflect the 2025 product launch.", cause: "Annual refresh is not on the compliance calendar.",
     effect: "Controls may not match the firm’s current risk profile.", recommendation: "Refresh the assessment annually and after material business changes; record approval.", severity: "moderate",
     citations: [{ document: "Risk-Assessment-2025.pdf", page: 3 }], status: "responded",
     managementResponse: "We agree. The assessment will be refreshed by 12/31 and added to the compliance calendar.", respondedAt: "2026-10-30T09:40:00.000Z",
   }),
   finding(3, {
-    title: "Training records missing for two new hires", rule: "FINRA Rule 3310(e) — ongoing training", condition: "Two employees hired in Q3 have no recorded AML training.",
+    title: "Training records missing for two new hires", rule: "FINRA Rule 3310(e): ongoing training", condition: "Two employees hired in Q3 have no recorded AML training.",
     cause: "Onboarding checklist omits AML training.", effect: "Staff may handle accounts without required training.", recommendation: "Add AML training to onboarding and track completion within 30 days.",
     severity: "low", citations: [{ document: "AML-Training-Roster-2025.xlsx", page: 4 }], status: "draft",
   }),

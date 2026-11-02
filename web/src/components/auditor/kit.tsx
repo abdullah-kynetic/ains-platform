@@ -58,6 +58,6 @@ const statusLabel: Record<FindingStatus, string> = { draft: "Draft", approved: "
 const statusVariant: Record<FindingStatus, "default" | "brand" | "deadline" | "success"> = { draft: "default", approved: "brand", issued: "deadline", responded: "brand", closed: "success" };
 export const FindingStatusBadge = ({ value }: { value: FindingStatus }) => <Badge variant={statusVariant[value]}>{statusLabel[value]}</Badge>;
 
-export const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "—");
-export const fmtDateTime = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC" }) + " UTC" : "—");
+export const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "Not set");
+export const fmtDateTime = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC" }) + " UTC" : "Not set");
 export const money = (cents: number) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });

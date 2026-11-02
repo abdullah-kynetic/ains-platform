@@ -47,7 +47,7 @@ export function EngagementsList() {
                     <TD>{e.period}</TD>
                     <TD><Badge variant={e.stage === "Complete" ? "success" : "brand"}>{e.stage}</Badge></TD>
                     <TD className="min-w-32"><span className="mb-1 block text-xs tabular-nums text-muted">{e.pipeline?.progress ?? 0}%</span><Progress value={e.pipeline?.progress ?? 0} /></TD>
-                    <TD>{e.due ? <Badge variant={e.stage === "Complete" ? "default" : "deadline"}>{fmtDate(e.due)}</Badge> : "—"}</TD>
+                    <TD>{e.due ? <Badge variant={e.stage === "Complete" ? "default" : "deadline"}>{fmtDate(e.due)}</Badge> : "None"}</TD>
                     <TD>{e.lead}</TD>
                   </TR>
                 ))}

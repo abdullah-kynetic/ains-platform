@@ -86,8 +86,8 @@ export function WorkpapersTab({ id }: { id: string }) {
               <TR key={t.requestId}>
                 <TD><span className="font-mono text-xs text-muted">{t.requestId}</span><div className="font-medium">{t.title}</div></TD>
                 <TD><ConclusionBadge value={p?.conclusion ?? t.conclusion} /></TD>
-                <TD>{p?.preparer || "—"}<div className="text-xs text-muted">{fmtDate(p?.preparedAt ?? null)}</div></TD>
-                <TD>{p?.reviewer || "—"}<div className="text-xs text-muted">{fmtDate(p?.reviewedAt ?? null)}</div></TD>
+                <TD>{p?.preparer || "None"}<div className="text-xs text-muted">{fmtDate(p?.preparedAt ?? null)}</div></TD>
+                <TD>{p?.reviewer || "None"}<div className="text-xs text-muted">{fmtDate(p?.reviewedAt ?? null)}</div></TD>
                 <TD>{state(p)}</TD>
                 <TD className="text-right"><Button size="sm" variant="outline" onClick={() => setOpenId(t.requestId)}>{p ? "Open" : "Start"}<span className="sr-only"> workpaper for {t.requestId}</span></Button></TD>
               </TR>

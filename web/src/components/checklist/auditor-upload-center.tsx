@@ -155,7 +155,7 @@ export default function AuditorUploadCenter() {
               <option value="">Choose a request</option>
               {filtered.map((item) => (
                 <option value={item.id} key={item.id}>
-                  {item.requestId} — {item.title}
+                  {item.requestId}: {item.title}
                 </option>
               ))}
             </Select>
@@ -233,7 +233,7 @@ export default function AuditorUploadCenter() {
                     >
                       {items.map((item) => (
                         <option key={item.id} value={item.id}>
-                          {item.requestId} — {item.title}
+                          {item.requestId}: {item.title}
                         </option>
                       ))}
                     </Select>
