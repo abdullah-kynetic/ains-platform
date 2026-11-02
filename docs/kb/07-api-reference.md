@@ -2,7 +2,7 @@
 
 Routes below are merged source. Deployed routes were not inspected. New mock screen contracts in [frontend inventory](../frontend-inventory.md) are not implemented merely because a similar legacy route exists.
 
-> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a115_user_onboarding`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
+> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a116_client_profiles`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
 
 Base URL: `NEXT_PUBLIC_API_URL` (production api.kiensolutions.com, owner-supplied). Auth by `ains_session` cookie. Errors are FastAPI `{"detail": ...}`.
 

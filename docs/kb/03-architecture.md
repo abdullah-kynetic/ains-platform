@@ -1,6 +1,6 @@
 # Architecture
 
-> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a115_user_onboarding`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
+> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a116_client_profiles`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
 
 ## Current production (owner-supplied runtime; code supports it)
 ```mermaid
@@ -51,7 +51,7 @@ Workers: live `kien-demo-live` (live.kiensolutions.com), preview `kien-signin-pr
 | `app/invoicing.py` | Invoice arithmetic/numbering/transitions — merged (#53) |
 | `app/*_seed.py` | Synthetic demo seeds (demo, invoice, report, monday and onboarding seeds merged) |
 | `app/egnyte_client/` | Optional Egnyte client, path guard `/Shared/AINS-Dev` |
-| `migrations/versions/` | Alembic chain; head `a115_user_onboarding`, including `a112`–`a115` |
+| `migrations/versions/` | Alembic chain; head `a116_client_profiles`, including the client-profile/contact tables |
 | `web/` | Next.js app; `wrangler.jsonc`, `open-next.config.ts` (`wrangler.preview.jsonc`/`wrangler.layout.jsonc` merged, #60) |
 | `web/e2e/` | Playwright tests (19 specs on `main`; 25 with the preview stack) |
 | `infra/aws/` | Terraform single-host AWS profile (not in use) |

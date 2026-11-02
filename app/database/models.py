@@ -519,6 +519,7 @@ class InvoiceEvent(Base):
 
 class EngagementReport(Base):
     """Versioned human-authored report; finalization freezes the content snapshot."""
+
     __tablename__ = "engagement_reports"
     __table_args__ = (
         UniqueConstraint("engagement_id", name="uq_report_engagement"),
@@ -539,3 +540,29 @@ class EngagementReport(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
+
+
+class ClientProfileDetails(Base):
+    """Optional business metadata; missing values remain empty until supplied by a human."""
+
+    __tablename__ = "client_profile_details"
+
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), primary_key=True)
+    firm_type: Mapped[str] = mapped_column(String(120), default="")
+    crd: Mapped[str] = mapped_column(String(40), default="")
+    clearing: Mapped[str] = mapped_column(String(255), default="")
+    state: Mapped[str] = mapped_column(String(120), default="")
+
+
+class ClientContact(Base):
+    __tablename__ = "client_contacts"
+    __table_args__ = (Index("ix_client_contacts_firm_id", "firm_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"))
+    name: Mapped[str] = mapped_column(String(255))
+    title: Mapped[str] = mapped_column(String(255))
+    email: Mapped[str] = mapped_column(String(320))
+    phone: Mapped[str] = mapped_column(String(80))
+    primary: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

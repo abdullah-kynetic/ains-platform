@@ -1,6 +1,6 @@
 # Frontend inventory and backend handoff
 
-The frontend redesign is merged through PR #72. Everything below runs on synthetic data. Screens that have no backend route yet call the typed mock layer in `web/src/lib/mock/*` through one interface, `web/src/lib/api/*` (import from `@/lib/api/index`). Each mocked function carries a `// TODO(backend)` comment with the route and shape it needs. Swapping in the real API means replacing the function bodies only; screens and types do not change.
+The frontend redesign is merged through PR #72. Mock mode runs on synthetic data. Clients, contacts and engagement summaries now have backend routes; the remaining new contracts below still use mocks. Screens that have no backend route yet call the typed mock layer in `web/src/lib/mock/*` through one interface, `web/src/lib/api/*` (import from `@/lib/api/index`). Each mocked function carries a `// TODO(backend)` comment with the route and shape it needs. Swapping in the real API means replacing the function bodies only; screens and types do not change.
 
 Contracts: [`web/src/lib/api/types.ts`](../web/src/lib/api/types.ts) (camelCase). Seed data: `web/src/lib/mock/seed.ts`. Persisted in `localStorage` (`kien-mock-*` keys).
 
@@ -64,7 +64,7 @@ Sidebar groups: **Workspace** (Today, Clients, Notifications), **Engagements** (
 
 Sign-in, invitation, reset and MFA screens are removed from the web app for the demo phase; `/sign-in` redirects to `/`.
 
-## Mocked calls (`TODO(backend)`)
+## API contracts (implemented status noted below; remaining calls use `TODO(backend)`)
 
 | Function (file) | Route needed | Shape |
 | --- | --- | --- |
@@ -102,3 +102,9 @@ Invoicing, report writing (existing `/auditor/reports`), pipeline, tasks, questi
 Browser journeys explicitly select the client role through `web/e2e/fixtures.ts`; demo hosts otherwise default to auditor. Auditor tests override that role. Existing manual evidence review and report drafting are under the engagement Requests tab; the engagement root is now Overview. Client Invoices navigation is separate from protected auditor invoice routes.
 
 Set `kien-synthetic-onboarding-enabled=1` to exercise the synthetic walkthrough. The existing `ains-e2e-live-api=1` switch in mock builds permits routed session/onboarding API fixtures for persistence and retry coverage; it is not real authentication or production authorization.
+
+## Implemented: clients, contacts and engagement summaries
+
+`web/src/lib/api/clients.ts` calls the real API outside `USE_MOCKS`; mock data remains confined to mock mode. `GET /auditor/clients`, `GET /auditor/clients/{id}`, `POST /auditor/clients/{id}/contacts` and `GET /auditor/engagements/{id}/summary` enforce client firm scope and current auditor assignment. The existing `GET /auditor/engagements` adds the summary fields while retaining `firmId`, `status` and `readiness` for the existing dashboard. Client engagement history includes only the caller's assigned engagements, even within one client firm.
+
+Additive revision `a116_client_profiles` creates profile metadata and contact tables. Contact creation records a minimal audit event. Unsupplied business metadata, reviewer and partner names remain empty; completed engagements do not invent a signed date (`signedOn` stays null). Profile metadata editing, verified signature dates and personnel assignments are deferred to their respective slices. `onboardedOn` is the firm record creation date, not proof of an accepted invitation. Backend routes still require a real authenticated auditor session; demo UI identities do not authorize them.

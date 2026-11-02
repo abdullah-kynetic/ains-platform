@@ -4,9 +4,9 @@ Refreshed 2 Nov 2026 against source through `d822ce1` (PR #72). Abdullah Ahmed o
 
 ## Current source and runtime
 
-PRs #53–#60 and #64–#72 are merged: invoicing, reversible/direct N/A, editable reports, onboarding, shadcn layout and the neutral redesign. Alembic head is `a115_user_onboarding`. These are source facts, not deployment verification.
+PRs #53–#60 and #64–#72 are merged: invoicing, reversible/direct N/A, editable reports, onboarding, shadcn layout and the neutral redesign. The next stacked backend slice adds `a116_client_profiles` for client metadata and contacts; the cleanup base is `a115_user_onboarding`. These are source facts, not deployment verification.
 
-The new auditor tabs and client Responses requested, Report and Invoices screens use typed synthetic mocks. [Frontend inventory](../frontend-inventory.md) identifies every route and backend contract. Existing backend workflows remain distinct from those new mock screens.
+Client profiles/contacts and engagement summaries have real API clients outside mock mode in the next backend slice. Other new auditor tabs and client Responses requested, Report and Invoices screens use typed synthetic mocks. [Frontend inventory](../frontend-inventory.md) identifies every route and backend contract. Existing backend workflows remain distinct from those new mock screens.
 
 Web authentication is temporarily removed (`AUTH_REMOVED`); backend auth, MFA, firm isolation and engagement assignment remain enforced. Restore the web flows before any live deployment or real data. Demo host roles default to auditor unless explicitly selected; firm and auditor hosts narrow the audience.
 

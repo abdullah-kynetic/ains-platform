@@ -28,6 +28,7 @@ from app.database.models import (
     utcnow,
 )
 
+from .client_profiles import engagement_summary
 from .engagements import DB, CurrentUser, visible_engagements
 from .intake import intake_item
 from .questionnaire import _get_engagement
@@ -316,8 +317,13 @@ def create_workspace(payload: WorkspaceCreate, user: CurrentUser, db: DB):
 def dashboard(user: CurrentUser, db: DB):
     require_auditor(user)
     engagements = db.scalars(
-        visible_engagements(user).options(
-            selectinload(Engagement.firm), selectinload(Engagement.items)
+        visible_engagements(user)
+        .join(Firm, Firm.id == Engagement.firm_id)
+        .where(Engagement.firm_id == Firm.id)
+        .options(
+            selectinload(Engagement.firm),
+            selectinload(Engagement.items),
+            selectinload(Engagement.auditor),
         )
     ).all()
     return [
@@ -327,6 +333,7 @@ def dashboard(user: CurrentUser, db: DB):
             "firmId": entry.firm_id,
             "status": entry.status,
             "readiness": readiness(entry),
+            **engagement_summary(entry),
         }
         for entry in engagements
     ]

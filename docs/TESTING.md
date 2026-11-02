@@ -130,3 +130,7 @@ with a retryable error. Live mode never uses localStorage for onboarding state.
 New users start null; existing pending users are not backfilled. No new migration
 is needed beyond `a115`. Static browser mocks have no sign-in;
 set `kien-synthetic-onboarding-enabled=1` to exercise their local walkthrough state.
+
+## Client profile coverage
+
+`tests/test_client_profiles.py` checks exact contract fields, contact validation/audit metadata, preservation of dashboard fields, other-firm/client denials, same-firm unassigned history, and revoked assignments across all profile/contact/summary paths. `tests/test_client_profiles_postgres.py` checks additive upgrade, model parity, downgrade and re-upgrade while preserving a pre-existing synthetic firm. The latter can use an explicitly configured isolated database via `KIEN_TEST_POSTGRES_URL`; without it, the existing temporary-Postgres fixture requires local binaries. Never point this test at a shared or production database.

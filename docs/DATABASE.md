@@ -167,3 +167,7 @@ set `kien-synthetic-onboarding-enabled=1` to exercise their local walkthrough st
 The demo-only `python -m app.monday_seed` preserves the exact demo auditor legacy
 ledger while enabling a synthetic issuing firm and colleague-created invoice. It refuses
 non-synthetic clients or merging populated ledgers; no credentials are created or changed.
+
+## Client profiles and contacts
+
+Additive `a116_client_profiles` creates `client_profile_details` keyed by client `firm_id` (firm type, CRD, clearing and state) and `client_contacts` (firm-scoped name, title, email, phone, primary flag and creation time). No existing table or data is changed or backfilled. Contact creation is auditor-assignment scoped and audited without copying contact data into the log. Metadata remains empty when it has not been supplied. Development downgrade removes only these new tables; production downgrade is not authorized.

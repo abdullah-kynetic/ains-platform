@@ -1,6 +1,6 @@
 # Data model
 
-> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a115_user_onboarding`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
+> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a116_client_profiles`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
 
 PostgreSQL 16, SQLAlchemy 2 models in `app/database/models.py`, Alembic migrations in `migrations/versions/`. IDs are UUID strings; timestamps are timezone-aware UTC. **Tenant = firm.** Isolation is by `firm_id` filters and auditor assignment in code (no database RLS).
 
@@ -36,10 +36,12 @@ Migrations `a112`–`a115` are merged. Installed schema is unverified.
 - Check job: queued, running, succeeded, failed. Task priority: high, normal, low. Finding review: pending, accepted, edited, rejected.
 
 ## Migration chain (oldest → head)
-`fb0fcc8fa1bf` initial schema → `0790ed53879f` check jobs → `4da4c66d93e6` questionnaire → `cf989925f35c` accepted doc types → `8ad73a592bc1` checklist snapshot → `a104` client workflow → `a105` manual review → `a106` auditor tasks → `a107` client invitations → `a108` auditor MFA recovery → `a109` password reset → `a110` audit chain → `a111` unassigned documents → `a112` auditor invoices → `a113` checklist N/A → `a114` engagement reports → **`a115` user onboarding (head)**.
+`fb0fcc8fa1bf` initial schema → `0790ed53879f` check jobs → `4da4c66d93e6` questionnaire → `cf989925f35c` accepted doc types → `8ad73a592bc1` checklist snapshot → `a104` client workflow → `a105` manual review → `a106` auditor tasks → `a107` client invitations → `a108` auditor MFA recovery → `a109` password reset → `a110` audit chain → `a111` unassigned documents → `a112` auditor invoices → `a113` checklist N/A → `a114` engagement reports → `a115` user onboarding → **`a116` client profiles (head)**.
 (Order of the early hex revisions is inferred from file names; check `down_revision` before relying on it.)
 
-Source reaches `a115`; no production schema was inspected. Migrations are additive; invoice downgrade deliberately refuses to delete financial history.
+Source reaches `a116`; no production schema was inspected. Migrations are additive; invoice downgrade deliberately refuses to delete financial history.
 
 ## Not yet defined
 Retention/deletion schedule, backup objectives (RPO/RTO), cleanup of expired tokens/sessions, legal hold. Do not invent these.
+
+Client profiles and contacts are added by `a116_client_profiles`; see [Database](../DATABASE.md#client-profiles-and-contacts).
