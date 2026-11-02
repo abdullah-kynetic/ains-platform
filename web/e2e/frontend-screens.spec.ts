@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 const E = "/auditor/engagements/eng-synthetic-001";
 const asRole = (page: Page, role: "auditor" | "client") =>
@@ -56,6 +56,7 @@ test.describe("auditor workspace (synthetic)", () => {
 
   test("global search finds a client and a finding", async ({ page }) => {
     await page.goto("/auditor");
+    await expect(page.getByRole("button", { name: "Search workspace", exact: true })).toBeVisible();
     await page.keyboard.press("Control+k");
     await page.getByLabel("Search pages").fill("Harborview");
     await expect(page.getByRole("button", { name: /Harborview Securities/ }).first()).toBeVisible({ timeout: 15000 });

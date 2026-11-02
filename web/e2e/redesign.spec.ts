@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 
 async function axe(page: import("@playwright/test").Page) {
@@ -34,7 +34,7 @@ test("auditor overview, sidebar rail and desktop screenshot", async ({
   ).toHaveAttribute("aria-expanded", "false");
   await page
     .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: "Settings" })
+    .getByRole("link", { name: "My account" })
     .click();
   await expect(page).toHaveURL(/\/auditor\/settings/, { timeout: 30000 });
   await expect(
@@ -79,12 +79,15 @@ test("engagement table searches, filters, sorts and paginates assigned records",
       ),
     );
   });
-  await page.goto("/auditor/engagements");
-  await expect(page.getByRole("status")).toContainText(
+  // The legacy assigned-record table remains on Today; Engagements now uses summaries.
+  await page.goto("/auditor");
+  const resultStatus = page.getByRole("region", { name: "Assigned engagements" })
+    .getByRole("status").filter({ hasText: /results/ });
+  await expect(resultStatus).toContainText(
     "8 results · Page 1 of 2",
   );
   await page.getByRole("button", { name: "Next", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("Page 2 of 2");
+  await expect(resultStatus).toContainText("Page 2 of 2");
   await page.getByRole("button", { name: "Firm", exact: true }).click();
   await expect(
     page.getByRole("columnheader", { name: "Firm", exact: true }),
@@ -92,14 +95,14 @@ test("engagement table searches, filters, sorts and paginates assigned records",
   await page
     .getByRole("combobox", { name: "Rows per page" })
     .selectOption("10");
-  await expect(page.getByRole("status")).toContainText("Page 1 of 1");
+  await expect(resultStatus).toContainText("Page 1 of 1");
   await page
     .getByRole("textbox", { name: "Search engagements" })
     .fill("Firm 3");
   await expect(
     page.getByRole("cell", { name: /Synthetic Firm 3/ }),
   ).toBeVisible();
-  await expect(page.getByRole("status")).toContainText("1 results");
+  await expect(resultStatus).toContainText("1 results");
   await page
     .getByRole("combobox", { name: "Filter engagement status" })
     .selectOption("ready");
@@ -140,7 +143,7 @@ test("client home uses sidebar navigation, messages and desktop screenshot; audi
   }
 });
 
-test("client sidebar lists every route and supports collapse, mobile navigation and sign out", async ({ page }) => {
+test("client sidebar lists every route and supports collapse, mobile navigation", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   const sidebar = page.locator(".desktop-sidebar");

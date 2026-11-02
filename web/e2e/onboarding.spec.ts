@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 for (const role of ["client", "auditor"]) {
   test(`${role} onboarding completes once and stays dismissed`, async ({

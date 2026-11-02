@@ -1,6 +1,6 @@
 # Frontend inventory and backend handoff
 
-Branch `design/preview-cleanup`. Everything below runs on synthetic data. Screens that have no backend route yet call the typed mock layer in `web/src/lib/mock/*` through one interface, `web/src/lib/api/*` (import from `@/lib/api/index`). Each mocked function carries a `// TODO(backend)` comment with the route and shape it needs. Swapping in the real API means replacing the function bodies only; screens and types do not change.
+The frontend redesign is merged through PR #72. Everything below runs on synthetic data. Screens that have no backend route yet call the typed mock layer in `web/src/lib/mock/*` through one interface, `web/src/lib/api/*` (import from `@/lib/api/index`). Each mocked function carries a `// TODO(backend)` comment with the route and shape it needs. Swapping in the real API means replacing the function bodies only; screens and types do not change.
 
 Contracts: [`web/src/lib/api/types.ts`](../web/src/lib/api/types.ts) (camelCase). Seed data: `web/src/lib/mock/seed.ts`. Persisted in `localStorage` (`kien-mock-*` keys).
 
@@ -96,3 +96,9 @@ Every new path needs a cross-tenant denial test (`firm_id` filter, assigned enga
 ## Not mocked
 
 Invoicing, report writing (existing `/auditor/reports`), pipeline, tasks, questionnaire, uploads, sign-in and onboarding keep their existing API clients (`invoice-api.ts`, `report-api.ts`, `workflow-api.ts`, `api.ts`).
+
+## Browser test setup
+
+Browser journeys explicitly select the client role through `web/e2e/fixtures.ts`; demo hosts otherwise default to auditor. Auditor tests override that role. Existing manual evidence review and report drafting are under the engagement Requests tab; the engagement root is now Overview. Client Invoices navigation is separate from protected auditor invoice routes.
+
+Set `kien-synthetic-onboarding-enabled=1` to exercise the synthetic walkthrough. The existing `ains-e2e-live-api=1` switch in mock builds permits routed session/onboarding API fixtures for persistence and retry coverage; it is not real authentication or production authorization.

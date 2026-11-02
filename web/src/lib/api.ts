@@ -190,14 +190,19 @@ const mockSession: SessionData = {
 export const AUTH_REMOVED = true;
 
 export async function getSession(): Promise<SessionData> {
-  if (!AUTH_REMOVED && !clientMocksEnabled()) return apiRequest<SessionData>("/auth/session");
+  // Keep the explicit Playwright API override available in synthetic builds.
+  if ((!AUTH_REMOVED || USE_MOCKS) && !clientMocksEnabled()) return apiRequest<SessionData>("/auth/session");
   let stored: string | null = null;
   try { stored = localStorage.getItem("ains-synthetic-role"); } catch { /* storage blocked */ }
   // The host narrows the audience; on demo hosts the sidebar switcher decides.
   const audience = currentAudience();
   const role = audience === "client" ? "client" : audience === "auditor" ? "auditor" : stored === "client" ? "client" : "auditor";
   let onboarding: string | null = null;
-  try { onboarding = localStorage.getItem(`kien-synthetic-onboarding-${role}`); } catch { /* storage blocked */ }
+  let walkthroughEnabled = false;
+  try {
+    onboarding = localStorage.getItem(`kien-synthetic-onboarding-${role}`);
+    walkthroughEnabled = localStorage.getItem("kien-synthetic-onboarding-enabled") === "1";
+  } catch { /* storage blocked */ }
   return {
     user: {
       ...mockSession.user,
@@ -205,7 +210,7 @@ export async function getSession(): Promise<SessionData> {
       role,
       name: role === "auditor" ? "Demo Auditor" : "Demo Client",
       email: role === "auditor" ? "auditor@example.invalid" : "client@example.invalid",
-      onboarding_state: onboarding === "completed" || onboarding === "skipped" ? onboarding : "completed",
+      onboarding_state: onboarding === "completed" || onboarding === "skipped" ? onboarding : walkthroughEnabled ? null : "completed",
     },
   };
 }

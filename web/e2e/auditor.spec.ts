@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test("manual auditor decision stays internal while neutral replacement feedback reaches client", async ({
   page,
@@ -38,6 +38,7 @@ test("manual auditor decision stays internal while neutral replacement feedback 
   );
   await page.goto("/auditor");
   await page.getByRole("link", { name: "Open audit workspace" }).click();
+  await page.getByRole("navigation", { name: "Tabs" }).getByRole("link", { name: "Requests", exact: true }).click();
   await page.locator("summary").filter({ hasText: "AML-BD-001 —" }).click();
   await expect(page.getByText("synthetic.txt", { exact: true })).toBeVisible();
   await page

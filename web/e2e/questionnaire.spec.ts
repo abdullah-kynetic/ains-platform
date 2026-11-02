@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test("questionnaire directly marks N/A and blocks uploads for that request", async ({ page }) => {
   await page.goto("/questionnaire");
@@ -14,5 +14,12 @@ test("questionnaire directly marks N/A and blocks uploads for that request", asy
   await page.goto("/checklist");
   await expect(page.getByText("Marked N/A by client", { exact: false })).toBeVisible();
   await page.goto("/upload");
-  await expect(page.getByLabel("Request", { exact: true }).locator('option[value="AML-BD-012"]')).toHaveCount(0);
+  // Client uploads are unassigned; the auditor picker must exclude N/A requests.
+  await expect(page.getByLabel("Request", { exact: true })).toHaveCount(0);
+  await page.evaluate(() => localStorage.setItem("ains-synthetic-role", "auditor"));
+  await page.reload();
+  const requests = page.getByLabel("Request", { exact: true });
+  await expect(requests).toBeVisible();
+  await expect(requests.locator('option[value="AML-BD-001"]')).toHaveCount(1);
+  await expect(requests.locator('option[value="AML-BD-012"]')).toHaveCount(0);
 });

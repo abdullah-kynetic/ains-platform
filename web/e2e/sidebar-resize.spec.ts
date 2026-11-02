@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("sidebar drag, keyboard and persistence", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });

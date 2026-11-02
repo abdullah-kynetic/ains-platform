@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 
 test("command palette supports shortcuts, filtering, navigation and focus return", async ({ page }) => {
@@ -40,7 +40,7 @@ test("engagement drawer contains a timeline, traps focus and keeps full workspac
   await trigger.click();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await drawer.getByRole("link", { name: "Continue to audit workspace" }).click();
-  await expect(page.getByRole("heading", { name: "Report readiness" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
 });
 
 test("client dashboard uses sidebar navigation and neutral intake state", async ({ page }) => {
