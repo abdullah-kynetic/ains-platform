@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 for (const role of ["client", "auditor"] as const) {
   test(`${role} inline header and pinned theme controls`, async ({ page }) => {
@@ -74,10 +74,10 @@ for (const role of ["client", "auditor"] as const) {
       }
     }
     if (role === "auditor") {
-      await sidebar.getByRole("link", { name: "Settings" }).click();
+      await sidebar.getByRole("link", { name: "My account" }).click();
       await expect(overview).not.toHaveAttribute("aria-current", "page");
       await expect(
-        sidebar.getByRole("link", { name: "Settings" }),
+        sidebar.getByRole("link", { name: "My account" }),
       ).toHaveAttribute("aria-current", "page");
     }
     await page.setViewportSize({ width: 375, height: 812 });

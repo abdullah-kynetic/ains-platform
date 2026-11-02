@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 
 test("auditor creates a workspace and manages a single-use synthetic client invitation", async ({ page }) => {
@@ -8,9 +8,7 @@ test("auditor creates a workspace and manages a single-use synthetic client invi
 
   await page.goto("/auditor/settings");
   await page.getByRole("button", { name: /Kien Operations/ }).click();
-  await page.getByLabel("Current authenticator code").fill("123456");
-  await page.getByRole("button", { name: "Replace recovery codes" }).click();
-  await expect(page.getByText("Previous unused codes are revoked.")).toBeVisible();
+  // MFA controls were deliberately removed with web authentication.
   await page.getByRole("link", { name: "Add client workspace" }).click();
   await expect(page.getByRole("heading", { name: "Add client workspace" })).toBeVisible();
   await page.getByLabel("Firm name").fill("Synthetic Gamma Securities");
@@ -43,19 +41,10 @@ test("auditor creates a workspace and manages a single-use synthetic client invi
   const reissuedHref = await preview.getAttribute("href");
   expect(reissuedHref).not.toBe(firstHref);
 
-  await page.goto(reissuedHref!);
-  await expect(page.getByRole("heading", { name: "Accept client invitation" })).toBeVisible();
-  await expect(page.getByText("Synthetic demo only.")).toBeVisible();
+  // Invitation acceptance/password setup returns with web authentication (phase 3).
+  expect(reissuedHref).toMatch(/accept-invitation/);
   expect(
-    (
-      await new AxeBuilder({ page })
-        .exclude("nextjs-portal")
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-        .analyze()
-    ).violations,
+    (await new AxeBuilder({ page }).exclude("nextjs-portal")
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations,
   ).toEqual([]);
-  await page.getByLabel("Create password").fill("synthetic-password-123");
-  await page.getByLabel("Confirm password").fill("synthetic-password-123");
-  await page.getByRole("button", { name: "Set password and activate account" }).click();
-  await expect(page.getByRole("heading", { name: "Example Securities LLC" })).toBeVisible();
 });

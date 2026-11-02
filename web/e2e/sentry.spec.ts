@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { scrubEvent } from "../src/lib/sentry";
 
 test("telemetry drops arbitrary client content", () => {

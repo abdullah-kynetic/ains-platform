@@ -1,9 +1,9 @@
-import {test,expect} from "@playwright/test";
+import {test,expect} from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 
 test("auditor creates, edits rich text, finalizes, prints and reopens report",async({page})=>{
   await page.goto("/");await page.evaluate(()=>localStorage.setItem("ains-synthetic-role","auditor"));
-  await page.goto("/auditor/engagements/eng-synthetic-001");
+  await page.goto("/auditor/engagements/eng-synthetic-001/requests");
   await page.getByRole("button",{name:"Draft report",exact:true}).click();
   await expect(page.getByRole("heading",{name:"Independent AML test report",level:1})).toBeVisible();
   await page.getByRole("textbox",{name:"Scope",exact:true}).fill("Synthetic human scope");

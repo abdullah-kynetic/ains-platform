@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 for (const role of ["client", "auditor"] as const) {
   test(`${role} long firm heading remains readable at narrow and zoom-sized widths`, async ({ page }) => {

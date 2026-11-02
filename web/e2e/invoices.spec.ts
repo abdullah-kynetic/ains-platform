@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 
 async function auditor(page: import("@playwright/test").Page) {
@@ -101,12 +101,12 @@ test("invoice filters, void confirmation, mobile and accessible form", async ({
   ).toBe(true);
 });
 
-test("client has no invoice navigation and cannot open any invoice URL", async ({
+test("client invoice navigation never grants access to auditor invoice URLs", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("link", { name: "Invoices", exact: true }),
+    page.locator('a[href="/auditor/invoices"]'),
   ).toHaveCount(0);
   for (const path of [
     "/auditor/invoices",
@@ -117,7 +117,7 @@ test("client has no invoice navigation and cannot open any invoice URL", async (
     await page.goto(path);
     await expect(page).toHaveURL(/\/$/);
     await expect(
-      page.getByRole("link", { name: "Invoices", exact: true }),
+      page.locator('a[href="/auditor/invoices"]'),
     ).toHaveCount(0);
     await expect(page.getByRole("heading", { name: /^INV-/ })).toHaveCount(0);
   }

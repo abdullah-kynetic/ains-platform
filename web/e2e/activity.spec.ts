@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test("auditor activity links to assigned work without exposing audit details", async ({
   page,
@@ -16,5 +16,6 @@ test("auditor activity links to assigned work without exposing audit details", a
     .getByRole("region", { name: "Latest activity" })
     .getByRole("link", { name: "AML-BD-001", exact: true })
     .click();
-  await expect(page.getByRole("heading", { name: "Example Securities LLC (synthetic)" })).toBeVisible();
+  await expect(page).toHaveURL(/\/auditor\/engagements\/eng-synthetic-001$/);
+  await expect(page.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
 });

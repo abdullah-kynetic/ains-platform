@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 
 test("theme toggle persists light and dark mode", async ({ page }) => {
@@ -70,6 +70,7 @@ test("client and auditor screens meet automated accessibility basics", async ({
     ).violations,
   ).toEqual([]);
   await page.getByRole("link", { name: "Open audit workspace" }).click();
+  await page.getByRole("navigation", { name: "Tabs" }).getByRole("link", { name: "Requests", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Report readiness" }),
   ).toBeVisible();
@@ -147,6 +148,7 @@ test("mobile navigation traps focus, closes with Escape and avoids horizontal ov
   );
   await page.goto("/auditor");
   await page.getByRole("link", { name: "Open audit workspace" }).click();
+  await page.getByRole("navigation", { name: "Tabs" }).getByRole("link", { name: "Requests", exact: true }).click();
   await page.locator("summary").filter({ hasText: "AML-BD-001 —" }).click();
   expect(
     await page.evaluate(
