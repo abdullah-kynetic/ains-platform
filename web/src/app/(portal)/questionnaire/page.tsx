@@ -137,7 +137,7 @@ export default function QuestionnairePage() {
                     <Badge variant="success">Marked N/A</Badge>
                   ) : null}
                   {question.naReviewState === "rejected" ? (
-                    <Badge variant="danger">Applies — upload required</Badge>
+                    <Badge variant="danger">Applies: upload required</Badge>
                   ) : null}
                 </div>
                 <CardDescription>{question.sectionTitle}</CardDescription>
@@ -173,7 +173,7 @@ export default function QuestionnairePage() {
                     }));
                   }}
                 >
-                  No — mark N/A
+                  No: mark N/A
                 </Button>
                 {answers[question.itemId] === false &&
                   question.whenNo === "representation_required" && (

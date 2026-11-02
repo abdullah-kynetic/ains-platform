@@ -4,7 +4,7 @@ test("auditor NA moves to bottom, updates progress, persists and undo restores s
   await page.goto("/");
   await page.evaluate(() => localStorage.setItem("ains-synthetic-role", "auditor"));
   await page.goto("/auditor/engagements/eng-synthetic-001");
-  const request = page.locator("details").filter({has: page.locator("summary", {hasText: "AML-BD-001 —"})});
+  const request = page.locator("details").filter({has: page.locator("summary", {hasText: "AML-BD-001:"})});
   await request.locator("summary").click();
   await request.getByRole("button", {name: "Does not apply", exact:true}).click();
   await expect(request.getByRole("button", {name: "Undo does not apply"})).toBeVisible();
@@ -41,7 +41,7 @@ test("client marks and undoes numbered N/A; auditor sees client attribution", as
   await expect(page.getByRole("button", {name:"Undo N/A AML-BD-001",exact:true})).toBeVisible();
   await page.evaluate(() => localStorage.setItem("ains-synthetic-role", "auditor"));
   await page.goto("/auditor/engagements/eng-synthetic-001");
-  await expect(page.locator("details").filter({has:page.locator("summary",{hasText:"AML-BD-001 —"})})).toContainText("Marked N/A by client");
+  await expect(page.locator("details").filter({has:page.locator("summary",{hasText:"AML-BD-001:"})})).toContainText("Marked N/A by client");
   await page.evaluate(() => localStorage.setItem("ains-synthetic-role", "client"));
   await page.goto("/checklist");
   await page.getByRole("button", {name:"Undo N/A AML-BD-001",exact:true}).click();

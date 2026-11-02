@@ -51,7 +51,7 @@ function Dashboard() {
         actions={<Link href="/auditor/workspaces/new" className={buttonVariants()}>Create client workspace</Link>}
       />
       {USE_MOCKS && <p className="mb-5 text-xs text-subtle">Synthetic demonstration workspace</p>}
-      <div className="mb-7 grid gap-4 sm:grid-cols-3"><Stat label="Assigned engagements" value={clients?.length ?? "—"} hint="Your active review portfolio" /><Stat label="Requests reviewed" value={clients?.reduce((sum, client) => sum + client.readiness.reviewed, 0) ?? "—"} hint="Human review recorded" /><Stat label="Ready for drafting" value={clients?.filter((client) => client.readiness.ready).length ?? "—"} hint="Auditor sign-off still required" /></div>
+      <div className="mb-7 grid gap-4 sm:grid-cols-3"><Stat label="Assigned engagements" value={clients?.length ?? "None"} hint="Your active review portfolio" /><Stat label="Requests reviewed" value={clients?.reduce((sum, client) => sum + client.readiness.reviewed, 0) ?? "None"} hint="Human review recorded" /><Stat label="Ready for drafting" value={clients?.filter((client) => client.readiness.ready).length ?? "None"} hint="Auditor sign-off still required" /></div>
       {!clients && (
         <LoadState
           error={error}
@@ -182,7 +182,7 @@ function EngagementWorkspace({ id }: { id: string }) {
             {data.readiness.ready
               ? "Ready for report drafting"
               : "Review incomplete"}{" "}
-            — {data.readiness.reviewed}/{data.readiness.total} reviewed
+            · {data.readiness.reviewed}/{data.readiness.total} reviewed
           </p>
           <p className="text-sm text-muted">
             {data.readiness.meaning} Quentin’s rubric remains to be completed
@@ -240,7 +240,7 @@ function EngagementWorkspace({ id }: { id: string }) {
               className="rounded-xl bg-card border border-border shadow-card p-4"
             >
               <summary className="cursor-pointer font-medium">
-                {request.requestId} — {request.title}
+                {request.requestId}: {request.title}
                 <span className="ml-2 text-xs text-muted">
                   {request.status === "not_applicable" ? "Does not apply" : request.applicability ?? "Undecided"} ·{" "}
                   {request.assessment?.replaceAll("_", " ") ?? "Not assessed"}
@@ -260,7 +260,7 @@ function EngagementWorkspace({ id }: { id: string }) {
                 {request.representation && (
                   <p>
                     Client representation:{" "}
-                    {request.representation.replaceAll("_", " ")} —{" "}
+                    {request.representation.replaceAll("_", " ")} :{" "}
                     {request.naReviewState}
                   </p>
                 )}
@@ -303,18 +303,18 @@ function EngagementWorkspace({ id }: { id: string }) {
                         <option value="">
                           Choose neutral document feedback
                         </option>
-                        <option value="unreadable">Unreadable — replace</option>
+                        <option value="unreadable">Unreadable: replace</option>
                         <option value="wrong_document">
-                          Wrong document — replace
+                          Wrong document: replace
                         </option>
                         <option value="wrong_period">
-                          Wrong review period — replace
+                          Wrong review period: replace
                         </option>
                         <option value="missing_pages">
-                          Missing pages — more needed
+                          Missing pages: more needed
                         </option>
                         <option value="usable">
-                          File usable — clear replacement request
+                          File usable: clear replacement request
                         </option>
                       </Select>
                     </label>

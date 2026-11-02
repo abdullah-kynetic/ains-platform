@@ -56,7 +56,7 @@ test.describe("auditor workspace (synthetic)", () => {
 
   test("global search finds a client and a finding", async ({ page }) => {
     await page.goto("/auditor");
-    await page.keyboard.press("Control+k");
+    await page.getByRole("button", { name: "Search workspace" }).click();
     await page.getByLabel("Search pages").fill("Harborview");
     await expect(page.getByRole("button", { name: /Harborview Securities/ }).first()).toBeVisible({ timeout: 15000 });
     await page.getByLabel("Search pages").fill("risk assessment");

@@ -97,7 +97,7 @@ export function FindingsTab({ id }: { id: string }) {
               </CardHeader>
               <CardContent className="grid gap-3 text-sm">
                 <dl className="grid gap-3 sm:grid-cols-2">
-                  {([["Condition", f.condition], ["Cause", f.cause], ["Effect", f.effect], ["Recommendation", f.recommendation]] as const).map(([k, v]) => <div key={k}><dt className="text-muted">{k}</dt><dd>{v || "—"}</dd></div>)}
+                  {([["Condition", f.condition], ["Cause", f.cause], ["Effect", f.effect], ["Recommendation", f.recommendation]] as const).map(([k, v]) => <div key={k}><dt className="text-muted">{k}</dt><dd>{v || "None"}</dd></div>)}
                 </dl>
                 <p className="text-xs text-muted">Cited: {f.citations.length ? f.citations.map((c) => `${c.document}, p.${c.page}`).join("; ") : "none yet"}</p>
                 {(f.managementResponse || f.status === "issued") && (
