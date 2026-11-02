@@ -126,3 +126,7 @@ with a retryable error. Live mode never uses localStorage for onboarding state.
 New users start null; existing pending users are not backfilled. No new migration
 is needed beyond `a115`. Static browser mocks have no sign-in;
 set `kien-synthetic-onboarding-enabled=1` to exercise their local walkthrough state.
+
+## Auditor client profiles
+
+Client/profile/contact queries require the auditor role and assignment to the client firm's engagement. Profile engagement history is separately filtered by auditor, so another auditor's engagement is omitted even in the same firm. Cross-firm IDs and revoked/unassigned records return 404; clients receive 403. Contact creation accepts only the typed contact fields and always sets `primary=false`; `firm_id` comes from the authorized route. Its audit event contains only IDs, not contact details. UI role switching grants no backend access.

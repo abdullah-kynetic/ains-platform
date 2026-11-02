@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from .audit_log import router as audit_log_router
 from .auditor import router as auditor_router
+from .client_profiles import router as client_profiles_router
 from .engagements import router as engagements_router
 from .intake import router as intake_router
 from .invoices import router as invoices_router
@@ -12,6 +13,7 @@ from .questionnaire import router as questionnaire_router
 from .reports import router as reports_router
 
 router = APIRouter()
+router.include_router(client_profiles_router)
 router.include_router(reports_router)
 router.include_router(invoices_router)
 router.include_router(audit_log_router)

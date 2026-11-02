@@ -155,3 +155,7 @@ with a retryable error. Live mode never uses localStorage for onboarding state.
 New users start null; existing pending users are not backfilled. No new migration
 is needed beyond `a115`. Static browser mocks have no sign-in;
 set `kien-synthetic-onboarding-enabled=1` to exercise their local walkthrough state.
+
+## Client profile backend
+
+`app/api/client_profiles.py` implements assigned-auditor profile/contact reads, contact creation and per-engagement summaries. The existing engagement register includes additive summary fields while preserving its dashboard contract. `web/src/lib/api/clients.ts` uses these routes outside `USE_MOCKS`. All other unimplemented new-screen contracts remain listed in the frontend inventory. No auth bypass or automatic finding/report approval is introduced.

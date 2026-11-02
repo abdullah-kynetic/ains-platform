@@ -1,7 +1,7 @@
 /**
- * Frontend data contracts for the screens that do not have a backend route yet.
- * Every function that returns these shapes lives in `src/lib/api/*` and is marked
- * `// TODO(backend)`. The real API should return exactly these shapes (camelCase).
+ * Frontend data contracts for the new audit screens.
+ * Functions returning these shapes live in `src/lib/api/*`; remaining mock-only
+ * contracts carry `// TODO(backend)`. Real APIs return these camelCase shapes.
  */
 
 export type Conclusion = "pass" | "partial" | "fail" | "na";

@@ -1,6 +1,6 @@
 # Tech stack, systems and vendors
 
-> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a115_user_onboarding`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
+> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a116_client_profiles`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
 
 ## Frontend
 - **Next.js 16.4.2**, **React 19.3**, TypeScript, **Tailwind CSS v4**, App Router.
@@ -17,7 +17,7 @@
 - Runs in **Docker** (`python:3.12-slim`, non-root user, entrypoint runs `alembic upgrade head` on start) behind **Caddy** (HTTPS).
 
 ## Data
-- **PostgreSQL 16**, source migration head `a115_user_onboarding`. Installed database revision is unverified; no server was inspected. Local dev uses `docker compose up -d`.
+- **PostgreSQL 16**, source migration head `a116_client_profiles`. Installed database revision is unverified; no server was inspected. Local dev uses `docker compose up -d`.
 - Files: **Cloudflare R2** bucket `kien-dev-documents` through the S3 API (`STORAGE_BACKEND=s3`). Egnyte optional and off.
 
 ## Environments

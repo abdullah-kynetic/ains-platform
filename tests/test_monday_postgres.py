@@ -16,6 +16,8 @@ def test_monday_additive_schema_preserves_rows(postgres_engine):
         connection.execute(text('ALTER TABLE users DROP COLUMN onboarding_state'))
         connection.execute(text('ALTER TABLE users DROP COLUMN onboarding_finished_at'))
         connection.execute(text('DROP TABLE engagement_reports'))
+        connection.execute(text('DROP TABLE client_contacts'))
+        connection.execute(text('DROP TABLE client_profile_details'))
         connection.execute(text(
             'ALTER TABLE checklist_item_instances DROP COLUMN na_previous_state'
         ))
