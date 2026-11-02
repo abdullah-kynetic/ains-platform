@@ -1,6 +1,6 @@
 # AWS migration plan (outline)
 
-Status: AWS account `095384893776` reinstated 27 Oct 2026 (12:05 AM PT). **No AWS build until Abdullah does root sign-in + MFA and sends the sign-in code.** Region: **us-east-1**. A Codex read-only analysis prompt (docs `docs/aws/00-what-we-have.md`, `docs/aws/01-move-to-aws-plan.md` on branch `docs/aws-plan`) was given to Abdullah to run; results not yet received.
+Status: AWS account `095384893776` reinstated 27 Oct 2026 (12:05 AM PT). **Preparation only: do not apply infrastructure or create resources. Use separately configured short-lived credentials for any future approved operation; never request sign-in codes or secrets in chat.** Region: **us-east-1**. A Codex read-only analysis prompt (docs `docs/aws/00-what-we-have.md`, `docs/aws/01-move-to-aws-plan.md` on branch `docs/aws-plan`) was given to Abdullah to run; results not yet received.
 
 ## Account foundations (first)
 1. Root sign-in, root MFA, confirm contact/card details match verification documents.
@@ -25,7 +25,7 @@ Status: AWS account `095384893776` reinstated 27 Oct 2026 (12:05 AM PT). **No AW
 | Logs | CloudWatch basic | + agent, alarms |
 Recommendation (inferred, to be confirmed by the plan): start with the existing single-host Terraform, keep Cloudflare frontend and Resend, move to RDS once there are paying clients.
 
-## Migration steps (zero data loss)
+## Future migration outline (requires separate authorization; zero data loss is an objective to verify)
 1. Apply Terraform in a fresh state path; bring up API on a temporary `sslip.io` host; synthetic smoke test.
 2. Copy R2 → S3 (rclone or `aws s3 sync` via S3 API) and verify checksums against `documents.sha256`.
 3. Maintenance window: freeze writes, `pg_dump -Fc` on OVH, `pg_restore` on AWS, verify row counts + audit chain (`/auditor/audit-log/verify-chain`).

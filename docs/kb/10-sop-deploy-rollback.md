@@ -2,8 +2,10 @@
 
 Never deploy, migrate production or delete data without authorization for that task. Live frontend changes need Abdullah's visual approval.
 
+> **Reference only for a separately authorized operation.** The current build request authorizes no deployment, server access, production migration or merge. Restore web auth before any live deployment or real data. Historical examples below do not establish current deployed state.
+
 ## Backend (OVH, `/opt/kien`, compose project `kien`)
-Pattern used by every Codex delivery (from delivery logs):
+Historical delivery pattern (unverified against current runtime):
 1. SSH to `ubuntu@40.160.150.91` with the Kien deploy key (never print keys). Work only in `/opt/kien`.
 2. **Back up the DB first** (even with no migration):
    `docker exec <kien postgres container> pg_dump -U kien -d kien -Fc > /opt/kien/kien-db-<tag>-$(date +%Y%m%d%H%M%S).dump` then `pg_restore --list` on it to validate. Files are mode 600.
@@ -20,8 +22,8 @@ Examples on record: `kien-api:na-447e7f2` with `rollback-na-447e7f2.yml`, backup
 - Live: `kien-demo-live` — only after approval (exact live config/flags **unverified** in repo; `wrangler.jsonc` says `ains-platform-demo`).
 - Before deploying: `wrangler deployments list -c <config>` and note the current version ID.
 - **Rollback:** `wrangler rollback <version-id> --name <worker> -c <config>`.
-  - Current preview `kien-signin-preview` = `7e79cfa4…` (previous `e5c48f9c-776e-4a81-b550-136a9482743f`).
-  - Current layout `kien-shadcn-preview` = `8142b130-5c16-4da0-a2ac-ec999d64a874`.
+  - Historical preview `kien-signin-preview` = `7e79cfa4…` (previous `e5c48f9c-776e-4a81-b550-136a9482743f`).
+  - Historical layout `kien-shadcn-preview` = `8142b130-5c16-4da0-a2ac-ec999d64a874`.
 - Verify the address loads, both demo logins work, light/dark/phone screenshots.
 
 ## Going live (after approval)
@@ -31,4 +33,4 @@ Examples on record: `kien-api:na-447e7f2` with `rollback-na-447e7f2.yml`, backup
 4. Verify with both demo logins; report to Abdullah.
 
 ## AWS (future)
-`docs/deploy-aws.md` + `infra/aws` Terraform describe a single t4g.micro host. Do not apply until the AWS plan is approved and Abdullah provides the sign-in code.
+`docs/deploy-aws.md` + `infra/aws` Terraform describe a single t4g.micro host. Do not apply without a separately approved plan and configured short-lived access; never request credentials or sign-in codes in chat.

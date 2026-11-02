@@ -33,7 +33,7 @@ Repo: `abdullah-kynetic/ains-platform`. Stack: Next.js 16 / React 19 / Tailwind 
 - Tell Abdullah what needs his decision; don't decide product or spending questions for him.
 
 ## Branch status: `main` vs preview (important)
-PRs #53–#60 (invoicing, reversible/direct N/A, editable reports, first-sign-in walkthrough, shadcn layout, preview Worker configs) and the nine-part design series #64–#72 (neutral style, Today view, engagement workspace, firm settings, client Responses requested, host audiences, removed web sign-in, docs) are merged into `main`. Check each feature's **Live / Preview** tag in [`docs/kb/00-INDEX.md`](docs/kb/00-INDEX.md); some knowledge-base pages still describe the earlier cream/ochre look and the old PR state.
+PRs #53–#60 (invoicing, reversible/direct N/A, editable reports, first-sign-in walkthrough, shadcn layout, preview Worker configs) and the nine-part design series #64–#72 (neutral style, Today view, engagement workspace, firm settings, client Responses requested, host audiences, removed web sign-in, docs) are merged into `main`. Source status and implementation boundaries are recorded in [`docs/kb/00-INDEX.md`](docs/kb/00-INDEX.md). Merged source does not establish deployment.
 
 ## Frontend state
 Web sign-in is removed for the demo phase (`AUTH_REMOVED` in `web/src/lib/api.ts`; `TODO(auth)` marks what to restore). **Restore it before any live deploy or real data.** Backend auth, MFA and tenant isolation are unchanged. Screens without a backend route use a typed mock layer in `web/src/lib/api/*` (`TODO(backend)`), listed in `docs/frontend-inventory.md`. Clients never see findings: they see only auditor-released "Responses requested".
@@ -58,7 +58,7 @@ Web sign-in is removed for the demo phase (`AUTH_REMOVED` in `web/src/lib/api.ts
 Repo docs (source of truth for behaviour on `main`):
 - [`AGENTS.md`](AGENTS.md) — coding-agent guide and session sequence
 - [`README.md`](README.md) · [`docs/PRD.md`](docs/PRD.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/DATABASE.md`](docs/DATABASE.md) · [`docs/SECURITY.md`](docs/SECURITY.md) · [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md) · [`docs/TESTING.md`](docs/TESTING.md) · [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) · [`docs/deploy-aws.md`](docs/deploy-aws.md)
-- `PRODUCT.md`, `DESIGN.md`, `.impeccable/` — arrive with #59; not on `main` yet
+- `PRODUCT.md`, `DESIGN.md`, `.impeccable/` — merged with #59
 
 Knowledge base (`docs/kb/`, written 29 Oct 2026; plain-English overview, SOPs and plans):
 - [`00-INDEX.md`](docs/kb/00-INDEX.md) — Kien — Master Knowledge Base (index)

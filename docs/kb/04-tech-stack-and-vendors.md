@@ -1,6 +1,6 @@
 # Tech stack, systems and vendors
 
-> **Branch status (checked 29 Oct 2026):** `main` is at merge `12f6f70` (PR #52), Alembic head `a111`. PRs **#53–#60 are NOT merged into `main`**; they are a stack (#53 → #54 → #55 → #56 → #57 → #58 → #59 → #60) on top of `main` and are visible only on preview (preview.kiensolutions.com; #59 on layout.kiensolutions.com). Anything tagged **Preview (#NN)** below is not in a fresh `main` checkout. The shared OVH backend already runs the stacked code (`02c480c`, DB at `a115`), so the API serves these routes even though `main` does not contain them.
+> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a115_user_onboarding`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
 
 ## Frontend
 - **Next.js 16.4.2**, **React 19.3**, TypeScript, **Tailwind CSS v4**, App Router.
@@ -17,15 +17,15 @@
 - Runs in **Docker** (`python:3.12-slim`, non-root user, entrypoint runs `alembic upgrade head` on start) behind **Caddy** (HTTPS).
 
 ## Data
-- **PostgreSQL 16**, Alembic head on `main` is `a111_unassigned_documents`; the preview stack (#53–#60) adds `a112`–`a115` (head `a115_user_onboarding`), and the shared production DB is already at `a115`. Local dev via `docker compose up -d`.
+- **PostgreSQL 16**, source migration head `a115_user_onboarding`. Installed database revision is unverified; no server was inspected. Local dev uses `docker compose up -d`.
 - Files: **Cloudflare R2** bucket `kien-dev-documents` through the S3 API (`STORAGE_BACKEND=s3`). Egnyte optional and off.
 
 ## Environments
 | Name | Address | Runs | Notes |
 | --- | --- | --- | --- |
-| Live | live.kiensolutions.com | Worker `kien-demo-live` | `main` branch (up to PR #52). Only after Abdullah approves visuals |
-| Preview | preview.kiensolutions.com | Worker `kien-signin-preview` (version `7e79cfa4`) | Stacked, unmerged PRs #53–#58, #60. Config `web/wrangler.preview.jsonc` (exists only on the stack) |
-| Layout | layout.kiensolutions.com | Worker `kien-shadcn-preview` (version `8142b130`) | Unmerged #59 shadcn layout + #60. Config `web/wrangler.layout.jsonc` (exists only on the stack) |
+| Live | live.kiensolutions.com | Worker `kien-demo-live` | Deployed revision unverified; no deployment authorized |
+| Preview | preview.kiensolutions.com | Worker `kien-signin-preview` | Config `web/wrangler.preview.jsonc` is merged; deployed version unverified |
+| Layout | layout.kiensolutions.com | Worker `kien-shadcn-preview` | Config `web/wrangler.layout.jsonc` is merged; deployed version unverified |
 | Design | design.kiensolutions.com | Worker `kien-design-preview` | #50 design exploration, unapproved |
 | Firm portals | `<slug>.kiensolutions.com` | Portal Worker | Tenant from host |
 | API | api.kiensolutions.com | FastAPI on OVH `/opt/kien` | Shared by all Workers (inferred) |
@@ -45,7 +45,7 @@ Note: `web/wrangler.jsonc` names the Worker `ains-platform-demo`; how `kien-demo
 | OpenAI Codex CLI | Main coding agent (`gpt-6.1-sol`, high effort) | Active |
 | Claude Code | Orchestrator project for parallel threads | Being set up |
 | Notion | Knowledge base and planning | Active |
-| Impeccable (pbakaus/impeccable, Apache 2.0) | Design-quality skill vendored in repo | Installed on `feat/shadcn-layout` (#59, not on `main`) |
+| Impeccable (pbakaus/impeccable, Apache 2.0) | Design-quality skill vendored in repo | Merged with #59 |
 | Kiranism next-shadcn-dashboard-starter (MIT) | Layout geometry reference | Credited in THIRD_PARTY_NOTICES.md |
 | Supabase | — | Explicitly **not** planned |
 | n8n | — | Not used by Kien (shared server only) |

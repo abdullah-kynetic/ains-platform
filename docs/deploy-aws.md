@@ -1,7 +1,9 @@
-# AWS deployment runbook (lean single-host profile)
+# AWS migration preparation (lean single-host profile)
+
+OVH is the current backend target per the owner, with Cloudflare frontend hosting. This AWS guide describes a planned alternative. Commands below are reference only: this task does not authorize applying infrastructure, creating resources, migration or deployment.
 
 Low-volume, single-region production for Kien Solutions (https://kiensolutions.com). Not a certification
-or high-availability service. Quinton must approve control evidence, retention policy
+or high-availability service. Quentin must approve control evidence, retention policy
 and release before client use. Use synthetic documents for every smoke test.
 
 ## Design and tradeoffs

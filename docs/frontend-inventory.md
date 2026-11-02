@@ -95,7 +95,7 @@ Every new path needs a cross-tenant denial test (`firm_id` filter, assigned enga
 
 ## Not mocked
 
-Invoicing, report writing (existing `/auditor/reports`), pipeline, tasks, questionnaire, uploads, sign-in and onboarding keep their existing API clients (`invoice-api.ts`, `report-api.ts`, `workflow-api.ts`, `api.ts`).
+Invoicing, report writing (existing `/auditor/reports`), pipeline, tasks, questionnaire, uploads and onboarding keep their existing API clients (`invoice-api.ts`, `report-api.ts`, `workflow-api.ts`, `api.ts`).
 
 ## Browser test setup
 

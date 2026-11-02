@@ -14,7 +14,7 @@ Kien supports evidence collection and independent human AML testing for broker-d
 | Backend/API | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2 | Central authentication, validation, and workflow boundary | All authorization is server-side; no model SDKs/calls |
 | Database | PostgreSQL 16, SQLAlchemy models, Alembic migrations | Relational tenant/workflow state and durable queue | FastAPI owns access; no direct browser DB access |
 | Authentication | App-owned password/invitation/session flow, auditor TOTP MFA and hashed recovery codes | Roles, firm binding, assignment and step-up are app-enforced | Session cookie and secret configured server-side; client accounts are invite-only |
-| Hosting | Owner-supplied runtime: Cloudflare Worker frontend + OVH Docker/Caddy API; repository also contains AWS single-host Terraform/deployment docs | Runtime is stated by the owner; repo provides an alternative deployment path | **Unresolved conflict:** checked-in AWS deployment guide describes EC2/Caddy/PostgreSQL, not OVH. Do not infer which production environment is current. |
+| Hosting | Owner-supplied runtime: Cloudflare Worker frontend + OVH Docker/Caddy API; repository also contains AWS single-host Terraform/deployment docs | Runtime is stated by the owner; repo provides an alternative deployment path | OVH is the owner-supplied current backend target; AWS is planned. Runtime was not inspected. |
 | Object storage | Owner-supplied Cloudflare R2 bucket `kien-dev-documents`; code supports S3 API, default `STORAGE_BACKEND=s3`, optional Egnyte | Store uploaded documents outside relational DB | Bucket/location/current production configuration are not verified in repo. Egnyte is optional/off by default. |
 | Email | Resend sender in `app/auth/email.py`; owner supplies no-reply/invite sender addresses | Invitation and recovery delivery | Variable names only: `RESEND_API_KEY`, `EMAIL_FROM`, `INVITE_EMAIL_FROM`; code has no addresses hard-coded. |
 
@@ -68,13 +68,13 @@ Runtime/domain assertions supplied by the owner: `live.kiensolutions.com` Worker
 | `web/src/components/{shell,checklist,auditor,tenant,auth,brand}/` | Workflow and application components |
 | `web/src/lib/` | API clients, mock data, tenant/checklist utilities |
 | `web/e2e/`, `web/src/**/*.test.ts` | Playwright e2e and Node unit tests |
-| `infra/aws/` | Checked-in AWS single-host Terraform/bootstrap (conflicts with owner-supplied OVH runtime) |
+| `infra/aws/` | Planned AWS migration Terraform/bootstrap; not the current OVH runbook |
 | `docs/` | Product, design, architecture, database, security, style, testing and operational notes |
 | `.github/workflows/` | CI workflows |
 
 ## Operations
 
-- **Environments/configuration:** Local backend uses `DATABASE_URL`, `STORAGE_BACKEND`, and related variables from `.env.example`; web uses `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_USE_MOCKS` from `web/.env.example`. Never expose backend secrets through `NEXT_PUBLIC_*`. There is a synthetic web demo mode. Deployment environment split and exact production resource bindings are unresolved due to OVH/AWS discrepancy.
+- **Environments/configuration:** Local backend uses `DATABASE_URL`, `STORAGE_BACKEND`, and related variables from `.env.example`; web uses `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_USE_MOCKS` from `web/.env.example`. Never expose backend secrets through `NEXT_PUBLIC_*`. There is a synthetic web demo mode. OVH is current per the owner; AWS is planned. Exact deployed bindings remain unverified.
 - **Deployment/rollback:** Repository includes Docker Compose for PostgreSQL/API/worker, Dockerfile, AWS Terraform, Caddy bootstrap, and Cloudflare Workers build config. Production deployment and rollback runbooks are incomplete; do not deploy from this doc.
 - **Monitoring:** `app/monitoring.py`, health/metrics endpoints, optional Sentry configuration exist. Operational thresholds, alerts, backup/restore and queue recovery procedures are unresolved.
 - **Scale limits:** Upload limit is 100 MB per file in current code/UI; Egnyte simple upload also caps at 100 MB. Worker uses the database queue. No approved throughput or retention SLO exists.
@@ -126,7 +126,7 @@ Version checks and row locks prevent lost updates. Finalization requires explici
 attestation, freezes content and records its SHA-256. Audited reopening permits edits;
 prior final hashes remain in the immutable audit chain. Final status does not complete
 the engagement, deliver a report, establish a clean opinion or create a cryptographic
-signature. Clients receive 403 and have no report navigation; unassigned auditors get 404.
+signature. Clients receive 403 from the auditor editor; unassigned auditors get 404. The separate client Report screen is a synthetic mock pending its backend slice.
 Print view uses the invoice-style browser print/save PDF flow. The idempotent
 `python -m app.report_seed` seeds one existing explicitly synthetic demo engagement.
 

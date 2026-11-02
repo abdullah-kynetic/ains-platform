@@ -1,21 +1,20 @@
 # Roadmap and build order
 
-## Now (waiting on Abdullah)
-- Visual review (all unmerged, not on `main`): preview.kiensolutions.com (#53–#58, #60), layout.kiensolutions.com (#59), design branch #50.
-- After approval: merge in stack order with real merge commits → deploy `kien-demo-live` → verify both demo logins.
-- Decision: may a client undo an N/A the auditor set? (Recommended: yes, keep.)
-- AWS: root sign-in + MFA, send sign-in code.
+## Current authorized sequence
 
-## Build order (agreed)
-1. **Invoicing follow-ups + Stripe behind a feature flag** — reminders/overdue follow-ups (no email today), Stripe payment links/checkout off by default, webhook → payment recorded as invoice event.
-2. **Security hardening** — malware scan on uploads (e.g. ClamAV sidecar, quarantine state), general API rate limits/lockout, operations runbook + scheduled off-site backups + restore drill.
-3. **Doc fixes** — reconcile OVH vs AWS conflicts in ARCHITECTURE/PRD/SECURITY, "Quinton" → "Quentin" in current-context text, de-duplicate appended sections, document `/tenant/branding` gap.
-4. **Move to AWS** — per `14-aws-migration-plan.md`.
-5. **Old PRs + better GitHub key** — triage stale `codex/*` and `cursor/*` branches; fine-grained token that can open PRs.
-6. **SOC 2 groundwork** — policies, access reviews, change-management evidence, vendor list, logging/retention decisions.
-7. **AI last** — (a) intake file sorting into the 34 items with auditor confirmation, SAR never to models; (b) FINRA rules chatbot. See `16-ai-features-finra-chatbot.md`.
+1. Cleanup: repair browser tests, correct Quentin's spelling and refresh documentation.
+2. Backend for the new mock screens, in small stacked slices: clients/contacts/summaries; checklist/documents; workpapers/samples; findings/released requests; reports/export; independence/review/sign-off; firm settings; notifications/search; client results.
+3. Restore web auth, MFA, invitations, setup, reset and sign-out; refuse host/role mismatch. Keep unauthenticated demo only under USE_MOCKS. No deployment.
+4. Security hardening: quarantine/scanning, API limits/lockout, operations instructions, off-site backup scripts and restore drill. Local/config work only.
+5. Invoice follow-ups and test-mode Stripe behind an off-by-default flag.
+6. AWS preparation: infrastructure/config/runbooks only. Do not apply or create resources.
 
-## Dependencies
-- 4 (AWS) should follow 2 so backups/runbook exist first; needs the AWS sign-in code.
-- 7 needs 4 (pgvector on the new DB is easiest) and Quentin's resources/questions; needs an approved data contract for intake sorting.
-- 1 needs Stripe account decision; 6 benefits from 4 (CloudTrail etc.).
+The earlier roadmap numbered invoicing 1, security 2 and AWS 4; the sequence above is Abdullah's current request. No model processing or other AI feature belongs to this work.
+
+## Existing state
+
+PRs #53–#60 and #64–#72 are merged. The neutral design is approved. New screen contracts remain synthetic until their backend slices are delivered; see [frontend inventory](../frontend-inventory.md). Web auth is temporarily removed. Current deployed code and database were not inspected.
+
+## Decisions
+
+Abdullah decides Stripe account/entity and payment methods, AWS target/budget, backup and retention objectives. Quentin supplies rubric, severity and report wording; legal terms require the attorney. Keep unresolved inputs visible rather than inventing them. No live deploy, OVH operations, production migration or merge is authorized.

@@ -1,28 +1,20 @@
-# Kien — Master Knowledge Base (index)
+# Kien — Master Knowledge Base
 
-Written 29 Oct 2026 from repo `abdullah-kynetic/ains-platform`, branch `fix/onboarding-once` (commit `02c480c`, 27 Oct 2026), which stacks every unmerged PR (#53–#60) on top of `main`. Items marked **(inferred)** or **(unverified)** were not confirmed from code.
+Refreshed 2 Nov 2026 against source through `d822ce1` (PR #72). Abdullah Ahmed owns the product; Quentin Koch approves findings and signs reports.
 
-## Main vs preview — read this first
-`main` (the branch Claude Code clones) is at merge `12f6f70` (PR #52), Alembic head `a111`. **PRs #53–#60 are open and NOT on `main`.** They are stacked in this order and shown only on preview addresses:
+## Current source and runtime
 
-| PR | Branch | What it adds | Where to see it |
-| --- | --- | --- | --- |
-| #53 | `feat/auditor-invoicing` | Auditor invoicing v1 (migration `a112`) | preview |
-| #54 | `fix/monday-polish` | Theme/sidebar polish, invoices shared within issuer firm | preview |
-| #55 | `feat/checklist-na` | Reversible checklist N/A, progress over 32 items (migration `a113`) | preview |
-| #56 | `feat/auditor-reports` | Editable auditor reports, finalize/reopen/print (migration `a114`) | preview |
-| #57 | `feat/onboarding` | First sign-in walkthrough (migration `a115`) | preview |
-| #58 | `fix/na-client-auditor-access` | Client marks N/A directly; assigned auditor full workspace access | preview |
-| #59 | `feat/shadcn-layout` | Compact shadcn layout, Impeccable, `PRODUCT.md`/`DESIGN.md`, `.impeccable/` | layout.kiensolutions.com |
-| #60 | `fix/onboarding-once` | Walkthrough only once per account; preview/layout Worker configs | preview + layout |
+PRs #53–#60 and #64–#72 are merged: invoicing, reversible/direct N/A, editable reports, onboarding, shadcn layout and the neutral redesign. Alembic head is `a115_user_onboarding`. These are source facts, not deployment verification.
 
-Consequences for anyone working from `main`:
-- Files such as `app/invoicing.py`, `app/api/invoices.py`, `app/api/reports.py`, `app/auth/onboarding.py`, migrations `a112`–`a115`, `PRODUCT.md`, `DESIGN.md`, `.impeccable/`, `web/wrangler.preview.jsonc` and `web/wrangler.layout.jsonc` do **not** exist yet.
-- On `main`, N/A is still the older flow: the client proposes N/A in the questionnaire and the auditor approves it (`/questionnaire/items/{item_id}/na-review`).
-- The shared OVH backend already runs the stacked code (`02c480c`) and its database is at `a115`, so production API ≠ `main`. Do not run `main`'s migrations "down" against it.
-- New feature branches that depend on #53–#60 must branch from `fix/onboarding-once` (or wait until the stack is merged); branches that don't can start from `main`.
-- Throughout these files, **Live** means on `main`; **Preview (#NN)** means only on the open stack.
+The new auditor tabs and client Responses requested, Report and Invoices screens use typed synthetic mocks. [Frontend inventory](../frontend-inventory.md) identifies every route and backend contract. Existing backend workflows remain distinct from those new mock screens.
 
+Web authentication is temporarily removed (`AUTH_REMOVED`); backend auth, MFA, firm isolation and engagement assignment remain enforced. Restore the web flows before any live deployment or real data. Demo host roles default to auditor unless explicitly selected; firm and auditor hosts narrow the audience.
+
+The approved look is neutral black-and-white; see [DESIGN.md](../../DESIGN.md). Ink is limited to brand/actions/navigation/focus; ochre marks deadlines; status colors are small pills.
+
+OVH is the current owner-supplied backend target, Cloudflare hosts the frontend and R2 stores files. AWS is planned migration work. No server or deployed resource was inspected during this refresh. Historical deployment versions are not current-state evidence.
+
+No AI features, model calls, live deployments, server operations or merges are authorized by the current build request. Preview deployments also require an explicit step.
 
 | File | Topic |
 | --- | --- |
