@@ -7,7 +7,7 @@
    [consolidation-summary.md](consolidation-summary.md) for the phase-by-phase limitations.
 2. **Canonical checklist:** all 34 stable request IDs in `data/checklist/aml_bd_v1.yaml`.
    Backend views read it; the web build generates its bundled demo inventory from that source.
-   Rubric placeholders remain empty for Quinton. Restricted requests accept no portal evidence.
+   Rubric placeholders remain empty for Quentin. Restricted requests accept no portal evidence.
 3. **Central upload:** searchable picker, multiple files, editable destinations, confirmation,
    per-file errors/receipts and SHA-256. Real ingestion is restricted to `/Shared/AINS-Dev`;
    synthetic browser tests use a local metadata mock and backend tests use fake Egnyte storage.
@@ -62,7 +62,7 @@ verification database; `alembic check` found no missing operations. CI is pinned
 
 ## Active remaining work
 
-- Quinton must review the request wording, applicability conditions and allowed evidence types,
+- Quentin must review the request wording, applicability conditions and allowed evidence types,
   then supply the rubric. Empty rubric fields are intentional, not invented audit standards.
 - Add controlled first-auditor account creation, auditor/client deactivation, engagement
   reassignment and an administrative audit view. Client invitations and auditor MFA enrollment

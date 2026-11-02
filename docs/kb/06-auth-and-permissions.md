@@ -1,6 +1,10 @@
 # Authentication and permissions
 
-> **Branch status (checked 29 Oct 2026):** `main` is at merge `12f6f70` (PR #52), Alembic head `a111`. PRs **#53–#60 are NOT merged into `main`**; they are a stack (#53 → #54 → #55 → #56 → #57 → #58 → #59 → #60) on top of `main` and are visible only on preview (preview.kiensolutions.com; #59 on layout.kiensolutions.com). Anything tagged **Preview (#NN)** below is not in a fresh `main` checkout. The shared OVH backend already runs the stacked code (`02c480c`, DB at `a115`), so the API serves these routes even though `main` does not contain them.
+> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a115_user_onboarding`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
+
+## Backend authentication and target web flows
+
+Web sign-in, setup, invitation acceptance, reset, sign-out and MFA controls are removed for the demo phase. Restore these before any live deployment or real data. The server rules below remain implemented.
 
 ## Sign-in
 - **Invite only.** No public sign-up. Auditors invite clients to a firm + engagement (`/auditor/engagements/{id}/invitations`); client accepts at `/accept-invitation` and sets a password.
@@ -18,11 +22,11 @@ Two roles only: **client** and **auditor**. No firm-admin. The synthetic demo ro
 | --- | --- | --- | --- |
 | See firm card, checklist, questionnaire, progress | Own firm only | Yes, full | Denied (404) |
 | Upload / re-upload evidence | Own engagement (not restricted items) | Yes | Denied |
-| Mark item N/A / undo | **Yes, directly** *(preview #55/#58; on `main` client proposes, auditor approves)* | **Yes** (sees who marked it) *(preview)* | Denied |
+| Mark item N/A / undo | **Yes, directly** *(merged #55/#58)* | **Yes** (sees who marked it) *(merged)* | Denied |
 | Neutral document feedback | Sees it | Writes it | Denied |
 | Internal notes, finding drafts, decisions, tasks | Never | Yes | Denied |
-| Reports (edit, finalize, reopen, print) *(preview #56)* | 403, no navigation | Yes | 404 |
-| Invoices *(preview #53/#54)* | No access | Yes, shared within issuing auditor firm | Denied |
+| Reports (edit, finalize, reopen, print) *(legacy editor, merged #56)* | 403, no navigation | Yes | 404 |
+| Invoices *(auditor ledger, merged #53/#54)* | No access | Yes, shared within issuing auditor firm | Denied |
 | Audit log | Denied | Assigned engagements (firm-wide needs all engagements assigned) | Denied |
 | Create workspaces, invite clients | Denied | Yes | — |
 
@@ -32,4 +36,4 @@ Two roles only: **client** and **auditor**. No firm-admin. The synthetic demo ro
 Every tenant-owned query filters by `firm_id`; auditor routes check engagement assignment. Every new API path must have a cross-tenant denial test. UI gates are convenience only.
 
 ## Demo logins
-Two synthetic demo identities (one client, one auditor). Credentials are **never** in chat or docs — Abdullah gets them by opening the logins file on his Mac. `python -m app.onboarding_seed --reset-demo` (preview stack only, #57) resets only those two demo walkthroughs.
+The current browser demo selects synthetic roles without sign-in. Backend seeds also define two synthetic identities (one client, one auditor). Credentials are **never** in chat or docs — Abdullah gets them by opening the logins file on his Mac. `python -m app.onboarding_seed --reset-demo` (merged #57) resets only those two demo walkthroughs.

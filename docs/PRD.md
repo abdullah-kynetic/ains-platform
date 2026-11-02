@@ -5,17 +5,17 @@
 ## Project context
 
 - **Product:** Kien, by Kien Solutions.
-- **Owner:** Unresolved: product decision-maker is not identified in repository documentation. Quentin is the AINS partner and auditor, not necessarily the product owner.
+- **Owner:** Abdullah Ahmed, founder of Kien Solutions. Quentin Koch approves audit findings and signs reports.
 - **Status:** Implementation-grounded working requirements; formal product approval is unresolved.
 - **Problem:** Broker-dealer firms and independent auditors need a controlled way to collect AML testing evidence, track human review, document decisions, and prepare reports under FINRA Rule 3310.
-- **Target users:** Client firm users and auditors at the audit agency. Quentin is the AINS partner and signing auditor. “Quinton” remains in historical source/docs and rubric placeholders.
+- **Target users:** Client firm users and auditors at the audit agency. Quentin is the AINS partner and signing auditor. The old spelling remains only in quoted history and unchanged fixture identifiers.
 - **Desired outcome:** Organized evidence and traceable human review, without making clients interpret audit findings or implying that automated receipt checks constitute an audit.
 
 ## MVP scope
 
 - **Must ship (implemented workflow):** Invite-based client and auditor sign-in; firm-scoped engagement workspaces; client questionnaire and neutral 34-item evidence checklist; drag-and-drop multi-file upload without selecting a separate request; auditor document assignment/review, applicability and manual evidence decisions, tasks, internal notes, activity/audit log, report draft and explicit auditor sign-off; recovery and auditor MFA features as implemented.
 - **Explicitly excluded or planned:** AI intake that classifies files against 34 checklist items, with auditor confirmation, is planned and not built. SAR (Suspicious Activity Report) pre-screening is planned and must begin with no model runs; SAR material must never be sent to any model. Model inference is not in the application. Production signing is not a cryptographic document signature. Client-side mock demo does not authenticate real users or deliver real files.
-- **Constraints:** Web app (Next.js/TypeScript) plus FastAPI API and PostgreSQL 16. The checked-in production infrastructure documents provision an AWS single-host profile, while owner-supplied operating context says Kien runs on OVH; deployment target must be resolved before operations documentation is treated as authoritative. Keep costs low; use synthetic-only examples; enforce server-side tenant boundaries; no external model calls.
+- **Constraints:** Web app (Next.js/TypeScript) plus FastAPI API and PostgreSQL 16. OVH is the current owner-supplied backend target; Cloudflare hosts the frontend. AWS infrastructure is migration preparation, not evidence of an active AWS deployment. Runtime state was not inspected. Keep costs low; use synthetic-only examples; enforce server-side tenant boundaries; no external model calls.
 
 ## User journeys
 
@@ -50,9 +50,9 @@
 
 ## Open decisions
 
-- Deployment source of truth (owner-provided OVH runtime vs checked-in AWS deployment guide and Terraform) — owner: unresolved — needed before operational changes.
+- AWS target architecture and migration inputs — Abdullah decides; existing OVH remains the owner-supplied current target.
 - Whether R2/Resend/domain values describe the active production deployment — owner: unresolved; not confirmed by source configuration.
-- Product owner, approved design reference, report retention/deletion policy, backup/restore objectives, and success targets — owner: unresolved.
+- Security owner, report retention/deletion policy, backup/restore objectives, and success targets — owner: unresolved.
 - Audit rubric wording, applicability rules, and allowed evidence types require Quentin’s review; rubric placeholders remain deliberately empty.
 
 ## Definition of ready
@@ -64,8 +64,7 @@ Feature scope and journey acceptance criteria are implementation-grounded; block
 F-13: Only authenticated auditors can list, create and view invoices for their assigned
 client firms. Drafts are editable. Auditors manually mark a draft sent, record dated
 payments against a sent invoice, or void an unpaid draft/sent invoice. Partial payments
-keep the balance open; full payment sets paid status. Clients have no navigation or API
-access. Issue-date range, client and status filters include computed overdue (sent,
+keep the balance open; full payment sets paid status. Clients have no access to the auditor ledger. The separate client Invoices screen is a synthetic mock pending its backend slice. Issue-date range, client and status filters include computed overdue (sent,
 past due in UTC, positive balance). No emails, reminders, tax, conversion or payment
 processing is included. PDF uses the browser print/save flow. Payment and transition
 events provide a base for later follow-up work, which remains unimplemented.
@@ -100,7 +99,7 @@ Version checks and row locks prevent lost updates. Finalization requires explici
 attestation, freezes content and records its SHA-256. Audited reopening permits edits;
 prior final hashes remain in the immutable audit chain. Final status does not complete
 the engagement, deliver a report, establish a clean opinion or create a cryptographic
-signature. Clients receive 403 and have no report navigation; unassigned auditors get 404.
+signature. Clients receive 403 from the auditor editor; unassigned auditors get 404. The separate client Report screen is a synthetic mock pending its backend slice.
 Print view uses the invoice-style browser print/save PDF flow. The idempotent
 `python -m app.report_seed` seeds one existing explicitly synthetic demo engagement.
 

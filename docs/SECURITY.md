@@ -53,7 +53,7 @@
 ## Dependencies and deployment
 
 - **Dependency review/update:** Python dependencies in `pyproject.toml`/`uv.lock`; web dependencies in `web/package.json`/`package-lock.json`. Review security impact and lockfile changes; no automated dependency update policy documented.
-- **Environment separation:** Local, synthetic preview/demo, and live API must remain distinct. `NEXT_PUBLIC_USE_MOCKS=true` is synthetic UI mode and does not establish production auth/storage. Exact deployed project separation, credentials, and endpoints remain unverified. Repo infra describes AWS; owner-provided runtime context describes OVH/Cloudflare; resolve before operations changes.
+- **Environment separation:** Local, synthetic preview/demo, and live API must remain distinct. `NEXT_PUBLIC_USE_MOCKS=true` is synthetic UI mode and does not establish production auth/storage. Exact deployed project separation, credentials, and endpoints remain unverified. OVH/Cloudflare is the current owner-supplied target. Checked-in AWS infrastructure is migration preparation; deployed configuration remains unverified.
 - **Sensitive review:** Require review of authorization, file handling, auth/session, audit chain, and secret/config changes. No formal security owner/process is documented.
 
 ## Verification
@@ -101,7 +101,7 @@ Version checks and row locks prevent lost updates. Finalization requires explici
 attestation, freezes content and records its SHA-256. Audited reopening permits edits;
 prior final hashes remain in the immutable audit chain. Final status does not complete
 the engagement, deliver a report, establish a clean opinion or create a cryptographic
-signature. Clients receive 403 and have no report navigation; unassigned auditors get 404.
+signature. Clients receive 403 from the auditor editor; unassigned auditors get 404. The separate client Report screen is a synthetic mock pending its backend slice.
 Print view uses the invoice-style browser print/save PDF flow. The idempotent
 `python -m app.report_seed` seeds one existing explicitly synthetic demo engagement.
 

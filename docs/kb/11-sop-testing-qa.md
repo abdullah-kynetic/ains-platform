@@ -1,6 +1,6 @@
 # SOP — Testing and QA
 
-> **Branch status (checked 29 Oct 2026):** `main` is at merge `12f6f70` (PR #52), Alembic head `a111`. PRs **#53–#60 are NOT merged into `main`**; they are a stack (#53 → #54 → #55 → #56 → #57 → #58 → #59 → #60) on top of `main` and are visible only on preview (preview.kiensolutions.com; #59 on layout.kiensolutions.com). Anything tagged **Preview (#NN)** below is not in a fresh `main` checkout. The shared OVH backend already runs the stacked code (`02c480c`, DB at `a115`), so the API serves these routes even though `main` does not contain them.
+> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a115_user_onboarding`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
 
 ## Commands (verified in CI config)
 Backend (repo root): `uv sync --frozen` · `uv run ruff check .` · `uv run pytest -q` · targeted: `uv run pytest tests/test_workflow_boundary.py -q` · `uv run python scripts/evaluate_synthetic.py`
@@ -11,10 +11,11 @@ CI (`.github/workflows/ci.yml`, Ubuntu 24.04) runs both jobs on PRs.
 ## Latest reported results (Codex delivery report, `fix/onboarding-once`, 27 Oct 2026)
 219 backend tests, 74 browser tests, 9 web unit tests passed. (Reported by the agent; not re-run for this document.)
 
-## What the tests cover (preview stack; `main` has 20 pytest files and 19 Playwright specs — invoices, N/A, reports, onboarding and impeccable tests arrive with #53–#60)
-- `tests/`: 25 pytest files — API, tenant isolation, auth/MFA/reset, invitations, uploads and path guard, S3 storage (moto), worker, audit chain (Postgres), invoices (incl. Postgres race test), N/A, reports, onboarding, monitoring scrubbing, workflow boundary (no model SDKs in `app/`).
-- `web/e2e/`: 25 Playwright specs — accessibility (axe), sign-in, upload, questionnaire, checklist N/A, auditor, tasks, pipeline, workspaces, invoices, reports, audit log, onboarding, sidebar resize, header/sidebar, tenant host, redesign, impeccable, sentry, demo.
-- E2E runs in synthetic mock mode; it does not prove live R2, Resend, OVH or Worker behaviour.
+## What the tests cover
+
+Backend coverage includes API permissions/tenant isolation, auth/MFA/reset, invitations, uploads/storage, worker receipt checks, audit chains, invoices, N/A, reports, onboarding and the no-model boundary. Browser tests exercise synthetic workflows, accessibility, role-specific navigation, upload/questionnaire, manual review, tasks/pipeline, workspaces, invoices/reports, onboarding persistence/retry, sidebar/theme and client response privacy.
+
+Web sign-in and MFA controls were deliberately removed for the demo; restore their browser assertions with auth in phase 3. Synthetic browser tests and routed API fixtures do not prove live storage, email, authentication or hosting behavior. Historical reported counts above are not current verification.
 
 ## Release checklist
 - [ ] All CI jobs pass; exact commands and results in the report.
@@ -23,8 +24,8 @@ CI (`.github/workflows/ci.yml`, Ubuntu 24.04) runs both jobs on PRs.
 - [ ] No secrets, no real client data in diff, screenshots or logs.
 - [ ] Docs updated to match behaviour.
 - [ ] UI: before/after screenshots desktop light, desktop dark, phone (375 px); keyboard and reduced motion checked.
-- [ ] Deployed preview verified with both demo logins (client and auditor).
+- [ ] If separately authorized, preview deployment verified for both roles; restore auth before live.
 - [ ] Synthetic test data undone/reset (e.g. progress back to 0/32, demo walkthroughs as required).
-- [ ] Abdullah approved visuals before live.
+- [ ] Separate live authorization, restored auth and Abdullah visual approval before any live operation.
 
 Automated passes do not certify accessibility, security or regulatory compliance.

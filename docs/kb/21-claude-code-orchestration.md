@@ -1,4 +1,6 @@
-# Claude Code orchestration plan
+# Historical Claude Code orchestration reference
+
+The prompts below are reference only and do not authorize agents, AWS operations, deployments or AI work. The current [build order](15-roadmap-build-order.md) takes precedence. No AI feature, server operation, merge or deployment belongs to the current task.
 
 The lead (orchestrator) thread owns planning, PR creation, merges, deploys to live, and reporting to Abdullah. Worker threads each own one branch. Abdullah only reviews visuals.
 
@@ -43,7 +45,7 @@ Hard rules:
 - Never read .env or print/commit secrets; refer to env var names only.
 - No model SDKs in app/ (tests/test_workflow_boundary.py must pass).
 - Server-side tenant checks (firm_id + auditor assignment); add cross-tenant denial tests for new endpoints.
-- Don't redesign the look (ink #33405C, ochre #B8924A, cream, dark #242D40). UI changes need before/after screenshots: desktop light, desktop dark, phone.
+- Don't redesign the look (ink #33405C, ochre #B8924A, neutral white/gray surfaces, dark #0A0A0A). UI changes need before/after screenshots: desktop light, desktop dark, phone.
 - Commit as abdullah-kynetic <211030198+abdullah-kynetic@users.noreply.github.com>. Real merge commits only; no rebase, squash or force-push.
 - Do not deploy to live, run production migrations, touch the OVH server, AWS, n8n, Twenty or the client portal unless this prompt explicitly says so.
 - Keep costs minimal. Keep changes small, typed, tested.

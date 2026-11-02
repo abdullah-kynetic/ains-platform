@@ -1,6 +1,6 @@
 # Product overview and PRD
 
-> **Branch status (checked 29 Oct 2026):** `main` is at merge `12f6f70` (PR #52), Alembic head `a111`. PRs **#53–#60 are NOT merged into `main`**; they are a stack (#53 → #54 → #55 → #56 → #57 → #58 → #59 → #60) on top of `main` and are visible only on preview (preview.kiensolutions.com; #59 on layout.kiensolutions.com). Anything tagged **Preview (#NN)** below is not in a fresh `main` checkout. The shared OVH backend already runs the stacked code (`02c480c`, DB at `a115`), so the API serves these routes even though `main` does not contain them.
+> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a115_user_onboarding`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
 
 ## In one line
 Kien (by Kien Solutions) is workflow software for **independent AML testing of broker-dealers under FINRA Rule 3310**. It connects document collection, human evidence review, traceable decisions, report preparation and invoicing.
@@ -30,36 +30,38 @@ There is **no firm-admin role** and **no public sign-up** (invite only).
 4. Restricted/SAR items: clients are told not to upload; human-only handling; never sent to a model.
 5. Synthetic data only for demos and tests.
 
+Backend-authenticated target journeys below require restoration of the removed web auth flows. The current synthetic demo does not sign users in. New screen behavior is tracked in [frontend inventory](../frontend-inventory.md).
+
 ## User journeys
 1. **Client evidence submission** — invited client signs in at their firm portal (`<firm>.kiensolutions.com`), answers the questionnaire, drags files into one upload area (no need to pick a checklist item), gets a receipt with SHA-256 hash.
 2. **Client status and correction** — sees progress and neutral feedback, uploads replacements.
-3. **Client N/A** — marks items not applicable (and can undo) directly. This matches how firms run the process today. *(Preview only, #55/#58. On `main` the client proposes N/A and the auditor approves it.)*
+3. **Client N/A** — marks items not applicable (and can undo) directly. This matches how firms run the process today.
 4. **Auditor review** — sees assigned engagements, assigns evidence to items, records applicability and evidence decisions, notes, tasks, report-readiness blockers.
-5. **Auditor report** — *(editable reports are preview only, #56; `main` has the legacy DOCX/PDF draft + hash sign-off)* edits the report, finalizes with explicit attestation (records SHA-256 of content), can reopen (audited). Print to PDF via browser.
+5. **Auditor report** — (Editable reports and the legacy DOCX/PDF workflow are both merged.) edits the report, finalizes with explicit attestation (records SHA-256 of content), can reopen (audited). Print to PDF via browser.
 6. **Auditor access** — email/password, TOTP MFA when enrolled, recovery codes.
 7. **Workspaces** — auditors create/switch firm workspaces; clients see a plain firm card only.
-8. **Invoicing** — auditor-only ledger. *(Preview only, #53/#54.)*
-9. **First sign-in walkthrough** — three-step tour shown once per account, ever. *(Preview only, #57/#60.)*
+8. **Invoicing** — auditor-only ledger.
+9. **First sign-in walkthrough** — three-step tour shown once per account, ever.
 
 ## Requirements table (from docs/PRD.md)
 | ID | Need | Priority / status |
 | --- | --- | --- |
 | F-01 | Private firm workspace | Must / built |
-| F-02 | Client applicability (N/A) — client and assigned auditor can set/undo | Must / built on preview (#55, #58), not on `main`; `main` has propose-and-approve N/A |
+| F-02 | Client applicability (N/A) — client and assigned auditor can set/undo | Must / merged (#55, #58) |
 | F-03 | Multi-file upload, no request selection | Must / built |
 | F-04 | Neutral status and replacements | Must / built |
 | F-05 | Auditor assigned-work queue | Must / built |
 | F-06 | Traceable human review | Must / built |
-| F-07 | Report workflow + sign-off | Must / built (legacy draft + sign-off on `main`; editable reports preview only, #56) |
+| F-07 | Report workflow + sign-off | Must / merged legacy and editable reports; new tabbed assembly remains mock |
 | F-08 | Auditor MFA | Must / built |
 | F-09 | Invitations, password reset, magic link | Must / built |
 | F-10 | Responsive, keyboard, themes | Must / built |
 | F-11 | AI intake classification | Later / not built |
 | F-12 | SAR pre-screen (zero model runs) | Later / not built |
-| F-13 | Auditor invoicing v1 | Built on preview only (#53, #54), not on `main` |
+| F-13 | Auditor invoicing v1 | Merged (#53, #54) |
 
 ## Explicitly not in the product (today)
 Model inference in `app/` (blocked by `tests/test_workflow_boundary.py`), cryptographic report signatures, payment processing, invoice emails, public sign-up, Supabase.
 
 ## Unresolved (per repo docs)
-Product owner of record, audit rubric wording (Quentin must supply; placeholders intentionally empty), retention/deletion policy, backup objectives, success metrics.
+Security owner, audit rubric wording (Quentin must supply; placeholders intentionally empty), retention/deletion policy, backup objectives, success metrics.

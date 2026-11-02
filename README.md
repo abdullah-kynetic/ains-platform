@@ -1,6 +1,6 @@
 # Kien Solutions
 
-Kien Solutions (https://kiensolutions.com) is an AI-native financial regulatory audit firm. Our software does the legwork; a credentialed auditor (Quinton) makes the calls and signs every report. The first service is the FINRA Rule 3310 independent AML test for broker-dealers; more regulatory audits will follow.
+Kien Solutions (https://kiensolutions.com) is an AI-native financial regulatory audit firm. Our software does the legwork; a credentialed auditor (Quentin) makes the calls and signs every report. The first service is the FINRA Rule 3310 independent AML test for broker-dealers; more regulatory audits will follow.
 
 This repo holds the audit workflow backend (Python 3.12, FastAPI, Pydantic) and the portal
 (Next.js 16 in `web/`). Client documents use S3 by default; Egnyte is an optional, off-by-default connector.
@@ -11,7 +11,7 @@ This repo holds the audit workflow backend (Python 3.12, FastAPI, Pydantic) and 
 IDs, client descriptions, applicability questions, and allowed file types. Backend views
 read it directly; the web build generates an ignored JSON bundle from it (`npm run catalog`).
 Do not hand-maintain a second request list. Rubric fields are intentionally empty for
-Quinton to complete; file acceptance is not an audit conclusion. Restricted requests
+Quentin to complete; file acceptance is not an audit conclusion. Restricted requests
 have no portal evidence types. `initialize_engagement` creates workflow instances from
 the catalog; existing noncanonical instance keys require an explicit migration before use.
 
@@ -84,7 +84,7 @@ npm run build
 The portal uses real backend sessions and API data by default. Set
 `NEXT_PUBLIC_USE_MOCKS=true` only for the built-in synthetic client demo. Client users get the
 overview, document checklist, and firm questionnaire; auditor accounts are routed to an internal
-review queue where Quinton can inspect evidence, decide N/A requests, review cited findings, and
+review queue where Quentin can inspect evidence, decide N/A requests, review cited findings, and
 generate unsigned DOCX/PDF drafts. Browser-visible `NEXT_PUBLIC_*` values must never contain
 secrets. See `web/README.md` for the portal-specific workflow.
 
@@ -160,7 +160,7 @@ or rejects a finding; accepted and edited findings cannot be saved without a pag
 
 `POST /auditor/engagements/{id}/report?format=docx|pdf` generates an unsigned draft containing
 only auditor-approved findings. The swappable layout and required draft language live in
-`templates/report/default.json`. The application never marks a report signed—Quinton reviews and
+`templates/report/default.json`. The application never marks a report signed—Quentin reviews and
 signs the final report outside this draft-generation step.
 
 ## Synthetic evaluations
@@ -178,7 +178,7 @@ credential is part of this application.
 4. **Restricted material stays outside the portal.** Catalog metadata routes human handling; no restricted document contents belong in uploads, notes, fixtures, or repository artifacts.
 5. **Intake feedback never reveals audit findings.** Clients may hear "unreadable" or "wrong period", never "your manual is missing X".
 6. **No model inference in this repository.** Any future external pipeline needs its own approved authenticated adapter; evidence citations remain required for findings.
-7. **Humans decide.** Quinton approves, edits, or rejects every finding and signs the report.
+7. **Humans decide.** Quentin approves, edits, or rejects every finding and signs the report.
 
 ## Build handoff
 

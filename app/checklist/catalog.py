@@ -1,4 +1,4 @@
-"""Canonical request definitions; rubric interpretation belongs to Quinton."""
+"""Canonical request definitions; rubric interpretation belongs to Quentin."""
 
 from pathlib import Path
 from typing import Literal

@@ -16,7 +16,7 @@ Kien uses a clean neutral black-and-white SaaS style (calm, serious, premium for
 
 - **Brand attributes:** calm, precise, trustworthy. Responsive web on desktop and phone; tablet stays usable. Source of truth is `web/src/app/globals.css` and the shared components.
 - **Surfaces:** white cards on a `#F7F7F8` canvas, thin `#E5E7EB` borders, 12px card radius, 32px controls, no gradients or glows. Dark mode uses a `#0A0A0A` canvas and `#111113` surfaces.
-- **Ink `#33405C`** is used only for the logo mark, primary buttons, active navigation and focus rings. **Ochre `#B8924A`** is used only for deadline and needs-attention badges. Red, amber and green appear only as small soft-tinted status pills.
+- **Ink `#33405C`** is used only for the logo mark, primary buttons, active navigation and focus rings. **Ochre `#B8924A`** is used only for deadline badges. Red, amber and green appear only as small soft-tinted status pills.
 - **Sidebar:** grouped sections with small gray labels and count badges. Auditor: Workspace (Today, Clients, Notifications), Engagements (Engagements, Audit pipeline, Reports, Invoices), Firm (Firm settings, Audit Log, My account). Client: Engagement, Updates, Results (Responses requested, Report, Invoices). The theme switch stays above the account block, the collapsed rail is icon-only, and phones get a sheet. It is resizable and remembers its width.
 - **Pages:** the auditor home is Today. Engagement workspaces use route tabs (`LinkTabs`). No nested cards: use dividers inside a card.
 - **Components:** shadcn-style primitives in `web/src/components/ui` and Lucide icons only. `Field` associates its label with its control; scrollable tables are keyboard-focusable.
@@ -28,12 +28,11 @@ Values below are sourced from `web/src/app/globals.css` on main. Mix-based value
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| `color.ink` | `#33405C` | Brand Ink Blue and light foreground |
+| `color.ink` | `#33405C` | Logo, primary actions, active navigation and focus |
 | `color.ochre` | `#B8924A` | Brand Ochre accent |
 | `color.background` (light) | `#F7F7F8` | Neutral canvas |
 | `color.surface` (light) | `#FFFFFF` | Cards and controls |
 | `color.sidebar` (light) | `#F7F7F8` | Sidebar |
-| `color.ink-deep` | `#242D40` | Dark background base |
 | `color.background` (dark) | `#0A0A0A` | Dark canvas |
 | `color.foreground` (light) | `#0A0A0A` | Primary text (Ink is not the text color) |
 | `color.danger` | `#DC2626` (text `#B91C1C`) | Error/status color; always paired with text |
@@ -49,8 +48,8 @@ Values below are sourced from `web/src/app/globals.css` on main. Mix-based value
 
 ## Layout rules
 
-- **Container widths, gutters, breakpoints:** Main CSS has no single fixed content max-width token. Desktop sidebar activates at Tailwind `lg` (1024px); mobile navigation is a focus-managed sheet below that. Sidebar default width 256px; persisted drag width clamped 200–360px; collapsed rail 48px in the layout preview. The exact snap/collapse threshold is implemented in `web/src/components/shell/nav.tsx` and should be preserved there.
-- **Grid, spacing, alignment:** Use the existing 4px-derived spacing tokens; group related content with 8px multiples. Use hairline `--color-border` borders and existing soft shadows. Prefer compact tiles with the primary action at top right. The layout preview adds the navigation-only header described above.
+- **Container widths, gutters, breakpoints:** Main CSS has no single fixed content max-width token. Desktop sidebar activates at Tailwind `lg` (1024px); mobile navigation is a focus-managed sheet below that. Sidebar default width 256px; persisted drag width clamped 200–360px; collapsed rail 48px in the current layout. The exact snap/collapse threshold is implemented in `web/src/components/shell/nav.tsx` and should be preserved there.
+- **Grid, spacing, alignment:** Use the existing 4px-derived spacing tokens; group related content with 8px multiples. Use hairline `--color-border` borders and existing soft shadows. Prefer compact tiles with the primary action at top right. The current shell includes the navigation-only header described above.
 - **Mobile behavior:** Sidebar is replaced with a sheet; preserve focus entry/return and keyboard close behavior. Ensure content and file controls fit narrow screens without horizontal overflow.
 - **Shell:** Desktop sidebar can resize and collapse, remembers state, and shows icons only when collapsed. Theme control is directly above identity/firm/logout content. Client firm identity is a plain firm card; workspace switching and add-workspace are auditor-only.
 - **Checklist:** Search is inline next to the “Open checklist” action where that combined view exists; checklist filtering remains local to the checklist screen.
@@ -68,7 +67,7 @@ Shared components live in `web/src/components/ui/`, with shell, checklist, audit
 
 ## Accessibility
 
-- Keyboard navigation and visible `:focus-visible` outline are global base rules; preserve native semantics, labels, and focus management. Current main outline color follows `--color-focus`; the owner’s Ochre keyboard-only focus rule is desired but not fully implemented as specified.
+- Keyboard navigation and visible `:focus-visible` outline are global base rules; preserve native semantics, labels, and focus management. Current main outline color follows `--color-focus`; the approved focus color is Ink.
 - Honor `prefers-reduced-motion: reduce` by removing/nearly eliminating animations and transitions; theme reveal and sidebar transitions must not obstruct interaction.
 - Pair error/success/warning colors with text and labels. Do not claim contrast conformance without measuring the actual computed theme colors; automated browser accessibility tests are coverage, not certification.
 - Provide semantic landmarks, accessible names, alt text where needed, adequate hit areas, and screen-reader status/error announcements.
@@ -125,7 +124,7 @@ Version checks and row locks prevent lost updates. Finalization requires explici
 attestation, freezes content and records its SHA-256. Audited reopening permits edits;
 prior final hashes remain in the immutable audit chain. Final status does not complete
 the engagement, deliver a report, establish a clean opinion or create a cryptographic
-signature. Clients receive 403 and have no report navigation; unassigned auditors get 404.
+signature. Clients receive 403 from the auditor editor; unassigned auditors get 404. The separate client Report screen is a synthetic mock pending its backend slice.
 Print view uses the invoice-style browser print/save PDF flow. The idempotent
 `python -m app.report_seed` seeds one existing explicitly synthetic demo engagement.
 

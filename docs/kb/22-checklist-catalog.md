@@ -41,4 +41,4 @@ Sections: Program and leadership · Training and independent testing · Clients 
 | AML-BD-033 | AML staffing and separation of duties | |
 | AML-BD-034 | Complaints and investigations | |
 
-Progress counts 32 collectable items (34 minus the two restricted). N/A items stay visible with their number, sort last and count as done. *(This N/A/progress behaviour is preview only, #55/#58; not on `main` yet.)*
+Progress counts 32 collectable items (34 minus the two restricted). N/A items stay visible with their number, sort last and count as done. *(Merged in #55/#58; deployment not inspected.)*

@@ -1,30 +1,22 @@
-# Open questions (need a decision)
+# Open questions
 
-## For Abdullah
-1. Approve visuals on preview (#53–#58, #60 — still unmerged) and layout (#59)? Fold the layout into the live build?
-2. Design branch #50 (design.kiensolutions.com): keep exploring, or close?
-3. Can a client undo an N/A the auditor set? (Recommended: yes.)
-4. AWS: send sign-in code after root MFA. Target shape: single EC2 (cheapest) vs RDS from day one?
-5. Stripe: which account/entity, and which payment methods? Fees passed to clients?
-6. Monthly budget cap for hosting and AI.
-7. GitHub: create a fine-grained token that can open PRs (gh currently can't).
-8. Retention/deletion policy and backup targets (how much data loss is acceptable, how fast to restore).
-9. Who is the product owner of record and security owner (for SOC 2)?
+## Decisions needed from Abdullah
 
-## For Quentin
-1. Audit rubric wording, applicability conditions and allowed evidence types for each of the 34 items (fields intentionally empty).
-2. FINRA/AML resources for the chatbot and ~30 common client questions with model answers.
-3. Report template wording and sign-off procedure (is hash attestation enough, or a real e-signature?).
-4. Severity logic and sample (sanitized) report.
+- Stripe account/entity, payment methods and treatment of fees; implementation uses test mode only with payments disabled by default.
+- AWS architecture (single host or managed database), account/region confirmation, spending cap and resource inputs. Do not request sign-in codes or credentials in chat.
+- Backup RPO/RTO, off-site destination, retention/deletion and legal hold policy.
+- Security owner and product success targets. Abdullah Ahmed is the product owner.
+- Auditor hostname and any Cloudflare Access policy before auth rollout.
+- Whether to retain the current behavior allowing a client to undo auditor-marked N/A; preserve it pending a decision.
 
-## For the attorney
-1. Written confirmation that Anthropic and OpenAI are approved, and under what retention terms.
-2. Reg S-P service-provider obligations and client contract terms (incident notice timing).
-3. "Not legal advice" wording for the chatbot.
+## Needs Quentin
 
-## Technical unknowns
-1. `/tenant/branding` backend route not found — confirm per-firm branding works in real mode.
-2. How `kien-demo-live` is configured (repo `wrangler.jsonc` says `ains-platform-demo`).
-3. Is Sentry enabled in production?
-4. R2 credential variable names on OVH (not in `.env.example`).
-5. Scheduled backups on OVH — do any exist?
+Rubric wording, applicability and allowed evidence for all 34 requests; severity logic; report template and sign-off procedure. Leave unapproved rubric criteria empty. Synthetic examples only.
+
+## Needs attorney
+
+Privacy/terms wording, Reg S-P obligations and incident terms; any future model-provider/data-retention approval is outside this task. Do not invent legal text.
+
+## Unverified operational facts
+
+Current deployed Worker/version/bindings, live Sentry state, backup schedule and restore evidence were not inspected. `/tenant/branding` has a frontend client but no backend route found in source. OVH is current per the owner; AWS is planned. Source merged status does not prove deployment.

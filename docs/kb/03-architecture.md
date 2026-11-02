@@ -1,6 +1,6 @@
 # Architecture
 
-> **Branch status (checked 29 Oct 2026):** `main` is at merge `12f6f70` (PR #52), Alembic head `a111`. PRs **#53–#60 are NOT merged into `main`**; they are a stack (#53 → #54 → #55 → #56 → #57 → #58 → #59 → #60) on top of `main` and are visible only on preview (preview.kiensolutions.com; #59 on layout.kiensolutions.com). Anything tagged **Preview (#NN)** below is not in a fresh `main` checkout. The shared OVH backend already runs the stacked code (`02c480c`, DB at `a115`), so the API serves these routes even though `main` does not contain them.
+> **Source status (2 Nov 2026):** PRs #53–#60 and #64–#72 are merged in the checked-out history through `d822ce1`. The schema head is `a115_user_onboarding`. Merged source does not establish what is deployed. Runtime state was not inspected. Web sign-in is removed for the synthetic demo; backend auth, MFA and tenant isolation remain required. New screen contracts still use mocks; see [frontend inventory](../frontend-inventory.md).
 
 ## Current production (owner-supplied runtime; code supports it)
 ```mermaid
@@ -40,23 +40,23 @@ Workers: live `kien-demo-live` (live.kiensolutions.com), preview `kien-signin-pr
 | --- | --- |
 | `app/main.py` | FastAPI app, routers, `/health` |
 | `app/config.py` | Settings from env vars |
-| `app/auth/` | Password, sessions, invitations, reset, magic link, MFA, Resend email; `onboarding.py` preview only (#57) |
-| `app/api/` | engagements, questionnaire, intake (feedback), manual_review (workspace, pipeline, tasks), auditor, audit_log; `reports.py` (#56) and `invoices.py` (#53) and the direct N/A route (#55/#58) are preview only |
+| `app/auth/` | Password, sessions, invitations, reset, magic link, MFA, Resend email; `onboarding.py` merged (#57) |
+| `app/api/` | engagements, questionnaire, intake (feedback), manual_review (workspace, pipeline, tasks), auditor, audit_log; `reports.py` (#56) and `invoices.py` (#53) and the direct N/A route (#55/#58) are merged |
 | `app/database/` | SQLAlchemy models, session |
 | `app/documents/`, `app/storage/s3.py` | Upload ingestion; S3-compatible storage (R2 today) |
 | `app/checklist/`, `data/checklist/` | Catalog and statuses |
 | `app/checks/`, `app/worker.py` | Receipt checks and Postgres queue |
 | `app/audit.py`, `app/evidence.py` | Audit chain, evidence helpers |
 | `app/reports/`, `templates/report/` | Draft report generation |
-| `app/invoicing.py` | Invoice arithmetic/numbering/transitions — preview only (#53) |
-| `app/*_seed.py` | Synthetic demo seeds (demo on `main`; invoice, report, monday, onboarding seeds preview only) |
+| `app/invoicing.py` | Invoice arithmetic/numbering/transitions — merged (#53) |
+| `app/*_seed.py` | Synthetic demo seeds (demo, invoice, report, monday and onboarding seeds merged) |
 | `app/egnyte_client/` | Optional Egnyte client, path guard `/Shared/AINS-Dev` |
-| `migrations/versions/` | Alembic chain; `main` head `a111_unassigned_documents`; `a112`–`a115` (head `a115_user_onboarding`) preview only |
-| `web/` | Next.js app; `wrangler.jsonc`, `open-next.config.ts` (`wrangler.preview.jsonc`/`wrangler.layout.jsonc` preview only, #60) |
+| `migrations/versions/` | Alembic chain; head `a115_user_onboarding`, including `a112`–`a115` |
+| `web/` | Next.js app; `wrangler.jsonc`, `open-next.config.ts` (`wrangler.preview.jsonc`/`wrangler.layout.jsonc` merged, #60) |
 | `web/e2e/` | Playwright tests (19 specs on `main`; 25 with the preview stack) |
 | `infra/aws/` | Terraform single-host AWS profile (not in use) |
 | `.github/workflows/ci.yml` | CI |
-| `.impeccable/` | Impeccable design review and design.json — preview only (#59) |
+| `.impeccable/` | Impeccable design review and design.json — merged (#59) |
 
 ## Background jobs
 Only one: the receipt-check worker (Postgres-backed queue, states queued/running/succeeded/failed). Retry/stale-job operations are not documented. No cron jobs in repo. (On AWS Terraform: daily `pg_dump` timer.)
