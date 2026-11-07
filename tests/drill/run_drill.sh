@@ -107,7 +107,7 @@ expect backup_fails_when_dump_fails nz $rc "exit code on pg_dump failure"
 [ "$before" = "$after" ] && rec backup_no_partial_snapshot PASS "db snapshots $before -> $after" || rec backup_no_partial_snapshot FAIL "failed dump still saved a db snapshot ($before -> $after): restore of 'latest' would use a truncated/empty dump"
 # doc tamper in backup copy and row-count drift
 psql -U kien -d kien -qc "insert into firms(id,name,slug,created_at) values('drift','Drift','drift',now())"
-"$D/backup/restore-drill.sh" >"$W/drill2.log" 2>&1; expect drill_detects_row_drift nz $? "$(grep DRILL $W/drill2.log | head -1)"
+"$D/backup/restore-drill.sh" >"$W/drill2.log" 2>&1; expect drill_ignores_post_backup_writes 0 $? "drill compares to backup-time counts, not live DB (IMPL-2 semantics): $(grep DRILL $W/drill2.log | head -1)"
 psql -U kien -d kien -qc "delete from firms where id='drift'"
 "$MOTO/bin/python" - <<PY
 import boto3
