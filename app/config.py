@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     password_reset_ttl_minutes: int = Field(default=15, ge=1, le=60)
 
     document_check_timeout_seconds: int = 300
+
+    # In-process protection (0 disables). Per client address per minute; concurrent uploads
+    # across the process, sized for the 4 GB VPS (each upload is buffered, up to 100 MB).
+    api_rate_limit_per_minute: int = Field(default=300, ge=0)
+    upload_max_concurrent: int = Field(default=3, ge=0)
     report_template: str = "default.json"
 
     database_url: str = "postgresql+psycopg://ains:ains_dev@localhost:5432/ains"
