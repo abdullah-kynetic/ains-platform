@@ -31,9 +31,9 @@ test("auditor can create and edit a synthetic internal task", async ({ page }) =
   await page.getByLabel("Task priority").selectOption("high");
   await page.getByRole("button", { name: "Save task" }).click();
 
-  await expect(page.getByText("Prepare synthetic status brief").first()).toBeVisible();
+  await expect(page.getByText("Prepare synthetic status brief")).toBeVisible();
   await page.reload();
-  await expect(page.getByText("Prepare synthetic status brief").first()).toBeVisible();
+  await expect(page.getByText("Prepare synthetic status brief")).toBeVisible();
 
   await page.getByRole("button", { name: "Edit Prepare synthetic status brief" }).click();
   await page.getByLabel("Task title").fill("Finalize synthetic status brief");
