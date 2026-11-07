@@ -35,6 +35,8 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type"],
+        # The web app reads Retry-After to tell a locked-out user how long to wait.
+        expose_headers=["Retry-After"],
     )
     from app.auth.onboarding import router as onboarding_router
     from app.auth.reset import router as reset_router

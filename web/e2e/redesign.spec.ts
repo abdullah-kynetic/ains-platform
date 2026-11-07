@@ -170,4 +170,8 @@ test("client sidebar lists every route and supports collapse, mobile navigation"
   await sheet.getByRole("link", { name: "Messages", exact: true }).click();
   await expect(page).toHaveURL(/\/messages$/);
   await expect(sheet).not.toBeVisible();
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await sheet.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(page).toHaveURL(/\/sign-in$/);
+  await expect(page.getByRole("heading", { name: "Sign in to Kien", exact: true })).toBeVisible();
 });

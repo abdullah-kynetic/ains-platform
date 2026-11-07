@@ -109,3 +109,13 @@ def test_real_app_returns_429_with_cors_headers_then_recovers(monkeypatch):
     assert client.get("/health").status_code == 200
     now[0] += 61
     assert client.get("/auth/capabilities", headers=origin).status_code == 200
+
+
+def test_cors_exposes_retry_after_to_the_browser():
+    from fastapi.testclient import TestClient
+
+    from app.main import create_app
+
+    client = TestClient(create_app())
+    response = client.get("/health", headers={"Origin": "http://localhost:3000"})
+    assert "Retry-After" in response.headers.get("access-control-expose-headers", "")
