@@ -94,6 +94,10 @@ def test_prod_stack_runs_clamd_and_forces_scanning_on():
     assert SERVICES["api"]["depends_on"]["clamav"]["condition"] == "service_healthy"
 
 
+def test_prod_api_sets_secure_session_cookie():
+    assert SERVICES["api"]["environment"]["SESSION_COOKIE_SECURE"] == "true"
+
+
 def test_app_refuses_to_start_in_production_with_scanning_off():
     import pytest
 
@@ -102,7 +106,15 @@ def test_app_refuses_to_start_in_production_with_scanning_off():
 
     with pytest.raises(RuntimeError, match="UPLOAD_SCAN_MODE"):
         enforce_production_safety(Settings(_env_file=None, env="production"))
-    enforce_production_safety(Settings(_env_file=None, env="production", upload_scan_mode="clamav"))
+    with pytest.raises(RuntimeError, match="SESSION_COOKIE_SECURE"):
+        enforce_production_safety(
+            Settings(_env_file=None, env="production", upload_scan_mode="clamav")
+        )
+    enforce_production_safety(
+        Settings(
+            _env_file=None, env="production", upload_scan_mode="clamav", session_cookie_secure=True
+        )
+    )
     enforce_production_safety(Settings(_env_file=None))  # development default still starts
 
 

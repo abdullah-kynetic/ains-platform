@@ -9,13 +9,18 @@ from app.auth.invitations import auditor_router as invitation_auditor_router
 from app.auth.invitations import public_router as invitation_public_router
 from app.config import get_settings
 from app.monitoring import init_sentry
+from app.origin_check import OriginCheckMiddleware
 from app.ratelimit import RateLimitMiddleware
 
 
 def enforce_production_safety(settings) -> None:
     """Refuse to start in production with unscanned uploads (no silent unsafe default)."""
-    if settings.env == "production" and settings.upload_scan_mode == "off":
+    if settings.env != "production":
+        return
+    if settings.upload_scan_mode == "off":
         raise RuntimeError("ENV=production requires UPLOAD_SCAN_MODE=clamav; refusing to start")
+    if not settings.session_cookie_secure:
+        raise RuntimeError("ENV=production requires SESSION_COOKIE_SECURE=true; refusing to start")
 
 
 def create_app() -> FastAPI:
@@ -28,6 +33,9 @@ def create_app() -> FastAPI:
         RateLimitMiddleware,
         per_minute=settings.api_rate_limit_per_minute,
         max_concurrent_uploads=settings.upload_max_concurrent,
+    )
+    application.add_middleware(
+        OriginCheckMiddleware, allowed_origins=settings.parsed_cors_origins()
     )
     application.add_middleware(
         CORSMiddleware,

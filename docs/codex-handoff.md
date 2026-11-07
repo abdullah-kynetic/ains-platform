@@ -36,7 +36,7 @@ Abdullah is not a developer. Explain things in plain English, keep reports short
 
 ### Verified commands
 - Backend (repo root): `uv sync --frozen`, `uv run ruff check .`, `uv run pytest -q`
-- Web (`web/`): `npm ci`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `NEXT_PUBLIC_USE_MOCKS=true npm run build`, `npm run build:cloudflare`, `npm run test:e2e`
+- Web (`web/`): `npm ci`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `KIEN_BUILD_TARGET=demo NEXT_PUBLIC_USE_MOCKS=true npm run build`, `npm run build:cloudflare`, `npm run test:e2e`
 - Local Postgres 16: `docker compose up -d`. Migrations are Alembic and must be additive and reversible; confirm parity on a real PostgreSQL.
 
 ### How to work
