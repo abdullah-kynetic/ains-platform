@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Test shim: emulates the few `docker` / `docker compose` calls the deploy scripts make, backed by a
+# local disposable PostgreSQL 16 cluster. Used only by tests/drill. NOT Docker coverage.
+export PGHOST=127.0.0.1 PGPORT=${DRILL_PGPORT:-55432}
+adm() { psql -U kien -d postgres -v ON_ERROR_STOP=1 -qAtc "$1"; }
+runwith() { env POSTGRES_USER=kien POSTGRES_DB=${DRILL_SRC_DB:-kien} "$@"; }
+case "${1:-}" in
+  compose)
+    shift
+    while [ $# -gt 0 ] && [ "$1" != exec ] && [ "$1" != ps ]; do shift; done
+    cmd=${1:-}; shift
+    if [ "$cmd" = exec ]; then
+      [ "${1:-}" = -T ] && shift
+      shift # service name
+      runwith "$@"
+    else
+      exit 0
+    fi ;;
+  run) # docker run -d --name X ...
+    while [ $# -gt 0 ] && [ "$1" != --name ]; do shift; done
+    adm "drop database if exists drill" && adm "drop role if exists drill" >/dev/null 2>&1 || true
+    adm "create role drill superuser login" && adm "create database drill owner drill" >/dev/null
+    echo scratch ;;
+  exec) shift; shift; env "$@" ;;   # container name dropped, command runs against local cluster
+  cp) cp "$2" "${3#*:}" ;;
+  rm) adm "drop database if exists drill" >/dev/null 2>&1; adm "drop role if exists drill" >/dev/null 2>&1; exit 0 ;;
+  *) echo "docker shim: unsupported: $*" >&2; exit 99 ;;
+esac
