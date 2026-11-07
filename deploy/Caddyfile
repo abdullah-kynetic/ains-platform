@@ -1,0 +1,25 @@
+# Hostnames come from /etc/kien/kien.env (API_HOST, STAGING_HOST). Caddy gets certificates automatically.
+# If Cloudflare proxying is ever enabled in front, add trusted_proxies for Cloudflare's ranges.
+
+(kien_api) {
+	encode zstd gzip
+	request_body {
+		max_size 105MB # app cap is 100 MB per file; leave room for multipart overhead
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	# Caddy overwrites X-Forwarded-For with the real client address by default.
+	reverse_proxy api:8000
+}
+
+{$API_HOST} {
+	import kien_api
+}
+
+{$STAGING_HOST} {
+	import kien_api
+}
