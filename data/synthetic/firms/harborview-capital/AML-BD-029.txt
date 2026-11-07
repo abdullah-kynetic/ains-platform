@@ -1,7 +1,0 @@
-SYNTHETIC TEST DOCUMENT - invented firm, not real
-Firm: Harborview Capital Partners Inc
-Request: AML-BD-029 AML governance and oversight
-Period: 2025
-
-This is a short invented sample covering: aml governance and oversight.
-Procedures are written in the firm's own words for testing only.

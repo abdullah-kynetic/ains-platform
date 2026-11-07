@@ -1,8 +1,0 @@
-SYNTHETIC TEST DOCUMENT - invented firm, not real
-Firm: Lakeshore Brokerage Group LLC
-Request: AML-BD-033 AML staffing and separation of duties
-Period: 2025
-
-This is a short invented sample covering: aml staffing and separation of duties.
-Procedures are written in the firm's own words for testing only.
-AML officer: Riley Sample. Program tested by: Riley Sample.

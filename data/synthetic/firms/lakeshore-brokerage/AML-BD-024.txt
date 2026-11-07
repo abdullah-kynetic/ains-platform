@@ -1,7 +1,0 @@
-SYNTHETIC TEST DOCUMENT - invented firm, not real
-Firm: Lakeshore Brokerage Group LLC
-Request: AML-BD-024 Intermediary arrangements or representation
-Period: 2025
-
-This is a short invented sample covering: intermediary arrangements or representation.
-Procedures are written in the firm's own words for testing only.

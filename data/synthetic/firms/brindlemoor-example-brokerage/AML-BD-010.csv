@@ -1,0 +1,66 @@
+date,account,counterparty,country,amount_usd,memo
+2025-01-06,ACCT-1073,Vendor 5,US,3800.00,ordinary activity
+2025-01-07,ACCT-1059,Vendor 6,US,1568.00,ordinary activity
+2025-01-19,ACCT-1016,Vendor 5,US,2770.00,ordinary activity
+2025-01-25,ACCT-1050,Vendor 4,US,3207.00,ordinary activity
+2025-02-01,ACCT-1008,Vendor 1,US,1996.00,ordinary activity
+2025-02-12,ACCT-1005,Vendor 3,US,223.00,ordinary activity
+2025-02-17,ACCT-1026,Vendor 7,US,3655.00,ordinary activity
+2025-02-19,ACCT-1014,Vendor 8,US,4348.00,ordinary activity
+2025-02-26,ACCT-1030,Vendor 7,US,7372.00,ordinary activity
+2025-03-08,ACCT-1011,Vendor 3,US,5374.00,ordinary activity
+2025-03-13,ACCT-1058,Vendor 9,US,2668.00,ordinary activity
+2025-03-19,ACCT-1020,Vendor 1,US,4498.00,ordinary activity
+2025-04-02,ACCT-1055,Vendor 4,US,2912.00,ordinary activity
+2025-04-07,ACCT-1077,Vendor 8,US,8683.00,ordinary activity
+2025-04-11,ACCT-1082,Vendor 9,US,2331.00,ordinary activity
+2025-04-13,ACCT-1047,Vendor 8,US,5128.00,ordinary activity
+2025-04-17,ACCT-1015,Vendor 3,US,245.00,ordinary activity
+2025-04-20,ACCT-1086,Vendor 8,US,5901.00,ordinary activity
+2025-04-27,ACCT-1070,Vendor 7,US,4200.00,ordinary activity
+2025-05-01,ACCT-1001,Vendor 7,US,6504.00,ordinary activity
+2025-05-09,ACCT-1045,Vendor 6,US,7098.00,ordinary activity
+2025-05-18,ACCT-1052,Vendor 9,US,1865.00,ordinary activity
+2025-06-01,ACCT-1042,Meridian Trading Ltd (invented),XX-Foreign,9500.00,wire
+2025-06-02,ACCT-1042,Meridian Trading Ltd (invented),XX-Foreign,9500.00,wire
+2025-06-03,ACCT-1032,Vendor 7,US,6392.00,ordinary activity
+2025-06-03,ACCT-1042,Meridian Trading Ltd (invented),XX-Foreign,9500.00,wire
+2025-06-03,ACCT-1046,Vendor 7,US,5038.00,ordinary activity
+2025-06-04,ACCT-1042,Meridian Trading Ltd (invented),XX-Foreign,9500.00,wire
+2025-06-04,ACCT-1073,Vendor 8,US,5586.00,ordinary activity
+2025-06-05,ACCT-1042,Meridian Trading Ltd (invented),XX-Foreign,9500.00,wire
+2025-06-13,ACCT-1073,Vendor 7,US,716.00,ordinary activity
+2025-06-19,ACCT-1037,Vendor 6,US,1538.00,ordinary activity
+2025-07-04,ACCT-1096,Vendor 7,US,1329.00,ordinary activity
+2025-07-08,ACCT-1060,Vendor 6,US,4435.00,ordinary activity
+2025-07-16,ACCT-1081,Vendor 8,US,8163.00,ordinary activity
+2025-07-16,ACCT-1087,Vendor 7,US,8242.00,ordinary activity
+2025-07-24,ACCT-1085,Vendor 7,US,4848.00,ordinary activity
+2025-08-02,ACCT-1010,Vendor 6,US,1316.00,ordinary activity
+2025-08-02,ACCT-1066,Vendor 5,US,1805.00,ordinary activity
+2025-08-04,ACCT-1043,Vendor 7,US,7965.00,ordinary activity
+2025-08-15,ACCT-1043,Vendor 6,US,7295.00,ordinary activity
+2025-08-16,ACCT-1040,Vendor 2,US,6757.00,ordinary activity
+2025-08-19,ACCT-1011,Vendor 6,US,5042.00,ordinary activity
+2025-09-03,ACCT-1047,Vendor 9,US,8721.00,ordinary activity
+2025-09-08,ACCT-1083,Vendor 5,US,4272.00,ordinary activity
+2025-09-13,ACCT-1033,Vendor 9,US,8483.00,ordinary activity
+2025-09-16,ACCT-1040,Vendor 7,US,4982.00,ordinary activity
+2025-09-17,ACCT-1088,Vendor 8,US,5267.00,ordinary activity
+2025-09-22,ACCT-1076,Vendor 6,US,6860.00,ordinary activity
+2025-10-03,ACCT-1089,Vendor 1,US,3298.00,ordinary activity
+2025-10-08,ACCT-1095,Vendor 7,US,4891.00,ordinary activity
+2025-10-17,ACCT-1037,Vendor 6,US,5302.00,ordinary activity
+2025-10-17,ACCT-1058,Vendor 1,US,4381.00,ordinary activity
+2025-10-18,ACCT-1020,Vendor 9,US,203.00,ordinary activity
+2025-11-03,ACCT-1004,Vendor 5,US,4621.00,ordinary activity
+2025-11-04,ACCT-1050,Vendor 5,US,7684.00,ordinary activity
+2025-11-07,ACCT-1085,Vendor 5,US,4155.00,ordinary activity
+2025-11-12,ACCT-1024,Vendor 7,US,3896.00,ordinary activity
+2025-11-15,ACCT-1082,Vendor 8,US,5418.00,ordinary activity
+2025-11-24,ACCT-1058,Vendor 5,US,3894.00,ordinary activity
+2025-11-25,ACCT-1040,Vendor 9,US,4630.00,ordinary activity
+2025-12-10,ACCT-1083,Vendor 2,US,1676.00,ordinary activity
+2025-12-18,ACCT-1042,Vendor 7,US,6604.00,ordinary activity
+2025-12-18,ACCT-1068,Vendor 9,US,6539.00,ordinary activity
+2025-12-23,ACCT-1040,Vendor 9,US,6614.00,ordinary activity

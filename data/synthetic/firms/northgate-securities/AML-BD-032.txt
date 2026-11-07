@@ -1,7 +1,0 @@
-SYNTHETIC TEST DOCUMENT - invented firm, not real
-Firm: Northgate Securities LLC
-Request: AML-BD-032 Continuity of AML controls
-Period: 2025
-
-This is a short invented sample covering: continuity of aml controls.
-Procedures are written in the firm's own words for testing only.

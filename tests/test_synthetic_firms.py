@@ -2,9 +2,25 @@ import json
 import re
 from pathlib import Path
 
+from scripts.build_synthetic_firms import build
+
 ROOT = Path(__file__).resolve().parents[1]
 FIRMS = ROOT / "data" / "synthetic" / "firms"
 RESTRICTED = {"AML-BD-017", "AML-BD-025"}
+
+# Real-looking identifiers that must never appear in synthetic files.
+PII_PATTERNS = {
+    "email": r"[\w.+-]+@[\w-]+\.[a-z]{2,}",
+    "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
+    "ein": r"\b\d{2}-\d{7}\b",
+    "phone": r"(?<!\d)(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}(?!\d)",
+    "url": r"https?://|www\.",
+    "street_address": (
+        r"\b\d{1,5}\s+[A-Z][a-z]+\s+(?:Street|St|Avenue|Ave|Road|Rd|Blvd|Drive|Dr|Lane|Ln)\b"
+    ),
+    "long_number": r"\b\d{9,}\b",
+    "sar_text": r"suspicious activity report",
+}
 
 
 def _keys():
@@ -30,21 +46,52 @@ def test_files_match_answer_key_and_defects_are_planted() -> None:
             else:
                 assert item["expected_status"] in {"missing", "not_applicable"}
         defects = [i for i in items if i["defect_id"]]
-        assert bool(defects) == (folder.name != "northgate-securities")
+        assert bool(defects) == (folder.name != "zephyrine-example-securities")
+
+
+def test_every_keyed_defect_marker_is_present_in_its_file() -> None:
+    checked = 0
+    for folder, items in _keys():
+        for item in items:
+            if not item["defect_id"]:
+                continue
+            if item["marker"] is None:  # absence defects: the evidence must be missing
+                assert item["file"] is None and item["expected_status"] == "missing", item
+                continue
+            text = (folder / item["file"]).read_text(encoding="utf-8")
+            assert item["marker"] in text, (folder.name, item["item_id"], item["defect_id"])
+            checked += 1
+    assert checked >= 10
+
+
+def test_clean_firm_files_contain_no_defect_markers() -> None:
+    markers = {i["marker"] for _, items in _keys() for i in items if i["marker"]}
+    clean = FIRMS / "zephyrine-example-securities"
+    for path in clean.glob("AML-BD-*"):
+        text = path.read_text(encoding="utf-8")
+        assert not [m for m in markers if m in text], path
+
+
+def test_missing_pages_defect_really_skips_page_three() -> None:
+    text = (FIRMS / "quillfeather-example-capital" / "AML-BD-009.txt").read_text()
+    assert "page 2 of 4" in text and "page 4 of 4" in text and "page 3 of 4" not in text
 
 
 def test_no_real_looking_data_or_sar_material() -> None:
-    pattern = re.compile(
-        r"(@[a-z0-9-]+\.[a-z]{2,}|\b\d{3}-\d{2}-\d{4}\b|suspicious activity report)", re.I
-    )
     for path in FIRMS.rglob("*"):
         if path.is_file():
-            assert not pattern.search(path.read_text(encoding="utf-8")), path
+            text = path.read_text(encoding="utf-8")
+            for name, pattern in PII_PATTERNS.items():
+                assert not re.search(pattern, text, re.I), (name, path)
 
 
-def test_generator_is_deterministic() -> None:
-    from scripts.build_synthetic_firms import build
+def test_firm_names_are_marked_fictional() -> None:
+    names = json.loads((FIRMS / "index.json").read_text())
+    assert all("Example" in v["name"] for v in names.values())
 
-    before = {p: p.read_bytes() for p in FIRMS.rglob("*") if p.is_file()}
-    build()
-    assert before == {p: p.read_bytes() for p in FIRMS.rglob("*") if p.is_file()}
+
+def test_generator_is_deterministic(tmp_path: Path) -> None:
+    build(tmp_path)
+    built = {p.relative_to(tmp_path): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    committed = {p.relative_to(FIRMS): p.read_bytes() for p in FIRMS.rglob("*") if p.is_file()}
+    assert built == committed

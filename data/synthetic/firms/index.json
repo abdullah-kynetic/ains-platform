@@ -1,16 +1,16 @@
 {
-  "northgate-securities": {
-    "name": "Northgate Securities LLC",
+  "zephyrine-example-securities": {
+    "name": "Zephyrine Example Securities LLC",
     "profile": "clean",
     "defects": 0
   },
-  "harborview-capital": {
-    "name": "Harborview Capital Partners Inc",
+  "quillfeather-example-capital": {
+    "name": "Quillfeather Example Capital Inc",
     "profile": "messy",
     "defects": 5
   },
-  "lakeshore-brokerage": {
-    "name": "Lakeshore Brokerage Group LLC",
+  "brindlemoor-example-brokerage": {
+    "name": "Brindlemoor Example Brokerage LLC",
     "profile": "bad",
     "defects": 9
   }

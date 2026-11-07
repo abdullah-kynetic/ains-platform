@@ -1,7 +1,0 @@
-SYNTHETIC TEST DOCUMENT - invented firm, not real
-Firm: Lakeshore Brokerage Group LLC
-Request: AML-BD-004 Clearing-firm AML reports
-Period: 2025
-
-This is a short invented sample covering: clearing-firm aml reports.
-Procedures are written in the firm's own words for testing only.
