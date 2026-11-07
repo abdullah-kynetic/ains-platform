@@ -23,3 +23,5 @@ class AdapterSettings(BaseSettings):
     ai_price_cache_seconds: int = 600
     ai_request_timeout_seconds: float = 60
     ai_max_consecutive_errors: int = Field(default=3, ge=1)
+    # Daily cap and error counter survive restarts here (SQLite by default; a Postgres URL works).
+    ai_state_database_url: str = "sqlite:////var/lib/kien-ai/state.db"

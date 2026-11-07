@@ -16,6 +16,7 @@ from ai_adapter.guards import (
 )
 from ai_adapter.schemas import AnalyzeOutput, AnalyzeRequest
 from ai_adapter.settings import AdapterSettings
+from ai_adapter.state import StateStore
 
 log = logging.getLogger("ai_adapter")
 
@@ -37,9 +38,12 @@ class AIAdapter:
         self.http = http or httpx.Client(timeout=settings.ai_request_timeout_seconds)
         self.allowlist = load_allowlist(settings.ai_allowlist_path)
         self.restricted = restricted_item_ids(settings.ai_checklist_path)
-        self.breaker = Breaker(settings.ai_breaker_path, settings.ai_max_consecutive_errors)
+        self.store = StateStore(settings.ai_state_database_url)
+        self.breaker = Breaker(
+            settings.ai_breaker_path, settings.ai_max_consecutive_errors, self.store
+        )
         self.limiter = RateLimiter(
-            settings.ai_max_requests_per_minute, settings.ai_daily_request_cap, clock
+            settings.ai_max_requests_per_minute, settings.ai_daily_request_cap, self.store, clock
         )
         self.prices = PriceChecker(settings, self.http, clock)
 

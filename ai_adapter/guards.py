@@ -5,12 +5,14 @@ import threading
 import time
 from collections import deque
 from collections.abc import Callable
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 import httpx
 import yaml
 
 from ai_adapter.settings import AdapterSettings
+from ai_adapter.state import StateStore
 
 
 class GuardViolation(Exception):
@@ -45,8 +47,8 @@ def restricted_item_ids(path: Path) -> set[str]:
 class Breaker:
     """Opens on a guard violation or repeated errors; stays open until a person closes it."""
 
-    def __init__(self, path: Path, max_errors: int):
-        self.path, self.max_errors, self._errors = path, max_errors, 0
+    def __init__(self, path: Path, max_errors: int, store: StateStore):
+        self.path, self.max_errors, self.store = path, max_errors, store
 
     @property
     def is_open(self) -> bool:
@@ -63,22 +65,33 @@ class Breaker:
 
     def close(self) -> None:  # called by a person (CLI/runbook), never by the adapter
         self.path.unlink(missing_ok=True)
-        self._errors = 0
+        self.store.clear_errors()
 
     def record_error(self) -> None:
-        self._errors += 1
-        if self._errors >= self.max_errors:
+        if self.store.add_error() >= self.max_errors:
             self.open("repeated_errors")
 
     def record_success(self) -> None:
-        self._errors = 0
+        self.store.clear_errors()
 
 
 class RateLimiter:
-    def __init__(self, per_minute: int, daily_cap: int, clock: Callable[[], float] = time.time):
-        self.per_minute, self.daily_cap, self.clock = per_minute, daily_cap, clock
+    """Per-minute window in memory; the daily cap is persisted so a restart cannot reset it."""
+
+    def __init__(
+        self,
+        per_minute: int,
+        daily_cap: int,
+        store: StateStore,
+        clock: Callable[[], float] = time.time,
+    ):
+        self.per_minute, self.daily_cap, self.store, self.clock = (
+            per_minute,
+            daily_cap,
+            store,
+            clock,
+        )
         self._recent: deque[float] = deque()
-        self._day = (clock() // 86400, 0)
         self._lock = threading.Lock()
 
     def acquire(self) -> None:
@@ -86,15 +99,11 @@ class RateLimiter:
             now = self.clock()
             while self._recent and now - self._recent[0] >= 60:
                 self._recent.popleft()
-            day, used = self._day
-            if day != now // 86400:
-                day, used = now // 86400, 0
-            if used >= self.daily_cap:
-                raise GuardViolation("daily_quota_reached")
             if len(self._recent) >= self.per_minute:
                 raise GuardViolation("rate_limited")
+            if not self.store.take_daily(self.daily_cap):
+                raise GuardViolation("daily_quota_reached")
             self._recent.append(now)
-            self._day = (day, used + 1)
 
 
 class PriceChecker:
@@ -124,7 +133,13 @@ class PriceChecker:
         if model is None:
             raise GuardViolation("model_not_listed")
         pricing = model.get("pricing") or {}
-        for field in self.FIELDS:
-            # Missing means unknown, which is not free. Only the exact zero string passes.
-            if str(pricing.get(field, "missing")).strip() not in {"0", "0.0", "0.00"}:
-                raise GuardViolation("model_not_free")
+        # Missing means unknown, which is not free. EVERY listed price must parse to exactly zero
+        # (including cache, web-search or reasoning prices), and the four basic fields must exist.
+        if not set(self.FIELDS) <= pricing.keys():
+            raise GuardViolation("model_not_free")
+        for value in pricing.values():
+            try:
+                if Decimal(str(value).strip()) != 0:
+                    raise GuardViolation("model_not_free")
+            except InvalidOperation:
+                raise GuardViolation("model_not_free") from None

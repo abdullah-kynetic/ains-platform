@@ -68,6 +68,7 @@ def env(tmp_path):
             ai_service_token="svc-token",
             ai_allowlist_path=allow,
             ai_breaker_path=tmp_path / "breaker.json",
+            ai_state_database_url=f"sqlite:///{tmp_path}/state.db",
         )
         settings = AdapterSettings(**{**values, **overrides})
         return AIAdapter(settings, http=httpx.Client(transport=httpx.MockTransport(fake))), settings
@@ -213,9 +214,12 @@ def test_repeated_upstream_errors_open_breaker(env):
     assert adapter.breaker.is_open
 
 
-def test_rate_limit_and_daily_cap():
+def test_rate_limit_and_daily_cap(tmp_path):
+    from ai_adapter.state import StateStore
+
     now = [1000.0]
-    limiter = RateLimiter(2, 3, clock=lambda: now[0])
+    store = StateStore(f"sqlite:///{tmp_path}/s.db")
+    limiter = RateLimiter(2, 3, store, clock=lambda: now[0])
     limiter.acquire()
     limiter.acquire()
     with pytest.raises(GuardViolation, match="rate_limited"):
@@ -225,6 +229,41 @@ def test_rate_limit_and_daily_cap():
     now[0] += 61
     with pytest.raises(GuardViolation, match="daily_quota_reached"):
         limiter.acquire()
+
+
+def test_daily_cap_and_error_counter_survive_a_restart(env):
+    make, fake, tmp_path = env
+    adapter, _ = make(ai_daily_request_cap=2, ai_max_consecutive_errors=2)
+    adapter.analyze(request(), FREE)
+    adapter.analyze(request(), FREE)
+    restarted, _ = make(ai_daily_request_cap=2, ai_max_consecutive_errors=2)  # new process state
+    with pytest.raises(GuardViolation, match="daily_quota_reached"):
+        restarted.analyze(request(), FREE)
+    assert len(fake.chat_calls) == 2  # the third request was stopped before any outbound call
+    restarted.breaker.record_error()
+    again, _ = make(ai_daily_request_cap=2, ai_max_consecutive_errors=2)
+    again.breaker.record_error()  # second error, counted across instances
+    assert again.breaker.is_open
+
+
+@pytest.mark.parametrize(
+    "extra", [{"web_search": "0.01"}, {"input_cache_read": "0.5"}, {"internal_reasoning": "-1"},
+              {"mystery": "free"}]
+)  # fmt: skip
+def test_any_nonzero_or_unparseable_price_field_refuses(env, extra):
+    make, fake, _ = env
+    adapter, _ = make()
+    fake.pricing = {**fake.pricing, **extra}
+    with pytest.raises(GuardViolation, match="model_not_free"):
+        adapter.analyze(request(), FREE)
+    assert fake.chat_calls == []
+
+
+def test_zero_valued_extra_price_fields_are_fine(env):
+    make, fake, _ = env
+    adapter, _ = make()
+    fake.pricing = {**fake.pricing, "web_search": "0", "input_cache_read": "0.0"}
+    assert adapter.analyze(request(), FREE)
 
 
 def test_output_must_cite_this_document_and_cannot_carry_actions(env):
