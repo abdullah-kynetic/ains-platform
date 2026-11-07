@@ -2,7 +2,7 @@
 
 Counters live in this process, which is correct for the single-worker production container.
 Behind Caddy the client address is the forwarded one (uvicorn --proxy-headers, trusted proxy only).
-The password-reset and sign-in throttles in the database remain the account-level controls.
+Sign-in lockout (app.auth.lockout) and the password-reset throttle are the account-level controls.
 """
 
 import re
