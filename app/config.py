@@ -58,7 +58,8 @@ class Settings(BaseSettings):
     upload_scan_timeout_seconds: float = Field(default=60, gt=0)
 
     # Failed sign-in lockout (per email and per client address); recovers after the window.
-    signin_max_per_email: int = Field(default=5, ge=1)
+    signin_max_per_email: int = Field(default=5, ge=1)  # per email AND address pair
+    signin_max_per_email_total: int = Field(default=50, ge=1)  # softer ceiling across addresses
     signin_max_per_ip: int = Field(default=30, ge=1)
     signin_lockout_minutes: int = Field(default=15, ge=1)
 

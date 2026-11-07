@@ -128,6 +128,9 @@ def auth_capabilities(settings: AuthSettings, sender: MagicSender) -> dict[str, 
     }
 
 
+MFA_REQUIRED = "MFA code required"
+
+
 def _normalize_email(email: str) -> str:
     return email.strip().casefold()
 
@@ -141,7 +144,7 @@ def _require_auditor_mfa(db: Session, user: User, code: str | None) -> None:
             detail="Auditor MFA enrollment is required",
         )
     if not code:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="MFA code required")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MFA_REQUIRED)
     if verify_totp(user.mfa_secret, code):
         return
     recovery_code = db.scalar(
@@ -194,7 +197,8 @@ def _authenticate(
         if require_mfa:
             _require_auditor_mfa(db, user, mfa_code)
     except HTTPException as exc:
-        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+        # A correct password with no MFA code yet is a normal step, not a failed attempt.
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED and exc.detail != MFA_REQUIRED:
             db.rollback()
             guard.fail()
         raise
@@ -420,7 +424,7 @@ def verify_magic_link(
     try:
         user = _verified_magic_user(db, payload, settings)
     except HTTPException as exc:
-        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED and exc.detail != MFA_REQUIRED:
             db.rollback()
             guard.fail()
         raise

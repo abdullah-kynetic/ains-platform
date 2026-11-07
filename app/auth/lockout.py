@@ -9,10 +9,14 @@ import hashlib
 from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, Request
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.database.models import AuthRateLimit
+
+_INSERTS = {"postgresql": pg_insert, "sqlite": sqlite_insert}
 
 
 def _aware(value: datetime) -> datetime:
@@ -26,8 +30,12 @@ class SignInGuard:
         ip = request.client.host if request.client else "unknown"
         self.db = db
         self.window = timedelta(minutes=settings.signin_lockout_minutes)
+        email = email.strip().casefold()
+        # The pair key means one address cannot lock a user out for everyone else; the softer
+        # per-email ceiling and the per-address limit still bound distributed guessing.
         self.limits = [
-            (self._key(f"{scope}-email", email.strip().casefold()), settings.signin_max_per_email),
+            (self._key(f"{scope}-pair", f"{email}|{ip}"), settings.signin_max_per_email),
+            (self._key(f"{scope}-email", email), settings.signin_max_per_email_total),
             (self._key(f"{scope}-ip", ip), settings.signin_max_per_ip),
         ]
 
@@ -36,10 +44,20 @@ class SignInGuard:
         return hashlib.sha256(f"{kind}:{identity}".encode()).hexdigest()
 
     def _row(self, key: str, now: datetime, create: bool) -> AuthRateLimit | None:
+        if create:
+            # Race-safe first insert: concurrent first failures cannot raise an integrity error.
+            dialect = self.db.get_bind().dialect.name
+            insert = _INSERTS.get(dialect)
+            if insert is not None:
+                self.db.execute(
+                    insert(AuthRateLimit)
+                    .values(key=key, count=0, window_start=now)
+                    .on_conflict_do_nothing(index_elements=["key"])
+                )
         row = self.db.get(AuthRateLimit, key, with_for_update=True)
         if row is not None and _aware(row.window_start) + self.window <= now:
             row.count, row.window_start = 0, now  # window passed: recovered
-        if row is None and create:
+        if row is None and create:  # dialects without ON CONFLICT support
             row = AuthRateLimit(key=key, count=0, window_start=now)
             self.db.add(row)
         return row
