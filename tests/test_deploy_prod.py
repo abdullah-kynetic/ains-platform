@@ -82,3 +82,36 @@ def test_forwarded_client_ip_is_used_from_proxy_and_ignored_from_others():
 
 def test_prod_image_does_not_download_aws_ca_bundle():
     assert "rds.amazonaws.com" not in Path("Dockerfile").read_text()
+
+
+def test_prod_stack_runs_clamd_and_forces_scanning_on():
+    clamav = SERVICES["clamav"]
+    assert not clamav.get("ports")
+    assert clamav["environment"]["CLAMD_CONF_StreamMaxLength"] == "100M"
+    api_env = SERVICES["api"]["environment"]
+    assert api_env["ENV"] == "production"
+    assert api_env["UPLOAD_SCAN_MODE"] == "clamav" and api_env["CLAMD_HOST"] == "clamav"
+    assert SERVICES["api"]["depends_on"]["clamav"]["condition"] == "service_healthy"
+
+
+def test_app_refuses_to_start_in_production_with_scanning_off():
+    import pytest
+
+    from app.config import Settings
+    from app.main import enforce_production_safety
+
+    with pytest.raises(RuntimeError, match="UPLOAD_SCAN_MODE"):
+        enforce_production_safety(Settings(_env_file=None, env="production"))
+    enforce_production_safety(Settings(_env_file=None, env="production", upload_scan_mode="clamav"))
+    enforce_production_safety(Settings(_env_file=None))  # development default still starts
+
+
+def test_create_app_fails_fast_in_production_without_scanning(monkeypatch):
+    import pytest
+
+    import app.main as main
+    from app.config import Settings
+
+    monkeypatch.setattr(main, "get_settings", lambda: Settings(_env_file=None, env="production"))
+    with pytest.raises(RuntimeError):
+        main.create_app()

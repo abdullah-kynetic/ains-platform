@@ -48,6 +48,9 @@ class Settings(BaseSettings):
 
     document_check_timeout_seconds: int = 300
 
+    # "production" turns on start-up safety checks (see app.main.enforce_production_safety).
+    env: Literal["development", "production"] = "development"
+
     # Upload malware scanning. "clamav" needs a clamd daemon; scan failure then blocks uploads.
     upload_scan_mode: Literal["off", "clamav"] = "off"
     clamd_host: str = "127.0.0.1"
