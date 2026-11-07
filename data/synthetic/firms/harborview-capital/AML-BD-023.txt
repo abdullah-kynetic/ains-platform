@@ -1,0 +1,7 @@
+SYNTHETIC TEST DOCUMENT - invented firm, not real
+Firm: Harborview Capital Partners Inc
+Request: AML-BD-023 Fee and payment exceptions
+Period: 2025
+
+This is a short invented sample covering: fee and payment exceptions.
+Procedures are written in the firm's own words for testing only.

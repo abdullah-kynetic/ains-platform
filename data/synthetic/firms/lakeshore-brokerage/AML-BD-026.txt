@@ -1,0 +1,7 @@
+SYNTHETIC TEST DOCUMENT - invented firm, not real
+Firm: Lakeshore Brokerage Group LLC
+Request: AML-BD-026 Government requests and responses
+Period: 2025
+
+This is a short invented sample covering: government requests and responses.
+Procedures are written in the firm's own words for testing only.

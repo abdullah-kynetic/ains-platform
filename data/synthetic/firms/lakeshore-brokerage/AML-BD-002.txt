@@ -1,0 +1,8 @@
+SYNTHETIC TEST DOCUMENT - invented firm, not real
+Firm: Lakeshore Brokerage Group LLC
+Request: AML-BD-002 Signed firm representation letter
+Period: 2025
+
+This is a short invented sample covering: signed firm representation letter.
+Procedures are written in the firm's own words for testing only.
+Signed: Jordan Example, CCO   Date: 2026-01-20

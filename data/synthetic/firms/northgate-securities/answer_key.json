@@ -1,0 +1,230 @@
+{
+  "firm": "Northgate Securities LLC",
+  "profile": "clean",
+  "items": [
+    {
+      "item_id": "AML-BD-001",
+      "file": "AML-BD-001.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-002",
+      "file": "AML-BD-002.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-003",
+      "file": "AML-BD-003.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-004",
+      "file": null,
+      "expected_status": "not_applicable",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-005",
+      "file": "AML-BD-005.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-006",
+      "file": "AML-BD-006.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-007",
+      "file": "AML-BD-007.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-008",
+      "file": "AML-BD-008.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-009",
+      "file": "AML-BD-009.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-010",
+      "file": "AML-BD-010.csv",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-011",
+      "file": null,
+      "expected_status": "not_applicable",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-012",
+      "file": "AML-BD-012.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-013",
+      "file": "AML-BD-013.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-014",
+      "file": "AML-BD-014.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-015",
+      "file": "AML-BD-015.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-016",
+      "file": null,
+      "expected_status": "not_applicable",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-018",
+      "file": "AML-BD-018.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-019",
+      "file": "AML-BD-019.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-020",
+      "file": "AML-BD-020.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-021",
+      "file": "AML-BD-021.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-022",
+      "file": "AML-BD-022.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-023",
+      "file": "AML-BD-023.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-024",
+      "file": null,
+      "expected_status": "not_applicable",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-026",
+      "file": "AML-BD-026.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-027",
+      "file": "AML-BD-027.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-028",
+      "file": "AML-BD-028.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-029",
+      "file": "AML-BD-029.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-030",
+      "file": "AML-BD-030.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-031",
+      "file": "AML-BD-031.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-032",
+      "file": "AML-BD-032.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-033",
+      "file": "AML-BD-033.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    },
+    {
+      "item_id": "AML-BD-034",
+      "file": "AML-BD-034.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null
+    }
+  ]
+}
