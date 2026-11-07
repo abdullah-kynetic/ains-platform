@@ -32,6 +32,9 @@ class Settings(BaseSettings):
 
     storage_backend: Literal["s3", "egnyte"] = "s3"
     aws_region: str = "us-east-1"
+    # "r2" targets Cloudflare R2 (S3 API): set S3_ENDPOINT_URL and AWS_REGION=auto.
+    s3_provider: Literal["aws", "r2"] = "aws"
+    s3_endpoint_url: str = ""
     s3_bucket: str = ""
     s3_sse: Literal["AES256", "aws:kms"] = "AES256"
     s3_kms_key_id: str = ""
