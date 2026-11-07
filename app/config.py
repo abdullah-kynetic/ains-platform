@@ -48,6 +48,11 @@ class Settings(BaseSettings):
 
     document_check_timeout_seconds: int = 300
 
+    # Failed sign-in lockout (per email and per client address); recovers after the window.
+    signin_max_per_email: int = Field(default=5, ge=1)
+    signin_max_per_ip: int = Field(default=30, ge=1)
+    signin_lockout_minutes: int = Field(default=15, ge=1)
+
     # In-process protection (0 disables). Per client address per minute; concurrent uploads
     # across the process, sized for the 4 GB VPS (each upload is buffered, up to 100 MB).
     api_rate_limit_per_minute: int = Field(default=300, ge=0)

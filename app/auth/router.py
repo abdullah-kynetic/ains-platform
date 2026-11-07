@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal, Protocol
 
 import pyotp
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -23,6 +23,7 @@ from app.database.models import (
 from app.database.session import get_db
 
 from .dependencies import SESSION_COOKIE, get_current_user
+from .lockout import SignInGuard
 from .security import (
     create_session_token,
     hash_magic_link_token,
@@ -175,6 +176,32 @@ def _password_user(db: Session, email: str, password: str) -> User:
     return user
 
 
+def _authenticate(
+    db: Session,
+    request: Request,
+    settings: Settings,
+    email: str,
+    password: str,
+    mfa_code: str | None = None,
+    *,
+    require_mfa: bool = False,
+) -> User:
+    """Password (and optionally MFA) check behind the failed-attempt lockout."""
+    guard = SignInGuard(db, request, settings, "signin", email)
+    guard.check()
+    try:
+        user = _password_user(db, email, password)
+        if require_mfa:
+            _require_auditor_mfa(db, user, mfa_code)
+    except HTTPException as exc:
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+            db.rollback()
+            guard.fail()
+        raise
+    guard.succeed()
+    return user
+
+
 def _new_recovery_codes(db: Session, user: User) -> list[str]:
     now = datetime.now(UTC)
     for record in db.scalars(
@@ -235,22 +262,25 @@ def _issue_session(
 @router.post("/password", response_model=SessionView)
 def password_sign_in(
     payload: PasswordSignIn,
+    request: Request,
     response: Response,
     db: DB,
     settings: AuthSettings,
 ) -> SessionView:
-    user = _password_user(db, payload.email, payload.password)
-    _require_auditor_mfa(db, user, payload.mfa_code)
+    user = _authenticate(
+        db, request, settings, payload.email, payload.password, payload.mfa_code, require_mfa=True
+    )
     return _issue_session(db=db, settings=settings, response=response, user=user)
 
 
 @router.post("/auditor/mfa/enrollment", response_model=AuditorMFAEnrollmentView)
 def start_auditor_mfa_enrollment(
     payload: AuditorMFAStart,
+    request: Request,
     db: DB,
     settings: AuthSettings,
 ) -> AuditorMFAEnrollmentView:
-    user = _password_user(db, payload.email, payload.password)
+    user = _authenticate(db, request, settings, payload.email, payload.password)
     if user.role != UserRole.AUDITOR:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Auditor access required")
     if user.mfa_enabled:
@@ -284,11 +314,12 @@ def start_auditor_mfa_enrollment(
 @router.post("/auditor/mfa/enrollment/confirm", response_model=AuditorMFAEnrollmentComplete)
 def confirm_auditor_mfa_enrollment(
     payload: AuditorMFAConfirm,
+    request: Request,
     response: Response,
     db: DB,
     settings: AuthSettings,
 ) -> AuditorMFAEnrollmentComplete:
-    user = _password_user(db, payload.email, payload.password)
+    user = _authenticate(db, request, settings, payload.email, payload.password)
     if user.role != UserRole.AUDITOR:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Auditor access required")
     if user.mfa_enabled:
@@ -352,13 +383,20 @@ def rotate_auditor_mfa_recovery_codes(
 @router.post("/magic-link", status_code=status.HTTP_202_ACCEPTED)
 def request_magic_link(
     payload: MagicLinkRequest,
+    request: Request,
     db: DB,
     settings: AuthSettings,
     sender: MagicSender,
 ) -> dict[str, str]:
     if isinstance(sender, UnconfiguredMagicLinkSender):
         raise HTTPException(status_code=503, detail="Email sign-in is not configured")
-    user = db.scalar(select(User).where(User.email == _normalize_email(payload.email)))
+    from .reset import throttle
+
+    email = _normalize_email(payload.email)
+    ip = request.client.host if request.client else "unknown"
+    if not throttle(db, [(f"magic-email:{email}", 3), (f"magic-ip:{ip}", 20)], datetime.now(UTC)):
+        return {"status": "accepted"}  # same answer, no email: nothing reveals the throttle
+    user = db.scalar(select(User).where(User.email == email))
     if user and user.is_active:
         token, token_hash = new_magic_link_token()
         expires = datetime.now(UTC) + timedelta(minutes=settings.magic_link_ttl_minutes)
@@ -371,10 +409,26 @@ def request_magic_link(
 @router.post("/magic-link/verify", response_model=SessionView)
 def verify_magic_link(
     payload: MagicLinkVerify,
+    request: Request,
     response: Response,
     db: DB,
     settings: AuthSettings,
 ) -> SessionView:
+    # Locks per token and per address, so the MFA code of a leaked link cannot be guessed.
+    guard = SignInGuard(db, request, settings, "magic", payload.token)
+    guard.check()
+    try:
+        user = _verified_magic_user(db, payload, settings)
+    except HTTPException as exc:
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+            db.rollback()
+            guard.fail()
+        raise
+    guard.succeed()
+    return _issue_session(db=db, settings=settings, response=response, user=user)
+
+
+def _verified_magic_user(db: Session, payload: MagicLinkVerify, settings: Settings) -> User:
     record = db.scalar(
         select(MagicLinkToken).where(
             MagicLinkToken.token_hash == hash_magic_link_token(payload.token),
@@ -401,7 +455,7 @@ def verify_magic_link(
         )
     _require_auditor_mfa(db, user, payload.mfa_code)
     record.used_at = now
-    return _issue_session(db=db, settings=settings, response=response, user=user)
+    return user
 
 
 @router.get("/session", response_model=SessionView)
