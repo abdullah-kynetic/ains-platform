@@ -9,12 +9,19 @@ from app.auth.invitations import auditor_router as invitation_auditor_router
 from app.auth.invitations import public_router as invitation_public_router
 from app.config import get_settings
 from app.monitoring import init_sentry
+from app.ratelimit import RateLimitMiddleware
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
     init_sentry(settings)
     application = FastAPI(title="Kien Solutions", version="0.1.0")
+    # Added before CORS so CORS stays outermost and 429 responses carry CORS headers.
+    application.add_middleware(
+        RateLimitMiddleware,
+        per_minute=settings.api_rate_limit_per_minute,
+        max_concurrent_uploads=settings.upload_max_concurrent,
+    )
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.parsed_cors_origins(),
