@@ -13,7 +13,8 @@ export RCLONE_CONFIG=${RCLONE_CONFIG:-/etc/kien/rclone.conf}
 SCRATCH=kien-restore-drill
 DB_USER=drill DB_NAME=drill
 START=$(date +%s)
-cleanup() { docker rm -f "$SCRATCH" >/dev/null 2>&1 || true; }
+SCRATCH_TMP=$(mktemp -d)
+cleanup() { docker rm -f "$SCRATCH" >/dev/null 2>&1 || true; rm -rf "$SCRATCH_TMP"; }
 trap cleanup EXIT
 cleanup
 docker run -d --name "$SCRATCH" -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD="$(head -c 24 /dev/urandom | base64)" \
@@ -24,14 +25,20 @@ for _ in $(seq 1 30); do docker exec "$SCRATCH" pg_isready -U $DB_USER -d $DB_NA
 RESTORED=$(date +%s)
 
 COUNT_SQL="select table_name||'='||(xpath('/row/c/text()', query_to_xml('select count(*) c from public.'||quote_ident(table_name), false, true, '')))[1]::text from information_schema.tables where table_schema='public' and table_type='BASE TABLE' order by 1"
-src=$(kien_compose exec -T postgres sh -c "psql -U \"\$POSTGRES_USER\" -d \"\$POSTGRES_DB\" -Atc \"$COUNT_SQL\"")
-dst=$(docker exec "$SCRATCH" psql -U $DB_USER -d $DB_NAME -Atc "$COUNT_SQL")
-if [ "$src" != "$dst" ]; then
-  echo "DRILL FAIL: row counts differ (backup may predate recent writes)" >&2
-  diff <(echo "$src") <(echo "$dst") >&2 || true
+WORK=${KIEN_BACKUP_WORK:-/var/backups/kien-work}
+# Compare with the counts recorded around the dump at backup time (never the live database):
+# each restored table must hold between the "before" and "after" row counts.
+restic dump latest "$WORK/kien-db.counts.before" --tag db,validated > "$SCRATCH_TMP/before"
+restic dump latest "$WORK/kien-db.counts.after" --tag db,validated > "$SCRATCH_TMP/after"
+docker exec "$SCRATCH" psql -U $DB_USER -d $DB_NAME -Atc "$COUNT_SQL" > "$SCRATCH_TMP/restored"
+if ! awk -F= 'FNR==NR && FILENAME==ARGV[1] {lo[$1]=$2; next} FILENAME==ARGV[2] {hi[$1]=$2; next}
+  {seen[$1]=1; if ($2+0 < lo[$1]+0 || $2+0 > hi[$1]+0) {print "count outside backup window: " $1 " restored=" $2 " window=" lo[$1] ".." hi[$1]; bad=1}}
+  END {for (t in lo) if (!(t in seen)) {print "missing table: " t; bad=1} exit bad}' \
+  "$SCRATCH_TMP/before" "$SCRATCH_TMP/after" "$SCRATCH_TMP/restored"; then
+  echo "DRILL FAIL: restored row counts do not match the counts recorded at backup time" >&2
   exit 1
 fi
-echo "row counts match for $(echo "$src" | wc -l) tables"
+echo "row counts match the backup-time record for $(wc -l < "$SCRATCH_TMP/restored") tables"
 
 # One document: SHA-256 of the backup copy must equal the value stored in the database.
 row=$(docker exec "$SCRATCH" psql -U $DB_USER -d $DB_NAME -Atc "select sha256||'|'||egnyte_path from documents order by id limit 1")

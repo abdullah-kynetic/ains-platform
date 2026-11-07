@@ -9,7 +9,9 @@ DB_USER=${3:?db user}; DB_NAME=${4:?db name}
 case "$CONTAINER" in *kien-postgres*) echo "refusing to restore into the live database" >&2; exit 3 ;; esac
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-restic dump "$SNAP" kien-db.dump --tag db > "$TMP/kien-db.dump"
+WORK=${KIEN_BACKUP_WORK:-/var/backups/kien-work}
+# Only snapshots that passed validation at backup time carry the "validated" tag.
+restic dump "$SNAP" "$WORK/kien-db.dump" --tag db,validated > "$TMP/kien-db.dump"
 docker cp "$TMP/kien-db.dump" "$CONTAINER:/tmp/kien-db.dump"
 docker exec "$CONTAINER" pg_restore -U "$DB_USER" -d "$DB_NAME" --no-owner --exit-on-error /tmp/kien-db.dump
 docker exec "$CONTAINER" rm -f /tmp/kien-db.dump
