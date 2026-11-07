@@ -155,3 +155,68 @@ def test_follow_up_and_reason_never_carry_internal_text(backend):  # noqa: F811
         assert not any(marker in json.dumps(body) for marker in LEAKS)
         client.cookies.clear()
         sign_in_auditor(client)
+
+
+def _release_in_db(factory, item_id, text):
+    from datetime import UTC, datetime
+
+    with factory() as db:
+        row = db.get(ChecklistItemInstance, item_id)
+        row.response_request_text = text
+        row.response_released_at = datetime.now(UTC)
+        db.commit()
+
+
+def test_other_engagements_and_firms_never_leak_into_responses_requested(backend):  # noqa: F811
+    """Released items elsewhere must not appear. Dropping the engagement/firm filter fails this."""
+    from datetime import date
+
+    from app.database.models import Engagement
+
+    client, factory, ids, *_ = backend
+    with factory() as db:  # second engagement in the SAME firm, with its own released item
+        other = Engagement(
+            firm_id=ids["firm_a"],
+            auditor_id=ids["auditor"],
+            review_period_start=date(2024, 1, 1),
+            review_period_end=date(2024, 12, 31),
+        )
+        db.add(other)
+        db.flush()
+        sibling = ChecklistItemInstance(
+            firm_id=ids["firm_a"],
+            engagement_id=other.id,
+            item_key="AML-BD-004",
+            section_key="governance",
+            section_title="AML program and governance",
+            title="SIBLING-ENGAGEMENT-TITLE",
+            position=1,
+        )
+        db.add(sibling)
+        db.commit()
+        sibling_id = sibling.id
+    _release_in_db(factory, sibling_id, "SIBLING-ENGAGEMENT-CANARY")
+    _release_in_db(factory, ids["item_b"], "OTHER-FIRM-CANARY")
+    sign_in_auditor(client)
+    assert release(client, ids).status_code == 200
+    client.cookies.clear()
+    sign_in_client(client)
+    body = read(client, ids)
+    assert [i["itemId"] for i in body.json()["items"]] == [ids["item_a"]]
+    for canary in ("SIBLING-ENGAGEMENT", "OTHER-FIRM-CANARY"):
+        assert canary not in body.text
+    foreign = client.get(f"/engagements/{ids['engagement_b']}/responses-requested")
+    assert foreign.status_code == 404 and "OTHER-FIRM-CANARY" not in foreign.text
+
+
+def test_withdraw_clears_the_stored_text_and_release_fields(backend):  # noqa: F811
+    client, factory, ids, *_ = backend
+    sign_in_auditor(client)
+    assert release(client, ids).status_code == 200
+    path = f"/auditor/engagements/{ids['engagement_a']}/items/{ids['item_a']}/response-request"
+    assert client.post(path + "/withdraw").status_code == 200
+    with factory() as db:
+        row = db.get(ChecklistItemInstance, ids["item_a"])
+        assert row.response_request_text is None
+        assert row.response_released_at is None
+        assert row.response_released_by_id is None

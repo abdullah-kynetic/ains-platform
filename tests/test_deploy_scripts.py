@@ -145,3 +145,11 @@ def test_drill_compares_against_backup_time_counts_not_live_database():
     assert "src=$(kien_compose" not in text  # no comparison with the live database
     readme = Path("deploy/backup/README.md").read_text()
     assert "off the server" in readme and "restic password" in readme.lower()
+
+
+def test_restore_drill_creates_its_temp_dir_after_the_first_cleanup():
+    lines = Path("deploy/backup/restore-drill.sh").read_text().splitlines()
+    first_cleanup = lines.index("cleanup")
+    mktemp = next(i for i, line in enumerate(lines) if line.startswith("SCRATCH_TMP=$(mktemp"))
+    assert mktemp > first_cleanup  # cleanup() must not delete the dir the drill is about to use
+    assert any('rm -rf "${SCRATCH_TMP:-}"' in line for line in lines)

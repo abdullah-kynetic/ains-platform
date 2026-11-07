@@ -13,10 +13,10 @@ export RCLONE_CONFIG=${RCLONE_CONFIG:-/etc/kien/rclone.conf}
 SCRATCH=kien-restore-drill
 DB_USER=drill DB_NAME=drill
 START=$(date +%s)
-SCRATCH_TMP=$(mktemp -d)
-cleanup() { docker rm -f "$SCRATCH" >/dev/null 2>&1 || true; rm -rf "$SCRATCH_TMP"; }
+cleanup() { docker rm -f "$SCRATCH" >/dev/null 2>&1 || true; rm -rf "${SCRATCH_TMP:-}"; }
 trap cleanup EXIT
 cleanup
+SCRATCH_TMP=$(mktemp -d)
 docker run -d --name "$SCRATCH" -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD="$(head -c 24 /dev/urandom | base64)" \
   -e POSTGRES_DB=$DB_NAME --network none postgres:16 >/dev/null
 for _ in $(seq 1 30); do docker exec "$SCRATCH" pg_isready -U $DB_USER -d $DB_NAME >/dev/null 2>&1 && break; sleep 1; done
