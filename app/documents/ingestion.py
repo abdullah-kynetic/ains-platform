@@ -14,6 +14,7 @@ from fastapi import Depends, HTTPException, UploadFile
 
 from app.config import Settings, get_settings
 from app.database.models import ChecklistItemInstance, Engagement
+from app.documents.scanning import screen_upload
 from app.egnyte_client import (
     SIMPLE_UPLOAD_MAX_BYTES,
     EgnyteClient,
@@ -137,6 +138,9 @@ class EgnyteDocumentIngestor:
                 detail="This file type is not accepted for this checklist item.",
             )
         content, sha256 = await _read_validated(file, suffix)
+        await screen_upload(
+            self.settings, content, suffix=suffix, sha256=sha256, filename=safe_name
+        )
         root = self.settings.egnyte_dev_root.rstrip("/")
         firm = _safe_segment(engagement.firm.slug, fallback=engagement.firm_id)
         engagement_segment = _safe_segment(engagement.id, fallback="engagement")
@@ -210,6 +214,7 @@ class S3DocumentIngestor:
         if accepted and suffix not in accepted:
             raise HTTPException(status_code=415, detail="File type is not accepted")
         content, digest = await _read_validated(file, suffix)
+        await screen_upload(self.settings, content, suffix=suffix, sha256=digest, filename=name)
         segment = item.item_key if item else "unassigned"
         path = f"{engagement.id}/{segment}/{uuid.uuid4().hex}-{name}"
         storage = None

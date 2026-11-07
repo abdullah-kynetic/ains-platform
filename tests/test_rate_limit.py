@@ -1,6 +1,7 @@
 """Request-rate and concurrent-upload limits (pure ASGI, synthetic traffic only)."""
 
 import asyncio
+from functools import partial
 
 import httpx
 import pytest
@@ -80,3 +81,31 @@ def test_defaults_are_enabled():
     settings = Settings(_env_file=None)
     assert settings.api_rate_limit_per_minute == 300
     assert settings.upload_max_concurrent == 3
+
+
+def test_real_app_returns_429_with_cors_headers_then_recovers(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    import app.main as main
+
+    now = [0.0]
+    settings = Settings(
+        _env_file=None, api_rate_limit_per_minute=3, cors_origins="http://localhost:3000"
+    )
+    monkeypatch.setattr(main, "get_settings", lambda: settings)
+    monkeypatch.setattr(
+        main, "RateLimitMiddleware", partial(RateLimitMiddleware, clock=lambda: now[0])
+    )
+    client = TestClient(main.create_app())
+    origin = {"Origin": "http://localhost:3000"}
+    assert [client.get("/auth/capabilities", headers=origin).status_code for _ in range(3)] == [
+        200,
+        200,
+        200,
+    ]
+    blocked = client.get("/auth/capabilities", headers=origin)
+    assert blocked.status_code == 429
+    assert blocked.headers["access-control-allow-origin"] == "http://localhost:3000"
+    assert client.get("/health").status_code == 200
+    now[0] += 61
+    assert client.get("/auth/capabilities", headers=origin).status_code == 200

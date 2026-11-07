@@ -48,6 +48,12 @@ class Settings(BaseSettings):
 
     document_check_timeout_seconds: int = 300
 
+    # Upload malware scanning. "clamav" needs a clamd daemon; scan failure then blocks uploads.
+    upload_scan_mode: Literal["off", "clamav"] = "off"
+    clamd_host: str = "127.0.0.1"
+    clamd_port: int = Field(default=3310, ge=1, le=65535)
+    upload_scan_timeout_seconds: float = Field(default=60, gt=0)
+
     # Failed sign-in lockout (per email and per client address); recovers after the window.
     signin_max_per_email: int = Field(default=5, ge=1)
     signin_max_per_ip: int = Field(default=30, ge=1)

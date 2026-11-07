@@ -302,3 +302,42 @@ def test_service_with_empty_token_setting_rejects_everyone(env):
         headers={"Authorization": "Bearer "},
     )
     assert response.status_code == 401
+
+
+def test_upstream_rate_limit_never_falls_through_to_another_model(env):
+    make, fake, _ = env
+    adapter, _ = make()
+    original = fake.__call__
+
+    def limited(request):
+        if request.url.path.endswith("/chat/completions"):
+            fake.calls.append(request)
+            return httpx.Response(429, headers={"Retry-After": "5"})
+        return original(request)
+
+    adapter.http = httpx.Client(transport=httpx.MockTransport(limited))
+    adapter.prices.http = httpx.Client(transport=httpx.MockTransport(fake))
+    with pytest.raises(GuardViolation, match="upstream_error"):
+        adapter.analyze(request(), FREE)
+    models_used = {json.loads(c.content)["model"] for c in fake.chat_calls}
+    assert models_used == {FREE}  # exactly one request, one model: no paid or alternate fallback
+
+
+def test_no_request_ever_carries_routing_or_spend_options(env):
+    make, fake, _ = env
+    adapter, _ = make()
+    adapter.analyze(request(), FREE)
+    adapter.analyze(request(), OTHER)
+    for call in fake.chat_calls:
+        body = json.loads(call.content)
+        assert body["model"].endswith(":free")
+        assert not {"models", "route", "plugins", "tools", "transforms", "max_price"} & body.keys()
+        assert body["provider"]["allow_fallbacks"] is False
+
+
+def test_adapter_has_no_credit_or_billing_calls():
+    from pathlib import Path
+
+    source = "\n".join(p.read_text() for p in Path("ai_adapter").glob("*.py"))
+    for forbidden in ("/credits", "/auth/key", "topup", "top_up", "billing"):
+        assert forbidden not in source
