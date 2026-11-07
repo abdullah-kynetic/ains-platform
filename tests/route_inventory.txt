@@ -66,3 +66,6 @@ GET /auditor/engagements/{engagement_id}/workspace auditor
 PATCH /auditor/engagements/{engagement_id}/items/{item_id}/decision auditor
 POST /auditor/engagements/{engagement_id}/items/{item_id}/na auditor
 GET /health public
+POST /auditor/engagements/{engagement_id}/items/{item_id}/response-request auditor
+POST /auditor/engagements/{engagement_id}/items/{item_id}/response-request/withdraw auditor
+GET /engagements/{engagement_id}/responses-requested client
