@@ -1,0 +1,8 @@
+[Unit]
+Description=Kien weekly document backup drift check
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/kien/deploy/backup/docs-sync.sh check

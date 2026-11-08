@@ -1,0 +1,8 @@
+[Unit]
+Description=Kien disk, container and queue checks
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c '/opt/kien/deploy/ops/disk-alert.sh; /opt/kien/deploy/ops/healthcheck.sh; /opt/kien/deploy/ops/queue-alert.sh; true'
+EnvironmentFile=-/etc/kien/alerts.env

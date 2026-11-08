@@ -110,3 +110,36 @@ def test_storage_selection_defaults_to_s3_and_egnyte_is_explicit(monkeypatch):
     settings = Settings(_env_file=None)
     assert isinstance(get_document_ingestor(settings), EgnyteDocumentIngestor)
     assert DocumentProcessor(settings).client_factory == EgnyteClient.from_settings
+
+
+def test_r2_provider_sends_no_sse_or_checksum_and_uses_endpoint(monkeypatch):
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
+    settings = Settings(
+        _env_file=None,
+        s3_provider="r2",
+        s3_endpoint_url="https://acct.r2.cloudflarestorage.com",
+        aws_region="auto",
+        s3_bucket="synthetic-r2",
+        s3_retention_days=7,
+    )
+    storage = S3Storage(settings)
+    assert storage.client.meta.endpoint_url == "https://acct.r2.cloudflarestorage.com"
+    assert storage.encryption() == {}
+    sent = {}
+    storage.client.put_object = lambda **kw: sent.update(kw) or {}
+    storage.put("firm-a", "reports/final/x.pdf", b"synthetic", final_report=True)
+    assert "ServerSideEncryption" not in sent
+    assert "ChecksumAlgorithm" not in sent
+    assert not any(k.startswith("ObjectLock") for k in sent)
+    assert sent["Metadata"]["sha256"] == hashlib.sha256(b"synthetic").hexdigest()
+    url = storage.presign("firm-a", "intake/f.txt", upload=True)
+    assert "x-amz-server-side-encryption" not in url.lower()
+    assert "r2.cloudflarestorage.com" in url
+
+
+def test_r2_requires_endpoint(monkeypatch):
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
+    with pytest.raises(ValueError, match="S3_ENDPOINT_URL"):
+        S3Storage(Settings(_env_file=None, s3_provider="r2", s3_bucket="b"))

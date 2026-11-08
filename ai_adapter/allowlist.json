@@ -1,0 +1,4 @@
+{
+  "_comment": "Exact OpenRouter model IDs ending in ':free'. Empty on purpose: nothing may be called until a person adds a model after checking it under strict privacy settings (data_collection=deny). Never add stealth, experimental, router or ':online' models.",
+  "models": []
+}

@@ -27,6 +27,7 @@ from app.database.models import (
 )
 from app.database.session import get_db
 from app.documents import DocumentIngestor, get_document_ingestor
+from app.documents.scanning import UploadRejected
 
 router = APIRouter(tags=["engagements"])
 DB = Annotated[Session, Depends(get_db)]
@@ -250,6 +251,26 @@ def current_engagement(user: CurrentUser, db: DB) -> EngagementView:
     return view
 
 
+async def _ingest(db, user, engagement, item, file, ingestor):
+    """Ingest an upload; blocked or unscannable uploads are audited (hash and name only)."""
+    try:
+        return await ingestor.ingest(engagement=engagement, item=item, file=file)
+    except UploadRejected as rejected:
+        if rejected.audit:
+            db.add(
+                AuditLog(
+                    firm_id=engagement.firm_id,
+                    actor_id=user.id,
+                    action=f"document.{rejected.audit['reason']}",
+                    entity_type="engagement",
+                    entity_id=engagement.id,
+                    details={**rejected.audit, "item_id": item.id if item else None},
+                )
+            )
+            db.commit()
+        raise
+
+
 @router.post(
     "/engagements/{engagement_id}/items/{item_id}/documents",
     response_model=DocumentView,
@@ -289,7 +310,7 @@ async def upload_document(
         )
 
     item.accepted_extensions = definition.allowed_evidence_types
-    stored = await ingestor.ingest(engagement=engagement, item=item, file=file)
+    stored = await _ingest(db, user, engagement, item, file, ingestor)
     document = Document(
         firm_id=engagement.firm_id,
         engagement_id=engagement.id,
@@ -352,7 +373,7 @@ async def upload_unassigned_document(
         raise HTTPException(status_code=404, detail="Engagement not found")
     if engagement.status in {EngagementStatus.DRAFT, EngagementStatus.COMPLETE}:
         raise HTTPException(status_code=409, detail="Engagement is not accepting uploads")
-    stored = await ingestor.ingest(engagement=engagement, item=None, file=file)
+    stored = await _ingest(db, user, engagement, None, file, ingestor)
     document = Document(
         firm_id=engagement.firm_id,
         engagement_id=engagement.id,

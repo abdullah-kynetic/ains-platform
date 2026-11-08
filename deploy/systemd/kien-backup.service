@@ -1,0 +1,8 @@
+[Unit]
+Description=Kien nightly database and config backup
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/kien/deploy/backup/backup.sh

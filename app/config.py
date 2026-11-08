@@ -32,6 +32,9 @@ class Settings(BaseSettings):
 
     storage_backend: Literal["s3", "egnyte"] = "s3"
     aws_region: str = "us-east-1"
+    # "r2" targets Cloudflare R2 (S3 API): set S3_ENDPOINT_URL and AWS_REGION=auto.
+    s3_provider: Literal["aws", "r2"] = "aws"
+    s3_endpoint_url: str = ""
     s3_bucket: str = ""
     s3_sse: Literal["AES256", "aws:kms"] = "AES256"
     s3_kms_key_id: str = ""
@@ -44,6 +47,26 @@ class Settings(BaseSettings):
     password_reset_ttl_minutes: int = Field(default=15, ge=1, le=60)
 
     document_check_timeout_seconds: int = 300
+
+    # "production" turns on start-up safety checks (see app.main.enforce_production_safety).
+    env: Literal["development", "production"] = "development"
+
+    # Upload malware scanning. "clamav" needs a clamd daemon; scan failure then blocks uploads.
+    upload_scan_mode: Literal["off", "clamav"] = "off"
+    clamd_host: str = "127.0.0.1"
+    clamd_port: int = Field(default=3310, ge=1, le=65535)
+    upload_scan_timeout_seconds: float = Field(default=60, gt=0)
+
+    # Failed sign-in lockout (per email and per client address); recovers after the window.
+    signin_max_per_email: int = Field(default=5, ge=1)  # per email AND address pair
+    signin_max_per_email_total: int = Field(default=50, ge=1)  # softer ceiling across addresses
+    signin_max_per_ip: int = Field(default=30, ge=1)
+    signin_lockout_minutes: int = Field(default=15, ge=1)
+
+    # In-process protection (0 disables). Per client address per minute; concurrent uploads
+    # across the process, sized for the 4 GB VPS (each upload is buffered, up to 100 MB).
+    api_rate_limit_per_minute: int = Field(default=300, ge=0)
+    upload_max_concurrent: int = Field(default=3, ge=0)
     report_template: str = "default.json"
 
     database_url: str = "postgresql+psycopg://ains:ains_dev@localhost:5432/ains"

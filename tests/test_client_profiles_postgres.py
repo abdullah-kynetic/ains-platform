@@ -30,11 +30,20 @@ def test_profile_upgrade_downgrade_preserves_existing_firms(request):
             )
             db.commit()
         with engine.begin() as connection:
+            # Model now includes the a117 columns; remove them to start from the a115 schema.
+            for column in (
+                "response_request_text",
+                "response_released_at",
+                "response_released_by_id",
+            ):
+                connection.exec_driver_sql(
+                    f"ALTER TABLE checklist_item_instances DROP COLUMN {column}"
+                )
             original = set(inspect(connection).get_table_names())
             config = Config("alembic.ini")
             config.attributes["connection"] = connection
             command.stamp(config, "a115_user_onboarding")
-            command.upgrade(config, "a116_client_profiles")
+            command.upgrade(config, "a117_response_requests")
             assert set(inspect(connection).get_table_names()) - original == new_tables | {
                 "alembic_version"
             }
@@ -42,7 +51,7 @@ def test_profile_upgrade_downgrade_preserves_existing_firms(request):
             command.downgrade(config, "a115_user_onboarding")
             assert set(inspect(connection).get_table_names()) == original | {"alembic_version"}
             assert connection.scalar(select(Firm.id)) == "synthetic-existing"
-            command.upgrade(config, "a116_client_profiles")
+            command.upgrade(config, "a117_response_requests")
             assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
     finally:
         if url:
