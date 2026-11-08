@@ -31,15 +31,18 @@ test("auditor can create and edit a synthetic internal task", async ({ page }) =
   await page.getByLabel("Task priority").selectOption("high");
   await page.getByRole("button", { name: "Save task" }).click();
 
-  await expect(page.getByText("Prepare synthetic status brief")).toBeVisible();
+  // The Today view's "Upcoming deadlines" card can list the same open task once its due
+  // date is among the next six, so scope to the task list instead of the whole page.
+  const taskList = page.getByRole("region", { name: "Upcoming tasks" });
+  await expect(taskList.getByText("Prepare synthetic status brief")).toBeVisible();
   await page.reload();
-  await expect(page.getByText("Prepare synthetic status brief")).toBeVisible();
+  await expect(taskList.getByText("Prepare synthetic status brief")).toBeVisible();
 
   await page.getByRole("button", { name: "Edit Prepare synthetic status brief" }).click();
   await page.getByLabel("Task title").fill("Finalize synthetic status brief");
   await page.getByLabel("Task priority").selectOption("low");
   await page.getByRole("button", { name: "Save task" }).click();
-  const updatedTask = page.getByRole("listitem").filter({ hasText: "Finalize synthetic status brief" });
+  const updatedTask = taskList.getByRole("listitem").filter({ hasText: "Finalize synthetic status brief" });
   await expect(updatedTask).toBeVisible();
   await expect(updatedTask.getByText("low priority")).toBeVisible();
 });
