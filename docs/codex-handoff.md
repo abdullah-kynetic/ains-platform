@@ -14,7 +14,7 @@ Abdullah is not a developer. Explain things in plain English, keep reports short
 ### Current state (as of `main`)
 - Merged to `main`: invoicing, reversible and direct N/A, editable reports, first-sign-in walkthrough, shadcn layout, and the neutral black-and-white redesign with all new auditor screens.
 - The new auditor screens (clients, engagement workspace tabs, workpapers, samples, findings, report builder and sign-off, independence, firm settings, notifications, search) and the client "Responses requested", Report and Invoices pages run on a **typed mock layer** in `web/src/lib/api/*` over `web/src/lib/mock/*`. They have no backend yet.
-- **Web sign-in is removed** for the demo phase (`AUTH_REMOVED` in `web/src/lib/api.ts`; `TODO(auth)` marks what to restore). Backend auth, MFA and tenant isolation are unchanged. Hostname-to-audience mapping is in `web/src/lib/audience.ts`.
+- **Web sign-in is restored** (PR for IMPL-4). The synthetic demo build still skips it. Hostname-to-audience mapping is in `web/src/lib/audience.ts`.
 - Some older e2e tests are broken by the redesign and removed auth.
 - `docs/kb/*` pages still describe the old cream and ochre look.
 
@@ -36,7 +36,7 @@ Abdullah is not a developer. Explain things in plain English, keep reports short
 
 ### Verified commands
 - Backend (repo root): `uv sync --frozen`, `uv run ruff check .`, `uv run pytest -q`
-- Web (`web/`): `npm ci`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `NEXT_PUBLIC_USE_MOCKS=true npm run build`, `npm run build:cloudflare`, `npm run test:e2e`
+- Web (`web/`): `npm ci`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `KIEN_BUILD_TARGET=demo NEXT_PUBLIC_USE_MOCKS=true npm run build`, `npm run build:cloudflare`, `npm run test:e2e`
 - Local Postgres 16: `docker compose up -d`. Migrations are Alembic and must be additive and reversible; confirm parity on a real PostgreSQL.
 
 ### How to work
@@ -66,7 +66,7 @@ Implement the routes in `docs/frontend-inventory.md`, matching the shapes in `we
 Stop and ask Abdullah before changing an existing table in a non-additive way.
 
 **Phase 3: restore auth (before any live deploy or real data)**
-Turn `AUTH_REMOVED` off and restore web sign-in, MFA enrolment and recovery, invitation acceptance, account setup, password reset and sign-out, using git history before commit `0e381f0` ("Remove sign-in and auth from the web app") as the reference. Make a session whose role does not match the host's audience (`web/src/lib/audience.ts`) be refused, with the existing wrong-portal screen. Keep a way to run the mock demo without auth only under `USE_MOCKS`. Add or restore tests, including host and role mismatch. Do not deploy.
+Done on the IMPL-4 branch: sign-in, MFA enrolment and recovery, invitation, account setup, reset and sign-out are restored, a role that does not match the host's audience gets the wrong-portal screen, and `npm run test:e2e:live` exercises it against a local backend. Not deployed.
 
 **Phase 4: security hardening** (roadmap item 2)
 Malware scan on uploads with a quarantine state (e.g. a ClamAV sidecar), general API rate limits and login lockout, an operations runbook, scheduled off-site backups, and a restore drill. Document everything in `docs/`. Do not touch the live server; write the scripts, config and instructions, and list what Abdullah must run.

@@ -1,4 +1,6 @@
 import type { NextConfig } from "next";
+import { PHASE_PRODUCTION_BUILD } from "next/constants.js";
+import { checkBuildMode } from "./scripts/build-guard.mjs";
 
 const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
@@ -20,4 +22,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/** `next build` refuses a demo (mock) build that was not declared as the demo, and a production build with mocks. */
+export default function config(phase: string): NextConfig {
+  if (phase === PHASE_PRODUCTION_BUILD) {
+    const problem = checkBuildMode(process.env);
+    if (problem) throw new Error(`Build refused: ${problem}`);
+  }
+  return nextConfig;
+}

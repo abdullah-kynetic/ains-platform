@@ -185,6 +185,62 @@ test("load failure can be retried and empty requests have an explanation", async
   ).toBeVisible();
 });
 
+test("sign-in form has accessible labels and a useful failed-sign-in state", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("ains-synthetic-signed-out", "true"),
+  );
+  await page.goto("/sign-in");
+  await expect(page).toHaveTitle("Kynetic portal");
+  await expect(
+    page.getByRole("heading", { name: "Sign in to Kien" }),
+  ).toBeVisible();
+  await expect(page.getByRole("contentinfo")).toContainText(
+    "Kien by Kien Solutions",
+  );
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .exclude("nextjs-portal")
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  await page
+    .getByLabel("Email", { exact: true })
+    .fill("synthetic@example.invalid");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("synthetic-only-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "Email or password is incorrect" }),
+  ).toBeVisible();
+
+  await page.goto("/account-setup");
+  await page
+    .getByLabel("Email", { exact: true })
+    .fill("auditor@example.invalid");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("synthetic-only-password");
+  await page.getByRole("button", { name: "Set up auditor MFA" }).click();
+  await expect(page.getByText("SYNTHETICMFAPREVIEWONLY")).toBeVisible();
+  await page.getByLabel("Authenticator code").fill("123456");
+  await page.getByRole("button", { name: "Confirm and enable MFA" }).click();
+  await expect(page.getByText("Save these recovery codes now")).toBeVisible();
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .exclude("nextjs-portal")
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+});
 
 test("system theme follows OS changes, persists, and client firm card is static", async ({
   page,

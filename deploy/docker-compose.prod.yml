@@ -53,6 +53,7 @@ services:
       RUN_MIGRATIONS: "0"
       ENV: production # the app refuses to start unless scanning is on
       UPLOAD_SCAN_MODE: clamav
+      SESSION_COOKIE_SECURE: "true" # the app also refuses to start in production without it
       CLAMD_HOST: clamav
       CLAMD_PORT: "3310"
     # Trust X-Forwarded-For only from Caddy's pinned address; spoofed headers from elsewhere are ignored.

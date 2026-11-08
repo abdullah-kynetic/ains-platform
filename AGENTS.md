@@ -25,7 +25,7 @@ Read [PRD](docs/PRD.md), [Design System](docs/DESIGN_SYSTEM.md), [Architecture](
 
 ## Frontend demo phase
 
-Web sign-in is removed for now. See [docs/frontend-inventory.md](docs/frontend-inventory.md) for screens, routes and every mocked `TODO(backend)` call, and `AUTH_REMOVED` in `web/src/lib/api.ts` to restore it. Clients never see findings: they see only auditor-released response requests. Backend authentication, MFA and tenant isolation are unchanged and still required.
+Web sign-in is restored; only the synthetic demo build skips it. See [docs/frontend-inventory.md](docs/frontend-inventory.md) for screens, routes and every mocked `TODO(backend)` call. Clients never see findings: they see only auditor-released response requests. Backend authentication, MFA and tenant isolation are unchanged and still required.
 
 ## Verified commands
 

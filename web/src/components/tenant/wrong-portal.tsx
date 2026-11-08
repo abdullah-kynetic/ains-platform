@@ -31,13 +31,13 @@ export function WrongPortal({
           <CardHeader>
             <h1 className="text-xl font-semibold">Wrong portal</h1>
             <CardDescription>
-              This sign-in belongs to a different firm. This browser can stay
-              signed in to one firm at a time.
+              This sign-in is not for this portal: it belongs to a different firm or
+              to the other kind of account. This browser can stay signed in to one firm at a time.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <p className="text-sm text-muted">
-              Sign out, then open the portal link for your firm.
+              Sign out, then open the portal link for your account.
             </p>
             <Button onClick={onSignOut} disabled={busy}>
               {busy ? "Signing out…" : "Sign out"}

@@ -6,7 +6,7 @@ Contracts: [`web/src/lib/api/types.ts`](../web/src/lib/api/types.ts) (camelCase)
 
 ## Auth and hosts (demo phase)
 
-- Web auth is removed: every visitor is a synthetic user (`AUTH_REMOVED` in `web/src/lib/api.ts`; `TODO(auth)` marks what to restore). Backend auth is unchanged. Before real data, restore the web side: sign-in, MFA enrolment, invitation and reset pages, sign-out and the `/auth/*` calls.
+- Web sign-in is restored (password, auditor MFA enrolment and recovery codes, invitation, reset, sign-out) and calls `/auth/*`. Only the synthetic demo build skips it. Not yet verified: wrong-portal refusal (the backend has no firm-host check or `/tenant/branding` route in this branch).
 - `audienceForHost()` (`web/src/lib/audience.ts`) maps hosts to an audience: `<firm>.kiensolutions.com` is client, `NEXT_PUBLIC_AUDITOR_HOST` (default `auditor.kiensolutions.com`) is auditor, and preview/localhost/workers.dev/apex are both (role switcher). It narrows the UI only; once auth is back, a session whose role does not match the host must be refused.
 - An auditor at `/` is redirected to `/auditor` (Today).
 

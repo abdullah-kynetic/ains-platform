@@ -14,11 +14,13 @@ import {
   isWrongPortalStatus,
   onWrongPortal,
   signOut,
+  clientMocksEnabled,
   ApiError,
   type SessionData,
   type SessionUser,
   type UserRole,
 } from "@/lib/api";
+import { audienceRefusesRole, currentAudience } from "@/lib/audience";
 import { WrongPortal } from "@/components/tenant/wrong-portal";
 import { LoadState } from "@/components/ui/load-state";
 
@@ -35,6 +37,11 @@ type SessionContextValue = {
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
+/** A real session whose role does not belong on this host is refused, like a wrong-firm session. */
+function refusedOnThisHost(next: SessionData): boolean {
+  return !clientMocksEnabled() && audienceRefusesRole(currentAudience(), next.user.role);
+}
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [session, setSession] = useState<SessionData | null>(null);
@@ -46,8 +53,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      setSession(await getSession());
-      setWrongPortal(false);
+      const next = await getSession();
+      if (refusedOnThisHost(next)) {
+        setSession(null);
+        setWrongPortal(true);
+      } else {
+        setSession(next);
+        setWrongPortal(false);
+      }
     } catch (caught) {
       setSession(null);
       if (caught instanceof ApiError && isWrongPortalStatus(caught.status, caught.message)) {
@@ -63,8 +76,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     getSession()
       .then((next) => {
-        setSession(next);
-        setWrongPortal(false);
+        if (refusedOnThisHost(next)) {
+          setSession(null);
+          setWrongPortal(true);
+        } else {
+          setSession(next);
+          setWrongPortal(false);
+        }
       })
       .catch((caught: unknown) => {
         setSession(null);
@@ -99,7 +117,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       await signOut();
       setSession(null);
       setWrongPortal(false);
-      router.replace("/");
+      router.replace("/sign-in");
     } catch {
       setSignOutError(
         "Sign-out could not be completed from this portal. Open your firm's address and sign out there.",
@@ -156,7 +174,7 @@ export function AuthGate({
   useEffect(() => {
     if (loading) return;
     if (!session) {
-      router.replace("/");
+      router.replace(`/sign-in?next=${encodeURIComponent(pathname + window.location.search + window.location.hash)}`);
     } else if (role && session.user.role !== role) {
       router.replace(session.user.role === "auditor" ? "/auditor" : "/");
     }
