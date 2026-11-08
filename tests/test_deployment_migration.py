@@ -10,7 +10,7 @@ from app.database.models import Base
 
 def test_password_recovery_migration_up_and_down():
     config = Config("alembic.ini")
-    assert ScriptDirectory.from_config(config).get_heads() == ["a116_client_profiles"]
+    assert ScriptDirectory.from_config(config).get_heads() == ["a117_response_requests"]
     engine = create_engine("sqlite://")
     tables = [
         table

@@ -266,6 +266,10 @@ class ChecklistItemInstance(Base):
     na_marked_by: Mapped[User | None] = relationship(foreign_keys=[na_approved_by_id])
     representation: Mapped[str | None] = mapped_column(String(50))
     follow_up: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Explicit auditor release of a "Response requested" item. Only this text is client-visible.
+    response_request_text: Mapped[str | None] = mapped_column(Text)
+    response_released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    response_released_by_id: Mapped[str | None] = mapped_column(String(36))
     applicability_decision: Mapped[str | None] = mapped_column(String(30))
     assessment: Mapped[str | None] = mapped_column(String(30))
     internal_notes: Mapped[str] = mapped_column(Text, default="")

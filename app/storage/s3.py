@@ -1,6 +1,7 @@
 """Firm-scoped S3 storage; retention is explicit and only for human-finalized reports."""
 
 import asyncio
+import hashlib
 import re
 from datetime import UTC, datetime, timedelta
 
@@ -15,8 +16,23 @@ class S3Storage:
         if not settings.s3_bucket:
             raise ValueError("S3 storage is not configured")
         self.settings = settings
+        if settings.s3_provider == "r2":
+            if not settings.s3_endpoint_url:
+                raise ValueError("S3_ENDPOINT_URL is required for Cloudflare R2")
+            # R2 rejects some default CRC checksums sent by recent boto3 versions.
+            config = Config(
+                signature_version="s3v4",
+                s3={"addressing_style": "path"},
+                request_checksum_calculation="when_required",
+                response_checksum_validation="when_required",
+            )
+        else:
+            config = Config(signature_version="s3v4")
         self.client = boto3.client(
-            "s3", region_name=settings.aws_region, config=Config(signature_version="s3v4")
+            "s3",
+            region_name=settings.aws_region,
+            endpoint_url=settings.s3_endpoint_url or None,
+            config=config,
         )
 
     @staticmethod
@@ -27,7 +43,13 @@ class S3Storage:
             raise ValueError("Invalid object path")
         return f"firms/{firm_id}/{path}"
 
+    @property
+    def is_r2(self) -> bool:
+        return self.settings.s3_provider == "r2"
+
     def encryption(self) -> dict:
+        if self.is_r2:  # R2 encrypts at rest by default and rejects the SSE header.
+            return {}
         params = {"ServerSideEncryption": self.settings.s3_sse}
         if self.settings.s3_sse == "aws:kms":
             if not self.settings.s3_kms_key_id:
@@ -37,7 +59,14 @@ class S3Storage:
 
     def put(self, firm_id: str, path: str, content: bytes, *, final_report=False) -> dict:
         params = self.encryption()
-        if final_report and self.settings.s3_retention_days:
+        if self.is_r2:
+            # No S3 Object Lock or S3 checksum on R2: retention is a bucket lock rule on
+            # the final-report prefix; integrity is the app's own SHA-256, kept as metadata.
+            params["Metadata"] = {"sha256": hashlib.sha256(content).hexdigest()}
+            checksum: dict = {}
+        else:
+            checksum = {"ChecksumAlgorithm": "SHA256"}
+        if final_report and self.settings.s3_retention_days and not self.is_r2:
             params.update(
                 ObjectLockMode=self.settings.s3_retention_mode,
                 ObjectLockRetainUntilDate=datetime.now(UTC)
@@ -47,7 +76,7 @@ class S3Storage:
             Bucket=self.settings.s3_bucket,
             Key=self.key(firm_id, path),
             Body=content,
-            ChecksumAlgorithm="SHA256",
+            **checksum,
             **params,
         )
 

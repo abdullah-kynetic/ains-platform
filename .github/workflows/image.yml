@@ -1,0 +1,57 @@
+name: Image
+
+# Builds the API/worker image after CI passes on main and publishes it to GHCR.
+# Deployment is a separate, manual, approved step (no deploy key lives in GitHub).
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/abdullah-kynetic/ains-platform
+
+jobs:
+  build:
+    name: Build and push image
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        run: echo "short=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:sha-${{ steps.meta.outputs.short }}
+            ${{ env.IMAGE }}:main
+      - name: Record digest
+        run: |
+          {
+            echo "### Image digest"
+            echo '`${{ env.IMAGE }}@${{ steps.build.outputs.digest }}`'
+            echo "Add it to deploy/RELEASES.md and deploy by digest after approval."
+          } >> "$GITHUB_STEP_SUMMARY"
