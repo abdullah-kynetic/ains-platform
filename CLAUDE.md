@@ -22,7 +22,7 @@ Repo: `abdullah-kynetic/ains-platform`. Stack: Next.js 16 / React 19 / Tailwind 
 7. **Preview first.** New features deploy to preview; live (`kien-demo-live`) only after Abdullah approves the visuals. Design experiments go on their own separate address.
 8. **Keep the approved look.** Clean neutral black-and-white SaaS style (see `DESIGN.md`): white and `#F7F7F8` surfaces, near-black text, ink blue `#33405C` only for logo, primary buttons, active nav and focus, ochre `#B8924A` only for deadlines, status colours only as small pills, `#0A0A0A` dark. No gradients, glass or cream. No generic "AI slop".
 9. **Costs as low as possible.** Prefer free tiers and existing infrastructure.
-10. **AI features come last** (intake file sorting, then FINRA chatbot). No vendor lock-in; pick the cheapest model that benchmarks well from an approved vendor (attorney verbally approved Anthropic and OpenAI).
+10. AI is core and built alongside the workflow (intake file sorting, FINRA chatbot). No vendor lock-in; pick the cheapest model that benchmarks well from an approved vendor. Anthropic and OpenAI are approved, directly or via OpenRouter, under the attorney's written sign-off, which covers real client data. Free-model trial and SAR rules still apply.
 11. Never claim AWS's certifications (SOC 2, etc.) as Kien's. Kien's SOC 2 is only groundwork.
 12. Never claim a test or check passed unless it was actually run.
 
