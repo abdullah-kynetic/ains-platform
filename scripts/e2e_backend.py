@@ -106,9 +106,19 @@ def main() -> None:
     args.db.unlink(missing_ok=True)
     configure(args.db)
     seed()
+    import anyio.to_thread
     import uvicorn
 
-    uvicorn.run("app.main:app", host="127.0.0.1", port=args.port, log_level="warning")
+    from app.main import app
+
+    async def one_request_at_a_time() -> None:
+        # SQLite has no advisory lock, so concurrent audit-log appends can pick the same sequence
+        # number (production PostgreSQL serialises them in app/audit.py). One worker thread keeps
+        # this throwaway backend faithful without touching production code.
+        anyio.to_thread.current_default_thread_limiter().total_tokens = 1
+
+    app.router.on_startup.append(one_request_at_a_time)
+    uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
 
 
 if __name__ == "__main__":

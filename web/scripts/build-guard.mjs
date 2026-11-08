@@ -10,6 +10,8 @@ export function checkBuildMode(env) {
   const target = env.KIEN_BUILD_TARGET ?? "";
   if (target === "production" && mocks)
     return "KIEN_BUILD_TARGET=production but NEXT_PUBLIC_USE_MOCKS=true. A real build must not use the demo (mock) data. Unset NEXT_PUBLIC_USE_MOCKS or set it to false.";
+  if (target === "demo" && !mocks)
+    return "KIEN_BUILD_TARGET=demo needs NEXT_PUBLIC_USE_MOCKS=true. A demo label on a real build (or the reverse) hides what is deployed.";
   if (mocks && target !== "demo")
     return "NEXT_PUBLIC_USE_MOCKS=true builds the synthetic demo. Use `npm run build:cloudflare` (demo) or set KIEN_BUILD_TARGET=demo on purpose.";
   if (target && target !== "demo" && target !== "production")

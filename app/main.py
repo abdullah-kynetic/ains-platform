@@ -21,6 +21,15 @@ def enforce_production_safety(settings) -> None:
         raise RuntimeError("ENV=production requires UPLOAD_SCAN_MODE=clamav; refusing to start")
     if not settings.session_cookie_secure:
         raise RuntimeError("ENV=production requires SESSION_COOKIE_SECURE=true; refusing to start")
+    # The same list is the CORS list and the exact-origin allowlist for state-changing requests,
+    # so every portal host (each firm host and the auditor host) must be listed, as https.
+    origins = settings.parsed_cors_origins()
+    bad = [o for o in origins if not o.startswith("https://") or "*" in o or "localhost" in o]
+    if not origins or bad:
+        raise RuntimeError(
+            "ENV=production requires CORS_ORIGINS to list every portal origin as https "
+            "(no wildcard, no localhost); refusing to start"
+        )
 
 
 def create_app() -> FastAPI:

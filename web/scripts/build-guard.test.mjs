@@ -15,6 +15,10 @@ it("refuses a mock build that is not declared as the demo", () => {
   assert.match(checkBuildMode({ NEXT_PUBLIC_USE_MOCKS: "true" }) ?? "", /synthetic demo/);
   assert.match(checkBuildMode({ NEXT_PUBLIC_USE_MOCKS: "true", KIEN_BUILD_TARGET: "preview" }) ?? "", /synthetic demo/);
 });
+it("refuses a demo label on a build with mocks off", () => {
+  assert.match(checkBuildMode({ KIEN_BUILD_TARGET: "demo" }) ?? "", /needs NEXT_PUBLIC_USE_MOCKS=true/);
+  assert.match(checkBuildMode({ KIEN_BUILD_TARGET: "demo", NEXT_PUBLIC_USE_MOCKS: "false" }) ?? "", /needs NEXT_PUBLIC_USE_MOCKS=true/);
+});
 it("refuses an unknown target", () => {
   assert.match(checkBuildMode({ KIEN_BUILD_TARGET: "staging" }) ?? "", /Unknown KIEN_BUILD_TARGET/);
 });

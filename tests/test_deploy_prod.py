@@ -110,11 +110,16 @@ def test_app_refuses_to_start_in_production_with_scanning_off():
         enforce_production_safety(
             Settings(_env_file=None, env="production", upload_scan_mode="clamav")
         )
-    enforce_production_safety(
-        Settings(
-            _env_file=None, env="production", upload_scan_mode="clamav", session_cookie_secure=True
-        )
+    good = dict(
+        env="production",
+        upload_scan_mode="clamav",
+        session_cookie_secure=True,
+        cors_origins="https://a.example.test,https://auditor.example.test",
     )
+    enforce_production_safety(Settings(_env_file=None, **good))
+    for bad in ("", "http://a.example.test", "https://*.example.test", "https://localhost:3000"):
+        with pytest.raises(RuntimeError, match="CORS_ORIGINS"):
+            enforce_production_safety(Settings(_env_file=None, **{**good, "cors_origins": bad}))
     enforce_production_safety(Settings(_env_file=None))  # development default still starts
 
 
