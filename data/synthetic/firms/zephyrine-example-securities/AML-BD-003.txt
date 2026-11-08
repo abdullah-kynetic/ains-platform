@@ -1,0 +1,21 @@
+SYNTHETIC TEST DOCUMENT - invented firm, not real
+Firm: Zephyrine Example Securities LLC
+Request: AML-BD-003 AML training records
+Period: 2025
+Prepared by: Compliance Department   Version: 4.0
+
+1. Purpose
+This document covers AML training records at Zephyrine Example Securities LLC.
+
+2. Approach
+Training is assigned on hire and every year after. Completion is tracked by the compliance team and escalated to management when overdue.
+
+3. Procedures
+  3.1. Owner is named and backed up by a deputy.
+  3.2. Work is done in the firm's case system and dated.
+  3.3. A second person checks a sample each month.
+  3.4. Exceptions go to the AML officer within two business days.
+  3.5. Results are summarised for management every quarter.
+
+4. Status
+Staff completed: 11 of 11

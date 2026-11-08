@@ -1,0 +1,21 @@
+SYNTHETIC TEST DOCUMENT - invented firm, not real
+Firm: Quillfeather Example Capital Inc
+Request: AML-BD-033 AML staffing and separation of duties
+Period: 2025
+Prepared by: Compliance Department   Version: 2.0
+
+1. Purpose
+This document covers AML staffing and separation of duties at Quillfeather Example Capital Inc.
+
+2. Approach
+The AML officer reports to senior management and the board each quarter. Responsibilities are assigned in writing and reviewed once a year.
+
+3. Procedures
+  3.1. Owner is named and backed up by a deputy.
+  3.2. Work is done in the firm's case system and dated.
+  3.3. A second person checks a sample each month.
+  3.4. Exceptions go to the AML officer within two business days.
+  3.5. Results are summarised for management every quarter.
+
+4. Status
+AML officer: Riley Sample. Program tested by: outside reviewer.
