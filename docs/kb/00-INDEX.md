@@ -8,7 +8,7 @@ PRs #53–#60 and #64–#72 are merged: invoicing, reversible/direct N/A, editab
 
 Client profiles/contacts and engagement summaries have real API clients outside mock mode in the next backend slice. Other new auditor tabs and client Responses requested, Report and Invoices screens use typed synthetic mocks. [Frontend inventory](../frontend-inventory.md) identifies every route and backend contract. Existing backend workflows remain distinct from those new mock screens.
 
-Web authentication is temporarily removed (`AUTH_REMOVED`); backend auth, MFA, firm isolation and engagement assignment remain enforced. Restore the web flows before any live deployment or real data. Demo host roles default to auditor unless explicitly selected; firm and auditor hosts narrow the audience.
+Web sign-in is restored on the IMPL-4 branch (not merged or deployed until its PR is reviewed). The synthetic demo build still opens without sign-in. Backend auth, MFA, firm isolation and engagement assignment remain enforced.
 
 The approved look is neutral black-and-white; see [DESIGN.md](../../DESIGN.md). Ink is limited to brand/actions/navigation/focus; ochre marks deadlines; status colors are small pills.
 

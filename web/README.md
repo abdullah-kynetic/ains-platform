@@ -36,7 +36,7 @@ at `NEXT_PUBLIC_API_URL`, with an invited user in Postgres and `SESSION_SECRET` 
 Magic-link delivery still requires an approved backend email adapter; password sign-in works
 without that adapter. Never place credentials in a `NEXT_PUBLIC_*` variable.
 
-There is no sign-in. Every visitor is a synthetic user (`AUTH_REMOVED` in `src/lib/api.ts`). On demo hosts (preview, localhost, workers.dev) the sidebar workspace switcher flips between auditor and client. On `<firm>.kiensolutions.com` the app shows the client portal only, and on the auditor host (`NEXT_PUBLIC_AUDITOR_HOST`, default `auditor.kiensolutions.com`) the auditor portal only (`src/lib/audience.ts`). The host narrows the UI and is not authorization. Screens with no API route yet use `src/lib/api/*` over `src/lib/mock/*` (see `docs/frontend-inventory.md`).
+Sign-in is on: the app calls the backend `/auth/*` routes. Only the synthetic demo (`NEXT_PUBLIC_USE_MOCKS=true`) skips it and opens as a demo user. In that demo, on demo hosts (preview, localhost, workers.dev) the sidebar workspace switcher flips between auditor and client. On `<firm>.kiensolutions.com` the app shows the client portal only, and on the auditor host (`NEXT_PUBLIC_AUDITOR_HOST`, default `auditor.kiensolutions.com`) the auditor portal only (`src/lib/audience.ts`). The host narrows the UI and is not authorization. Screens with no API route yet use `src/lib/api/*` over `src/lib/mock/*` (see `docs/frontend-inventory.md`).
 
 ## Cloudflare synthetic demo
 
@@ -128,3 +128,5 @@ replay, logs and trace propagation are disabled. Backend transaction events are
 always dropped for privacy, even if a nonzero trace sample rate is configured.
 Source maps are neither generated for Sentry nor uploaded. Use only synthetic data
 when checking delivery; do not add attachments or alternate telemetry transports.
+
+Sign-in end to end against a real local backend with synthetic users: `npm run test:e2e:live` (needs the repo-root Python venv; starts `scripts/e2e_backend.py` on a throwaway SQLite file and the app on port 3100).

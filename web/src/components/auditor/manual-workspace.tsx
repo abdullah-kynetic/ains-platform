@@ -21,6 +21,7 @@ import { FolderOpen } from "lucide-react";
 import { AuditorActivityFeed } from "@/components/auditor/activity-feed";
 import { AuditorUpcomingTasks } from "@/components/auditor/upcoming-tasks";
 import { ClientInvitations } from "@/components/auditor/client-invitations";
+import { MFARecoveryCodes } from "@/components/auditor/mfa-recovery-codes";
 import {
   setRequestNA,
   getClients,
@@ -115,6 +116,9 @@ function Dashboard() {
         </div>
       </div>
       <EngagementDrawer client={selected} onClose={() => setSelected(null)} />
+      <div className="mt-6">
+        <MFARecoveryCodes />
+      </div>
     </>
   );
 }

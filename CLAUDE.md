@@ -36,7 +36,7 @@ Repo: `abdullah-kynetic/ains-platform`. Stack: Next.js 16 / React 19 / Tailwind 
 PRs #53–#60 (invoicing, reversible/direct N/A, editable reports, first-sign-in walkthrough, shadcn layout, preview Worker configs) and the nine-part design series #64–#72 (neutral style, Today view, engagement workspace, firm settings, client Responses requested, host audiences, removed web sign-in, docs) are merged into `main`. Source status and implementation boundaries are recorded in [`docs/kb/00-INDEX.md`](docs/kb/00-INDEX.md). Merged source does not establish deployment.
 
 ## Frontend state
-Web sign-in is removed for the demo phase (`AUTH_REMOVED` in `web/src/lib/api.ts`; `TODO(auth)` marks what to restore). **Restore it before any live deploy or real data.** Backend auth, MFA and tenant isolation are unchanged. Screens without a backend route use a typed mock layer in `web/src/lib/api/*` (`TODO(backend)`), listed in `docs/frontend-inventory.md`. Clients never see findings: they see only auditor-released "Responses requested".
+Web sign-in is restored (IMPL-4 branch; real routes `/auth/*`). Only the synthetic demo build (`NEXT_PUBLIC_USE_MOCKS=true`) skips it. Backend auth, MFA and tenant isolation are unchanged. Screens without a backend route use a typed mock layer in `web/src/lib/api/*` (`TODO(backend)`), listed in `docs/frontend-inventory.md`. Clients never see findings: they see only auditor-released "Responses requested".
 
 ## Repo rules for coding agents (also in AGENTS.md)
 - Never read, print, log or commit `.env` or any secret; use `.env.example` for variable names. Load config only through `app/config.py`. No secrets in `NEXT_PUBLIC_*` vars (they ship to the browser).

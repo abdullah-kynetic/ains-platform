@@ -30,3 +30,7 @@ Two synthetic demo logins (client + auditor). Credentials live only in a file on
 
 ## To build (roadmap item 2)
 Proper runbook with alerts (uptime, queue age, disk), scheduled encrypted off-site backups, restore drill, secret rotation, log retention.
+
+## Portal hosts and CORS_ORIGINS
+
+`CORS_ORIGINS` must list every portal origin, https, comma separated: each firm host (`<firm>.kiensolutions.com`) and the auditor host. The API uses the same exact list to refuse cross-site POST/PUT/PATCH/DELETE (`app/origin_check.py`), so a firm host that is not listed gets 403 "Cross-site request refused" on sign-in. In production the app refuses to start if the list is empty, has a wildcard or localhost, or any entry is not https. Add a firm host to `CORS_ORIGINS` (and restart the API) when onboarding that firm.

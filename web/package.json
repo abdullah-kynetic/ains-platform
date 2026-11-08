@@ -10,14 +10,17 @@
     "pretypecheck": "npm run catalog",
     "dev": "next dev",
     "build": "next build",
-    "build:cloudflare": "NEXT_PUBLIC_USE_MOCKS=true opennextjs-cloudflare build",
-    "build:cloudflare:production": "NEXT_PUBLIC_USE_MOCKS=false opennextjs-cloudflare build",
+    "build:cloudflare": "KIEN_BUILD_TARGET=demo NEXT_PUBLIC_USE_MOCKS=true opennextjs-cloudflare build",
+    "build:cloudflare:production": "KIEN_BUILD_TARGET=production NEXT_PUBLIC_USE_MOCKS=false opennextjs-cloudflare build",
+    "deploy:production": "npm run build:cloudflare:production && opennextjs-cloudflare deploy",
     "deploy:demo": "npm run build:cloudflare && opennextjs-cloudflare deploy",
+    "guard:build": "node scripts/build-guard.mjs",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test:unit": "tsc -p tsconfig.unit.json --noEmit && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/lib/tenant.test.ts src/lib/audience.test.ts",
-    "test:e2e": "playwright test"
+    "test:unit": "tsc -p tsconfig.unit.json --noEmit && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/lib/tenant.test.ts src/lib/audience.test.ts src/lib/sign-in-next.test.ts src/lib/sign-in-message.test.ts scripts/build-guard.test.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:live": "playwright test -c playwright.live.config.ts"
   },
   "dependencies": {
     "@sentry/browser": "^10.76.2",

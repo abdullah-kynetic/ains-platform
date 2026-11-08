@@ -5,8 +5,8 @@
  *  - demo hosts (preview, localhost, workers.dev, apex) -> both, switchable in the sidebar
  *
  * The host only narrows what the UI offers. It is not authorization: the API must still
- * enforce role and firm on every call. TODO(auth): once sign-in is back, a session whose
- * role does not match the host's audience should be refused (see wrong-portal.tsx).
+ * enforce role and firm on every call. TODO(auth): a session whose role does not
+ * match the host's audience should be refused (see wrong-portal.tsx); the backend has no such check yet.
  */
 /** Same value as PORTAL_APEX_HOST in tenant.ts (kept local so this file stays dependency-free for node tests). */
 const PORTAL_APEX_HOST = "kiensolutions.com";
@@ -42,4 +42,9 @@ export function audienceForHost(
 /** Browser helper; server and unknown contexts fall back to the demo behaviour. */
 export function currentAudience(): Audience {
   return typeof window === "undefined" ? "both" : audienceForHost(window.location.host);
+}
+
+/** True when a signed-in role must not use a host that serves only the other audience. */
+export function audienceRefusesRole(audience: Audience, role: "client" | "auditor"): boolean {
+  return audience !== "both" && audience !== role;
 }
