@@ -18,6 +18,8 @@ def test_monday_additive_schema_preserves_rows(postgres_engine):
         connection.execute(text('DROP TABLE engagement_reports'))
         connection.execute(text('DROP TABLE client_contacts'))
         connection.execute(text('DROP TABLE client_profile_details'))
+        for column in ('response_request_text', 'response_released_at', 'response_released_by_id'):
+            connection.execute(text(f'ALTER TABLE checklist_item_instances DROP COLUMN {column}'))
         connection.execute(text(
             'ALTER TABLE checklist_item_instances DROP COLUMN na_previous_state'
         ))
