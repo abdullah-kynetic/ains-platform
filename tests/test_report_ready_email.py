@@ -165,3 +165,16 @@ def test_signoff_without_key_still_completes(backend, monkeypatch) -> None:  # n
         json={"reportSha256": "ef" * 32, "attestation": True},
     )
     assert response.status_code == 200
+
+
+def test_unexpected_error_is_swallowed(monkeypatch: pytest.MonkeyPatch) -> None:
+    def boom(*args: object, **kwargs: object) -> None:
+        raise ValueError("synthetic")
+
+    monkeypatch.setattr("app.auth.email.httpx.post", boom)
+    notify_report_ready(
+        _settings(),
+        recipients=["synthetic@example.test"],
+        firm_name="Synthetic Alpha Securities",
+        review_period=PERIOD,
+    )

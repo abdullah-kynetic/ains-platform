@@ -98,5 +98,5 @@ def notify_report_ready(
                 timeout=10,
             )
             response.raise_for_status()
-        except httpx.HTTPError:
-            logger.warning("Report-ready email was not delivered")
+        except Exception as exc:  # noqa: BLE001 - sign-off must never fail on mail
+            logger.warning("Report-ready email was not delivered (%s)", type(exc).__name__)
