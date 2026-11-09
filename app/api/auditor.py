@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.auth.dependencies import get_current_user
+from app.auth.email import notify_report_ready
 from app.checklist import ClientStatus
 from app.checklist.catalog import load_catalog
 from app.config import Settings, get_settings
@@ -325,13 +326,21 @@ class ReportSignoff(APIModel):
 
 
 @router.post("/engagements/{engagement_id}/report/signoff")
-def signoff_report(engagement_id: str, payload: ReportSignoff, user: CurrentUser, db: DB):
+def signoff_report(
+    engagement_id: str,
+    payload: ReportSignoff,
+    user: CurrentUser,
+    db: DB,
+    settings: AppSettings,
+):
     """Record the assigned auditor's explicit approval of a specific report artifact."""
     from app.database.models import EngagementStatus
 
     _require_auditor(user)
     engagement = db.scalar(
-        select(Engagement).where(Engagement.id == engagement_id, Engagement.auditor_id == user.id)
+        select(Engagement)
+        .where(Engagement.id == engagement_id, Engagement.auditor_id == user.id)
+        .options(selectinload(Engagement.firm))
     )
     if not engagement:
         raise HTTPException(404, "Engagement not found")
@@ -349,4 +358,22 @@ def signoff_report(engagement_id: str, payload: ReportSignoff, user: CurrentUser
     )
     engagement.status = EngagementStatus.COMPLETE
     db.commit()
+    recipients = list(
+        db.scalars(
+            select(User.email).where(
+                User.firm_id == engagement.firm_id,
+                User.role == UserRole.CLIENT,
+                User.is_active.is_(True),
+            )
+        ).all()
+    )
+    notify_report_ready(
+        settings,
+        recipients=recipients,
+        firm_name=engagement.firm.name if engagement.firm is not None else "your firm",
+        review_period=(
+            f"{engagement.review_period_start.isoformat()} through "
+            f"{engagement.review_period_end.isoformat()}"
+        ),
+    )
     return {"signed_off": True, "report_sha256": payload.report_sha256}
