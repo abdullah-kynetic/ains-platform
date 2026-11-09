@@ -87,9 +87,12 @@ subscription. Buy Advanced Certificate Manager only for a partial (CNAME) DNS
 setup, where Universal SSL does not provision the wildcard for you, or for
 names deeper than one label. This portal uses a single label.
 
-`NEXT_PUBLIC_API_URL` is a **public build-time** setting, not a secret. Set it
-to `https://api.kiensolutions.com` before building; changing a Wrangler runtime
-variable does not replace a URL already embedded in browser JavaScript. The API
+`NEXT_PUBLIC_API_URL` is a **public build-time** setting, not a secret. It is read
+only in `src/lib/api.ts`. When it is unset, a development build uses
+`http://localhost:8000` and a production build uses `https://api.kiensolutions.com`.
+`npm run build:cloudflare:production` reads `env.production.vars` in `wrangler.jsonc`
+when the shell does not set it. Changing a Wrangler runtime variable does not replace
+a URL already embedded in browser JavaScript. The API
 host has to share the registrable domain `kiensolutions.com` so the browser
 treats portal and API as the same site.
 
