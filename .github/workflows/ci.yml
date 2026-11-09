@@ -16,6 +16,23 @@ jobs:
   backend:
     name: Python lint and tests
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          # Throwaway CI-only credentials for a service that lives for this job only.
+          POSTGRES_USER: synthetic
+          POSTGRES_PASSWORD: synthetic-ci-only
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U synthetic"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      KIEN_TEST_POSTGRES_URL: postgresql+psycopg://synthetic:synthetic-ci-only@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -26,7 +43,12 @@ jobs:
           python-version-file: .python-version
       - run: uv sync --frozen
       - run: uv run ruff check .
-      - run: uv run pytest -q
+      - run: uv run pytest -q -rs
+      - name: Postgres tests must run, not skip
+        run: |
+          uv run pytest -v -rs tests/test_*_postgres.py | tee postgres-tests.log
+          if grep -q SKIPPED postgres-tests.log; then echo "Postgres tests were skipped"; exit 1; fi
+          grep -E "[0-9]+ passed" postgres-tests.log
 
   web:
     name: Web lint, typecheck, and build
