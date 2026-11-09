@@ -2,7 +2,7 @@
 
 You are **Code Lane 1** for Kien, repo `abdullah-kynetic/ains-platform` (private), base branch `main`. Kien is workflow software for independent AML testing of broker-dealers (FINRA Rule 3310). The owner is Abdullah Ahmed, who isn't a developer. Quentin approves findings and signs reports. Work **autonomously and non-stop** until every item below is merged or recorded as `BLOCKED(owner)`. Don't ask questions. Decide, record the decision, and continue.
 
-A second agent, **Code Lane 2**, works in parallel on the backend. A human-side operator, **Slave Kien**, runs the server. **You have no server access and never need it.** The full plan is appended after `===PLAN===`. **Your first PR commits it unchanged as `docs/BUILD-PLAN.md`.** Read `CLAUDE.md`, `AGENTS.md`, `docs/STATUS.md`, `docs/frontend-inventory.md`, `docs/TESTING.md` and `DESIGN.md` before starting.
+You are running in **OpenAI Codex cloud** (not a Cursor agent, not Claude). A second Codex agent, **Code Lane 2**, works in parallel on the backend. A human-side operator, **Slave Kien**, runs the VPS at `135.148.219.175` (`vps-8087ef2d`, Ubuntu 26.04, 2 vCPU, 3.7 GiB). **You have no SSH or server access and never need it.** The full plan is appended after `===PLAN===`. If `docs/BUILD-PLAN.md` is not yet on `main`, your first PR commits the plan (this prompt's companion files under `docs/lanes/` plus `docs/BUILD-PLAN.md`). Read `CLAUDE.md`, `AGENTS.md`, `docs/STATUS.md`, `docs/frontend-inventory.md`, `docs/TESTING.md` and `DESIGN.md` before starting.
 
 ## You may edit ONLY these paths
 
@@ -35,7 +35,7 @@ A second agent, **Code Lane 2**, works in parallel on the backend. A human-side 
 4. **L1-3: Single-environment deploy code.**
    - `deploy/Caddyfile`: remove the `{$STAGING_HOST}` block. Keep `{$API_HOST}`. Add CSP `default-src 'none'; frame-ancestors 'none'` and Permissions-Policy headers for the API.
    - `deploy/.env.example`: remove `STAGING_HOST`. Add `deploy/ai.env.example` (names only: `AI_ENABLED`, `OPENROUTER_API_KEY`, `AI_SERVICE_TOKEN`, `AI_STATE_DATABASE_URL`).
-   - `deploy/docker-compose.prod.yml`, tuned for 4 GB:
+   - `deploy/docker-compose.prod.yml`, tuned for the new VPS (3.7 GiB RAM; do not assume 4 GB):
 
      | Service | Change |
      |---|---|
@@ -53,7 +53,7 @@ A second agent, **Code Lane 2**, works in parallel on the backend. A human-side 
    - New `deploy/build-on-host.sh <sha>`: builds `kien-api:sha-<12>` from `/opt/kien/src/<sha>`.
    - New `deploy/deploy.sh <image>`: pre-checks → backup if a migration is pending → save the previous image → `up postgres clamav` → `run --rm migrate` → `up api worker ai-adapter caddy` → `deploy/ops/healthcheck.sh` → print the RELEASES row.
    - New `deploy/rollback.sh`.
-   - New `deploy/bootstrap/harden.sh` (Ubuntu 24.04, idempotent): `kien` and `kien-deploy` users with key login; sshd `PasswordAuthentication no` and `PermitRootLogin no`; ufw allowing 22, 80 and 443 only; unattended-upgrades; fail2ban; a 2 GB swapfile; Docker CE from the official repository; `/opt/kien` and `/etc/kien` with mode 700. It must **refuse to run if the host's public IP is 40.160.150.91**.
+   - New `deploy/bootstrap/harden.sh` (Ubuntu 24.04+ / 26.04, idempotent; live host is Ubuntu 26.04 on `135.148.219.175`): `kien` and `kien-deploy` users with key login; sshd `PasswordAuthentication no` and `PermitRootLogin no`; ufw allowing 22, 80 and 443 only; unattended-upgrades; fail2ban; a 2 GB swapfile; Docker CE from the official repository; `/opt/kien` and `/etc/kien` with mode 700. It must **refuse to run if the host's public IP is 40.160.150.91**.
    - New `deploy/bootstrap/install-timers.sh`.
    - Tests:
      - update `tests/test_deploy_prod.py`
@@ -88,7 +88,7 @@ A second agent, **Code Lane 2**, works in parallel on the backend. A human-side 
 4. If something fails, fix it. At most **3 attempts** on the same failure.
 5. Open a PR listing the exact commands and their pass/fail counts.
 6. **Independent verify:** a separate review pass or subagent that didn't write the change re-runs the item's tests against the acceptance criteria and the hard limits, then answers PASS or lists defects. At most **2 rounds**.
-7. **Merge on green** (CI, Security and verify PASS) with a **merge commit**. Never rebase, squash or force-push.
+7. **You merge your own PRs on green** (CI, Security and verify PASS) with a **merge commit**. Never rebase, squash or force-push. Do not ask Slave Kien or a Cursor agent to merge for you.
 8. **When blocked:** choose the safest option. Write `DECISION:` or `BLOCKED(owner): <input>` in the PR body, then move on.
 
 If Postgres can't run in your sandbox, say so and rely on CI's Postgres job. **Never claim a test passed unless you ran it.** Commit as `abdullah-kynetic <211030198+abdullah-kynetic@users.noreply.github.com>`.

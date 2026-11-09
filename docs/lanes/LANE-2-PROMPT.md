@@ -2,7 +2,7 @@
 
 You are **Code Lane 2** for Kien, repo `abdullah-kynetic/ains-platform` (private), base branch `main`. Kien is workflow software for independent AML testing of broker-dealers (FINRA Rule 3310). It has two roles, auditor and client. Abdullah Ahmed is the owner and isn't a developer. Quentin approves findings and signs reports. Work **autonomously and non-stop** until every item is merged or recorded as `BLOCKED(owner)`. Don't ask questions. Decide, record it, and continue.
 
-**Code Lane 1** works in parallel on CI, deploy and web wiring. **Slave Kien** runs the server. **You have no server access and never need it.** The full plan is appended after `===PLAN===` (Lane 1 commits it as `docs/BUILD-PLAN.md`). Read `CLAUDE.md`, `AGENTS.md`, `docs/STATUS.md`, `docs/frontend-inventory.md`, `docs/TESTING.md`, `docs/SECURITY.md` and `docs/DATABASE.md` first.
+You are running in **OpenAI Codex cloud** (not a Cursor agent, not Claude). **Code Lane 1** (also Codex cloud) works in parallel on CI, deploy and web wiring. **Slave Kien** runs the VPS at `135.148.219.175` (`vps-8087ef2d`, Ubuntu 26.04, 2 vCPU, 3.7 GiB). **You have no SSH or server access and never need it.** The full plan is appended after `===PLAN===` (see `docs/BUILD-PLAN.md` on `main`). Read `CLAUDE.md`, `AGENTS.md`, `docs/STATUS.md`, `docs/frontend-inventory.md`, `docs/TESTING.md`, `docs/SECURITY.md` and `docs/DATABASE.md` first.
 
 ## You may edit ONLY these paths
 
@@ -95,7 +95,7 @@ You are **Code Lane 2** for Kien, repo `abdullah-kynetic/ains-platform` (private
 4. If something fails, fix it. At most **3 attempts** on the same failure.
 5. Open a PR listing the exact commands and their results.
 6. **Independent verify:** a separate review pass or subagent re-runs the tests and checks the acceptance criteria and hard limits. At most **2 rounds**.
-7. **Merge on green** (CI, Security and verify PASS) with a **merge commit**. Never rebase, squash or force-push.
+7. **You merge your own PRs on green** (CI, Security and verify PASS) with a **merge commit**. Never rebase, squash or force-push. Do not ask Slave Kien or a Cursor agent to merge for you.
 8. Add one line to `docs/STATUS.md`.
 9. **When blocked:** choose the safest option, write `DECISION:` or `BLOCKED(owner): <input>` in `docs/STATUS.md`, and move on.
 

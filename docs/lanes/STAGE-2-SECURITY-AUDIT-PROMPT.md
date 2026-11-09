@@ -1,6 +1,6 @@
 # Stage 2 prompt: security-skill audit in Claude Code
 
-Paste this into Claude Code, opened on a fresh clone of `abdullah-kynetic/ains-platform` at `main`. **Use it only after Stage 1 (G1) is reported green.**
+Paste this into Claude Code, opened on a fresh clone of `abdullah-kynetic/ains-platform` at `main`. **Use it only after Stage 1 (G1) is reported green.** Stage 1 code lanes ran in OpenAI Codex cloud; Slave Kien operates the VPS at `135.148.219.175`. You still have no SSH access.
 
 ```
 You are running Kien's Stage 2 security audit. Repo: abdullah-kynetic/ains-platform (main). The live site is a single environment: web at https://auditor.kiensolutions.com plus the synthetic pilot firm hosts listed in web/wrangler.jsonc env.production, and the API at https://api.kiensolutions.com. Synthetic data only. Read CLAUDE.md, AGENTS.md, docs/BUILD-PLAN.md (Parts 4.5, 5, 6 and 7), docs/security/** and docs/inventory/PRODUCT-INVENTORY.md first.

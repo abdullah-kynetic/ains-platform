@@ -1,6 +1,6 @@
 # Kien build plan v2: staged (Foundation, then Security audit, then AML engine)
 
-Revised 2026-11-09, 3:15 PM PST. Supersedes [PLAN.md](PLAN.md) (v1, kept for reference) on **sequencing and scope**. Repo facts were read read-only from GitHub at `main` = `9043e24` (merge of #89). Public URLs were fetched the same day. **[unverified]** marks anything not checked.
+Revised 2026-11-09, 3:25 PM PST (Codex lanes + new VPS details). Supersedes [PLAN.md](PLAN.md) (v1, kept for reference) on **sequencing and scope**. Repo facts were read read-only from GitHub at `main` = `9043e24` (merge of #89). Public URLs were fetched the same day. **[unverified]** marks anything not checked.
 
 ---
 
@@ -14,7 +14,7 @@ There are three stages, each with a gate.
    - every security and sign-in control proven by a test or command, with an evidence file
    - the new server set up, locked down and backed up
 
-   Slave Kien runs the server. Two cloud coding agents split the code work by folder, so they never edit the same files.
+   Slave Kien runs the server. Two **OpenAI Codex cloud** coding agents (Code Lane 1 and Code Lane 2) split the code work by folder, so they never edit the same files. Each lane merges its own PRs on green with merge commits. Codex has no SSH or VPS access.
    **Gate:** Slave Kien runs the "Stage 1 done" checklist (Part 6) and reports it green.
 2. **Stage 2, Security-skill audit in Claude Code.** We install free, open-source security review skills (all checked to exist, see Part 7) and run them against the repo and the live site. Claude fixes what they find and re-runs until clean.
    **Gate:** you check the results and say "Stage 2 signed off".
@@ -54,7 +54,7 @@ Unchanged from v1 Part 2(a):
   - `docs/STATUS.md` says "AI: nothing is built yet", but `ai_adapter/` is on `main`.
   - Readiness item 41 conflicts with `CLAUDE.md` rule 10 on OpenRouter.
   - `Dockerfile` doesn't copy `ai_adapter/` (and `audit_engine/` once Stage 3 lands).
-  - The memory limits in `deploy/docker-compose.prod.yml` add up to 4.4 GB, more than a 4 GB VPS.
+  - The memory limits in `deploy/docker-compose.prod.yml` add up to 4.4 GB, more than the new VPS (3.7 GiB). Tune them down in L1-3.
 - **Engine branch** `claude/engine-core`: **parked until Stage 3** (it has one known test false match and two failures nobody has looked at).
 
 ### 2.3 New: production still contains mock data (the full-product gap)
@@ -106,6 +106,8 @@ Unchanged from v1 Part 2(a):
 ## Part 4: Stage 1, Foundation (automated)
 
 ### 4.1 Lanes and file ownership
+
+**Where the lanes run (2026-11-09):** Code Lane 1 and Code Lane 2 both run in **OpenAI Codex cloud** (not a Cursor agent and not Claude for Stage 1 code). Each lane opens PRs, waits for green CI, and merges its own PRs with **merge commits** only. **Lane C (Slave Kien)** does all VPS work over SSH. Codex has **no SSH access** and never needs it.
 
 | Path | **Code Lane 1** (CI, deploy, web wiring) | **Code Lane 2** (backend, auth and security, rebuilds) | **Lane C** (Slave Kien, VPS) |
 |---|---|---|---|
@@ -172,7 +174,7 @@ If PostgreSQL can't run in an agent sandbox, say so and rely on CI's Postgres jo
 | L1-0 | Commit this plan as `docs/BUILD-PLAN.md` (first PR) | File on `main` | CI green |
 | L1-1 | Image workflow fix | `image.yml` succeeds on `main`; the digest is recorded in `deploy/RELEASES.md` with "Deployed to: none" | `gh workflow run image.yml --ref main`; read the failing log and fix; `uv run pytest -q tests/test_image_workflow.py` |
 | L1-2 | **S-CI security workflow** `.github/workflows/security.yml`, run on PRs and `main`, all tools free (see 4.5) | Every scanner runs and fails the job on High or Critical (or on any verified secret). An allowlist file `docs/security/accepted-risks.md` (each entry has a reason and an expiry date) is the only way to suppress a finding. Reports upload as artifacts | The commands in 4.5 row S-CI |
-| L1-3 | Single-environment deploy code (v1 item B5, unchanged in scope; see `PLAN.md` 3.7 B5) | Covers: Caddyfile without `STAGING_HOST`; compose tuned to 4 GB with ClamAV `ConcurrentDatabaseReload=no`; the `ai-adapter` service **defined but `AI_ENABLED=false`**; Dockerfile copies `ai_adapter`; `deploy/deploy.sh`, `rollback.sh` and `build-on-host.sh`; `deploy/bootstrap/harden.sh` (refuses 40.160.150.91) and `install-timers.sh`; `docs/runbooks/vps-bringup.md`; updates to `docs/kb/10` and `docs/kb/13`. **Add least-privilege DB roles:** a `kien_migrator` owner role used only by `migrate`, a `kien_app` role (DML only, no DDL) used by the api and worker, and a `kien_backup` read-only role used by `backup.sh`, all created by `deploy/bootstrap/db-roles.sql`. Add Caddy CSP and Permissions-Policy headers for the API | `uv run pytest -q tests/test_deploy_prod.py tests/test_deploy_scripts.py tests/test_deploy_single_env.py`; `shellcheck deploy/*.sh deploy/*/*.sh`; `docker compose ... config -q`; `caddy validate` (exact forms in `PLAN.md` 3.7 B5); new `tests/test_db_roles.py` (Postgres: `kien_app` can't `CREATE TABLE` or `DROP`, and can SELECT, INSERT, UPDATE and DELETE app tables; audit-log table is append-only for `kien_app` if feasible) |
+| L1-3 | Single-environment deploy code (v1 item B5, unchanged in scope; see `PLAN.md` 3.7 B5) | Covers: Caddyfile without `STAGING_HOST`; compose tuned to fit 3.7 GiB with ClamAV `ConcurrentDatabaseReload=no`; the `ai-adapter` service **defined but `AI_ENABLED=false`**; Dockerfile copies `ai_adapter`; `deploy/deploy.sh`, `rollback.sh` and `build-on-host.sh`; `deploy/bootstrap/harden.sh` (refuses 40.160.150.91) and `install-timers.sh`; `docs/runbooks/vps-bringup.md`; updates to `docs/kb/10` and `docs/kb/13`. **Add least-privilege DB roles:** a `kien_migrator` owner role used only by `migrate`, a `kien_app` role (DML only, no DDL) used by the api and worker, and a `kien_backup` read-only role used by `backup.sh`, all created by `deploy/bootstrap/db-roles.sql`. Add Caddy CSP and Permissions-Policy headers for the API | `uv run pytest -q tests/test_deploy_prod.py tests/test_deploy_scripts.py tests/test_deploy_single_env.py`; `shellcheck deploy/*.sh deploy/*/*.sh`; `docker compose ... config -q`; `caddy validate` (exact forms in `PLAN.md` 3.7 B5); new `tests/test_db_roles.py` (Postgres: `kien_app` can't `CREATE TABLE` or `DROP`, and can SELECT, INSERT, UPDATE and DELETE app tables; audit-log table is append-only for `kien_app` if feasible) |
 | L1-4 | Web security headers | `web/next.config.ts` sends a strict **Content-Security-Policy** (no `unsafe-eval`; `connect-src` limited to the API origin and Sentry if used), HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` and `frame-ancestors 'none'` | New `web/e2e-live/headers-live.spec.ts` asserts the headers on the production build; `npm run build:cloudflare:production` |
 | L1-5 | **Product inventory** `docs/inventory/PRODUCT-INVENTORY.md` (see 4.6) | Every page in `web/src/app/**/page.tsx`, every button or action in its components, the API function it calls, the backend route (from `tests/route_inventory.txt` and `app/api/*` decorators), the status (built / mocked / missing), the Lane 2 item that will build it, and the e2e-live spec that proves it. Also every backend route that no UI uses | New `scripts/security/inventory_check.mjs` (or `.py`) fails CI if any `TODO(backend)` remains in `web/src/lib/**`, or if a page has no row. It's allowed to fail until the end of Stage 1; it becomes blocking at G1 |
 | L1-6 | **No mocks in production builds** | `web/scripts/build-guard.mjs` fails `build:cloudflare:production` if the bundle contains `kien-mock-` keys, `web/src/lib/mock` imports or seed data. Every `web/src/lib/api/*` function calls the real API when `USE_MOCKS` is false (no `localStorage` fallback) | `node --test web/scripts/build-guard.test.mjs` (extended); `npm run build:cloudflare:production && npm run guard:build` |
@@ -197,6 +199,8 @@ If PostgreSQL can't run in an agent sandbox, say so and rely on CI's Postgres jo
 | L2-10 | Readiness tracker `docs/readiness/STATUS.md` (all 45 items: status, evidence link, owner) | Done only with evidence | CI |
 
 #### Lane C: Slave Kien on the VPS
+
+**New VPS (owner-provided 2026-11-09):** `135.148.219.175` (hostname `vps-8087ef2d`), Ubuntu 26.04, 2 vCPU, 3.7 GiB RAM. Slave Kien handles **all** VPS work over SSH. Codex has no SSH access. Never touch the old shared server `40.160.150.91`.
 
 Same steps as v1 `PLAN.md` 3.7 Lane C, C0–C9. **C10 (AI eval) moves to Stage 3.** Additions:
 - **C1+:** add the evidence for S-21 (firewall) and S-22 (SSH hardening), as in 4.5.
@@ -376,12 +380,12 @@ Saved as [STAGE-2-SECURITY-AUDIT-PROMPT.md](STAGE-2-SECURITY-AUDIT-PROMPT.md).
 ## Part 8: Owner inputs (as few as possible)
 
 Stage 1:
-1. **VPS:** IP, OS (Ubuntu 24.04 preferred), username, one-time password and plan size. Use the secure form.
+1. **VPS:** received. Public IP `135.148.219.175`, hostname `vps-8087ef2d`, Ubuntu 26.04, 2 vCPU, 3.7 GiB. Username and one-time password stay in the secure form / secret box only (never paste them into the repo or chat).
 2. **R2:** the account ID plus a documents token and a backups token, or a yes to Slave Kien creating them through the Cloudflare connector **[unverified that it can]**. Store the restic password Slave Kien generates in your password manager.
 3. **DNS yes:** point `api.kiensolutions.com` at the new VPS; add `auditor.` and the pilot firm hosts.
 4. **Cloudflare API token** for kiensolutions.com (Workers Scripts Edit and DNS Edit).
 5. **Resend** API key and a verified sending domain.
-6. A yes for Slave Kien to **launch the two cloud coding agents** (Cursor cloud agents; Codex cloud if it's available **[unverified]**). Each launch is a separate approval.
+6. **Code lanes:** both Stage 1 code lanes run in **OpenAI Codex cloud**. Each lane merges its own PRs on green with merge commits. No Cursor coding agent and no Claude for Stage 1 code work. (Stage 2 security audit and Stage 3 AML engine still run in Claude, after their gates.)
 
 Stage 2: your sign-off (G2). The optional claude-code-security-review Action would need an Anthropic API key, which is paid. Skip it unless you want it.
 
@@ -428,5 +432,5 @@ These will **not** be done in 5 hours: #45, full wiring, all e2e-live specs, and
 - Stage 3 (engine) prompt: written only after G2. The v1 Lane A items A1–A8 in [PLAN.md](PLAN.md) 3.7 are the starting scope, to run in Claude.
 
 How Slave Kien launches the lanes:
-- Start each cloud agent on `abdullah-kynetic/ains-platform`, `main`. Use the prompt file's contents, then a line `===PLAN===`, then this file's full contents, so Lane 1 can commit it as `docs/BUILD-PLAN.md`.
+- Start each lane in **OpenAI Codex cloud** on `abdullah-kynetic/ains-platform`, `main`. Paste the matching prompt under `docs/lanes/`, then a line `===PLAN===`, then this file. Each Codex lane merges its own PRs on green with merge commits. Codex has no VPS/SSH access; Slave Kien alone operates `135.148.219.175`.
 - Watch each agent at the hourly checkpoints. Re-launch one if it stops before its done-list is complete.
