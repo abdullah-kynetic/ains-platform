@@ -71,12 +71,16 @@ Only #39 was closed. Rebuilds were not started: #40, #45 and #37 each need their
 
 - L2-1: #37 rebuilt on current main and merged in [#92](https://github.com/abdullah-kynetic/ains-platform/pull/92) (`74f1759`); original #37 closed as superseded. CI backend and web (including full browser tests) passed; independent source, tests and production artifact review PASS. Local backend: 369 passed, 11 skipped; web unit: 28 passed; lint/typecheck, demo and production builds passed. Production browser artifact contains `https://api.kiensolutions.com`. No deployment.
 - L2-0: [#90](https://github.com/abdullah-kynetic/ains-platform/pull/90) merged after #92. Independent review confirmed the CI step "Postgres tests must run, not skip" passed. The older no-Postgres CI statement above is historical; current main includes the service.
-- L2-2: [#93](https://github.com/abdullah-kynetic/ains-platform/pull/93) open, report-ready rebuild. Ordered migration/email/reset/report regression: 31 passed; independent verify PASS. Full fixed backend and updated CI pending.
-- L2-3: [#96](https://github.com/abdullah-kynetic/ains-platform/pull/96) open, portal rebuild. Post-fix focused suite: 106 passed, 1 PostgreSQL test skipped locally (no binaries). Independent security source review PASS; full backend, PostgreSQL CI and integrated report-ready links still required.
+- L2-2: [#93](https://github.com/abdullah-kynetic/ains-platform/pull/93) open, report-ready rebuild. Ordered migration/email/reset/report regression: 31 passed; independent verify PASS. Full fixed backend: 377 passed, 12 skipped locally; updated CI pending.
+- L2-3: [#96](https://github.com/abdullah-kynetic/ains-platform/pull/96) open, portal rebuild. Post-fix focused suite: 106 passed, 1 PostgreSQL test skipped locally (no binaries). Independent security source review PASS; full pre-integration backend: 398 passed, 13 skipped locally. Integrated report-ready links passed the 50-test focused suite. Final full backend/CI remain required; live browser gate is blocked below.
 
 ### Requests to Lane 1
 
 #92 landed the #37 package/Wrangler changes; Lane 1 now owns those files. Preserve the build-time API URL helper and its tests when updating production build guards. No dependency change requested.
+
+BLOCKED(Lane 1): #96 live browser tests use `http://kynetic.localhost:3100`, but `scripts/e2e_backend.py` seeds only firm slug `synthetic-e2e`. With portal binding enabled the branding request returns 404 `Unknown firm portal`; client sign-in fails. Align the seed slug with the test hostname (or update the live test hostname and hard-coded URL assertions together). Lane 2 does not own `scripts/e2e_backend.py` or Playwright specs/config. Do not weaken host binding to make this fixture pass.
+
+BLOCKED(runtime): local full mock browser run: 80 passed, 2 failed. Both production-style mapped aliases receive `Domain forbidden` from the managed proxy; a targeted retry with local-alias proxy bypass also failed. CI's full #92 browser step passed. Browser dependency install required unavailable root access; bundled download was forbidden; installed Chromium successfully ran the other 80 tests.
 
 ### BLOCKED inputs
 
