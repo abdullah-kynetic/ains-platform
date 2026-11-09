@@ -21,6 +21,14 @@ FROM = "Kien <no-reply@example.test>"
 PERIOD = "2025-01-01 through 2025-12-31"
 
 
+@pytest.fixture(autouse=True)
+def enable_email_log_capture(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Earlier migration tests run Alembic fileConfig in this process and disable
+    # existing loggers. Real migrations run separately from the API; isolate that
+    # test-only global state so privacy assertions still inspect emitted records.
+    monkeypatch.setattr(logging.getLogger("app.auth.email"), "disabled", False)
+
+
 def _settings(key: str = API_KEY, email_from: str = FROM) -> Settings:
     return Settings(
         _env_file=None,
