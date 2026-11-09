@@ -56,7 +56,7 @@ Backend-authenticated target journeys below require restoration of the removed w
 | F-08 | Auditor MFA | Must / built |
 | F-09 | Invitations, password reset, magic link | Must / built |
 | F-10 | Responsive, keyboard, themes | Must / built |
-| F-11 | AI intake classification | Later / not built |
+| F-11 | AI intake classification | Planned, built alongside the workflow; not built yet |
 | F-12 | SAR pre-screen (zero model runs) | Later / not built |
 | F-13 | Auditor invoicing v1 | Merged (#53, #54) |
 

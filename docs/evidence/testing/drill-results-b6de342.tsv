@@ -1,0 +1,27 @@
+env_postgres	PASS	postgres (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+env_s3	PASS	moto S3 EMULATOR; restic 0.16.4, rclone rclone v1.60.1-DEV
+migrate	PASS	alembic head=a117_response_requests
+seed	PASS	synthetic firm/users/3 documents/15 audit rows
+restic_init	PASS	encrypted repo on S3 emulator
+backup_run	PASS	backup ok
+backup_snapshots	PASS	snapshots=2 (db+config)
+docs_copy	PASS	docs-sync copy ok
+docs_copy_idempotent	PASS	second run
+docs_check	PASS	docs-sync check ok
+restore_drill	PASS	row counts match the backup-time record for 24 tables document checksum matches DRILL PASS: restore 2s, total 3s 
+restore_script	PASS	restored latest into kien-restore-drill
+schema_version	PASS	a117_response_requests
+schema_identical	PASS	pg_dump --schema-only equal (sorted; CHECK bodies compared by name only: PG re-deparses the expression text on restore, semantically equal; \restrict tokens ignored)
+app_reads_restored	PASS	firms=1 documents=3 audit_chain={'valid': True, 'checked': 15, 'broken_at': None} checksum_mismatches=0
+encryption_at_rest	PASS	no plaintext markers in 10 repo objects
+wrong_password_rejected	PASS	restic with wrong password
+restore_refuses_live	PASS	container name contains kien-postgres
+restore_unknown_snapshot	PASS	bad snapshot id
+backup_fails_when_dump_fails	PASS	exit code on pg_dump failure
+backup_no_partial_snapshot	PASS	db snapshots 1 -> 1
+drill_ignores_post_backup_writes	PASS	drill compares to backup-time counts, not live DB (IMPL-2 semantics): DRILL PASS: restore 1s, total 3s
+drill_detects_tampered_document	PASS	DRILL FAIL: document checksum mismatch (note: checks only first document by id)
+restic_check_clean	PASS	before corruption
+restic_detects_corruption	PASS	bit flip in one pack
+disk_alert_warn_rc1	PASS	forced warn threshold
+disk_alert_page_rc2	PASS	forced page threshold

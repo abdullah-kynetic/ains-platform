@@ -1,4 +1,4 @@
-# AI features (built last)
+# AI features (built alongside the workflow)
 
 Both features are **planned, not built**. `app/` must keep passing `tests/test_workflow_boundary.py` (no model SDKs in the workflow app); AI lives behind a separate authenticated adapter/module with its own data contract.
 
