@@ -51,3 +51,31 @@ No unavailable scan is counted as a clean scan. CI and independent acceptance
 remain required. No server, deployment or AI changes were made.
 
 Targeted final verification: `UV_CACHE_DIR=/tmp/kien-uv-cache uv run pytest -q tests/test_ci_security.py tests/test_image_workflow.py`: 46 passed. Ruff, bash syntax and suppression-policy checks passed.
+
+
+## Final full gate
+
+- `UV_CACHE_DIR=/tmp/kien-uv-cache uv sync --frozen`: PASS, 67 packages.
+- `UV_CACHE_DIR=/tmp/kien-uv-cache uv run ruff check .`: PASS.
+- `UV_CACHE_DIR=/tmp/kien-uv-cache uv run pytest -q`: 412 passed, 11 skipped,
+  one Starlette dependency deprecation warning (184.77 seconds).
+- In web: `npm ci --cache /tmp/kien-npm-cache`, `npm run lint`,
+  `npm run typecheck`: PASS; `npm run test:unit`: 23 passed.
+- `NEXT_PUBLIC_USE_MOCKS=true npm run build:cloudflare` and
+  `npm run build:cloudflare:production`: PASS. Both completed with a read-only-home
+  Wrangler log warning; no deployment was run.
+- `npx playwright install --with-deps chromium`: failed (root elevation unavailable).
+  Browser-only installation failed (download domain denied).
+- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e:live`:
+  8 passed using the real local backend and synthetic users.
+- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e`:
+  80 passed, 2 failed. The two production-style tenant-host checks show a cloud proxy
+  Domain forbidden page, not the application. No policy bypass was attempted.
+
+PRs: #94 (image) and #97 (security), neither merged. Latest hosted Security checks:
+pip-audit, npm, TruffleHog and Bandit passed; Gitleaks, Semgrep and zizmor failed;
+Trivy jobs were pending at the checkpoint. Full hosted CI remained pending.
+
+L1-3 through L1-9 are not implemented in this change; no inventory counts or live
+product coverage are claimed. Package and lockfile ownership still awaits Lane 2's
+#37 handoff. No edits were made outside Lane 1's owned paths.
