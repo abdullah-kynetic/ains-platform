@@ -66,3 +66,19 @@ Only #39 was closed. Rebuilds were not started: #40, #45 and #37 each need their
 2. Whether #40, #45 and #37 are rebuilt on `main` now, or after the VPS phase resumes.
 3. The partner-firm conflict in [VISION.md](VISION.md) needs legal and commercial advice before any decision.
 4. The items in the readiness checklist marked for Abdullah, starting with Phase 0.
+
+## Lane 2 checkpoint (2026-11-09)
+
+- L2-1: #37 rebuilt on current main and merged in [#92](https://github.com/abdullah-kynetic/ains-platform/pull/92) (`74f1759`); original #37 closed as superseded. CI backend and web (including full browser tests) passed; independent source, tests and production artifact review PASS. Local backend: 369 passed, 11 skipped; web unit: 28 passed; lint/typecheck, demo and production builds passed. Production browser artifact contains `https://api.kiensolutions.com`. No deployment.
+- L2-0: [#90](https://github.com/abdullah-kynetic/ains-platform/pull/90) merged after #92. Independent review confirmed the CI step "Postgres tests must run, not skip" passed. The older no-Postgres CI statement above is historical; current main includes the service.
+- L2-2: [#93](https://github.com/abdullah-kynetic/ains-platform/pull/93) open, report-ready rebuild. Ordered migration/email/reset/report regression: 31 passed; independent verify PASS. Full fixed backend and updated CI pending.
+- L2-3: [#96](https://github.com/abdullah-kynetic/ains-platform/pull/96) open, portal rebuild. Post-fix focused suite: 106 passed, 1 PostgreSQL test skipped locally (no binaries). Independent security source review PASS; full backend, PostgreSQL CI and integrated report-ready links still required.
+
+### Requests to Lane 1
+
+#92 landed the #37 package/Wrangler changes; Lane 1 now owns those files. Preserve the build-time API URL helper and its tests when updating production build guards. No dependency change requested.
+
+### BLOCKED inputs
+
+BLOCKED(owner/attorney): reconcile readiness item 41 with CLAUDE.md rule 10; no real client data or model work is authorized by this checkpoint.
+BLOCKED(Lane C): live R2/ClamAV, email delivery, host configuration and server evidence require the server lane; code agents have no server access.
