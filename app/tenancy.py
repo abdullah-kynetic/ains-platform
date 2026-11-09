@@ -64,8 +64,16 @@ def require_logo_url(value: str | None) -> str | None:
         raise ValueError("logo url must be a relative path or https URL")
     if not value or ".." in value or len(value) > 500:
         raise ValueError("logo url must be a relative path or https URL")
-    if value.startswith("/") or value.startswith("https://"):
+    if value.startswith("/") and not value.startswith("//"):
         return value
+    if value.startswith("https://"):
+        try:
+            parsed = urlsplit(value)
+            _ = parsed.port
+            if parsed.hostname and not parsed.username and not parsed.password:
+                return value
+        except ValueError:
+            pass
     raise ValueError("logo url must be a relative path or https URL")
 
 
@@ -102,8 +110,8 @@ def portal_url_for(settings: Settings, slug: str | None) -> str:
     """Expand ``PORTAL_URL``. A concrete URL is returned unchanged.
 
     ``https://{slug}.kiensolutions.com`` becomes that firm's origin. With no firm
-    (a platform auditor), the ``{slug}.`` label is removed so the link stays on
-    the apex. The slug is validated before substitution.
+    (a platform auditor), the label becomes ``auditor``. The slug is validated
+    before substitution.
     """
     template = settings.portal_url.strip()
     if "{slug}" not in template:
@@ -112,7 +120,7 @@ def portal_url_for(settings: Settings, slug: str | None) -> str:
         marker = "://{slug}."
         if marker not in template:
             raise ValueError("PORTAL_URL requires a firm slug")
-        return template.replace(marker, "://", 1).rstrip("/")
+        return template.replace(marker, "://auditor.", 1).rstrip("/")
     return template.replace("{slug}", require_firm_slug(slug), 1).rstrip("/")
 
 
@@ -189,7 +197,11 @@ def _hostname_signal(hostname: str, settings: Settings) -> tuple[str, str | None
 
 
 def _origin_signal(origin: str, settings: Settings) -> tuple[str, str | None]:
-    parsed = urlsplit(origin.strip())
+    try:
+        parsed = urlsplit(origin.strip())
+        _ = parsed.port
+    except ValueError:
+        return "invalid", None
     if (
         parsed.scheme not in {"http", "https"}
         or parsed.hostname is None

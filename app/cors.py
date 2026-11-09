@@ -21,7 +21,7 @@ from app.tenancy import (
     localhost_portal_kind,
 )
 
-ALLOW_METHODS = "GET, POST, PATCH, OPTIONS"
+ALLOW_METHODS = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
 ALLOW_HEADERS = "Authorization, Content-Type"
 # The web app reads Retry-After to tell a locked-out user how long to wait.
 EXPOSE_HEADERS = "Retry-After"
@@ -63,6 +63,14 @@ def _is_localhost_portal_origin(candidate: str) -> bool:
 
 def allowed_cors_origin(origin: str, settings: Settings, slugs: frozenset[str]) -> str | None:
     """Return the origin to echo, or None when the request origin is not allowlisted."""
+    try:
+        return _allowed_cors_origin(origin, settings, slugs)
+    except ValueError:
+        # Malformed URL authority/port is untrusted input, not an application error.
+        return None
+
+
+def _allowed_cors_origin(origin: str, settings: Settings, slugs: frozenset[str]) -> str | None:
     candidate = origin.strip()
     if not candidate or any(char in candidate for char in "\r\n "):
         return None
@@ -159,7 +167,14 @@ class PortalCORSMiddleware:
         request_method = _header(scope, b"access-control-request-method")
         preflight = scope["method"] == "OPTIONS" and bool(request_method)
         if preflight:
-            status = 200 if allowed else 400
+            requested_headers = _header(scope, b"access-control-request-headers") or ""
+            headers_allowed = all(
+                name.strip().lower() in {"authorization", "content-type"}
+                for name in requested_headers.split(",") if name.strip()
+            )
+            permitted = allowed and request_method in ALLOW_METHODS.split(", ") and headers_allowed
+            status = 200 if permitted else 400
+            allowed = allowed if permitted else None
             headers = _cors_headers(allowed, preflight=True) if allowed else [(b"vary", b"Origin")]
             await send({"type": "http.response.start", "status": status, "headers": headers})
             await send({"type": "http.response.body", "body": b""})

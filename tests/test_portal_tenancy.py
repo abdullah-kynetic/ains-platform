@@ -39,6 +39,7 @@ from app.tenancy import (
     allocate_firm_slug,
     portal_url_for,
     require_firm_slug,
+    require_logo_url,
     resolve_portal,
 )
 
@@ -100,14 +101,25 @@ def test_allocate_skips_reserved_and_collisions() -> None:
     engine.dispose()
 
 
-def test_portal_url_template_and_apex() -> None:
+def test_portal_url_template_and_auditor_host() -> None:
     settings = _settings()
     assert portal_url_for(settings, "kynetic") == "https://kynetic.kiensolutions.com"
-    assert portal_url_for(settings, None) == "https://kiensolutions.com"
+    assert portal_url_for(settings, None) == "https://auditor.kiensolutions.com"
+    decision = resolve_portal(_request({"origin": portal_url_for(settings, None)}), settings)
+    assert decision.kind == "auditor"
     local = _settings(portal_url="http://localhost:3000")
     assert portal_url_for(local, None) == "http://localhost:3000"
     with pytest.raises(ValueError):
         portal_url_for(settings, "evil.example/path")
+
+
+@pytest.mark.parametrize("value", [
+    "//external.example/logo.svg", "https://", "https://user:pass@example.test/logo",
+    "https://example.test:bad/logo",
+])
+def test_logo_rejects_network_paths_and_malformed_https(value) -> None:
+    with pytest.raises(ValueError):
+        require_logo_url(value)
 
 
 def test_slug_cache_reuses_a_load_until_cleared() -> None:
@@ -677,6 +689,32 @@ def test_cors_keeps_retry_after_exposed(portal) -> None:
     client, _, _ = portal
     response = client.get("/health", headers=_origin("synthetic-alpha"))
     assert response.headers["access-control-expose-headers"] == "Retry-After"
+
+
+@pytest.mark.parametrize("origin", ["https://[", "https://synthetic-alpha.kiensolutions.com:bad"])
+def test_malformed_origins_are_denied_without_server_errors(portal, origin) -> None:
+    client, _, _ = portal
+    assert allowed_cors_origin(origin, _settings(), frozenset({"synthetic-alpha"})) is None
+    response = client.post("/auth/password", headers={"origin": origin}, json={})
+    assert response.status_code == 403
+    assert "access-control-allow-origin" not in response.headers
+    assert "set-cookie" not in response.headers
+
+
+@pytest.mark.parametrize(
+    "method,headers,status",
+    [("PUT", "content-type", 200), ("DELETE", "authorization", 200),
+     ("TRACE", "content-type", 400), ("POST", "x-forwarded-host", 400)],
+)
+def test_preflight_enforces_exact_methods_and_headers(portal, method, headers, status) -> None:
+    client, _, _ = portal
+    response = client.options("/health", headers={
+        **_origin("synthetic-alpha"),
+        "access-control-request-method": method,
+        "access-control-request-headers": headers,
+    })
+    assert response.status_code == status
+    assert ("access-control-allow-origin" in response.headers) == (status == 200)
 
 
 def test_production_start_accepts_base_domain_without_cors_list() -> None:

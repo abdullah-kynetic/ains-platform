@@ -9,12 +9,12 @@ Synthetic data only. This change does not apply Terraform or touch AWS state.
 
 ## Slug
 
-`firms.slug` already existed as a unique label. Migration `a111_firm_portal_slug` does
+`firms.slug` already existed as a unique label. Migration `a118_firm_portal_slug` does
 not add a second column. On PostgreSQL it lowercases stored values and adds
 `ck_firms_portal_slug`: one DNS label, 1–63 characters, `[a-z0-9-]`, not starting or
 ending with a hyphen, and not one of `www`, `api`, `app`, `admin`, `mail`, `status`.
 The ORM rejects the same values. Fix any existing slug that fails the check before
-`alembic upgrade head`. Migration `a112_firm_logo_url` adds a nullable `firms.logo_url`
+`alembic upgrade head`. Migration `a119_firm_logo_url` adds a nullable `firms.logo_url`
 used only by public branding.
 
 ## Which host a request belongs to
@@ -95,7 +95,7 @@ An origin is allowed only when it is:
 
 The slug set is cached for 30 seconds and cleared when a firm row changes. A label
 that merely looks like a subdomain is denied. Allowed methods are `GET`, `POST`,
-`PATCH`, and `OPTIONS`. Allowed request headers are `Authorization` and
+`PUT`, `PATCH`, `DELETE`, and `OPTIONS`. Preflight rejects any other method or request header. Allowed request headers are `Authorization` and
 `Content-Type` (`X-Forwarded-Host` is not allowed, so browser JavaScript cannot
 attach it cross-origin).
 
@@ -118,41 +118,19 @@ id, slug, users, or engagements.
 `PORTAL_URL=https://{slug}.kiensolutions.com` is expanded with the firm's slug for
 invitation, password reset, magic link, and report-ready mail. A URL without
 `{slug}` (local `http://localhost:3000`) is used as written. Platform auditors have
-no firm, so their links use the apex. Report-ready mail goes only to active client
+no firm, so their links use the fixed auditor host. Report-ready mail goes only to active client
 users of that firm and does not include findings or a report digest. Sign-off still
 succeeds when email is not configured.
 
-## Terraform and DNS (do not apply here)
+## Hosting boundary
 
-`infra/aws` user-data now passes:
+One production Worker and one API are the current plan. Terraform and DNS changes
+are outside this rebuild. Code lanes have no server access; Lane C configures the
+single environment. No hosts or cloud resources are changed by this PR.
 
-```text
-SESSION_COOKIE_SECURE=true
-CORS_ORIGINS=
-PORTAL_BASE_DOMAIN=kiensolutions.com
-PORTAL_URL=https://{slug}.kiensolutions.com
-EMAIL_FROM=<existing email_from variable>
-```
-
-`CORS_ORIGINS` is no longer `var.portal_url`. `portal_base_domain` defaults to
-`kiensolutions.com`. Applying this replaces the EC2 host because
-`user_data_replace_on_change` is true. Dump Postgres first. This repository change
-does not run Terraform.
-
-DNS and Cloudflare, after that apply. Workers custom domains do not match a
-wildcard, so the firm hosts are a route:
-
-| Name | Type | Target | Proxy |
-| --- | --- | --- | --- |
-| `kiensolutions.com` | Worker route `kiensolutions.com/*` | landing Worker | Proxied |
-| `www.kiensolutions.com` | Worker route `www.kiensolutions.com/*` | landing Worker | Proxied |
-| `*.kiensolutions.com` | Worker route `*.kiensolutions.com/*` | portal Worker | Proxied |
-| `*` | A `192.0.2.1` or AAAA `100::` (placeholder) | portal route | Proxied |
-| `api.kiensolutions.com` | A | the EC2 Elastic IP | DNS only (grey cloud) |
-
-Do not point the wildcard at the EC2 address, and do not proxy `api` (a proxied
-`api` name would match the portal route). Caddy on the instance keeps the API
-certificate. Reserved labels that still hit the Worker are not firm portals.
+Required API configuration names: `SESSION_COOKIE_SECURE`, `CORS_ORIGINS`,
+`PORTAL_BASE_DOMAIN`, `PORTAL_URL`, and `EMAIL_FROM`. Production uses secure cookies,
+HTTPS portal origins, and no localhost entries. See [BUILD-PLAN.md](BUILD-PLAN.md).
 
 ## What the frontend keeps, and what a proxy would change
 
