@@ -7,6 +7,7 @@ import httpx
 from fastapi import HTTPException
 
 from app.config import Settings
+from app.tenancy import portal_url_for
 
 PRODUCT_NAME = "Kien"
 BRAND_NAME = "Kien Solutions"
@@ -24,7 +25,9 @@ class ResendSender:
         self.settings = settings
         self.purpose = purpose
 
-    def send(self, *, email: str, token: str, expires_at: datetime) -> None:
+    def send(
+        self, *, email: str, token: str, expires_at: datetime, slug: str | None = None
+    ) -> None:
         email_from = self.settings.email_from
         if self.purpose == "invitation" and self.settings.invite_email_from:
             email_from = self.settings.invite_email_from
@@ -35,9 +38,11 @@ class ResendSender:
             "invitation": "accept-invitation",
             "reset": "reset-password",
         }
-        url = f"{self.settings.portal_url.rstrip('/')}/{routes[self.purpose]}?" + urlencode(
-            {"token": token}
-        )
+        try:
+            base = portal_url_for(self.settings, slug)
+        except ValueError:
+            raise HTTPException(status_code=503, detail="Firm portal link is unavailable") from None
+        url = f"{base}/{routes[self.purpose]}?" + urlencode({"token": token})
         try:
             response = httpx.post(
                 "https://api.resend.com/emails",

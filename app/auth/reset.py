@@ -12,7 +12,14 @@ from sqlalchemy.orm import Session
 from app.auth.email import ResendSender
 from app.auth.security import hash_magic_link_token, hash_password, new_magic_link_token
 from app.config import Settings, get_settings
-from app.database.models import AuthRateLimit, AuthSession, MagicLinkToken, PasswordResetToken, User
+from app.database.models import (
+    AuthRateLimit,
+    AuthSession,
+    Firm,
+    MagicLinkToken,
+    PasswordResetToken,
+    User,
+)
 from app.database.session import get_db
 
 router = APIRouter(prefix="/auth/password-reset", tags=["auth"])
@@ -76,7 +83,10 @@ def request_reset(
         db.add(PasswordResetToken(user_id=user.id, token_hash=digest, expires_at=expires))
         db.commit()
         try:
-            ResendSender(settings, "reset").send(email=email, token=token, expires_at=expires)
+            firm = db.get(Firm, user.firm_id) if user.firm_id else None
+            ResendSender(settings, "reset").send(
+                email=email, token=token, expires_at=expires, slug=firm.slug if firm else None
+            )
         except HTTPException:
             # Keep the same response for registered and unregistered addresses.
             pass

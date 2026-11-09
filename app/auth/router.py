@@ -15,14 +15,16 @@ from app.config import Settings, get_settings
 from app.database.models import (
     AuditLog,
     AuthSession,
+    Firm,
     MagicLinkToken,
     MFARecoveryCode,
     User,
     UserRole,
 )
 from app.database.session import get_db
+from app.tenancy import assert_user_on_portal, require_firm_portal
 
-from .dependencies import SESSION_COOKIE, get_current_user
+from .dependencies import SESSION_COOKIE, AuthenticatedUser, get_current_user
 from .lockout import SignInGuard
 from .security import (
     create_session_token,
@@ -98,13 +100,17 @@ class AuditorMFARecoveryCodes(BaseModel):
 
 
 class MagicLinkSender(Protocol):
-    def send(self, *, email: str, token: str, expires_at: datetime) -> None: ...
+    def send(
+        self, *, email: str, token: str, expires_at: datetime, slug: str | None = None
+    ) -> None: ...
 
 
 class UnconfiguredMagicLinkSender:
-    def send(self, *, email: str, token: str, expires_at: datetime) -> None:
+    def send(
+        self, *, email: str, token: str, expires_at: datetime, slug: str | None = None
+    ) -> None:
         # Never log or return a sign-in token. A production email adapter replaces this dependency.
-        del email, token, expires_at
+        del email, token, expires_at, slug
 
 
 def get_magic_link_sender(settings: AuthSettings) -> MagicLinkSender:
@@ -192,6 +198,7 @@ def _authenticate(
     """Password (and optionally MFA) check behind the failed-attempt lockout."""
     guard = SignInGuard(db, request, settings, "signin", email)
     guard.check()
+    portal = require_firm_portal(request, settings, db)
     try:
         user = _password_user(db, email, password)
         if require_mfa:
@@ -202,6 +209,8 @@ def _authenticate(
             db.rollback()
             guard.fail()
         raise
+    # A valid account may only sign in on its own firm portal. No session or cookie is issued.
+    assert_user_on_portal(user, portal)
     guard.succeed()
     return user
 
@@ -406,7 +415,13 @@ def request_magic_link(
         expires = datetime.now(UTC) + timedelta(minutes=settings.magic_link_ttl_minutes)
         db.add(MagicLinkToken(user_id=user.id, token_hash=token_hash, expires_at=expires))
         db.commit()
-        sender.send(email=user.email, token=token, expires_at=expires)
+        firm = db.get(Firm, user.firm_id) if user.firm_id else None
+        sender.send(
+            email=user.email,
+            token=token,
+            expires_at=expires,
+            slug=firm.slug if firm else None,
+        )
     return {"status": "accepted"}
 
 
@@ -422,7 +437,7 @@ def verify_magic_link(
     guard = SignInGuard(db, request, settings, "magic", payload.token)
     guard.check()
     try:
-        user = _verified_magic_user(db, payload, settings)
+        user = _verified_magic_user(db, request, payload, settings)
     except HTTPException as exc:
         if exc.status_code == status.HTTP_401_UNAUTHORIZED and exc.detail != MFA_REQUIRED:
             db.rollback()
@@ -432,7 +447,10 @@ def verify_magic_link(
     return _issue_session(db=db, settings=settings, response=response, user=user)
 
 
-def _verified_magic_user(db: Session, payload: MagicLinkVerify, settings: Settings) -> User:
+def _verified_magic_user(
+    db: Session, request: Request, payload: MagicLinkVerify, settings: Settings
+) -> User:
+    portal = require_firm_portal(request, settings, db)
     record = db.scalar(
         select(MagicLinkToken).where(
             MagicLinkToken.token_hash == hash_magic_link_token(payload.token),
@@ -458,6 +476,8 @@ def _verified_magic_user(db: Session, payload: MagicLinkVerify, settings: Settin
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Magic link is invalid or expired"
         )
     _require_auditor_mfa(db, user, payload.mfa_code)
+    # Checked before the link is consumed, so a wrong-portal attempt does not burn it.
+    assert_user_on_portal(user, portal)
     record.used_at = now
     return user
 
@@ -470,9 +490,10 @@ def read_session(user: CurrentUser) -> SessionView:
 @router.post("/sign-out", status_code=status.HTTP_204_NO_CONTENT)
 def sign_out(
     response: Response,
-    user: CurrentUser,
+    user: AuthenticatedUser,
     db: DB,
 ) -> None:
+    # Any portal may sign out: the session cookie is shared by every portal on the API host.
     # Revoking all current sessions is conservative and appropriate for the first release.
     for auth_session in db.scalars(
         select(AuthSession).where(AuthSession.user_id == user.id, AuthSession.revoked_at.is_(None))
