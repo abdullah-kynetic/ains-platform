@@ -14,7 +14,7 @@ The approved look is neutral black-and-white; see [DESIGN.md](../../DESIGN.md). 
 
 OVH is the current owner-supplied backend target, Cloudflare hosts the frontend and R2 stores files. AWS is planned migration work. No server or deployed resource was inspected during this refresh. Historical deployment versions are not current-state evidence.
 
-No AI features, model calls, live deployments, server operations or merges are authorized by the current build request. Preview deployments also require an explicit step.
+AI is core and built alongside the workflow under the attorney's written sign-off (see [17-model-policy.md](17-model-policy.md)). Real client data waits for the [readiness checklist](../readiness/readiness-checklist-2026-11-07.md). This index does not authorize live deployments, server operations or merges. Preview deployments also require an explicit step. Current status: [docs/STATUS.md](../STATUS.md). Vision: [docs/VISION.md](../VISION.md).
 
 | File | Topic |
 | --- | --- |

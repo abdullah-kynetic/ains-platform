@@ -77,7 +77,7 @@ Knowledge base (`docs/kb/`, written 29 Oct 2026; plain-English overview, SOPs an
 - [`13-ops-runbook.md`](docs/kb/13-ops-runbook.md) — Ops runbook (current OVH setup)
 - [`14-aws-migration-plan.md`](docs/kb/14-aws-migration-plan.md) — AWS migration plan (outline)
 - [`15-roadmap-build-order.md`](docs/kb/15-roadmap-build-order.md) — Roadmap and build order
-- [`16-ai-features-finra-chatbot.md`](docs/kb/16-ai-features-finra-chatbot.md) — AI features (built last)
+- [`16-ai-features-finra-chatbot.md`](docs/kb/16-ai-features-finra-chatbot.md) — AI features (built alongside the workflow, rule 10)
 - [`17-model-policy.md`](docs/kb/17-model-policy.md) — Model policy
 - [`18-costs.md`](docs/kb/18-costs.md) — Costs (all figures are ESTIMATES unless marked)
 - [`19-open-questions.md`](docs/kb/19-open-questions.md) — Open questions (need a decision)

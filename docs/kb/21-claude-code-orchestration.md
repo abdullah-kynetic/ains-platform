@@ -1,6 +1,6 @@
 # Historical Claude Code orchestration reference
 
-The prompts below are reference only and do not authorize agents, AWS operations, deployments or AI work. The current [build order](15-roadmap-build-order.md) takes precedence. No AI feature, server operation, merge or deployment belongs to the current task.
+The prompts below are reference only and do not authorize agents, AWS operations, deployments or model calls on client data. The current [build order](15-roadmap-build-order.md) takes precedence. AI is built alongside the workflow (CLAUDE.md rule 10), but no model call touches client data until the readiness checklist allows it. No server operation, merge or deployment belongs to the current task.
 
 The lead (orchestrator) thread owns planning, PR creation, merges, deploys to live, and reporting to Abdullah. Worker threads each own one branch. Abdullah only reviews visuals.
 
@@ -112,11 +112,11 @@ Branch docs/soc2-groundwork. Docs only under docs/compliance/: control inventory
 ### WS7a — AI intake file sorting
 ```
 [preamble]
-Only when the lead says AI work has started. Branch feat/ai-intake-sorting. Build a separate adapter (not inside app/ workflow code; boundary test must pass) that suggests a checklist item for an uploaded document with document/page citations; auditor must confirm. SAR/restricted detection runs first with zero model calls and routes to human-only. Provider switch layer (Anthropic/OpenAI). Synthetic documents only. Log model, tokens, cost.
+Start when the lead schedules AI work, after the Phase 6 items in docs/readiness/readiness-checklist-2026-11-07.md are met. Branch feat/ai-intake-sorting. Build a separate adapter (not inside app/ workflow code; boundary test must pass) that suggests a checklist item for an uploaded document with document/page citations; auditor must confirm. SAR/restricted detection runs first with zero model calls and routes to human-only. Provider switch layer (Anthropic/OpenAI). Synthetic documents only. Log model, tokens, cost.
 ```
 
 ### WS7b — FINRA chatbot
 ```
 [preamble]
-Only when the lead says AI work has started. Branch feat/finra-chatbot. Build per 16-ai-features-finra-chatbot.md: pgvector in existing Postgres, ingestion script for public FINRA/SEC/FinCEN rules + Quentin's resources, hybrid search (vector + full-text), provider switch layer, cheapest approved model per current benchmarks, mandatory citations, refusal without sources, no client files or SAR, logging and per-user rate limits, chat panel in the client workspace using existing components. Eval: pytest set from Quentin's ~30 questions must pass. Deploy to preview only.
+Start when the lead schedules AI work, after the Phase 6 items in docs/readiness/readiness-checklist-2026-11-07.md are met. Branch feat/finra-chatbot. Build per 16-ai-features-finra-chatbot.md: pgvector in existing Postgres, ingestion script for public FINRA/SEC/FinCEN rules + Quentin's resources, hybrid search (vector + full-text), provider switch layer, cheapest approved model per current benchmarks, mandatory citations, refusal without sources, no client files or SAR, logging and per-user rate limits, chat panel in the client workspace using existing components. Eval: pytest set from Quentin's ~30 questions must pass. Deploy to preview only.
 ```

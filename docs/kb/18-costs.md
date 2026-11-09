@@ -18,7 +18,7 @@ Principle: as cheap as possible; use free tiers and existing infrastructure.
 ## After AWS move (single-host profile, estimates)
 t4g.micro EC2 ~$6/mo, 20 GB gp3 ~$2, Elastic IP (attached public IPv4) ~$3.6, S3 small, CloudTrail first trail free, SSM Parameter Store standard free → roughly **$12–15/mo** before credits (budget alarm $15 in repo). RDS adds ~$15+/mo when justified. Startup credits (Kynetic AWS credits application) may cover this.
 
-## AI (later, estimates)
+## AI (planned, estimates)
 Chatbot: cents to embed rules; a few $/mo for answers at low volume. Intake sorting: depends on pages processed; estimate before building.
 
 ## Stripe (later)
