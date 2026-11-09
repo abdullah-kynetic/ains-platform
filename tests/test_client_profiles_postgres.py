@@ -1,21 +1,18 @@
 """Additive profile migration parity and reversible local PostgreSQL upgrade."""
 
-import os
-
 from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.config import Config
 from alembic.migration import MigrationContext
-from sqlalchemy import create_engine, inspect, select
+from sqlalchemy import inspect, select
 from sqlalchemy.orm import Session
 
 from app.database.models import Base, Firm
 from tests.test_audit_postgres import postgres_engine as postgres_engine
 
 
-def test_profile_upgrade_downgrade_preserves_existing_firms(request):
-    url = os.environ.get("KIEN_TEST_POSTGRES_URL")
-    engine = create_engine(url) if url else request.getfixturevalue("postgres_engine")
+def test_profile_upgrade_downgrade_preserves_existing_firms(postgres_engine):
+    engine = postgres_engine
     try:
         new_tables = {"client_contacts", "client_profile_details"}
         Base.metadata.create_all(
@@ -54,5 +51,4 @@ def test_profile_upgrade_downgrade_preserves_existing_firms(request):
             command.upgrade(config, "a117_response_requests")
             assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
     finally:
-        if url:
-            engine.dispose()
+        engine.dispose()

@@ -16,7 +16,7 @@ Quoted exactly as PR #84 states them:
 
 - Normal suite: **339 passed + 1 skipped**.
 - PostgreSQL 16.15: **11 tests run** on real PostgreSQL. These are not part of the normal suite.
-- **CI has no PostgreSQL service** (`.github/workflows/*.yml` has no `postgres` entry). The PostgreSQL tests run only in manual runs, not on each pull request.
+- **CI now has a PostgreSQL 16 service** (`.github/workflows/ci.yml`, throwaway CI-only credentials, `KIEN_TEST_POSTGRES_URL`). The 11 PostgreSQL tests run on every pull request, each on a fresh database, and a CI step fails if any of them is skipped. Counts from the first CI run are recorded in the PR that added this.
 
 Other runs recorded in the evidence files use different counts, for example 350 passed + 1 skipped on b6de342 in [checkpoint-TEST-4](evidence/testing/checkpoint-TEST-4.md). Those runs were on other candidates. Do not mix the counts. Quote the #84 numbers unless a run is re-done and recorded.
 
