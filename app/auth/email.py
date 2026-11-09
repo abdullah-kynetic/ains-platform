@@ -70,7 +70,8 @@ class ResendSender:
 
 
 def notify_report_ready(
-    settings: Settings, *, recipients: list[str], firm_name: str, review_period: str
+    settings: Settings, *, recipients: list[str], firm_name: str, review_period: str,
+    firm_slug: str | None = None,
 ) -> None:
     """Tell client users a signed report is ready. Never raises, never includes findings.
 
@@ -82,7 +83,11 @@ def notify_report_ready(
     if not api_key or not settings.email_from:
         logger.info("Report-ready email skipped: email delivery is not configured")
         return
-    portal = settings.portal_url.rstrip("/")
+    try:
+        portal = portal_url_for(settings, firm_slug)
+    except ValueError:
+        logger.warning("Report-ready email skipped: invalid portal configuration")
+        return
     text = (
         f"The independent AML test report for {firm_name} ({review_period}) is ready.\n"
         f"Open {portal}\n"
