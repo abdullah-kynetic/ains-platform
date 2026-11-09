@@ -6,6 +6,16 @@ Kien by Kien Solutions is workflow software for independent AML testing of broke
 
 Read [PRD](docs/PRD.md), [Design System](docs/DESIGN_SYSTEM.md), [Architecture](docs/ARCHITECTURE.md), [Database](docs/DATABASE.md), [Security](docs/SECURITY.md), [Code Style](docs/CODE_STYLE.md), and [Testing](docs/TESTING.md). Keep them mutually consistent. Treat explicit unresolved items as unresolved, not approved design.
 
+## Stage gates (Abdullah, 2026-11-09)
+
+Use one production Worker and one API until pilot-ready; existing preview/demo
+Workers are frozen. Preview-first is paused for this phase. Code agents never
+access servers; Lane C operates the new VPS. Never access the old shared server.
+`audit_engine/**`, `ai_adapter/**` and `claude/engine-core` remain frozen until
+Abdullah signs off the Stage 2 security audit (G2), enabling Stage 3 (G3).
+No model calls in Stage 1. See [BUILD-PLAN.md](docs/BUILD-PLAN.md) for sequencing.
+These current stage gates supersede earlier "built alongside" scheduling text.
+
 ## Working rules
 
 - Inspect relevant code, tests, docs, nested `AGENTS.md` files, and the current git diff before editing. Build on existing app structures; do not create parallel systems without a documented need.

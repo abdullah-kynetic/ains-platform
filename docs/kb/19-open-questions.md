@@ -20,3 +20,13 @@ Privacy/terms wording, Reg S-P obligations and incident terms; any future model-
 ## Unverified operational facts
 
 Current deployed Worker/version/bindings, live Sentry state, backup schedule and restore evidence were not inspected. `/tenant/branding` has a frontend client but no backend route found in source. OVH is current per the owner; AWS is planned. Source merged status does not prove deployment.
+
+## Readiness item 41 versus rule 10 (unresolved)
+
+Readiness item 41 says "OpenRouter is not approved for client data; synthetic only."
+`CLAUDE.md` rule 10 says attorney sign-off covers approved vendors directly or via
+OpenRouter, including real client data. These statements conflict; source text is
+not evidence resolving the scope of legal approval. BLOCKED(owner/attorney): confirm
+and reconcile the written approval and readiness item 41. Until then use synthetic
+data only, make no model calls in Stage 1, and preserve the G1/G2/G3 gates. No paid
+fallback; the existing OpenRouter balance remains untouched.

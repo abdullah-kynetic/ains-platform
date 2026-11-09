@@ -19,12 +19,23 @@ Repo: `abdullah-kynetic/ains-platform`. Stack: Next.js 16 / React 19 / Tailwind 
 4. **No secrets in chat, code, commits, logs or screenshots.** Refer to environment variable names only. Never read or print `.env`.
 5. **Shared OVH server:** never touch n8n, Twenty CRM or the client portal. Kien lives only in `/opt/kien`, compose project `kien`.
 6. **Git:** commit as `abdullah-kynetic <211030198+abdullah-kynetic@users.noreply.github.com>`. Real merge commits only. No rebase, no squash, no force-push.
-7. **Preview first.** New features deploy to preview; live (`kien-demo-live`) only after Abdullah approves the visuals. Design experiments go on their own separate address.
+7. **Preview-first paused (Abdullah, 2026-11-09).** Use one production Worker and one API until pilot-ready. Existing preview/demo Workers are frozen. Code agents never access servers or deploy; Lane C handles the VPS.
 8. **Keep the approved look.** Clean neutral black-and-white SaaS style (see `DESIGN.md`): white and `#F7F7F8` surfaces, near-black text, ink blue `#33405C` only for logo, primary buttons, active nav and focus, ochre `#B8924A` only for deadlines, status colours only as small pills, `#0A0A0A` dark. No gradients, glass or cream. No generic "AI slop".
 9. **Costs as low as possible.** Prefer free tiers and existing infrastructure.
 10. AI is core and built alongside the workflow (intake file sorting, FINRA chatbot). No vendor lock-in; pick the cheapest model that benchmarks well from an approved vendor. Anthropic and OpenAI are approved, directly or via OpenRouter, under the attorney's written sign-off, which covers real client data. Free-model trial and SAR rules still apply.
 11. Never claim AWS's certifications (SOC 2, etc.) as Kien's. Kien's SOC 2 is only groundwork.
 12. Never claim a test or check passed unless it was actually run.
+
+## Current stage gates (Abdullah, 2026-11-09)
+
+The build plan supersedes earlier scheduling: Stage 1 completes the workflow and
+security proofs; G1 requires all Stage 1 evidence. Stage 2 is the security audit;
+Abdullah's written sign-off is G2. Only then may G3 start engine work.
+`audit_engine/**`, `ai_adapter/**` and `claude/engine-core` are frozen until then.
+No model calls in Stage 1. Rule 10's vendor approval statement conflicts with
+readiness item 41; the unresolved conflict is recorded in
+[open questions](docs/kb/19-open-questions.md). Synthetic data only until all 45
+readiness items, G1, G2 and Abdullah's written authorization are complete.
 
 ## How to respond
 - Short, plain, direct. Lead with the answer. Use bullets for steps.

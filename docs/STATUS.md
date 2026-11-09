@@ -6,8 +6,10 @@ This page is the current status summary. It was checked against GitHub on 2026-1
 
 - **Code on `main`:** PRs #78 to #88 are merged. Web sign-in is restored (real `/auth/*` routes). Only the synthetic demo build (`NEXT_PUBLIC_USE_MOCKS=true`) skips sign-in.
 - **Real client data:** none. Synthetic data only. The rule stays until the readiness checklist is complete and Abdullah changes it in writing. See [readiness checklist](readiness/readiness-checklist-2026-11-07.md).
-- **AI:** planned and built alongside the workflow (CLAUDE.md rule 10). Nothing is built yet. The attorney's written sign-off covers cloud models, including OpenRouter, and real client data. The free-model trial rules still apply: first two weeks on free hosted models, no paid fallback, and the roughly $18 OpenRouter balance stays untouched. See [model policy](kb/17-model-policy.md).
-- **Hosting:** the dedicated VPS plan is on hold. Nothing was bought, configured or changed. AWS is paused. The frontend stays on Cloudflare. R2 holds files.
+- **AI:** the separate `ai_adapter/` skeleton exists on main, is off, and has an empty allowlist. The engine and adapter are frozen until Stage 2 sign-off. No model calls in Stage 1. Rule 10 and readiness item 41 disagree about OpenRouter approval; see [open questions](kb/19-open-questions.md).
+- **Hosting plan (Abdullah, 2026-11-09):** one production Worker (`ains-platform`) and one API until pilot-ready. Existing preview/demo Workers are frozen; preview-first is paused. Lane C owns the new VPS; code agents have no server access. Source configuration does not prove deployment.
+- **Mock gap:** many screen contracts still use the typed mock layer and browser storage, including firm settings. Production must not fall back to mocks. Lane 2 builds backend contracts and Lane 1 wires them; see [frontend inventory](frontend-inventory.md) and [build plan](BUILD-PLAN.md).
+- **Gates:** G1 requires every Stage 1 acceptance item with evidence; G2 requires the Stage 2 security audit and Abdullah's written sign-off; G3 starts the engine only after G2. Real client data additionally requires all 45 readiness items and Abdullah's written authorization.
 - **Deployments:** none were made in this cleanup.
 
 ## Test results
