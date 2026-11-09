@@ -108,13 +108,14 @@ state or run `terraform show -json` into CI logs when keys exist.
 
 ## Cloudflare production portal
 
-The portal already uses `NEXT_PUBLIC_API_URL`. It is compiled into browser code;
-Wrangler runtime vars cannot change it after build. Use Node 22:
+The portal reads `NEXT_PUBLIC_API_URL` in `web/src/lib/api.ts` at build time. It is compiled
+into browser code; Wrangler runtime vars cannot change it after build. The production default
+is `https://api.kiensolutions.com` (`env.production.vars` in `web/wrangler.jsonc`). Use Node 22:
 
 ```sh
 cd web
 npm ci
-NEXT_PUBLIC_API_URL=https://api.example.com npm run build:cloudflare:production
+npm run build:cloudflare:production   # or set NEXT_PUBLIC_API_URL to override
 npx opennextjs-cloudflare deploy --env production
 ```
 

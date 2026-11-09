@@ -8,8 +8,15 @@ import {
 import catalog from "../../.generated/catalog.json";
 
 export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
+// Build-time public setting, read only here. Local `next dev` falls back to the local API.
+// Production compiles fall back to the production API when the variable is unset.
+// `npm run build:cloudflare:production` sets it from wrangler `env.production.vars`.
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
 export const API_URL = (
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+  configuredApiUrl ||
+  (process.env.NODE_ENV === "production"
+    ? "https://api.kiensolutions.com"
+    : "http://localhost:8000")
 ).replace(/\/$/, "");
 
 /** Playwright sets this so session and branding hit a mocked API. */
