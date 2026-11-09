@@ -167,9 +167,11 @@ def test_signoff_without_key_still_completes(backend, monkeypatch) -> None:  # n
     assert response.status_code == 200
 
 
-def test_unexpected_error_is_swallowed(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_unexpected_error_is_swallowed(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
     def boom(*args: object, **kwargs: object) -> None:
-        raise ValueError("synthetic")
+        raise ValueError("synthetic@example.test provider-secret-body")
 
     monkeypatch.setattr("app.auth.email.httpx.post", boom)
     notify_report_ready(
@@ -178,3 +180,7 @@ def test_unexpected_error_is_swallowed(monkeypatch: pytest.MonkeyPatch) -> None:
         firm_name="Synthetic Alpha Securities",
         review_period=PERIOD,
     )
+    assert "ValueError" in caplog.text
+    assert "synthetic@example.test" not in caplog.text
+    assert "provider-secret-body" not in caplog.text
+    assert API_KEY not in caplog.text

@@ -64,3 +64,7 @@ Only #39 was closed. Rebuilds were not started: #40, #45 and #37 each need their
 2. Whether #40, #45 and #37 are rebuilt on `main` now, or after the VPS phase resumes.
 3. The partner-firm conflict in [VISION.md](VISION.md) needs legal and commercial advice before any decision.
 4. The items in the readiness checklist marked for Abdullah, starting with Phase 0.
+
+## Lane 2: report-ready rebuild
+
+DECISION: Rebuilt #40 on current main. Password-reset delivery already exists on main and is covered by `tests/test_password_reset.py`. Reverted the branch's `migrations/env.py` logging change: report notification delivery does not need to change Alembic's global logger configuration. Omitted the README change to preserve lane ownership; behavior is recorded here instead. Only active clients of the signed engagement's firm receive the generic report-ready notice. Mail exceptions do not undo sign-off; exception messages, addresses, keys and report content are not logged.
