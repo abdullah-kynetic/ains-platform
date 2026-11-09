@@ -37,8 +37,10 @@ async def run_evaluation() -> list[EvalResult]:
     for case in manifest["cases"]:
         status, fingerprint = "missing", None
         if case["filename"]:
-            file = UploadFile(filename=case["filename"],
-                              file=io.BytesIO((SYNTHETIC_ROOT / case["filename"]).read_bytes()))
+            file = UploadFile(
+                filename=case["filename"],
+                file=io.BytesIO((SYNTHETIC_ROOT / case["filename"]).read_bytes()),
+            )
             try:
                 _, suffix = _validated_filename(file.filename)
                 _, fingerprint = await _read_validated(file, suffix)
@@ -47,10 +49,14 @@ async def run_evaluation() -> list[EvalResult]:
                 status = "rejected"
             finally:
                 await file.close()
-        results.append(EvalResult(
-            item_id=case["item_id"], expected_status=case["expected_status"],
-            actual_status=status, sha256=fingerprint,
-        ))
+        results.append(
+            EvalResult(
+                item_id=case["item_id"],
+                expected_status=case["expected_status"],
+                actual_status=status,
+                sha256=fingerprint,
+            )
+        )
     return results
 
 

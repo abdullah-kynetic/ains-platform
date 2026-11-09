@@ -125,7 +125,7 @@ The production Wrangler environment has a distinct Worker/self-reference and
 That production value is the public HTTPS portal origin. Local `.env` allows
 `http://localhost:3000` with the API at `http://localhost:8000`; do not copy localhost
 into production CORS. Secure HttpOnly cookies remain backend-owned. Never put secrets in `NEXT_PUBLIC_*`.
-Do not use `deploy:demo` for production: it intentionally builds synthetic mocks.
+Do not use `deploy:demo` for production: it intentionally builds synthetic mocks. Use `npm run deploy:production`. `next build` refuses a mock build that is not declared as the demo (`KIEN_BUILD_TARGET=demo`) and refuses `KIEN_BUILD_TARGET=production` with `NEXT_PUBLIC_USE_MOCKS=true` (`web/scripts/build-guard.mjs`).
 Reset links lead to `/reset-password`; magic links lead to `/sign-in?token=...`.
 Disable query-string logging/analytics on all authentication pages at the edge.
 

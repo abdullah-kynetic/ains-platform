@@ -21,12 +21,21 @@ test("telemetry drops arbitrary client content", () => {
   expect(hint).not.toHaveProperty("attachments");
 });
 
-test("portal makes no Sentry requests without a DSN", async ({ page }) => {
-  const requests: string[] = [];
-  page.on("request", (request) => {
-    if (/sentry|\/envelope\//i.test(request.url())) requests.push(request.url());
+for (const scenario of [
+  { name: "signed-in portal page", path: "/", signedOut: false },
+  { name: "sign-in page", path: "/sign-in", signedOut: true },
+]) {
+  test(`${scenario.name} makes no Sentry requests without a DSN`, async ({ page }) => {
+    const requests: string[] = [];
+    page.on("request", (request) => {
+      if (/sentry|\/envelope\//i.test(request.url())) requests.push(request.url());
+    });
+    if (scenario.signedOut)
+      await page.addInitScript(() => localStorage.setItem("ains-synthetic-signed-out", "true"));
+    await page.goto(scenario.path);
+    if (scenario.signedOut)
+      await expect(page.getByRole("heading", { name: /Sign in to/ })).toBeVisible();
+    else await expect(page.getByRole("navigation", { name: "Main navigation" }).first()).toBeVisible();
+    expect(requests).toEqual([]);
   });
-  await page.goto("/");
-  await expect(page.locator("body")).toBeVisible();
-  expect(requests).toEqual([]);
-});
+}

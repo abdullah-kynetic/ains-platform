@@ -1,0 +1,262 @@
+{
+  "firm": "Quillfeather Example Capital Inc",
+  "profile": "messy",
+  "items": [
+    {
+      "item_id": "AML-BD-001",
+      "file": "AML-BD-001.txt",
+      "expected_status": "defect",
+      "defect_id": "D-STALE-POLICY",
+      "defect": "Policy last reviewed in 2021; no 2025 review",
+      "marker": "Policy last reviewed: 2021-03-15"
+    },
+    {
+      "item_id": "AML-BD-002",
+      "file": "AML-BD-002.txt",
+      "expected_status": "defect",
+      "defect_id": "D-UNSIGNED",
+      "defect": "Representation letter has no signature or date",
+      "marker": "Signature: ______"
+    },
+    {
+      "item_id": "AML-BD-003",
+      "file": "AML-BD-003.txt",
+      "expected_status": "defect",
+      "defect_id": "D-WRONG-PERIOD",
+      "defect": "Training log covers 2022, not the 2025 audit period",
+      "marker": "Period: 2022"
+    },
+    {
+      "item_id": "AML-BD-004",
+      "file": "AML-BD-004.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-005",
+      "file": "AML-BD-005.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-006",
+      "file": "AML-BD-006.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-007",
+      "file": "AML-BD-007.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-008",
+      "file": "AML-BD-008.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-009",
+      "file": "AML-BD-009.txt",
+      "expected_status": "defect",
+      "defect_id": "D-MISSING-PAGES",
+      "defect": "Due-diligence file jumps from page 2 to page 4",
+      "marker": "--- page 4 of 4 ---"
+    },
+    {
+      "item_id": "AML-BD-010",
+      "file": "AML-BD-010.csv",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-011",
+      "file": "AML-BD-011.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-012",
+      "file": "AML-BD-012.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-013",
+      "file": "AML-BD-013.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-014",
+      "file": "AML-BD-014.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-015",
+      "file": "AML-BD-015.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-016",
+      "file": null,
+      "expected_status": "not_applicable",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-018",
+      "file": "AML-BD-018.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-019",
+      "file": "AML-BD-019.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-020",
+      "file": "AML-BD-020.txt",
+      "expected_status": "defect",
+      "defect_id": "D-THIN-RISK-ASSESSMENT",
+      "defect": "Risk assessment is one paragraph, no customer or product factors",
+      "marker": "Risk assessment: one paragraph only"
+    },
+    {
+      "item_id": "AML-BD-021",
+      "file": "AML-BD-021.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-022",
+      "file": "AML-BD-022.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-023",
+      "file": "AML-BD-023.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-024",
+      "file": "AML-BD-024.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-026",
+      "file": "AML-BD-026.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-027",
+      "file": "AML-BD-027.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-028",
+      "file": "AML-BD-028.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-029",
+      "file": "AML-BD-029.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-030",
+      "file": "AML-BD-030.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-031",
+      "file": "AML-BD-031.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-032",
+      "file": "AML-BD-032.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-033",
+      "file": "AML-BD-033.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    },
+    {
+      "item_id": "AML-BD-034",
+      "file": "AML-BD-034.txt",
+      "expected_status": "good",
+      "defect_id": null,
+      "defect": null,
+      "marker": null
+    }
+  ]
+}

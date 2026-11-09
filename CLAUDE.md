@@ -22,7 +22,7 @@ Repo: `abdullah-kynetic/ains-platform`. Stack: Next.js 16 / React 19 / Tailwind 
 7. **Preview first.** New features deploy to preview; live (`kien-demo-live`) only after Abdullah approves the visuals. Design experiments go on their own separate address.
 8. **Keep the approved look.** Clean neutral black-and-white SaaS style (see `DESIGN.md`): white and `#F7F7F8` surfaces, near-black text, ink blue `#33405C` only for logo, primary buttons, active nav and focus, ochre `#B8924A` only for deadlines, status colours only as small pills, `#0A0A0A` dark. No gradients, glass or cream. No generic "AI slop".
 9. **Costs as low as possible.** Prefer free tiers and existing infrastructure.
-10. **AI features come last** (intake file sorting, then FINRA chatbot). No vendor lock-in; pick the cheapest model that benchmarks well from an approved vendor (attorney verbally approved Anthropic and OpenAI).
+10. AI is core and built alongside the workflow (intake file sorting, FINRA chatbot). No vendor lock-in; pick the cheapest model that benchmarks well from an approved vendor. Anthropic and OpenAI are approved, directly or via OpenRouter, under the attorney's written sign-off, which covers real client data. Free-model trial and SAR rules still apply.
 11. Never claim AWS's certifications (SOC 2, etc.) as Kien's. Kien's SOC 2 is only groundwork.
 12. Never claim a test or check passed unless it was actually run.
 
@@ -36,7 +36,7 @@ Repo: `abdullah-kynetic/ains-platform`. Stack: Next.js 16 / React 19 / Tailwind 
 PRs #53–#60 (invoicing, reversible/direct N/A, editable reports, first-sign-in walkthrough, shadcn layout, preview Worker configs) and the nine-part design series #64–#72 (neutral style, Today view, engagement workspace, firm settings, client Responses requested, host audiences, removed web sign-in, docs) are merged into `main`. Source status and implementation boundaries are recorded in [`docs/kb/00-INDEX.md`](docs/kb/00-INDEX.md). Merged source does not establish deployment.
 
 ## Frontend state
-Web sign-in is removed for the demo phase (`AUTH_REMOVED` in `web/src/lib/api.ts`; `TODO(auth)` marks what to restore). **Restore it before any live deploy or real data.** Backend auth, MFA and tenant isolation are unchanged. Screens without a backend route use a typed mock layer in `web/src/lib/api/*` (`TODO(backend)`), listed in `docs/frontend-inventory.md`. Clients never see findings: they see only auditor-released "Responses requested".
+Web sign-in is restored (IMPL-4 branch; real routes `/auth/*`). Only the synthetic demo build (`NEXT_PUBLIC_USE_MOCKS=true`) skips it. Backend auth, MFA and tenant isolation are unchanged. Screens without a backend route use a typed mock layer in `web/src/lib/api/*` (`TODO(backend)`), listed in `docs/frontend-inventory.md`. Clients never see findings: they see only auditor-released "Responses requested".
 
 ## Repo rules for coding agents (also in AGENTS.md)
 - Never read, print, log or commit `.env` or any secret; use `.env.example` for variable names. Load config only through `app/config.py`. No secrets in `NEXT_PUBLIC_*` vars (they ship to the browser).
@@ -77,7 +77,7 @@ Knowledge base (`docs/kb/`, written 29 Oct 2026; plain-English overview, SOPs an
 - [`13-ops-runbook.md`](docs/kb/13-ops-runbook.md) — Ops runbook (current OVH setup)
 - [`14-aws-migration-plan.md`](docs/kb/14-aws-migration-plan.md) — AWS migration plan (outline)
 - [`15-roadmap-build-order.md`](docs/kb/15-roadmap-build-order.md) — Roadmap and build order
-- [`16-ai-features-finra-chatbot.md`](docs/kb/16-ai-features-finra-chatbot.md) — AI features (built last)
+- [`16-ai-features-finra-chatbot.md`](docs/kb/16-ai-features-finra-chatbot.md) — AI features (built alongside the workflow, rule 10)
 - [`17-model-policy.md`](docs/kb/17-model-policy.md) — Model policy
 - [`18-costs.md`](docs/kb/18-costs.md) — Costs (all figures are ESTIMATES unless marked)
 - [`19-open-questions.md`](docs/kb/19-open-questions.md) — Open questions (need a decision)

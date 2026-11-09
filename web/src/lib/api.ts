@@ -22,11 +22,14 @@ const WRONG_PORTAL_DETAILS = new Set([
 
 export class ApiError extends Error {
   readonly status: number;
+  /** Seconds from a Retry-After header (429 lockout), when the server sent one. */
+  readonly retryAfterSeconds: number | null;
 
-  constructor(status: number, detail: string) {
+  constructor(status: number, detail: string, retryAfterSeconds: number | null = null) {
     super(detail);
     this.name = "ApiError";
     this.status = status;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -75,7 +78,12 @@ async function responseError(response: Response): Promise<ApiError> {
     // The status-only message is safe and useful when the response is not JSON.
   }
   noteWrongPortal(response.status, detail);
-  return new ApiError(response.status, detail);
+  const retry = Number(response.headers.get("Retry-After"));
+  return new ApiError(
+    response.status,
+    detail,
+    Number.isFinite(retry) && retry > 0 ? Math.ceil(retry) : null,
+  );
 }
 
 export async function apiRequest<T>(
@@ -182,16 +190,14 @@ const mockSession: SessionData = {
   },
 };
 
-/**
- * Authentication is removed for the demo phase: every visitor is a synthetic user.
- * Role comes from the sidebar workspace switcher (default: auditor).
- * TODO(auth): restore real sign-in (see git history before "Remove sign-in") and the /auth/* API calls.
- */
-export const AUTH_REMOVED = true;
-
 export async function getSession(): Promise<SessionData> {
-  // Keep the explicit Playwright API override available in synthetic builds.
-  if ((!AUTH_REMOVED || USE_MOCKS) && !clientMocksEnabled()) return apiRequest<SessionData>("/auth/session");
+  if (!clientMocksEnabled()) return apiRequest<SessionData>("/auth/session");
+  // Synthetic demo only: a visitor who signed out of the demo gets no session.
+  try {
+    if (localStorage.getItem("ains-synthetic-signed-out") === "true") throw new Error("Demo signed out");
+  } catch (error) {
+    if (error instanceof Error && error.message === "Demo signed out") throw error;
+  }
   let stored: string | null = null;
   try { stored = localStorage.getItem("ains-synthetic-role"); } catch { /* storage blocked */ }
   // The host narrows the audience; on demo hosts the sidebar switcher decides.
@@ -206,7 +212,6 @@ export async function getSession(): Promise<SessionData> {
   return {
     user: {
       ...mockSession.user,
-      id: `demo-${role}`,
       role,
       name: role === "auditor" ? "Demo Auditor" : "Demo Client",
       email: role === "auditor" ? "auditor@example.invalid" : "client@example.invalid",
@@ -324,7 +329,7 @@ export async function verifyMagicLink(
 }
 
 export async function signOut(): Promise<void> {
-  if (AUTH_REMOVED || clientMocksEnabled()) {
+  if (clientMocksEnabled()) {
     localStorage.setItem("ains-synthetic-signed-out", "true");
     return;
   }

@@ -36,6 +36,6 @@
 - Insurance (E&O, cyber), entity and attorney review tracked in the Notion AML Audit OS hub.
 
 ## AI-specific
-- Attorney verbally approved **Anthropic and OpenAI** as model providers. Use zero/limited data retention options where available.
+- The attorney's written sign-off approves **Anthropic and OpenAI** (including through OpenRouter) and covers real client data. SAR material never goes to any model, and real data stays out until the build and security work are complete. Details: [17-model-policy.md](17-model-policy.md). Use zero/limited data retention options where available.
 - AI may only see public rules and approved non-client resources (chatbot) or, for intake sorting, client docs only after a separate approved data contract — never SAR.
 - Log every AI question/answer/source; show a "not legal advice" note.

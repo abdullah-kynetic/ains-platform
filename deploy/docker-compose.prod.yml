@@ -1,0 +1,143 @@
+# Production stack for the dedicated Kien VPS (compose project "kien", directory /opt/kien).
+# Run with:  docker compose -p kien --env-file /etc/kien/kien.env -f deploy/docker-compose.prod.yml up -d
+# Secrets live only in /etc/kien/kien.env (root, mode 600). Variable NAMES: deploy/.env.example.
+# Only Caddy publishes ports. Postgres and the API publish nothing.
+# KIEN_IMAGE must be a digest from the image workflow, e.g. ghcr.io/abdullah-kynetic/ains-platform@sha256:...
+
+name: kien
+
+x-app: &app
+  image: ${KIEN_IMAGE:?set KIEN_IMAGE to an image digest}
+  env_file: /etc/kien/kien.env
+  restart: unless-stopped
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  postgres:
+    # TODO(deploy): pin by digest (postgres:16@sha256:...) once chosen on the new host.
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: ${POSTGRES_DB:?}
+    command: ["postgres", "-c", "shared_buffers=512MB", "-c", "max_connections=50"]
+    shm_size: 256m
+    mem_limit: 1200m
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    <<: *app
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      RUN_MIGRATIONS: "0" # the command above is the migration; skip the entrypoint's
+    networks: [backend]
+    mem_limit: 400m
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  api:
+    <<: *app
+    environment:
+      RUN_MIGRATIONS: "0"
+      ENV: production # the app refuses to start unless scanning is on
+      UPLOAD_SCAN_MODE: clamav
+      SESSION_COOKIE_SECURE: "true" # the app also refuses to start in production without it
+      CLAMD_HOST: clamav
+      CLAMD_PORT: "3310"
+    # Trust X-Forwarded-For only from Caddy's pinned address; spoofed headers from elsewhere are ignored.
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --proxy-headers
+      - --forwarded-allow-ips=172.30.0.2
+    expose: ["8000"]
+    mem_limit: 900m
+    networks: [backend, edge]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      clamav: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  worker:
+    <<: *app
+    environment:
+      RUN_MIGRATIONS: "0"
+    command: ["python", "-m", "app.worker", "--poll-seconds", "2"]
+    mem_limit: 400m
+    networks: [backend, edge]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+
+  clamav:
+    # Malware scanner for uploads. Needs about 1.2 GB RAM for signatures: this is the main reason
+    # the stack outgrows 4 GB; revisit VPS size (plan section 12) or move scanning to its own host.
+    # TODO(deploy): pin by digest once chosen on the new host.
+    image: clamav/clamav:1.4
+    restart: unless-stopped
+    environment:
+      CLAMD_CONF_StreamMaxLength: 100M # must cover the 100 MB upload cap, or large uploads fail closed
+      CLAMD_CONF_MaxFileSize: 100M
+    mem_limit: 1300m
+    volumes:
+      - clamav_db:/var/lib/clamav
+    networks: [backend, edge] # edge only so freshclam can fetch signature updates
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+
+  caddy:
+    # TODO(deploy): pin by digest once chosen on the new host.
+    image: caddy:2
+    restart: unless-stopped
+    env_file: /etc/kien/kien.env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    mem_limit: 200m
+    networks:
+      edge:
+        ipv4_address: 172.30.0.2
+    depends_on:
+      api: {condition: service_healthy}
+
+networks:
+  backend:
+    internal: true # Postgres has no route to the internet
+  edge:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+  clamav_db:

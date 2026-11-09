@@ -11,6 +11,8 @@ import { getAuditorTasks, getPipeline } from "@/lib/workflow-api";
 import { listClientProfiles, listEngagementSummaries, listNotifications, unreadCount } from "@/lib/api/index";
 import { currentAudience } from "@/lib/audience";
 import { Onboarding } from "@/components/auth/onboarding";
+import { USE_MOCKS } from "@/lib/api";
+import { useTenant } from "@/components/tenant/tenant-provider";
 
 const clientItems: NavItem[] = [
   { href: "/", label: "Overview", icon: "LayoutDashboard", exact: true, group: "Engagement" },
@@ -70,7 +72,8 @@ function useNavCounts(isAuditor: boolean, enabled: boolean) {
 }
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
-  const { session, refresh } = useSession();
+  const { session, logOut, refresh } = useSession();
+  const { branding } = useTenant();
   const router = useRouter();
   const pathname = usePathname();
   const user = session?.user;
@@ -84,8 +87,13 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     !counts[item.href] ? item : { ...item, count: counts[item.href] },
   );
 
+  async function handleSignOut() {
+    await logOut();
+    router.replace("/sign-in");
+  }
+
   async function handleWorkspaceChange(workspace: "auditor" | "client") {
-    if (workspace === user?.role) return;
+    if (!USE_MOCKS || workspace === user?.role) return;
     localStorage.setItem("ains-synthetic-role", workspace);
     await refresh();
     router.push(workspace === "auditor" ? "/auditor" : "/");
@@ -105,10 +113,13 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             org={
               isAuditor
                 ? "Kien Solutions independent review"
-                : "Example Securities LLC (synthetic)"
+                : USE_MOCKS
+                  ? "Example Securities LLC (synthetic)"
+                  : branding.name
             }
+            onSignOut={() => void handleSignOut()}
             onWorkspaceChange={
-              currentAudience() === "both"
+              USE_MOCKS && currentAudience() === "both"
                 ? (workspace) => void handleWorkspaceChange(workspace)
                 : undefined
             }

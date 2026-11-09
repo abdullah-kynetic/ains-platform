@@ -1,9 +1,11 @@
 """Neutral client intake feedback and declarations, never audit findings."""
 
+from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 from sqlalchemy import select
 
 from app.checklist import ClientStatus
@@ -149,3 +151,97 @@ def feedback(engagement_id: str, item_id: str, payload: Feedback, user: CurrentU
     )
     db.commit()
     return {"status": item.status, "reason": item.client_reason}
+
+
+class ResponseRequestInput(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+class ReleasedRequest(BaseModel):
+    """The only fields a client ever receives for a released request: title and request text."""
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    item_id: str
+    title: str
+    request_text: str
+
+
+class ResponsesRequested(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    engagement_id: str
+    items: list[ReleasedRequest]
+
+
+@router.post("/auditor/engagements/{engagement_id}/items/{item_id}/response-request")
+def release_response_request(
+    engagement_id: str, item_id: str, payload: ResponseRequestInput, user: CurrentUser, db: DB
+):
+    """Auditor explicitly releases a request; nothing is client-visible until this is called."""
+    if user.role != UserRole.AUDITOR:
+        raise HTTPException(403, "Auditor access required")
+    engagement, item = intake_item(db, user, engagement_id, item_id)
+    if load_catalog().get(item.item_key).restricted or item.restricted:
+        raise HTTPException(409, "Restricted requests cannot be released")
+    item.response_request_text = payload.text.strip()
+    item.response_released_at = datetime.now(UTC)
+    item.response_released_by_id = user.id
+    db.add(
+        AuditLog(
+            firm_id=engagement.firm_id,
+            actor_id=user.id,
+            action="request.response_released",
+            entity_type="checklist_item_instance",
+            entity_id=item.id,
+            details={"text_length": len(item.response_request_text)},
+        )
+    )
+    db.commit()
+    return {"status": "released"}
+
+
+@router.post("/auditor/engagements/{engagement_id}/items/{item_id}/response-request/withdraw")
+def withdraw_response_request(engagement_id: str, item_id: str, user: CurrentUser, db: DB):
+    if user.role != UserRole.AUDITOR:
+        raise HTTPException(403, "Auditor access required")
+    engagement, item = intake_item(db, user, engagement_id, item_id)
+    item.response_request_text = None
+    item.response_released_at = None
+    item.response_released_by_id = None
+    db.add(
+        AuditLog(
+            firm_id=engagement.firm_id,
+            actor_id=user.id,
+            action="request.response_withdrawn",
+            entity_type="checklist_item_instance",
+            entity_id=item.id,
+        )
+    )
+    db.commit()
+    return {"status": "withdrawn"}
+
+
+@router.get(
+    "/engagements/{engagement_id}/responses-requested",
+    response_model=ResponsesRequested,
+    response_model_by_alias=True,
+)
+def responses_requested(engagement_id: str, user: CurrentUser, db: DB) -> ResponsesRequested:
+    engagement = _get_engagement(db, user, engagement_id)
+    rows = db.scalars(
+        select(ChecklistItemInstance)
+        .where(
+            ChecklistItemInstance.engagement_id == engagement.id,
+            ChecklistItemInstance.firm_id == engagement.firm_id,
+            ChecklistItemInstance.response_request_text.is_not(None),
+            ChecklistItemInstance.response_released_at.is_not(None),
+            ChecklistItemInstance.restricted.is_(False),
+        )
+        .order_by(ChecklistItemInstance.position)
+    ).all()
+    return ResponsesRequested(
+        engagement_id=engagement.id,
+        items=[
+            ReleasedRequest(item_id=i.id, title=i.title, request_text=i.response_request_text)
+            for i in rows
+        ],
+    )

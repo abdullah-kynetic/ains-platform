@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { audienceForHost } from "./audience.ts";
+import { audienceForHost, audienceRefusesRole } from "./audience.ts";
 
 describe("audienceForHost", () => {
   it("serves firm subdomains as the client portal", () => {
@@ -17,5 +17,18 @@ describe("audienceForHost", () => {
   });
   it("does not treat nested labels as firms", () => {
     assert.equal(audienceForHost("a.b.kiensolutions.com"), "both");
+  });
+});
+
+describe("audienceRefusesRole", () => {
+  it("refuses a role on the other audience's host", () => {
+    assert.equal(audienceRefusesRole("client", "auditor"), true);
+    assert.equal(audienceRefusesRole("auditor", "client"), true);
+  });
+  it("allows the matching role and any role on demo hosts", () => {
+    assert.equal(audienceRefusesRole("client", "client"), false);
+    assert.equal(audienceRefusesRole("auditor", "auditor"), false);
+    assert.equal(audienceRefusesRole("both", "client"), false);
+    assert.equal(audienceRefusesRole("both", "auditor"), false);
   });
 });

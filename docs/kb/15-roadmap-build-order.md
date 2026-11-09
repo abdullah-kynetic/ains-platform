@@ -9,7 +9,7 @@
 5. Invoice follow-ups and test-mode Stripe behind an off-by-default flag.
 6. AWS preparation: infrastructure/config/runbooks only. Do not apply or create resources.
 
-The earlier roadmap numbered invoicing 1, security 2 and AWS 4; the sequence above is Abdullah's current request. No model processing or other AI feature belongs to this work.
+The earlier roadmap numbered invoicing 1, security 2 and AWS 4; the sequence above is Abdullah's current request. AI is core and built alongside the workflow (CLAUDE.md rule 10). Model work stays synthetic-only until the [readiness checklist](../readiness/readiness-checklist-2026-11-07.md) items are done.
 
 ## Existing state
 
