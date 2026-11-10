@@ -3,6 +3,7 @@ FROM python:3.12-alpine@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca252
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PATH="/app/.venv/bin:$PATH"
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export PIP_CERT=/run/secrets/proxy_ca; fi; \
+    apk add --no-cache --upgrade 'krb5-libs>=1.22.3-r0' && \
     pip install --no-cache-dir uv==0.13.5 && \
     addgroup -S ains && adduser -S -G ains -h /app ains
 WORKDIR /app
