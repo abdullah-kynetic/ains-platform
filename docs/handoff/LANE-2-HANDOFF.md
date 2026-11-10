@@ -52,7 +52,11 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
   Open decisions for Abdullah are at the end of that file.
 - **S-19** built on branch `lane2/s-19` (stacked on the workflow PR): authorized download routes, 60 s presigned links, evidence `app-s-19.md`. Live anonymous-403 check is Lane C.
 - Actions recovered at 20:43 UTC; #102 Security is green.
-- Still to do after it: #104 (S-12), S-19, then 4 (L2-6 a-h), 5-8.
+- **Merged to main (green CI and Security):** #102, #106 (workflow routes), #107 (S-19), #104 (S-12).
+- **Done: L2-6a** (branch `claude/project-thread-grvxp5`): practice team, branding, rubric,
+  request templates. Migration `a121_practice_routes`. Contract and decisions:
+  `docs/kb/24-practice-api.md`. Local: ruff clean, 583 passed, 1 skipped (PostgreSQL tests need CI).
+- **Next:** L2-6b (checklist tests and conclusions, documents), then c-h, L2-7 to L2-10.
 
 ## In progress
 

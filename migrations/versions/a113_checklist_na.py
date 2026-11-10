@@ -1,4 +1,5 @@
 """Add reversible NA snapshot. Status is an existing non-native VARCHAR enum."""
+
 import sqlalchemy as sa
 from alembic import op
 

@@ -170,7 +170,8 @@ class PortalCORSMiddleware:
             requested_headers = _header(scope, b"access-control-request-headers") or ""
             headers_allowed = all(
                 name.strip().lower() in {"authorization", "content-type"}
-                for name in requested_headers.split(",") if name.strip()
+                for name in requested_headers.split(",")
+                if name.strip()
             )
             permitted = allowed and request_method in ALLOW_METHODS.split(", ") and headers_allowed
             status = 200 if permitted else 400

@@ -15,10 +15,12 @@ def test_portal_upgrade_downgrade_preserves_existing_firms(postgres_engine):
     config = Config("alembic.ini")
     with postgres_engine.begin() as connection:
         connection.exec_driver_sql("ALTER TABLE firms DROP COLUMN logo_url")
-        connection.execute(text(
-            "INSERT INTO firms (id, name, slug, created_at) "
-            "VALUES ('synthetic-legacy', 'Synthetic Legacy', 'Synthetic-Legacy', now())"
-        ))
+        connection.execute(
+            text(
+                "INSERT INTO firms (id, name, slug, created_at) "
+                "VALUES ('synthetic-legacy', 'Synthetic Legacy', 'Synthetic-Legacy', now())"
+            )
+        )
         config.attributes["connection"] = connection
         command.stamp(config, "a117_response_requests")
         command.upgrade(config, "a119_firm_logo_url")

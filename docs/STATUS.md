@@ -154,3 +154,9 @@ stage pipeline. Contract: [`docs/kb/23-workflow-api.md`](kb/23-workflow-api.md).
 rows for these flows are satisfied once the PR is merged; no live proof is claimed. Direct client
 N/A (`POST /engagements/{id}/items/{id}/na` with true) now returns 409; Lane 1 must move the
 client UI to `na-request`.
+
+## L2-6a practice routes (branch claude/project-thread-grvxp5)
+
+Team, branding, rubric and request templates under `/auditor/firm/*`, per-practice scope, partner
+guards and audit chain. Contract: [`docs/kb/24-practice-api.md`](kb/24-practice-api.md). Invites
+create inactive members and send no email; logo upload waits for L2-7. No live proof is claimed.

@@ -8,7 +8,7 @@ from pathlib import Path
 
 def test_live_fixture_seeds_the_browser_portal_firm(tmp_path):
     root = Path.cwd()
-    code = '''
+    code = """
 import runpy
 import sys
 from pathlib import Path
@@ -34,12 +34,19 @@ with get_session_factory()() as db:
     assert document.original_name == "synthetic-review-policy.pdf"
     assert len(clients) == 2
     assert all(client.firm_id == firm.id for client in clients)
-'''
+"""
     # Separate process/cwd avoids cached app settings and any repository dotenv file.
     result = subprocess.run(
-        [sys.executable, '-c', code, str(root / 'scripts/e2e_backend.py'),
-         str(tmp_path / 'synthetic.db')],
-        cwd=tmp_path, env={**os.environ, 'PYTHONPATH': str(root), 'ENV': 'development'},
-        capture_output=True, text=True,
+        [
+            sys.executable,
+            "-c",
+            code,
+            str(root / "scripts/e2e_backend.py"),
+            str(tmp_path / "synthetic.db"),
+        ],
+        cwd=tmp_path,
+        env={**os.environ, "PYTHONPATH": str(root), "ENV": "development"},
+        capture_output=True,
+        text=True,
     )
     assert result.returncode == 0, result.stderr

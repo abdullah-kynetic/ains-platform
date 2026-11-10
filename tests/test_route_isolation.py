@@ -28,7 +28,13 @@ TASK = "TASK-MARKER-7c2"
 NOTE = "INTERNAL-NOTE-MARKER-7c3"
 REPORT = "DRAFT-REPORT-MARKER-7c4"
 # Routes whose schema demands a particular value that the generic example cannot guess.
-BODY_OVERRIDES = {("PATCH", "/auditor/tasks/{task_id}"): {"title": "Synthetic task"}}
+_TEMPLATE = {"name": "Synthetic", "kind": "custom", "requestIds": ["AML-BD-001"]}
+BODY_OVERRIDES = {
+    ("PATCH", "/auditor/tasks/{task_id}"): {"title": "Synthetic task"},
+    ("POST", "/auditor/firm/team"): {"email": "synthetic@example.test", "role": "auditor"},
+    ("POST", "/auditor/firm/request-templates"): _TEMPLATE,
+    ("PUT", "/auditor/firm/request-templates/{template_id}"): _TEMPLATE,
+}
 BODY_VALIDATED_FIRST: set[tuple[str, str]] = set()
 LEAKS = (FINDING, TASK, NOTE, REPORT)
 

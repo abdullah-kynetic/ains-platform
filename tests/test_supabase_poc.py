@@ -67,8 +67,7 @@ def test_invalid_supabase_url_does_not_echo_the_credential() -> None:
 def test_supabase_url_accepts_direct_and_pooler_tls_connections() -> None:
     direct = validated_supabase_url(
         settings(
-            "postgresql://synthetic:password@db.synthetic.supabase.co:5432/postgres"
-            "?sslmode=require"
+            "postgresql://synthetic:password@db.synthetic.supabase.co:5432/postgres?sslmode=require"
         )
     )
     pooler = validated_supabase_url(

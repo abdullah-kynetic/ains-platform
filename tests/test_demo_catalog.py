@@ -1,4 +1,5 @@
 """The generated demo data must retain the authoritative request definitions."""
+
 import json
 import shutil
 import subprocess

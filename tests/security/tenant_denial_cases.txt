@@ -77,3 +77,15 @@ GET /engagements/{engagement_id}/report client_scope
 POST /engagements/{engagement_id}/report/confirm client_scope
 GET /engagements/{engagement_id}/documents/{document_id}/download client_scope
 GET /auditor/engagements/{engagement_id}/documents/{document_id}/download auditor_scope
+GET /auditor/firm/team practice_scope
+POST /auditor/firm/team practice_scope
+PATCH /auditor/firm/team/{member_id} practice_scope
+DELETE /auditor/firm/team/{member_id} practice_scope
+GET /auditor/firm/branding practice_scope
+PUT /auditor/firm/branding practice_scope
+GET /auditor/firm/rubric practice_scope
+PUT /auditor/firm/rubric/{request_id} practice_scope
+GET /auditor/firm/request-templates practice_scope
+POST /auditor/firm/request-templates practice_scope
+PUT /auditor/firm/request-templates/{template_id} practice_scope
+DELETE /auditor/firm/request-templates/{template_id} practice_scope

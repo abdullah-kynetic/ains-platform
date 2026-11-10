@@ -51,9 +51,7 @@ def visible(user: User) -> Select[tuple[EngagementReport]]:
     )
 
 
-def load(
-    db: Session, user: User, report_id: str, *, lock: bool = False
-) -> EngagementReport:
+def load(db: Session, user: User, report_id: str, *, lock: bool = False) -> EngagementReport:
     _require_auditor(user)
     query = visible(user).where(EngagementReport.id == report_id)
     if lock:

@@ -60,9 +60,7 @@ def upgrade():
         ["assignee_id", "completed_at"],
         unique=False,
     )
-    op.create_index(
-        "ix_auditor_tasks_assignee_id", "auditor_tasks", ["assignee_id"], unique=False
-    )
+    op.create_index("ix_auditor_tasks_assignee_id", "auditor_tasks", ["assignee_id"], unique=False)
     op.create_index(
         "ix_auditor_tasks_engagement_id", "auditor_tasks", ["engagement_id"], unique=False
     )

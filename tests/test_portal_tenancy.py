@@ -113,10 +113,15 @@ def test_portal_url_template_and_auditor_host() -> None:
         portal_url_for(settings, "evil.example/path")
 
 
-@pytest.mark.parametrize("value", [
-    "//external.example/logo.svg", "https://", "https://user:pass@example.test/logo",
-    "https://example.test:bad/logo",
-])
+@pytest.mark.parametrize(
+    "value",
+    [
+        "//external.example/logo.svg",
+        "https://",
+        "https://user:pass@example.test/logo",
+        "https://example.test:bad/logo",
+    ],
+)
 def test_logo_rejects_network_paths_and_malformed_https(value) -> None:
     with pytest.raises(ValueError):
         require_logo_url(value)
@@ -345,7 +350,9 @@ def test_cross_tenant_session_is_rejected_and_cookie_is_host_only(portal) -> Non
     denied = client.get("/auth/session", headers=_origin("synthetic-beta"))
     assert denied.status_code == 403
     assert denied.json()["detail"] == "Session firm does not match this portal"
-    assert denied.headers["access-control-allow-origin"] == "https://synthetic-beta.kiensolutions.com"
+    assert (
+        denied.headers["access-control-allow-origin"] == "https://synthetic-beta.kiensolutions.com"
+    )
     assert denied.headers["access-control-allow-credentials"] == "true"
     assert client.get("/engagements/current", headers=_origin("synthetic-beta")).status_code == 403
     assert client.get("/engagements/current", headers=_origin("synthetic-alpha")).status_code == 200
@@ -374,9 +381,7 @@ def test_reserved_and_unknown_hosts_and_conflicting_labels(portal) -> None:
     )
     assert reserved.status_code == 403
     assert reserved.json()["detail"] == "Firm portal host is required"
-    unknown = client.post(
-        "/auth/password", headers=_origin("not-a-firm"), json=body
-    )
+    unknown = client.post("/auth/password", headers=_origin("not-a-firm"), json=body)
     # The cross-site origin check refuses an unknown firm host before sign-in is reached.
     assert unknown.status_code == 403
     assert unknown.json()["detail"] == "Cross-site request refused"
@@ -467,9 +472,7 @@ def test_email_links_use_the_firm_slug(portal) -> None:
         body = json.loads(send.calls[-1].request.content)
         link = f"https://synthetic-alpha.kiensolutions.com/{path}?token=synthetic-token"
         assert link in body["text"]
-    requested = client.post(
-        "/auth/magic-link", json={"email": "alpha-client@example.test"}
-    )
+    requested = client.post("/auth/magic-link", json={"email": "alpha-client@example.test"})
     assert requested.status_code == 202
     message = json.loads(send.calls[-1].request.content)["text"]
     link = message.split()[1]
@@ -489,9 +492,7 @@ def test_email_links_use_the_firm_slug(portal) -> None:
     assert verified.status_code == 200
 
     client.cookies.clear()
-    reset = client.post(
-        "/auth/password-reset/request", json={"email": "beta-client@example.test"}
-    )
+    reset = client.post("/auth/password-reset/request", json={"email": "beta-client@example.test"})
     assert reset.status_code == 202
     reset_text = json.loads(send.calls[-1].request.content)["text"]
     assert "https://synthetic-beta.kiensolutions.com/reset-password?token=" in reset_text
@@ -518,9 +519,7 @@ def test_public_branding_returns_only_name_and_logo(portal) -> None:
     assert "example.test" not in branded.text
 
     unknown = client.get("/tenant/branding", headers=_origin("not-a-firm"))
-    reserved = client.get(
-        "/tenant/branding", headers={"origin": "https://www.kiensolutions.com"}
-    )
+    reserved = client.get("/tenant/branding", headers={"origin": "https://www.kiensolutions.com"})
     api_host = client.get("/tenant/branding", headers={"origin": "https://api.kiensolutions.com"})
     assert unknown.status_code == reserved.status_code == api_host.status_code == 404
     for response in (unknown, reserved, api_host):
@@ -542,10 +541,13 @@ def test_public_branding_returns_only_name_and_logo(portal) -> None:
         headers={"origin": "http://not-a-firm.localhost:3000"},
     )
     assert missing.status_code == 404
-    assert client.get(
-        "/tenant/branding",
-        headers={"origin": "http://api.localhost:3000"},
-    ).status_code == 404
+    assert (
+        client.get(
+            "/tenant/branding",
+            headers={"origin": "http://api.localhost:3000"},
+        ).status_code
+        == 404
+    )
 
     preflight = client.options(
         "/tenant/branding",
@@ -703,16 +705,23 @@ def test_malformed_origins_are_denied_without_server_errors(portal, origin) -> N
 
 @pytest.mark.parametrize(
     "method,headers,status",
-    [("PUT", "content-type", 200), ("DELETE", "authorization", 200),
-     ("TRACE", "content-type", 400), ("POST", "x-forwarded-host", 400)],
+    [
+        ("PUT", "content-type", 200),
+        ("DELETE", "authorization", 200),
+        ("TRACE", "content-type", 400),
+        ("POST", "x-forwarded-host", 400),
+    ],
 )
 def test_preflight_enforces_exact_methods_and_headers(portal, method, headers, status) -> None:
     client, _, _ = portal
-    response = client.options("/health", headers={
-        **_origin("synthetic-alpha"),
-        "access-control-request-method": method,
-        "access-control-request-headers": headers,
-    })
+    response = client.options(
+        "/health",
+        headers={
+            **_origin("synthetic-alpha"),
+            "access-control-request-method": method,
+            "access-control-request-headers": headers,
+        },
+    )
     assert response.status_code == status
     assert ("access-control-allow-origin" in response.headers) == (status == 200)
 

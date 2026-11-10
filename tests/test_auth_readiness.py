@@ -12,7 +12,8 @@ from app.main import create_app
 def test_unconfigured_email_sign_in_fails_explicitly() -> None:
     app = create_app()
     app.dependency_overrides[get_settings] = lambda: Settings(
-        _env_file=None, session_secret=SecretStr("x" * 32),
+        _env_file=None,
+        session_secret=SecretStr("x" * 32),
     )
     with TestClient(app) as client:
         capabilities = client.get("/auth/capabilities")
@@ -25,7 +26,8 @@ def test_unconfigured_email_sign_in_fails_explicitly() -> None:
 def test_short_session_secret_cannot_issue_session() -> None:
     with pytest.raises(RuntimeError, match="at least 32 bytes"):
         create_session_token(
-            user_id="synthetic-user", session_id="synthetic-session",
+            user_id="synthetic-user",
+            session_id="synthetic-session",
             settings=Settings(_env_file=None, session_secret=SecretStr("short")),
             now=datetime.now(UTC),
         )
@@ -38,7 +40,8 @@ def test_weak_secret_disables_sign_in_and_decoding(secret: str) -> None:
 
     settings = Settings(_env_file=None, session_secret=SecretStr(secret))
     assert auth_capabilities(settings, UnconfiguredMagicLinkSender()) == {
-        "password_sign_in": False, "magic_link": False,
+        "password_sign_in": False,
+        "magic_link": False,
     }
     with pytest.raises(RuntimeError, match="at least 32 bytes"):
         decode_session_token("synthetic-token", settings)
@@ -53,5 +56,6 @@ def test_configured_email_adapter_exposes_magic_link() -> None:
 
     settings = Settings(_env_file=None, session_secret=SecretStr("x" * 32))
     assert auth_capabilities(settings, SyntheticSender()) == {
-        "password_sign_in": True, "magic_link": True,
+        "password_sign_in": True,
+        "magic_link": True,
     }

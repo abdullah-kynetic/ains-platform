@@ -359,12 +359,15 @@ def test_auditor_enrolls_mfa_and_uses_each_recovery_code_once(backend) -> None:
             hash_mfa_recovery_code(code) for code in recovery_codes
         }
         assert all(code not in {record.code_hash for record in records} for code in recovery_codes)
-        assert db.scalar(
-            select(AuditLog).where(
-                AuditLog.actor_id == auditor.id,
-                AuditLog.action == "auth.mfa_enrollment_completed",
+        assert (
+            db.scalar(
+                select(AuditLog).where(
+                    AuditLog.actor_id == auditor.id,
+                    AuditLog.action == "auth.mfa_enrollment_completed",
+                )
             )
-        ) is not None
+            is not None
+        )
 
     client.cookies.clear()
     recovery_sign_in = client.post(
@@ -418,8 +421,7 @@ def test_auditor_rotates_recovery_codes_with_current_totp(backend) -> None:
         previous_id = previous.id
     sign_in_auditor(client)
     assert (
-        client.post("/auth/auditor/mfa/recovery-codes", json={"code": "000000"}).status_code
-        == 401
+        client.post("/auth/auditor/mfa/recovery-codes", json={"code": "000000"}).status_code == 401
     )
     rotated = client.post(
         "/auth/auditor/mfa/recovery-codes",
@@ -446,8 +448,7 @@ def test_auditor_rotates_recovery_codes_with_current_totp(backend) -> None:
 
     sign_in_client(client)
     assert (
-        client.post("/auth/auditor/mfa/recovery-codes", json={"code": "000000"}).status_code
-        == 403
+        client.post("/auth/auditor/mfa/recovery-codes", json={"code": "000000"}).status_code == 403
     )
     client.cookies.clear()
     recovery_sign_in = client.post(
@@ -460,12 +461,15 @@ def test_auditor_rotates_recovery_codes_with_current_totp(backend) -> None:
     )
     assert recovery_sign_in.status_code == 200
     with factory() as db:
-        assert db.scalar(
-            select(AuditLog).where(
-                AuditLog.actor_id == ids["auditor"],
-                AuditLog.action == "auth.mfa_recovery_codes_rotated",
+        assert (
+            db.scalar(
+                select(AuditLog).where(
+                    AuditLog.actor_id == ids["auditor"],
+                    AuditLog.action == "auth.mfa_recovery_codes_rotated",
+                )
             )
-        ) is not None
+            is not None
+        )
 
 
 def test_magic_link_is_single_use(backend) -> None:
@@ -680,9 +684,7 @@ def test_auditor_creates_isolated_client_workspace_without_provisioning_access(b
         assert engagement.firm_id == body["firmId"]
         assert engagement.auditor_id == ids["auditor"]
         assert len(engagement.items) == 34
-        assert db.scalar(
-            select(User).where(User.firm_id == body["firmId"])
-        ) is None
+        assert db.scalar(select(User).where(User.firm_id == body["firmId"])) is None
         event = db.scalar(
             select(AuditLog).where(
                 AuditLog.firm_id == body["firmId"],
@@ -752,9 +754,7 @@ def test_client_invitation_is_assignment_scoped_rotated_revocable_and_single_use
     assert accepted.json()["user"]["role"] == "client"
     assert accepted.json()["user"]["firm_id"] == ids["firm_a"]
     assert client.get("/engagements/current").json()["id"] == ids["engagement_a"]
-    assert (
-        client.get(f"/engagements/{ids['engagement_b']}/questionnaire").status_code == 404
-    )
+    assert client.get(f"/engagements/{ids['engagement_b']}/questionnaire").status_code == 404
     assert (
         client.post(
             "/auth/invitations/accept",
@@ -771,13 +771,16 @@ def test_client_invitation_is_assignment_scoped_rotated_revocable_and_single_use
         assert provisioned.email == payload["email"]
         assert provisioned.firm_id == ids["firm_a"]
         assert provisioned.role == UserRole.CLIENT
-        assert db.scalar(
-            select(AuditLog).where(
-                AuditLog.firm_id == ids["firm_a"],
-                AuditLog.entity_id == invitation.id,
-                AuditLog.action == "client_invitation.accepted",
+        assert (
+            db.scalar(
+                select(AuditLog).where(
+                    AuditLog.firm_id == ids["firm_a"],
+                    AuditLog.entity_id == invitation.id,
+                    AuditLog.action == "client_invitation.accepted",
+                )
             )
-        ) is not None
+            is not None
+        )
 
     client.cookies.clear()
     sign_in_auditor(client)
@@ -892,10 +895,7 @@ def test_auditor_can_create_and_edit_assigned_tasks(backend):
     assert updated.json()["findingFinalized"] is False
     assert updated.json()["reportSigned"] is False
     assert client.patch(f"/auditor/tasks/{task_id}", json={}).status_code == 422
-    assert (
-        client.patch(f"/auditor/tasks/{task_id}", json={"title": "  "}).status_code
-        == 422
-    )
+    assert client.patch(f"/auditor/tasks/{task_id}", json={"title": "  "}).status_code == 422
 
     with factory() as db:
         task = db.get(AuditorTask, task_id)
@@ -981,8 +981,7 @@ def test_manual_decision_history_and_client_privacy(backend, assessment):
     item = next(item for item in workspace["requests"] if item["id"] == ids["item_a"])
     assert item["assessment"] == assessment and item["applicability"] == "applicable"
     event = next(
-        row for row in reversed(workspace["history"])
-        if row["action"] == "request.manual_decision"
+        row for row in reversed(workspace["history"]) if row["action"] == "request.manual_decision"
     )
     assert event["actorId"] == ids["auditor"]
     assert event["details"]["before"]["assessment"] is None

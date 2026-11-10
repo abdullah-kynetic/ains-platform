@@ -23,7 +23,9 @@ class DownloadClient(Protocol):
 
 class DocumentProcessor:
     def __init__(
-        self, settings: Settings, *,
+        self,
+        settings: Settings,
+        *,
         client_factory: Callable[[Settings], DownloadClient] | None = None,
     ) -> None:
         self.settings = settings
@@ -35,8 +37,9 @@ class DocumentProcessor:
 
     async def process(self, db: Session, document_id: str) -> int:
         started = time.monotonic()
-        document = db.scalar(select(Document).where(Document.id == document_id)
-                             .options(selectinload(Document.item)))
+        document = db.scalar(
+            select(Document).where(Document.id == document_id).options(selectinload(Document.item))
+        )
         if not document:
             raise LookupError("document_not_found")
         if document.item and document.item.restricted:
@@ -53,20 +56,29 @@ class DocumentProcessor:
         if hashlib.sha256(content).hexdigest() != document.sha256:
             raise ValueError("stored_document_fingerprint_mismatch")
         duration_ms = int((time.monotonic() - started) * 1000)
-        db.add(CheckResult(
-            firm_id=document.firm_id, document_id=document.id,
-            check_type="storage_receipt", status="received",
-            details={"sha256_verified": True}, duration_ms=duration_ms,
-        ))
+        db.add(
+            CheckResult(
+                firm_id=document.firm_id,
+                document_id=document.id,
+                check_type="storage_receipt",
+                status="received",
+                details={"sha256_verified": True},
+                duration_ms=duration_ms,
+            )
+        )
         # Receipt verification must not erase a later auditor replacement request
         # or a pending client representation.
         if document.item and document.item.status == ClientStatus.CHECKING:
             document.item.status = ClientStatus.WITH_AUDITOR
             document.item.client_reason = None
-        db.add(AuditLog(
-            firm_id=document.firm_id, action="document.receipt_verified",
-            entity_type="document", entity_id=document.id,
-            details={"duration_ms": duration_ms},
-        ))
+        db.add(
+            AuditLog(
+                firm_id=document.firm_id,
+                action="document.receipt_verified",
+                entity_type="document",
+                entity_id=document.id,
+                details={"duration_ms": duration_ms},
+            )
+        )
         db.flush()
         return duration_ms

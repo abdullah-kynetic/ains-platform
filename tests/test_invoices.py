@@ -270,7 +270,5 @@ def test_whole_issuer_firm_shares_invoice_and_assignment(invoices):
     assert [i["id"] for i in client.get("/auditor/invoices").json()] == [invoice["id"]]
     assert client.patch(path, json=payload(ids, notes="Shared synthetic draft")).status_code == 200
     assert client.post(path + "/sent").status_code == 200
-    response = client.post(
-        path + "/paid", json={"paidDate": str(date.today()), "amountCents": 1}
-    )
+    response = client.post(path + "/paid", json={"paidDate": str(date.today()), "amountCents": 1})
     assert response.status_code == 200

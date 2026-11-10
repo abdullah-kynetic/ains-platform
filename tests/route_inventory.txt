@@ -90,3 +90,15 @@ GET /engagements/{engagement_id}/report client
 POST /engagements/{engagement_id}/report/confirm client
 GET /engagements/{engagement_id}/documents/{document_id}/download client
 GET /auditor/engagements/{engagement_id}/documents/{document_id}/download auditor
+GET /auditor/firm/team auditor
+POST /auditor/firm/team auditor
+PATCH /auditor/firm/team/{member_id} auditor
+DELETE /auditor/firm/team/{member_id} auditor
+GET /auditor/firm/branding auditor
+PUT /auditor/firm/branding auditor
+GET /auditor/firm/rubric auditor
+PUT /auditor/firm/rubric/{request_id} auditor
+GET /auditor/firm/request-templates auditor
+POST /auditor/firm/request-templates auditor
+PUT /auditor/firm/request-templates/{template_id} auditor
+DELETE /auditor/firm/request-templates/{template_id} auditor
