@@ -17,6 +17,7 @@ test("auditor creates, edits, sends and pays an invoice with persistent payment 
     page.getByRole("link", { name: "Invoices", exact: true }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Create invoice" }).click();
+  await expect(page.getByText("Client & dates", { exact: true })).toBeVisible();
   await page
     .getByLabel("Description 1", { exact: true })
     .fill("Synthetic independent review");

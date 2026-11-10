@@ -36,7 +36,7 @@ scan() {
       docker run --rm -v "$scratch:/scan:ro" aquasec/trivy:0.69.3 \
         image --input /scan/image.tar --severity HIGH,CRITICAL --exit-code 1 --format json > "$scratch/findings.json" ;;
     semgrep)
-      uvx semgrep scan --config p/python --config p/typescript \
+      uvx semgrep scan --timeout 60 --config p/python --config p/typescript \
         --config p/owasp-top-ten --config p/secrets --error --json > "$scratch/findings.json" ;;
     bandit) uvx bandit -r app ai_adapter -ll -ii -f json > "$scratch/findings.json" ;;
     zizmor) uvx zizmor --config "$scratch/zizmor.yml" --format json .github/workflows > "$scratch/findings.json" ;;
