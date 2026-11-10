@@ -131,6 +131,10 @@ def test_assigned_workspace_remains_allowed_across_auditor_firms(backend):
     with factory() as db:
         db.get(User, ids["auditor"]).firm_id = db.get(Engagement, ids["engagement_b"]).firm_id
         db.commit()
+    # Scope changes invalidate the old identity; assignment survives a fresh sign-in.
+    assert client.get(base + "/workspace").status_code == 401
+    client.cookies.clear()
+    sign_in_auditor(client)
     response = client.get(base + "/workspace")
     assert response.status_code == 200
     assert "notes" in response.json()["requests"][0]

@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 import jwt
-from fastapi import Cookie, Depends, Header, HTTPException, status
+from fastapi import Cookie, Depends, Header, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,7 @@ from app.database.models import AuthSession, User
 from app.database.session import get_db
 
 from .security import decode_session_token
+from .session_policy import assert_session_identity
 
 SESSION_COOKIE = "ains_session"
 DB = Annotated[Session, Depends(get_db)]
@@ -28,6 +29,7 @@ def _aware(value: datetime) -> datetime:
 
 
 def get_current_user(
+    request: Request,
     db: DB,
     settings: AuthSettings,
     session_cookie: SessionCookie = None,
@@ -60,4 +62,5 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Session is invalid or expired"
         )
+    assert_session_identity(payload, row.User, require_mfa=request.url.path != "/auth/sign-out")
     return row.User
