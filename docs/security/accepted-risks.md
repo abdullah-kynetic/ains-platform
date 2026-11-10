@@ -2,7 +2,8 @@
 
 Only the explicitly recorded findings below are suppressed. A finding may only be accepted here
 with its scanner and finding ID, affected path/package, reason, owner and expiry
-(YYYY-MM-DD). Expired entries must fail review. The policy validates these records and generates temporary scanner configuration;
+(YYYY-MM-DD). Expired entries must fail review. The policy validates these records and generates temporary scanner configuration
+or filters only exact approved rule/file metadata from valid scanner reports;
 expired, malformed or unsupported records fail closed. Do not add tool-native ignore files or inline suppressions to bypass CI.
 
 | ID | Reason | Owner | Expiry | Compensating controls |
@@ -23,7 +24,7 @@ local environment; never paste raw scanner logs into PRs or upload unredacted re
 
 ## Owner-approved finding exceptions
 
-The JSON block is the only machine-readable exception source. All four entries
+The JSON block is the only machine-readable exception source. All entries
 expire after 90 days. Fingerprints apply only to the exact historical findings;
 no git history is changed. No matched values are recorded here.
 
@@ -67,6 +68,102 @@ no git history is changed. No matched values are recorded here.
     "owner": "Abdullah via Slave Kien",
     "approved": "2026-11-09",
     "expires": "2027-02-07"
+  },
+  {
+    "owner": "Abdullah via Slave Kien",
+    "approved": "2026-11-09",
+    "expires": "2027-02-07",
+    "review": "Stage 2 security audit",
+    "scanner": "semgrep",
+    "finding": "python.lang.security.audit.logging.logger-credential-leak.python-logger-credential-disclosure",
+    "scope": "ai_adapter/client.py",
+    "reason": "Owner accepted until Stage 2/3: ai_adapter is frozen and disabled; no adapter edits or model runs are authorized. Stage 2 must audit logging before enabling it."
+  },
+  {
+    "owner": "Abdullah via Slave Kien",
+    "approved": "2026-11-09",
+    "expires": "2027-02-07",
+    "review": "Stage 2 security audit",
+    "scanner": "semgrep",
+    "finding": "javascript.browser.security.wildcard-postmessage-configuration.wildcard-postmessage-configuration",
+    "scope": ".agents/skills/impeccable/scripts/live-browser.js",
+    "reason": "Owner accepted: local agent tooling is never shipped with the product. Stage 2 must review cross-window messaging before this tooling is enabled beyond its existing local context."
+  },
+  {
+    "owner": "Abdullah via Slave Kien",
+    "approved": "2026-11-09",
+    "expires": "2027-02-07",
+    "review": "Stage 2 security audit",
+    "scanner": "trivy-fs",
+    "finding": "AWS-0015",
+    "scope": "infra/aws/main.tf",
+    "reason": "Owner accepted: legacy AWS infrastructure is not used by the single VPS environment and is not deployed. Stage 2 must review and remediate this rule before any AWS use."
+  },
+  {
+    "owner": "Abdullah via Slave Kien",
+    "approved": "2026-11-09",
+    "expires": "2027-02-07",
+    "review": "Stage 2 security audit",
+    "scanner": "trivy-fs",
+    "finding": "AWS-0086",
+    "scope": "infra/aws/main.tf",
+    "reason": "Owner accepted: legacy AWS infrastructure is not used by the single VPS environment and is not deployed. Stage 2 must review and remediate this rule before any AWS use."
+  },
+  {
+    "owner": "Abdullah via Slave Kien",
+    "approved": "2026-11-09",
+    "expires": "2027-02-07",
+    "review": "Stage 2 security audit",
+    "scanner": "trivy-fs",
+    "finding": "AWS-0087",
+    "scope": "infra/aws/main.tf",
+    "reason": "Owner accepted: legacy AWS infrastructure is not used by the single VPS environment and is not deployed. Stage 2 must review and remediate this rule before any AWS use."
+  },
+  {
+    "owner": "Abdullah via Slave Kien",
+    "approved": "2026-11-09",
+    "expires": "2027-02-07",
+    "review": "Stage 2 security audit",
+    "scanner": "trivy-fs",
+    "finding": "AWS-0091",
+    "scope": "infra/aws/main.tf",
+    "reason": "Owner accepted: legacy AWS infrastructure is not used by the single VPS environment and is not deployed. Stage 2 must review and remediate this rule before any AWS use."
+  },
+  {
+    "owner": "Abdullah via Slave Kien",
+    "approved": "2026-11-09",
+    "expires": "2027-02-07",
+    "review": "Stage 2 security audit",
+    "scanner": "trivy-fs",
+    "finding": "AWS-0093",
+    "scope": "infra/aws/main.tf",
+    "reason": "Owner accepted: legacy AWS infrastructure is not used by the single VPS environment and is not deployed. Stage 2 must review and remediate this rule before any AWS use."
+  },
+  {
+    "owner": "Abdullah via Slave Kien",
+    "approved": "2026-11-09",
+    "expires": "2027-02-07",
+    "review": "Stage 2 security audit",
+    "scanner": "trivy-fs",
+    "finding": "AWS-0104",
+    "scope": "infra/aws/main.tf",
+    "reason": "Owner accepted: legacy AWS infrastructure is not used by the single VPS environment and is not deployed. Stage 2 must review and remediate this rule before any AWS use."
+  },
+  {
+    "owner": "Abdullah via Slave Kien",
+    "approved": "2026-11-09",
+    "expires": "2027-02-07",
+    "review": "Stage 2 security audit",
+    "scanner": "trivy-fs",
+    "finding": "AWS-0132",
+    "scope": "infra/aws/main.tf",
+    "reason": "Owner accepted: legacy AWS infrastructure is not used by the single VPS environment and is not deployed. Stage 2 must review and remediate this rule before any AWS use."
   }
 ]
 ```
+
+The owner also approved exact Semgrep rule/file and legacy AWS misconfiguration
+exceptions, all flagged for the Stage 2 security audit. Scanners still run in full.
+Report filtering never accepts secret findings, unrelated rules/files, scanner
+errors, malformed reports or non-finding exit codes. No container CVE is suppressed;
+the pinned Alpine application image scans clean.

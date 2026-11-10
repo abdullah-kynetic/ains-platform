@@ -67,6 +67,16 @@ if __name__ == "__main__":
         rows = findings(scanner, Path(source).read_text())
     except (OSError, AttributeError, TypeError):
         rows = []
+    accepted = []
+    try:
+        data = json.loads(Path(source).read_text())
+        if isinstance(data, dict):
+            accepted = [
+                {key: str(entry[key]) for key in ["id", "location", "expires", "review"]}
+                for entry in data.get("KienAcceptedFindings", [])
+            ]
+    except (ValueError, OSError, KeyError, TypeError):
+        accepted = []
     diagnostics = []
     if logs:
         try:
@@ -83,7 +93,7 @@ if __name__ == "__main__":
                 diagnostics.append(label)
     Path(target).write_text(json.dumps({
         "scanner": scanner, "exit_status": int(status), "findings": rows,
-        "diagnostics": diagnostics,
+        "diagnostics": diagnostics, "accepted_findings": accepted,
         "note": "Only finding IDs, locations and severities are exported. "
                 "Nonzero status without findings can indicate a tool or network error.",
     }, indent=2) + "\n")

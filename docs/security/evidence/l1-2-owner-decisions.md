@@ -79,3 +79,30 @@ L1-3 follows only after #97 is fully green and merged, per the owner's latest
 sequence. Its revised memory budget is PostgreSQL 768M, ClamAV approximately 1.2G
 with ConcurrentDatabaseReload=no, API 512M, worker 384M, Caddy 128M, and disabled
 ai-adapter 256M. No server access is needed or authorized.
+
+## Superseding owner decision: scoped Stage 2 exceptions
+
+The owner subsequently instructed Lane 1 not to route these to Lane 2. The frozen
+adapter, local agent tooling and legacy AWS findings above are now explicitly
+accepted by exact rule ID and file until 2027-02-07, each flagged for the Stage 2
+security audit. Their records are in accepted-risks.md. No source in these paths
+was edited. The earlier cross-owner BLOCKED entry is superseded by this decision.
+
+Semgrep and Trivy still scan all tracked source. The policy removes only exact
+approved rule/file matches from valid finding reports. It never clears runtime
+exit codes, missing/malformed reports, report errors, unrelated rules/files,
+Trivy secret findings or vulnerability findings. Accepted metadata and expiry
+remain visible in the sanitized artifacts. All expiry checks run before scanning.
+TruffleHog's verified-secret gate remains unchanged and has no exceptions.
+
+Hosted run 42726926633 proved the Alpine remediation: trivy-image passed, along
+with Gitleaks, zizmor, pip-audit, npm, TruffleHog and Bandit (seven green jobs).
+The only failures were the now owner-approved Semgrep/AWS findings. A final
+hosted run with their exact report filtering is required before merging #97.
+
+Independent code verification at a702571: PASS, 69 targeted tests, Ruff and
+policy/shell checks passed; hardened local image runtime smoke passed again.
+Full backend checkpoint: 433 passed, 11 skipped, one dependency warning. Web lint,
+typecheck, 28 unit tests and both builds passed. Real-backend browser suite: 8
+passed. Mock suite: 80 passed, 2 cloud-proxy tenant-host failures (same Domain
+forbidden evidence as the earlier checkpoint).

@@ -66,6 +66,15 @@ def accepted_risks(path: Path, today: date | None = None) -> list[dict]:
             and scope == ".github/workflows/image.yml"
         ):
             key = (scanner, finding, scope)
+        elif scanner in {"semgrep", "trivy-fs"}:
+            if entry.get("review") != "Stage 2 security audit":
+                raise ValueError("Scoped exceptions require Stage 2 review")
+            if Path(scope).is_absolute() or ".." in Path(scope).parts or "*" in scope:
+                raise ValueError("Exceptions require an exact relative file")
+            pattern = r"AWS-[0-9]{4}" if scanner == "trivy-fs" else r"[a-zA-Z0-9_.-]+"
+            if not re.fullmatch(pattern, finding):
+                raise ValueError("Invalid scoped finding ID")
+            key = (scanner, finding, scope)
         else:
             raise ValueError("Unsupported accepted risk")
         if key in seen:
@@ -90,13 +99,70 @@ def generate(directory: Path, entries: list[dict]) -> None:
     (directory / "zizmor.yml").write_text(json.dumps({"rules": rules}))
 
 
+def apply_filter(scanner: str, status: int, path: Path, entries: list[dict]) -> int:
+    # Only documented finding exit code 1 can be cleared; runtime errors stay red.
+    if status != 1 or scanner not in {"semgrep", "trivy-fs"}:
+        return status
+    data = json.loads(path.read_text())
+    if not isinstance(data, dict):
+        raise ValueError("Invalid scanner report")
+    approved = {(e["finding"], e["scope"]): e for e in entries if e["scanner"] == scanner}
+    accepted, total, remaining = [], 0, 0
+
+    def keep(finding, scope):
+        nonlocal total, remaining
+        total += 1
+        risk = approved.get((finding, scope))
+        if risk:
+            accepted.append({"id": finding, "location": scope, "expires": risk["expires"],
+                             "review": risk["review"]})
+            return False
+        remaining += 1
+        return True
+
+    if scanner == "semgrep":
+        results = data["results"]
+        if not isinstance(results, list):
+            raise ValueError("Invalid Semgrep findings")
+        data["results"] = [r for r in results if keep(r["check_id"], r["path"])]
+    else:
+        results = data["Results"]
+        if not isinstance(results, list):
+            raise ValueError("Invalid Trivy findings")
+        for result in results:
+            # Only misconfigurations can match approved AWS rules. Never secrets/vulns.
+            remaining += len(result.get("Secrets") or []) + len(result.get("Vulnerabilities") or [])
+            result["Misconfigurations"] = [
+                r for r in (result.get("Misconfigurations") or [])
+                if keep(r["ID"], result["Target"])
+            ]
+    data["KienAcceptedFindings"] = accepted
+    path.write_text(json.dumps(data))
+    return 0 if total > 0 and remaining == 0 and not data.get("errors") else status
+
+
+def filter_report(scanner: str, status: int, path: Path, entries: list[dict]) -> int:
+    try:
+        return apply_filter(scanner, status, path, entries)
+    except (ValueError, OSError, KeyError, TypeError):
+        # Missing/malformed scanner JSON can never clear a failing scanner.
+        return status
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--filter-report", choices=["semgrep", "trivy-fs"])
+    parser.add_argument("--report", type=Path)
+    parser.add_argument("--status", type=int)
     args = parser.parse_args()
     try:
         entries = accepted_risks(Path("docs/security/accepted-risks.md"))
-        if args.output_dir:
+        if args.filter_report:
+            if args.report is None or args.status is None:
+                raise ValueError("Missing scanner report arguments")
+            print(filter_report(args.filter_report, args.status, args.report, entries))
+        elif args.output_dir:
             generate(args.output_dir, entries)
         else:
             files = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
@@ -104,5 +170,5 @@ if __name__ == '__main__':
             for error in errors:
                 print(error)
             raise SystemExit(bool(errors))
-    except (ValueError, OSError, StopIteration):
+    except (ValueError, OSError, StopIteration, KeyError, TypeError):
         raise SystemExit("Invalid accepted-risk policy; no suppression applied") from None

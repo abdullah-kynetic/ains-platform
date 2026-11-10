@@ -164,7 +164,7 @@ def test_approved_risks_generate_only_exact_scoped_suppressions(tmp_path):
 
     policy = runpy.run_path(str(SCRIPT.with_name('policy.py')))
     entries = policy['accepted_risks'](Path('docs/security/accepted-risks.md'), date(2026, 11, 10))
-    assert len(entries) == 4
+    assert len(entries) == 13
     policy['generate'](tmp_path, entries)
     ignored = (tmp_path / 'gitleaksignore').read_text().splitlines()
     assert len(ignored) == 3
@@ -260,3 +260,48 @@ def test_image_runtime_failure_prevents_saving_or_scanning_the_image(tmp_path):
     assert calls[0] == 'build -t kien-api:ci .'
     assert '/app/smoke.py' in calls[1]
     assert len(calls) == 2
+
+
+@pytest.mark.parametrize('scanner', ['semgrep', 'trivy-fs'])
+@pytest.mark.parametrize(
+    'case', ['approved', 'different-file', 'different-rule', 'error', 'bad-json'],
+)
+def test_scoped_filter_never_clears_unapproved_findings_or_scanner_errors(tmp_path, scanner, case):
+    import json
+    import runpy
+    from datetime import date
+
+    policy = runpy.run_path(str(SCRIPT.with_name('policy.py')))
+    entries = policy['accepted_risks'](Path('docs/security/accepted-risks.md'), date(2026, 11, 10))
+    risk = next(e for e in entries if e['scanner'] == scanner)
+    rule = 'not-approved' if case == 'different-rule' else risk['finding']
+    scope = 'app/not-approved.py' if case == 'different-file' else risk['scope']
+    if scanner == 'semgrep':
+        report = {'results': [{'check_id': rule, 'path': scope}], 'errors': []}
+    else:
+        report = {'Results': [{'Target': scope, 'Misconfigurations': [{'ID': rule}]}]}
+    if case == 'error':
+        report['errors'] = [{'type': 'synthetic scanner error'}]
+    source = tmp_path / 'scanner.json'
+    source.write_text('invalid-json' if case == 'bad-json' else json.dumps(report))
+    result = policy['filter_report'](scanner, 1, source, entries)
+    assert result == (0 if case == 'approved' else 1)
+    assert policy['filter_report'](scanner, 2, source, entries) == 2
+    if case == 'approved':
+        assert json.loads(source.read_text())['KienAcceptedFindings'][0]['expires'] == '2027-02-07'
+
+
+def test_trivy_exceptions_never_clear_secret_or_vulnerability_findings(tmp_path):
+    import json
+    import runpy
+    from datetime import date
+
+    policy = runpy.run_path(str(SCRIPT.with_name('policy.py')))
+    entries = policy['accepted_risks'](Path('docs/security/accepted-risks.md'), date(2026, 11, 10))
+    for category in ['Secrets', 'Vulnerabilities']:
+        source = tmp_path / 'scanner.json'
+        source.write_text(json.dumps({'Results': [{
+            'Target': 'infra/aws/main.tf', 'Misconfigurations': [{'ID': 'AWS-0104'}],
+            category: [{'ID': 'synthetic-new-finding'}],
+        }]}))
+        assert policy['filter_report']('trivy-fs', 1, source, entries) == 1

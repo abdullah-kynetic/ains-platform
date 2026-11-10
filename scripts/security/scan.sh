@@ -48,6 +48,10 @@ set +e
 (set -e; scan) > "$scratch/raw.log" 2>&1
 result=$?
 set -e
+if [[ "$scanner" == semgrep || "$scanner" == trivy-fs ]]; then
+  result=$(python3 "$script_dir/policy.py" --filter-report "$scanner" \
+    --report "$scratch/findings.json" --status "$result")
+fi
 printf 'Scanner: %s\nExit status: %s\n' "$scanner" "$result" \
   > "security-reports/$scanner.txt"
 python3 "$script_dir/report.py" "$scanner" "$result" "$scratch/findings.json" "security-reports/$scanner.json" "$scratch/raw.log"
