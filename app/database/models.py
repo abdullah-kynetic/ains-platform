@@ -28,7 +28,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, validates
 
 from app.checklist import ClientStatus
 
@@ -91,11 +91,26 @@ class Firm(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String(255))
+    # Portal label: https://{slug}.<portal base>. Unique, lowercase, not a reserved host.
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    # Public mark only. Relative path or https URL. Never other firm data.
+    logo_url: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     users: Mapped[list[User]] = relationship(back_populates="firm")
     engagements: Mapped[list[Engagement]] = relationship(back_populates="firm")
+
+    @validates("slug")
+    def _validate_slug(self, _key: str, value: str) -> str:
+        from app.tenancy import require_firm_slug
+
+        return require_firm_slug(value)
+
+    @validates("logo_url")
+    def _validate_logo_url(self, _key: str, value: str | None) -> str | None:
+        from app.tenancy import require_logo_url
+
+        return require_logo_url(value)
 
 
 class User(Base):

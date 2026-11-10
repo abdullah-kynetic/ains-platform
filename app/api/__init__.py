@@ -11,8 +11,10 @@ from .invoices import router as invoices_router
 from .manual_review import router as manual_review_router
 from .questionnaire import router as questionnaire_router
 from .reports import router as reports_router
+from .tenant import router as tenant_router
 
 router = APIRouter()
+router.include_router(tenant_router)
 router.include_router(client_profiles_router)
 router.include_router(reports_router)
 router.include_router(invoices_router)

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.config import Settings, get_settings
 from app.database.models import AuthSession, User
 from app.database.session import get_db
+from app.tenancy import assert_user_on_portal, require_firm_portal
 
 from .security import decode_session_token
 from .session_policy import assert_session_identity
@@ -28,13 +29,14 @@ def _aware(value: datetime) -> datetime:
     return value if value.tzinfo else value.replace(tzinfo=UTC)
 
 
-def get_current_user(
+def get_authenticated_user(
     request: Request,
     db: DB,
     settings: AuthSettings,
     session_cookie: SessionCookie = None,
     authorization: AuthorizationHeader = None,
 ) -> User:
+    """Authenticate the presented session without checking which portal it came from."""
     token = session_cookie
     if not token and authorization and authorization.lower().startswith("bearer "):
         token = authorization[7:].strip()
@@ -64,3 +66,14 @@ def get_current_user(
         )
     assert_session_identity(payload, row.User, require_mfa=request.url.path != "/auth/sign-out")
     return row.User
+
+
+AuthenticatedUser = Annotated[User, Depends(get_authenticated_user)]
+
+
+def get_current_user(
+    request: Request, db: DB, settings: AuthSettings, user: AuthenticatedUser
+) -> User:
+    """Authenticated user, and that user's firm must match the portal host (when enforced)."""
+    assert_user_on_portal(user, require_firm_portal(request, settings, db))
+    return user

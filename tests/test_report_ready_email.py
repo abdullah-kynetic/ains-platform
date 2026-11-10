@@ -107,7 +107,8 @@ def test_signoff_emails_only_active_clients_of_that_firm(backend) -> None:  # no
     client, factory, ids, _, _ = backend
     base = client.app.dependency_overrides[get_settings]()
     client.app.dependency_overrides[get_settings] = lambda: base.model_copy(
-        update={"resend_api_key": SecretStr(API_KEY), "email_from": FROM}
+        update={"resend_api_key": SecretStr(API_KEY), "email_from": FROM,
+                "portal_url": "https://{slug}.kiensolutions.com"}
     )
     route = respx.post(RESEND_URL).mock(return_value=httpx.Response(200, json={"id": "x"}))
     with factory() as db:
@@ -134,6 +135,17 @@ def test_signoff_emails_only_active_clients_of_that_firm(backend) -> None:  # no
     assert sent["to"] == ["alpha-client@example.test"]
     assert digest not in sent["text"]
     assert "Synthetic Alpha Securities" in sent["text"]
+    assert "https://synthetic-alpha.kiensolutions.com" in sent["text"]
+    assert "{slug}" not in sent["text"]
+
+
+def test_invalid_portal_template_skips_mail(monkeypatch, caplog) -> None:
+    _no_http(monkeypatch)
+    settings = _settings().model_copy(update={"portal_url": "https://example.test/{slug}"})
+    notify_report_ready(settings, recipients=["synthetic@example.test"],
+                        firm_name="Synthetic", review_period=PERIOD)
+    assert "invalid portal configuration" in caplog.text
+    assert "synthetic@example.test" not in caplog.text
 
 
 @respx.mock

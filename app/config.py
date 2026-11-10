@@ -6,7 +6,7 @@ Secrets are typed as SecretStr so they are never shown in reprs or logs.
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     resend_api_key: SecretStr = SecretStr("")
     email_from: str = ""
     invite_email_from: str = ""
+    # Bare registrable domain. Empty keeps the local single-portal behavior.
+    # Production: kiensolutions.com. Firm portals are https://<slug>.<domain>.
+    portal_base_domain: str = ""
+    # Concrete origin (http://localhost:3000) or a template: https://{slug}.kiensolutions.com.
     portal_url: str = "http://localhost:3000"
     password_reset_ttl_minutes: int = Field(default=15, ge=1, le=60)
 
@@ -86,10 +90,20 @@ class Settings(BaseSettings):
     client_invitation_ttl_hours: int = 72
     invitation_preview_enabled: bool = False
 
-    # Comma-separated browser origins; wildcard origins are deliberately unsupported.
+    # Extra exact browser origins (wildcards are deliberately unsupported). With
+    # PORTAL_BASE_DOMAIN set, the apex, www, auditor and https://<known firm slug>.<domain>
+    # are also allowed, read from the firms table.
     # Local development default: portal http://localhost:3000, API http://localhost:8000.
     # Production must set public HTTPS origins and must not include localhost.
     cors_origins: str = "http://localhost:3000"
+
+    @field_validator("portal_base_domain")
+    @classmethod
+    def bare_portal_domain(cls, value: str) -> str:
+        cleaned = value.strip().lower().rstrip(".")
+        if cleaned and any(char in cleaned for char in "/:?#@ "):
+            raise ValueError("PORTAL_BASE_DOMAIN must be a bare hostname")
+        return cleaned
 
     def parsed_cors_origins(self) -> list[str]:
         return [

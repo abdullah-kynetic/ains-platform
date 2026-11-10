@@ -28,12 +28,21 @@ def test_expired_token_and_revoked_session_return_401(backend):
             settings=settings,
             now=datetime.now(UTC) - timedelta(hours=13),
         )
-        row.revoked_at = datetime.now(UTC)
-        db.commit()
+        session_id = row.id
     client.cookies.clear()
-    for token in (expired, current):
-        response = client.get("/auth/session", headers={"Authorization": f"Bearer {token}"})
-        assert response.status_code == 401
+    assert (
+        client.get("/auth/session", headers={"Authorization": f"Bearer {expired}"}).status_code
+        == 401
+    )
+    assert (
+        client.get("/auth/session", headers={"Authorization": f"Bearer {current}"}).status_code
+        == 200
+    )
+    with factory() as db:
+        db.get(AuthSession, session_id).revoked_at = datetime.now(UTC)
+        db.commit()
+    response = client.get("/auth/session", headers={"Authorization": f"Bearer {current}"})
+    assert response.status_code == 401
 
 
 @pytest.mark.parametrize("field", ["role", "firm_id"])

@@ -101,3 +101,8 @@ evidence. No server changes, real email delivery or Stage 1 gate completion is c
 ## L2-5 auth proof tranche
 
 S-01 through S-06 now have executable proofs in `tests/security/` and evidence under `docs/security/evidence/app-s-*.md`. Focused suite: 15 passed; broader auth/reset/API: 70 passed. The initial full run found one legacy N/A assignment test retaining a token after its auditor changed firms; it now asserts revocation and signs in again before checking assignment. Final full gate and independent review pending. Existing sessions without role/firm claims must sign in again after deployment. No deployment was performed. S-07 through S-15 and S-19 remain in progress; no complete L2-5 claim yet.
+
+
+## Portal rebuild recheck after Lane 1 fixes
+
+RESOLVED: #98 aligned the live fixture hostname with its synthetic firm and made the migration-head guard check the current single head. #96 merged current main, including #97 Security and #99 auth proofs. Its prior pre-auth full run passed 478 tests (12 skipped locally), and the corrected real local backend browser run passed all 8 tests. Fresh combined full CI, Security and independent verification are required before #96 merges. The auth/portal merge preserves request-time identity/MFA checks and portal firm binding; authenticated sign-out remains possible from any portal.

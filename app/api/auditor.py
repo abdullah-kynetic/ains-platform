@@ -371,6 +371,7 @@ def signoff_report(
         settings,
         recipients=recipients,
         firm_name=engagement.firm.name if engagement.firm is not None else "your firm",
+        firm_slug=engagement.firm.slug if engagement.firm is not None else None,
         review_period=(
             f"{engagement.review_period_start.isoformat()} through "
             f"{engagement.review_period_end.isoformat()}"

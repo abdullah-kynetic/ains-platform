@@ -1,13 +1,13 @@
 """FastAPI application factory and entrypoint."""
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import router as engagement_router
 from app.auth import router as auth_router
 from app.auth.invitations import auditor_router as invitation_auditor_router
 from app.auth.invitations import public_router as invitation_public_router
 from app.config import get_settings
+from app.cors import PortalCORSMiddleware, portal_origin_allowed
 from app.monitoring import init_sentry
 from app.origin_check import OriginCheckMiddleware
 from app.ratelimit import RateLimitMiddleware
@@ -21,14 +21,15 @@ def enforce_production_safety(settings) -> None:
         raise RuntimeError("ENV=production requires UPLOAD_SCAN_MODE=clamav; refusing to start")
     if not settings.session_cookie_secure:
         raise RuntimeError("ENV=production requires SESSION_COOKIE_SECURE=true; refusing to start")
-    # The same list is the CORS list and the exact-origin allowlist for state-changing requests,
-    # so every portal host (each firm host and the auditor host) must be listed, as https.
+    # The same allowlist is the CORS list and the exact-origin check for state-changing requests.
+    # With PORTAL_BASE_DOMAIN set, firm hosts come from the database instead, so CORS_ORIGINS
+    # may be empty; any entry that is listed must still be https with no wildcard or localhost.
     origins = settings.parsed_cors_origins()
     bad = [o for o in origins if not o.startswith("https://") or "*" in o or "localhost" in o]
-    if not origins or bad:
+    if (not origins and not settings.portal_base_domain) or bad:
         raise RuntimeError(
-            "ENV=production requires CORS_ORIGINS to list every portal origin as https "
-            "(no wildcard, no localhost); refusing to start"
+            "ENV=production requires PORTAL_BASE_DOMAIN or a CORS_ORIGINS list of https portal "
+            "origins (no wildcard, no localhost); refusing to start"
         )
 
 
@@ -44,17 +45,13 @@ def create_app() -> FastAPI:
         max_concurrent_uploads=settings.upload_max_concurrent,
     )
     application.add_middleware(
-        OriginCheckMiddleware, allowed_origins=settings.parsed_cors_origins()
+        OriginCheckMiddleware,
+        allowed_origins=settings.parsed_cors_origins(),
+        extra_allowed=portal_origin_allowed,
     )
-    application.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.parsed_cors_origins(),
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type"],
-        # The web app reads Retry-After to tell a locked-out user how long to wait.
-        expose_headers=["Retry-After"],
-    )
+    # Outermost. Exact CORS_ORIGINS entries plus, when PORTAL_BASE_DOMAIN is set, the apex, www,
+    # auditor and https://<known firm slug>.<domain>. No wildcard is ever sent.
+    application.add_middleware(PortalCORSMiddleware)
     from app.auth.onboarding import router as onboarding_router
     from app.auth.reset import router as reset_router
 

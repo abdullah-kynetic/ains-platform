@@ -69,3 +69,4 @@ GET /health public
 POST /auditor/engagements/{engagement_id}/items/{item_id}/response-request auditor
 POST /auditor/engagements/{engagement_id}/items/{item_id}/response-request/withdraw auditor
 GET /engagements/{engagement_id}/responses-requested client
+GET /tenant/branding public

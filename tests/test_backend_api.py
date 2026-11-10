@@ -56,7 +56,10 @@ class CaptureMagicLinkSender:
     def __init__(self) -> None:
         self.token: str | None = None
 
-    def send(self, *, email: str, token: str, expires_at: datetime) -> None:
+    def send(
+        self, *, email: str, token: str, expires_at: datetime, slug: str | None = None
+    ) -> None:
+        del slug
         assert email.endswith("@example.test")
         assert expires_at > datetime.now(UTC)
         self.token = token
