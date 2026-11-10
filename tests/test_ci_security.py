@@ -305,3 +305,21 @@ def test_trivy_exceptions_never_clear_secret_or_vulnerability_findings(tmp_path)
             category: [{'ID': 'synthetic-new-finding'}],
         }]}))
         assert policy['filter_report']('trivy-fs', 1, source, entries) == 1
+
+
+def test_scanner_error_metadata_never_exports_error_messages_or_source(tmp_path):
+    import json
+
+    source, report = tmp_path / 'raw.json', tmp_path / 'safe.json'
+    source.write_text(json.dumps({'results': [], 'errors': [{
+        'type': 'ParseError', 'level': 'warn', 'code': 3, 'path': 'synthetic.ts',
+        'message': 'synthetic-sensitive-output', 'lines': 'synthetic-sensitive-output',
+    }]}))
+    result = subprocess.run([
+        'python3', str(SCRIPT.with_name('report.py')), 'semgrep', '1', str(source), str(report),
+    ], capture_output=True, text=True)
+    assert 'synthetic-sensitive-output' not in result.stdout + report.read_text()
+    assert 'ParseError' in result.stdout
+    assert json.loads(report.read_text())['errors'] == [
+        {'type': 'ParseError', 'level': 'warn', 'code': '3', 'path': 'synthetic.ts'},
+    ]

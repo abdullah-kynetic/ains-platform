@@ -68,9 +68,14 @@ if __name__ == "__main__":
     except (OSError, AttributeError, TypeError):
         rows = []
     accepted = []
+    errors = []
     try:
         data = json.loads(Path(source).read_text())
         if isinstance(data, dict):
+            for error in data.get("errors", []):
+                if isinstance(error, dict):
+                    errors.append({key: str(error[key]) for key in ["type", "level", "code", "path"]
+                                   if key in error and isinstance(error[key], (str, int))})
             accepted = [
                 {key: str(entry[key]) for key in ["id", "location", "expires", "review"]}
                 for entry in data.get("KienAcceptedFindings", [])
@@ -93,7 +98,7 @@ if __name__ == "__main__":
                 diagnostics.append(label)
     Path(target).write_text(json.dumps({
         "scanner": scanner, "exit_status": int(status), "findings": rows,
-        "diagnostics": diagnostics, "accepted_findings": accepted,
+        "diagnostics": diagnostics, "accepted_findings": accepted, "errors": errors,
         "note": "Only finding IDs, locations and severities are exported. "
                 "Nonzero status without findings can indicate a tool or network error.",
     }, indent=2) + "\n")
@@ -102,7 +107,10 @@ if __name__ == "__main__":
         def escape(value):
             return str(value).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
-        summary = f"{scanner}: exit {status}; findings={len(rows)}; diagnostics={diagnostics}"
+        summary = (
+            f"{scanner}: exit {status}; findings={len(rows)}; diagnostics={diagnostics}; "
+            f"error metadata={errors}"
+        )
         print("::error title=Security scan failed::" + escape(summary))
         metadata = [" | ".join(str(value) for value in row.values()) for row in rows]
         if metadata:
