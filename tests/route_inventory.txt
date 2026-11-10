@@ -118,3 +118,7 @@ DELETE /auditor/findings/{finding_record_id} auditor
 POST /auditor/findings/{finding_record_id}/response-request auditor
 GET /engagements/{engagement_id}/response-requests client
 POST /engagements/{engagement_id}/response-requests/{response_request_id}/response client
+GET /auditor/engagements/{engagement_id}/report-draft auditor
+PUT /auditor/engagements/{engagement_id}/report-draft/sections/{section_id} auditor
+GET /auditor/engagements/{engagement_id}/report-draft/docx auditor
+GET /auditor/engagements/{engagement_id}/report-draft/pdf auditor

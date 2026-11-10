@@ -178,3 +178,9 @@ No live proof is claimed.
 Auditor-only findings with server-enforced status moves and citation checks, explicit release of a
 client response request, and the client's single reply. Clients see only the released title and
 text. Contract: [`docs/kb/26-findings-api.md`](kb/26-findings-api.md). No live proof is claimed.
+
+## L2-6e report draft (branch lane2/l2-6e-report-draft)
+
+Server-assembled report draft from the auditor's own conclusions, samples and non-draft findings,
+section edits, and real Word and PDF downloads, auditor-only. Contract:
+[`docs/kb/27-report-draft-api.md`](kb/27-report-draft-api.md). No live proof is claimed.

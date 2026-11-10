@@ -13,6 +13,7 @@ from .intake import router as intake_router
 from .invoices import router as invoices_router
 from .manual_review import router as manual_review_router
 from .questionnaire import router as questionnaire_router
+from .report_draft import router as report_draft_router
 from .reports import router as reports_router
 from .tenant import router as tenant_router
 from .testing import router as testing_router
@@ -35,6 +36,7 @@ router.include_router(workflow_router)
 router.include_router(testing_router)
 router.include_router(workpapers_router)
 router.include_router(findings_router)
+router.include_router(report_draft_router)
 router.include_router(downloads_router)
 
 __all__ = ["router"]

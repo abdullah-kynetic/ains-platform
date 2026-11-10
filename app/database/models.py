@@ -851,3 +851,21 @@ class ResponseRequest(Base):
     responded_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     released_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     released_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+
+
+class ReportSectionEdit(Base):
+    """An auditor's replacement text for one assembled report-draft section."""
+
+    __tablename__ = "report_section_edits"
+    __table_args__ = (
+        UniqueConstraint("engagement_id", "section_id", name="uq_report_section_edit"),
+        Index("ix_report_section_edits_firm_engagement", "firm_id", "engagement_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    section_id: Mapped[str] = mapped_column(String(80))
+    body: Mapped[str] = mapped_column(Text)
+    edited_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    edited_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
