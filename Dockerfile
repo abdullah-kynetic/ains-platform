@@ -1,9 +1,15 @@
-FROM python:3.12-slim
+# syntax=docker/dockerfile:1
+FROM python:3.12-alpine@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PATH="/app/.venv/bin:$PATH"
-RUN pip install --no-cache-dir uv==0.13.5 && groupadd --system ains && useradd --system --gid ains --home /app ains
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -f /run/secrets/proxy_ca ]; then export PIP_CERT=/run/secrets/proxy_ca; fi; \
+    pip install --no-cache-dir uv==0.13.5 && \
+    addgroup -S ains && adduser -S -G ains -h /app ains
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -f /run/secrets/proxy_ca ]; then export SSL_CERT_FILE=/run/secrets/proxy_ca; fi; \
+    uv sync --frozen --no-dev
 COPY --chown=ains:ains app ./app
 COPY --chown=ains:ains migrations ./migrations
 COPY --chown=ains:ains data/checklist ./data/checklist

@@ -1,0 +1,49 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Security (${{ matrix.scanner }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        scanner: [pip-audit, npm, gitleaks, trufflehog, trivy-fs, trivy-image, semgrep, bandit, zizmor]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          enable-cache: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Verify Python lockfile
+        run: uv lock --check
+      - name: Reject unreviewed scanner suppressions
+        run: python3 scripts/security/policy.py
+      - name: Scan
+        env:
+          SCANNER: ${{ matrix.scanner }}
+        run: bash scripts/security/scan.sh "$SCANNER"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: security-${{ matrix.scanner }}
+          path: security-reports/
+          if-no-files-found: error
+          retention-days: 7
