@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { API, signIn } from "./helpers";
 
 test("rubric and templates read server state or show unavailable", async ({ page }) => {
   await signIn(page);
   for (const [tab, route] of [["rubric", "/auditor/firm/rubric"], ["templates", "/auditor/firm/request-templates"]]) {
-    const response = page.waitForResponse((r) => r.url().endsWith(route));
+    const response = page.waitForResponse((r) => r.request().method() === "GET" && r.url().startsWith(API) && r.url().endsWith(route));
     await page.goto(`/auditor/firm/${tab}`);
     const result = await response;
     if (result.status() === 404) {

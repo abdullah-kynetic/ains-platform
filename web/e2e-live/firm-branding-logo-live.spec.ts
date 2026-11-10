@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { API, signIn } from "./helpers";
 
 test("branding contract has no local-storage fallback or pretend logo upload", async ({ page }) => {
   await signIn(page);
-  const response = page.waitForResponse((r) => r.url().endsWith("/auditor/firm/branding"));
+  const response = page.waitForResponse((r) => r.request().method() === "GET" && r.url().startsWith(API) && r.url().endsWith("/auditor/firm/branding"));
   await page.goto("/auditor/firm/branding");
   const result = await response;
   if (result.status() === 404) {

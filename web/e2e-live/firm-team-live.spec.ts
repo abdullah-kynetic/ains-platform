@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { API, signIn } from "./helpers";
 
 test("team reads server state or shows unavailable, never inventing members", async ({ page }) => {
   await signIn(page);
-  const response = page.waitForResponse((r) => r.url().endsWith("/auditor/firm/team"));
+  const response = page.waitForResponse((r) => r.request().method() === "GET" && r.url().startsWith(API) && r.url().endsWith("/auditor/firm/team"));
   await page.goto("/auditor/firm/team");
   const result = await response;
   await expect(page.getByTestId("mock-notice")).toHaveCount(0);

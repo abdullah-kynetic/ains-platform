@@ -91,3 +91,10 @@ test("branding, rubric and templates save through their contracts", async () => 
   ]);
   assert.deepEqual(JSON.parse(calls[0].body), branding);
 });
+
+for (const logoUrl of ["https://", "//storage.example.test/a.png", "/\\storage.example.test/a.png"]) {
+  test(`live logo rejects malformed or ambiguous URL: ${logoUrl}`, async () => {
+    globalThis.fetch = async () => Response.json({ logoUrl });
+    await assert.rejects(firm.uploadBrandingLogo(new File(["synthetic"], "synthetic.png", { type: "image/png" })), /valid logo URL/);
+  });
+}

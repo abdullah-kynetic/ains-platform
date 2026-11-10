@@ -69,7 +69,17 @@ export async function uploadBrandingLogo(file: File): Promise<{ logoUrl: string 
   const body = new FormData();
   body.append("file", file);
   const result = await contractRequest<{ logoUrl: string }>("/auditor/firm/branding/logo", { method: "POST", body });
-  if (!/^https:\/\//.test(result.logoUrl) && !/^\/(?!\/)/.test(result.logoUrl)) {
+  let valid = false;
+  if (typeof result.logoUrl === "string" && !result.logoUrl.includes("\\")) {
+    if (/^\/(?!\/)/.test(result.logoUrl)) valid = true;
+    else {
+      try {
+        const url = new URL(result.logoUrl);
+        valid = url.protocol === "https:" && !url.username && !url.password;
+      } catch { /* Invalid server URL stays unavailable. */ }
+    }
+  }
+  if (!valid) {
     throw new Error("The server did not return a valid logo URL.");
   }
   return result;

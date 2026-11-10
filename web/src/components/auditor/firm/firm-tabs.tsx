@@ -53,12 +53,12 @@ export function TeamTab() {
         </Table>
       )}
       <ul className="mt-4 grid gap-1 text-xs text-muted sm:grid-cols-2">{roles.map((r) => <li key={r.value}><span className="font-medium text-foreground">{r.label}:</span> {r.help}</li>)}</ul>
-      <Dialog open={open} onOpenChange={setOpen} title="Invite a team member" description="They get an invitation by email and set up two-factor sign-in on first use.">
+      <Dialog open={open} onOpenChange={(next) => { if (!busy) setOpen(next); }} title="Invite a team member" description="They get an invitation by email and set up two-factor sign-in on first use.">
         <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); void run(() => inviteMember(email.trim(), role), (team) => { setData(team); setOpen(false); setEmail(""); }); }}>
           {problem && <p role="alert" className="status-note" data-tone="warning">{problem}</p>}
-          <Field label="Work email"><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
-          <Field label="Role"><Select value={role} onChange={(e) => setRole(e.target.value as TeamRole)}>{roles.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}</Select></Field>
-          <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" disabled={busy || !/.+@.+\..+/.test(email)}>{busy ? "Sending…" : "Send invitation"}</Button></div>
+          <Field label="Work email"><Input type="email" required disabled={busy} value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+          <Field label="Role"><Select disabled={busy} value={role} onChange={(e) => setRole(e.target.value as TeamRole)}>{roles.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}</Select></Field>
+          <div className="flex justify-end gap-2"><Button variant="ghost" disabled={busy} onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" disabled={busy || !/.+@.+\..+/.test(email)}>{busy ? "Sending…" : "Send invitation"}</Button></div>
         </form>
       </Dialog>
     </>
@@ -72,22 +72,23 @@ function BrandingForm({ initial, onSaved }: { initial: FirmBranding; onSaved: ()
   const file = useRef<HTMLInputElement>(null);
   function pick(f?: File) {
     if (!f) return;
+    setMsg("");
     void run(() => uploadBrandingLogo(f), ({ logoUrl }) => {
       setB((current) => ({ ...current, logoUrl }));
       setMsg("Logo ready. Save branding to apply it.");
     });
   }
   return (
-    <form className="grid max-w-2xl gap-4" onSubmit={(e) => { e.preventDefault(); void run(() => saveBranding(b), () => { setMsg("Branding saved."); onSaved(); }); }}>
+    <form className="grid max-w-2xl gap-4" onSubmit={(e) => { e.preventDefault(); setMsg(""); void run(() => saveBranding(b), () => { setMsg("Branding saved."); onSaved(); }); }}>
       {problem && <p role="alert" className="status-note" data-tone="warning">{problem}</p>}
       <Card><CardContent className="grid gap-4">
-        <Field label="Firm name" hint="Shown in client emails and the client portal header."><Input value={b.name} onChange={(e) => setB({ ...b, name: e.target.value })} required /></Field>
-        <Field label="Tagline"><Input value={b.tagline} onChange={(e) => setB({ ...b, tagline: e.target.value })} /></Field>
+        <Field label="Firm name" hint="Shown in client emails and the client portal header."><Input value={b.name} disabled={busy} onChange={(e) => setB({ ...b, name: e.target.value })} required /></Field>
+        <Field label="Tagline"><Input value={b.tagline} disabled={busy} onChange={(e) => setB({ ...b, tagline: e.target.value })} /></Field>
         <div className="grid gap-2">
           <span className="text-sm font-medium">Logo</span>
           <div className="flex items-center gap-4">
             <div className="grid size-16 place-items-center overflow-hidden rounded-lg border border-border bg-elevated">{b.logoUrl ? <Image unoptimized src={b.logoUrl} alt={`${b.name} logo`} width={64} height={64} className="size-full object-contain" /> : <ImagePlus aria-hidden className="size-6 text-muted" />}</div>
-            <div className="flex gap-2"><input ref={file} type="file" accept="image/png,image/jpeg,image/svg+xml" className="sr-only" aria-label="Upload logo" onChange={(e) => pick(e.target.files?.[0])} /><Button variant="outline" disabled={busy} onClick={() => file.current?.click()}>Upload logo</Button>{b.logoUrl && <Button variant="ghost" disabled={busy} onClick={() => setB({ ...b, logoUrl: null })}>Remove</Button>}</div>
+            <div className="flex gap-2"><input ref={file} disabled={busy} type="file" accept="image/png,image/jpeg,image/svg+xml" className="sr-only" aria-label="Upload logo" onChange={(e) => pick(e.target.files?.[0])} /><Button variant="outline" disabled={busy} onClick={() => file.current?.click()}>Upload logo</Button>{b.logoUrl && <Button variant="ghost" disabled={busy} onClick={() => setB({ ...b, logoUrl: null })}>Remove</Button>}</div>
           </div>
           <p className="text-xs text-muted">PNG, JPG or SVG, under 512 KB.</p>
         </div>
@@ -148,17 +149,17 @@ function TemplateForm({ template, rubric, onClose, onSaved }: { template?: Reque
   const [description, setDescription] = useState(template?.description ?? "");
   const [ids, setIds] = useState<string[]>(template?.requestIds ?? rubric.map((r) => r.requestId));
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} className="max-w-2xl" title={template?.id ? "Edit template" : "New template"} description="Choose which of the 34 requests a new engagement starts with.">
+    <Dialog open onOpenChange={(o) => { if (!busy && !o) onClose(); }} className="max-w-2xl" title={template?.id ? "Edit template" : "New template"} description="Choose which of the 34 requests a new engagement starts with.">
       <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); void run(() => saveTemplate({ id: template?.id, name, kind, description, requestIds: ids }), () => { onSaved(); onClose(); }); }}>
         {problem && <p role="alert" className="status-note" data-tone="warning">{problem}</p>}
-        <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} required /></Field>
-        <Field label="Firm type"><Select value={kind} onChange={(e) => setKind(e.target.value as RequestTemplate["kind"])}>{kinds.map((k) => <option key={k} value={k}>{kindLabel[k]}</option>)}</Select></Field>
-        <Field label="Description"><Textarea className="min-h-16" value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
-        <fieldset className="grid max-h-56 gap-1 overflow-y-auto rounded-lg border border-border p-3">
+        <Field label="Name"><Input disabled={busy} value={name} onChange={(e) => setName(e.target.value)} required /></Field>
+        <Field label="Firm type"><Select disabled={busy} value={kind} onChange={(e) => setKind(e.target.value as RequestTemplate["kind"])}>{kinds.map((k) => <option key={k} value={k}>{kindLabel[k]}</option>)}</Select></Field>
+        <Field label="Description"><Textarea className="min-h-16" disabled={busy} value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
+        <fieldset disabled={busy} className="grid max-h-56 gap-1 overflow-y-auto rounded-lg border border-border p-3">
           <legend className="px-1 text-sm font-medium">Requests ({ids.length} of {rubric.length})</legend>
           {rubric.map((r) => <label key={r.requestId} className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4 accent-foreground" checked={ids.includes(r.requestId)} onChange={(e) => setIds(e.target.checked ? [...ids, r.requestId] : ids.filter((x) => x !== r.requestId))} /><span className="font-mono text-xs text-muted">{r.requestId}</span>{r.title}</label>)}
         </fieldset>
-        <div className="flex justify-end gap-2"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" disabled={busy || !name.trim() || ids.length === 0}>Save template</Button></div>
+        <div className="flex justify-end gap-2"><Button variant="ghost" disabled={busy} onClick={onClose}>Cancel</Button><Button type="submit" disabled={busy || !name.trim() || ids.length === 0}>Save template</Button></div>
       </form>
     </Dialog>
   );
