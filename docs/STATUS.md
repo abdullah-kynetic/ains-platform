@@ -138,3 +138,9 @@ firm ownership, assignment, role and workflow transitions; UI state is not autho
 ## Portal rebuild recheck after Lane 1 fixes
 
 RESOLVED: #98 aligned the live fixture hostname with its synthetic firm and made the migration-head guard check the current single head. #96 merged current main, including #97 Security and #99 auth proofs. Its prior pre-auth full run passed 478 tests (12 skipped locally), and the corrected real local backend browser run passed all 8 tests. Fresh combined full CI, Security and independent verification are required before #96 merges. The auth/portal merge preserves request-time identity/MFA checks and portal firm binding; authenticated sign-out remains possible from any portal.
+
+## Lane 2 continuation checkpoint
+
+L2-3 complete: #96 merged as `9a8a10a`; original #45 closed. Final combined backend: 493 passed, 12 skipped locally. Both local browser suites passed (82 mock, 8 real local API), including production-style aliases through a loopback-only test transport. Hosted CI/PostgreSQL, all nine Security jobs and independent security review passed. No server or deployment action occurred.
+
+L2-5 next tranche: S-07/S-08/S-09/S-10/S-11/S-13/S-14/S-15 have security-suite modules and per-control evidence; 53 security tests passed. Full gate/review pending. S-12 log privacy and S-19 authorized download are separate follow-ups. S-16 depends on Lane 1's #100 database roles; S-17 headers belong to Lane 1/Lane C; S-18 live encrypted/object-locked backup restore evidence belongs to Lane C. These operational controls are not marked Done.

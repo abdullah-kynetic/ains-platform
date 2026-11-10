@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     s3_retention_days: int = Field(default=0, ge=0)
     s3_retention_mode: Literal["COMPLIANCE", "GOVERNANCE"] = "GOVERNANCE"
     resend_api_key: SecretStr = SecretStr("")
+    demo_password: SecretStr = SecretStr("")
     email_from: str = ""
     invite_email_from: str = ""
     # Bare registrable domain. Empty keeps the local single-portal behavior.
@@ -73,7 +74,7 @@ class Settings(BaseSettings):
     upload_max_concurrent: int = Field(default=3, ge=0)
     report_template: str = "default.json"
 
-    database_url: str = "postgresql+psycopg://ains:ains_dev@localhost:5432/ains"
+    database_url: SecretStr = SecretStr("postgresql+psycopg://ains:ains_dev@localhost:5432/ains")
 
     # Isolated hosted-Postgres evaluation only. The application never selects this URL
     # automatically; scripts/supabase_poc.py requires an explicit synthetic-only acknowledgement.
