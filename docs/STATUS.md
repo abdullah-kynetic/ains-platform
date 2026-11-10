@@ -204,3 +204,9 @@ The legacy `POST /auditor/engagements/{id}/report/signoff` is untouched and stil
 `GET /engagements/{id}/invoices` gives the client their firm's sent and paid invoices
 (`app/api/client_invoices.py`, contract `docs/kb/30-client-invoices-api.md`). Overdue unpaid
 invoices also appear as auditor notifications. This completes L2-6 (groups a to h).
+
+## L2-8 flows (branch lane2/l2-8-signed-report-confirm)
+
+The client can confirm the signed report by fingerprint, which unlocks invoicing for engagements
+that use the new sign-off path. `tests/test_end_to_end_flow.py` walks the whole journey. See
+`docs/kb/32-report-confirmation-and-journey.md`. Live email and DNS are not verified here.
