@@ -34,6 +34,16 @@ BODY_OVERRIDES = {
     ("PATCH", "/auditor/engagements/{engagement_id}/checklist-tests/{request_id}"): {
         "conclusion": "pass"
     },
+    ("PUT", "/auditor/engagements/{engagement_id}/workpapers/{request_id}"): {
+        "procedure": "Synthetic procedure"
+    },
+    ("POST", "/auditor/engagements/{engagement_id}/samples"): {
+        "area": "Synthetic area",
+        "population": 10,
+        "sampleSize": 2,
+        "method": "Synthetic method",
+    },
+    ("PATCH", "/auditor/samples/{set_id}/items/{sample_item_id}"): {"result": "pass"},
     ("POST", "/auditor/firm/team"): {"email": "synthetic@example.test", "role": "auditor"},
     ("POST", "/auditor/firm/request-templates"): _TEMPLATE,
     ("PUT", "/auditor/firm/request-templates/{template_id}"): _TEMPLATE,

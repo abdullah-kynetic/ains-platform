@@ -62,7 +62,11 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
   conclusion is the auditor's own entry; nothing derives it and clients never see it. N/A rows
   (conclusion `na` or accepted N/A) sort last with ids unchanged. Documents need no new route:
   `listDocuments` already reads the live auditor workspace, which carries document numbers.
-- **Next:** L2-6c (workpapers and review, samples), then d-h, L2-7 to L2-10.
+- **Done: L2-6c** (branch `lane2/l2-6c-workpapers-samples`): workpapers (save, independent review)
+  and sample sets, migration `a123_workpapers_samples`. Contract and decisions:
+  `docs/kb/25-workpapers-samples-api.md`.
+- **Next:** L2-6d (findings, response-request release, client response requests and replies),
+  then e-h, L2-7 to L2-10.
 
 ## In progress
 

@@ -728,3 +728,64 @@ class IssueMessage(Base):
     # Re-upload offered with this reply; must belong to the same engagement.
     document_id: Mapped[str | None] = mapped_column(ForeignKey("documents.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Workpaper(Base):
+    """One workpaper per engagement request: the auditor's procedure, evidence and conclusion."""
+
+    __tablename__ = "workpapers"
+    __table_args__ = (
+        UniqueConstraint("engagement_id", "request_id", name="uq_workpaper_engagement_request"),
+        Index("ix_workpapers_firm_engagement", "firm_id", "engagement_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    request_id: Mapped[str] = mapped_column(String(20))
+    procedure: Mapped[str] = mapped_column(Text, default="")
+    # Documents in the same engagement that support the procedure.
+    evidence_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    conclusion: Mapped[str | None] = mapped_column(String(8))
+    preparer_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    prepared_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    reviewer_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class SampleSet(Base):
+    __tablename__ = "sample_sets"
+    __table_args__ = (Index("ix_sample_sets_firm_engagement", "firm_id", "engagement_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    area: Mapped[str] = mapped_column(String(200))
+    request_id: Mapped[str | None] = mapped_column(String(20))
+    population: Mapped[int] = mapped_column(Integer)
+    sample_size: Mapped[int] = mapped_column(Integer)
+    method: Mapped[str] = mapped_column(String(200))
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    items: Mapped[list[SampleItem]] = relationship(
+        cascade="all, delete-orphan", order_by="SampleItem.position"
+    )
+
+
+class SampleItem(Base):
+    __tablename__ = "sample_items"
+    __table_args__ = (
+        CheckConstraint("result in ('pending','pass','exception')", name="ck_sample_item_result"),
+        Index("ix_sample_items_firm_set", "firm_id", "set_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    set_id: Mapped[str] = mapped_column(ForeignKey("sample_sets.id"), index=True)
+    position: Mapped[int] = mapped_column(Integer)
+    reference: Mapped[str] = mapped_column(String(64))
+    result: Mapped[str] = mapped_column(String(10), default="pending")
+    note: Mapped[str] = mapped_column(Text, default="")
+    updated_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
