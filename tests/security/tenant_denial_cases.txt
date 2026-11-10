@@ -105,3 +105,7 @@ DELETE /auditor/findings/{finding_record_id} auditor_scope
 POST /auditor/findings/{finding_record_id}/response-request auditor_scope
 GET /engagements/{engagement_id}/response-requests client_scope
 POST /engagements/{engagement_id}/response-requests/{response_request_id}/response client_scope
+GET /auditor/engagements/{engagement_id}/report-draft auditor_scope
+PUT /auditor/engagements/{engagement_id}/report-draft/sections/{section_id} auditor_scope
+GET /auditor/engagements/{engagement_id}/report-draft/docx auditor_scope
+GET /auditor/engagements/{engagement_id}/report-draft/pdf auditor_scope

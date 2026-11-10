@@ -153,6 +153,7 @@ def real_workflow_rows(factory, ids):
         db.flush()
         db.commit()
         return {
+            "section_id": "scope",
             "finding_record_id": finding.id,
             "response_request_id": request.id,
             "document_id": document.id,
