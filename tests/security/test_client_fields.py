@@ -31,6 +31,8 @@ MUTATIONS = {
     # No finalized report exists in this fixture; tests/test_workflow_routes.py covers the view.
     ("GET", "/engagements/{engagement_id}/report"): 404,
     ("POST", "/engagements/{engagement_id}/report/confirm"): 404,
+    # Object storage is not configured in this fixture; tests/security/test_downloads.py covers it.
+    ("GET", "/engagements/{engagement_id}/documents/{document_id}/download"): 501,
     ("POST", "/engagements/{engagement_id}/items/{item_id}/representations"): 200,
     ("POST", "/engagements/{engagement_id}/questionnaire/answers"): 200,
     ("POST", "/engagements/{engagement_id}/questionnaire/items/{item_id}/na-review"): 403,
