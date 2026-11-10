@@ -11,6 +11,7 @@ RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export SSL_CERT_FILE=/run/secrets/proxy_ca; fi; \
     uv sync --frozen --no-dev
 COPY --chown=ains:ains app ./app
+COPY --chown=ains:ains ai_adapter ./ai_adapter
 COPY --chown=ains:ains migrations ./migrations
 COPY --chown=ains:ains data/checklist ./data/checklist
 COPY --chown=ains:ains templates ./templates

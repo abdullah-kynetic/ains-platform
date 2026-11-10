@@ -1,7 +1,9 @@
-# Hostnames come from /etc/kien/kien.env (API_HOST, STAGING_HOST). Caddy gets certificates automatically.
+# One environment only. The hostname comes from API_HOST (set in /etc/kien/compose.env and passed to
+# this container by compose). Caddy gets the TLS certificate automatically (HTTP-01 / TLS-ALPN-01),
+# so api.<domain> must be a DNS-only (unproxied) A record pointing at this VPS.
 # If Cloudflare proxying is ever enabled in front, add trusted_proxies for Cloudflare's ranges.
 
-(kien_api) {
+{$API_HOST} {
 	encode zstd gzip
 	request_body {
 		max_size 105MB # app cap is 100 MB per file; leave room for multipart overhead
@@ -10,16 +12,12 @@
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "no-referrer"
+		# JSON API: nothing may render, frame or run from these responses.
+		Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+		X-Frame-Options "DENY"
 		-Server
 	}
 	# Caddy overwrites X-Forwarded-For with the real client address by default.
 	reverse_proxy api:8000
-}
-
-{$API_HOST} {
-	import kien_api
-}
-
-{$STAGING_HOST} {
-	import kien_api
 }

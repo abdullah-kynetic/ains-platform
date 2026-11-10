@@ -34,3 +34,11 @@ Proper runbook with alerts (uptime, queue age, disk), scheduled encrypted off-si
 ## Portal hosts and CORS_ORIGINS
 
 `CORS_ORIGINS` must list every portal origin, https, comma separated: each firm host (`<firm>.kiensolutions.com`) and the auditor host. The API uses the same exact list to refuse cross-site POST/PUT/PATCH/DELETE (`app/origin_check.py`), so a firm host that is not listed gets 403 "Cross-site request refused" on sign-in. In production the app refuses to start if the list is empty, has a wildcard or localhost, or any entry is not https. Add a firm host to `CORS_ORIGINS` (and restart the API) when onboarding that firm.
+
+## Per-service env files (L1-3)
+
+Secrets are split so each container only sees what it needs: `/etc/kien/compose.env` (no secrets),
+`postgres.env`, `migrate.env`, `app.env` (api + worker), `ai.env`. ClamAV and Caddy get none. The DB
+roles are `kien_migrator` (DDL, migrate only), `kien_app` (DML only, api and worker) and `kien_backup`
+(read-only), from `deploy/bootstrap/db-roles.sql`. Memory limits fit the 3.7 GiB host (about 3.0 GB
+long-running, 3.25 GB with the AI adapter enabled).
