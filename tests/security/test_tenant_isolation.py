@@ -154,10 +154,8 @@ def test_revoked_assignment_denies_real_resources_and_filters_collections(backen
         )
         assert not any(marker in response.text for marker in LEAKS)
         if not scoped:
-            assert not any(
-                ids[key] in response.text
-                for key in ("engagement_id", "report_id", "invoice_id", "finding_id", "task_id")
-            )
+            # No metadata-only shell (firm names, contacts, IDs, counts) may survive.
+            assert response.json() == [], path
     client.cookies.clear()
     sign_in_client(client, "beta-client@example.test")
     assert _send(client, "POST", "/auditor/workspaces", ids).status_code == 403
