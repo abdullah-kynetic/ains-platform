@@ -76,7 +76,11 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
 - **Done: L2-6f** (branch `lane2/l2-6f-signoff`): independence, reviewer approval, partner
   signature with server-computed fingerprint, completion, client signed report. Migration
   `a126_engagement_signoffs`. Contract and decisions: `docs/kb/28-signoff-api.md`.
-- **Next:** L2-6g (activity, notifications, search), L2-6h (client invoices), then L2-7 to L2-10.
+- **Merged:** #113 (L2-6f independence and sign-off).
+- **Done: L2-6g** (branch `lane2/l2-6g-activity`): per-engagement activity, derived notifications
+  with read marks, search. Migration `a127_notification_reads`. Contract and decisions:
+  `docs/kb/29-feed-api.md`.
+- **Next:** L2-6h (client invoices), then L2-7 to L2-10.
 
 ## In progress
 

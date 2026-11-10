@@ -117,3 +117,8 @@ POST /auditor/engagements/{engagement_id}/signoff/review auditor_scope
 POST /auditor/engagements/{engagement_id}/signoff/partner auditor_scope
 POST /auditor/engagements/{engagement_id}/complete auditor_scope
 GET /engagements/{engagement_id}/signed-report client_scope
+GET /auditor/engagements/{engagement_id}/activity auditor_scope
+GET /auditor/notifications auditor_scope
+POST /auditor/notifications/read-all auditor_scope
+POST /auditor/notifications/{notification_id}/read auditor_scope
+GET /auditor/search auditor_scope

@@ -192,3 +192,9 @@ signed report are real routes (`app/api/signoff.py`, migration `a126_engagement_
 contract `docs/kb/28-signoff-api.md`). Every step is a recorded human action and is audit-logged.
 The legacy `POST /auditor/engagements/{id}/report/signoff` is untouched and still sends the
 "report ready" email; the new flow sends no email.
+
+## L2-6g activity, notifications, search (branch lane2/l2-6g-activity)
+
+`GET /auditor/engagements/{id}/activity`, `GET /auditor/notifications` (+ read, read-all) and
+`GET /auditor/search` are real (`app/api/feed.py`, migration `a127_notification_reads`, contract
+`docs/kb/29-feed-api.md`). All are scoped to assigned engagements; none returns entered text.
