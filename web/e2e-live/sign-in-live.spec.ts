@@ -97,7 +97,8 @@ test("sign-out ends the session", async ({ page }) => {
   await fillCredentials(page, CLIENT, CLIENT_PASSWORD);
   await expect(page).not.toHaveURL(/sign-in/);
   // A first sign-in shows the welcome tour; skip it like a user would.
-  await page.getByRole("button", { name: "Skip tour" }).click();
+  const skipTour = page.getByRole("button", { name: "Skip tour" });
+  if (await skipTour.isVisible()) await skipTour.click();
   await page.getByRole("button", { name: "Sign out" }).first().click();
   await expect(page).toHaveURL(/sign-in/);
   expect(await sessionStatus(page)).toBe(401);

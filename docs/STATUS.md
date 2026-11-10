@@ -101,3 +101,36 @@ evidence. No server changes, real email delivery or Stage 1 gate completion is c
 ## L2-5 auth proof tranche
 
 S-01 through S-06 now have executable proofs in `tests/security/` and evidence under `docs/security/evidence/app-s-*.md`. Focused suite: 15 passed; broader auth/reset/API: 70 passed. The initial full run found one legacy N/A assignment test retaining a token after its auditor changed firms; it now asserts revocation and signs in again before checking assignment. Final full gate and independent review pending. Existing sessions without role/firm claims must sign in again after deployment. No deployment was performed. S-07 through S-15 and S-19 remain in progress; no complete L2-5 claim yet.
+
+## Lane 1: L1-7 wiring (2026-11-10)
+
+The next web slices use main's assigned-auditor workspace for document receipt
+metadata, its server activity feed (latest 20 events across assigned engagements),
+and its existing six-stage pipeline. Receipt metadata is not upload/storage proof,
+and receiving a document is not an auditor approval. Deploy code and DNS are
+being handled separately; Lane 1 is skipping L1-3 and does not edit deploy or
+compose files in this phase.
+
+### Requests to Lane 2
+
+The following contracts are missing from main at `083daba`; the web must show an
+unavailable/error state rather than synthesize successful writes. Existing types
+in `web/src/lib/api/types.ts` remain the contract for the listed route groups.
+
+| Flow | Required route/behavior | Existing route limitation |
+| --- | --- | --- |
+| Checklist dispatch | Auditor sends the numbered checklist and records sent state/time | Initialization creates instances but is not a recorded client dispatch |
+| Reasoned N/A | Client requests N/A with a required reason; auditor accepts/rejects; pending/accepted/rejected states, original item numbers, N/A last | Direct N/A auto-approves; questionnaire N/A review only covers conditional questions |
+| Document numbering/linking | Stable document numbers such as 1.17; client links receipts to items and submits each item | Workspace exposes linked receipt metadata, not stable numbers or a client linking/submission mutation |
+| Document issue threads | Atomic flag on a document (outdated, wrong year, incorrect, missing) creates an item request thread; replies and explicit resolution drive item status/progress | Existing intake feedback and item response release do not implement a per-document thread lifecycle |
+| Findings/replies | Finding CRUD/status and explicit approved-finding response release; client allowlisted request list/reply | Existing item-based release is not the finding-based contract |
+| Report | Engagement report draft/sections/docx and independence/reviewer/partner sign-off contracts | Separate `/auditor/reports` editor/finalize routes exist; engagement draft/sign-off contracts do not |
+| Client confirmation/invoice | Client sees finalized report and confirms it; server allows invoice issuance only after confirmation; paid/unpaid state | Auditor invoice CRUD exists; no client confirmation gate or client invoices contract |
+| Pipeline | Workflow stages include dispatch, client submission, issue resolution, report finalization, client confirmation and invoicing | Current six stages do not represent all of these transitions |
+| Team/branding | Team invite/roles/removal and branding/logo file upload to API/object storage | `/auditor/firm/team` and branding contract routes absent |
+| Rubric/templates | Partner-approved rubric and request-template CRUD | Contract routes absent; keep criteria empty |
+| Testing/workpapers/samples | Checklist conclusions, workpapers/review and sample sets/results | Contract routes absent; do not translate human assessment values into invented conclusions |
+| Notifications/search | Server-scoped notification/read and search contracts | Contract routes absent |
+
+No live proof of these missing behaviors is claimed. A backend route must enforce
+firm ownership, assignment, role and workflow transitions; UI state is not authorization.
