@@ -119,6 +119,7 @@ def test_inventory_matches_the_running_application(backend):  # noqa: F811
     assert {p for m, p, k in INVENTORY if k == "public"} <= {
         "/health",
         "/auth/capabilities",
+        "/tenant/branding",
         "/auth/password",
         "/auth/magic-link",
         "/auth/magic-link/verify",

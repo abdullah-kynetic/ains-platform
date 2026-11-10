@@ -113,7 +113,7 @@ compose files in this phase.
 
 ### Requests to Lane 2
 
-The following contracts are missing from main at `083daba`; the web must show an
+The following contracts are missing from main at `9a8a10a`; the web must show an
 unavailable/error state rather than synthesize successful writes. Existing types
 in `web/src/lib/api/types.ts` remain the contract for the listed route groups.
 
@@ -134,3 +134,7 @@ in `web/src/lib/api/types.ts` remain the contract for the listed route groups.
 
 No live proof of these missing behaviors is claimed. A backend route must enforce
 firm ownership, assignment, role and workflow transitions; UI state is not authorization.
+
+## Portal rebuild recheck after Lane 1 fixes
+
+RESOLVED: #98 aligned the live fixture hostname with its synthetic firm and made the migration-head guard check the current single head. #96 merged current main, including #97 Security and #99 auth proofs. Its prior pre-auth full run passed 478 tests (12 skipped locally), and the corrected real local backend browser run passed all 8 tests. Fresh combined full CI, Security and independent verification are required before #96 merges. The auth/portal merge preserves request-time identity/MFA checks and portal firm binding; authenticated sign-out remains possible from any portal.
