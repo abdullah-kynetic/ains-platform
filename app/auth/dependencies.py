@@ -16,6 +16,7 @@ from app.database.session import get_db
 from app.tenancy import assert_user_on_portal, require_firm_portal
 
 from .security import decode_session_token
+from .session_policy import assert_session_identity
 
 SESSION_COOKIE = "ains_session"
 DB = Annotated[Session, Depends(get_db)]
@@ -29,6 +30,7 @@ def _aware(value: datetime) -> datetime:
 
 
 def get_authenticated_user(
+    request: Request,
     db: DB,
     settings: AuthSettings,
     session_cookie: SessionCookie = None,
@@ -62,6 +64,7 @@ def get_authenticated_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Session is invalid or expired"
         )
+    assert_session_identity(payload, row.User, require_mfa=request.url.path != "/auth/sign-out")
     return row.User
 
 

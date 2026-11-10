@@ -98,6 +98,11 @@ L2-8 remaining end-to-end flows, L2-9 seed hooks, and L2-10 readiness tracker ar
 completed by this checkpoint. Existing tests are not a substitute for their required
 evidence. No server changes, real email delivery or Stage 1 gate completion is claimed.
 
-### Additional portal ownership blocker
+## L2-5 auth proof tranche
 
-BLOCKED(Lane 1): the inherited #45 branch changed `tests/test_deployment_migration.py` to expect `a119_firm_logo_url`. That file matches Lane 1's `tests/test_deploy*.py` ownership. Lane 2 removed that inherited change from #96. Lane 1 must update the assertion from `a117_response_requests` to `a119_firm_logo_url` (or make the single-head check migration-independent) before #96 can pass the full gate. Earlier 409-passed results were before this ownership correction; the final candidate must be checked again.
+S-01 through S-06 now have executable proofs in `tests/security/` and evidence under `docs/security/evidence/app-s-*.md`. Focused suite: 15 passed; broader auth/reset/API: 70 passed. The initial full run found one legacy N/A assignment test retaining a token after its auditor changed firms; it now asserts revocation and signs in again before checking assignment. Final full gate and independent review pending. Existing sessions without role/firm claims must sign in again after deployment. No deployment was performed. S-07 through S-15 and S-19 remain in progress; no complete L2-5 claim yet.
+
+
+## Portal rebuild recheck after Lane 1 fixes
+
+RESOLVED: #98 aligned the live fixture hostname with its synthetic firm and made the migration-head guard check the current single head. #96 merged current main, including #97 Security and #99 auth proofs. Its prior pre-auth full run passed 478 tests (12 skipped locally), and the corrected real local backend browser run passed all 8 tests. Fresh combined full CI, Security and independent verification are required before #96 merges. The auth/portal merge preserves request-time identity/MFA checks and portal firm binding; authenticated sign-out remains possible from any portal.
