@@ -56,7 +56,13 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
 - **Done: L2-6a** (branch `claude/project-thread-grvxp5`): practice team, branding, rubric,
   request templates. Migration `a121_practice_routes`. Contract and decisions:
   `docs/kb/24-practice-api.md`. Local: ruff clean, 583 passed, 1 skipped (PostgreSQL tests need CI).
-- **Next:** L2-6b (checklist tests and conclusions, documents), then c-h, L2-7 to L2-10.
+- **Merged:** #108 (L2-6a practice routes).
+- **Done: L2-6b** (branch `claude/project-thread-grvxp5`): `GET` and `PATCH`
+  `/auditor/engagements/{id}/checklist-tests`, migration `a122_checklist_conclusions`. The
+  conclusion is the auditor's own entry; nothing derives it and clients never see it. N/A rows
+  (conclusion `na` or accepted N/A) sort last with ids unchanged. Documents need no new route:
+  `listDocuments` already reads the live auditor workspace, which carries document numbers.
+- **Next:** L2-6c (workpapers and review, samples), then d-h, L2-7 to L2-10.
 
 ## In progress
 

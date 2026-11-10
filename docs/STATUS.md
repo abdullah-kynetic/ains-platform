@@ -160,3 +160,9 @@ client UI to `na-request`.
 Team, branding, rubric and request templates under `/auditor/firm/*`, per-practice scope, partner
 guards and audit chain. Contract: [`docs/kb/24-practice-api.md`](kb/24-practice-api.md). Invites
 create inactive members and send no email; logo upload waits for L2-7. No live proof is claimed.
+
+## L2-6b checklist test conclusions (branch claude/project-thread-grvxp5)
+
+`GET/PATCH /auditor/engagements/{id}/checklist-tests[/{requestId}]` store the auditor's own
+pass, partial, fail or na per request (audit-logged, auditor-only). No conclusion is derived or
+suggested. Documents are served by the existing live workspace route. No live proof is claimed.
