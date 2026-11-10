@@ -17,6 +17,7 @@ READS = {
     ("GET", "/engagements/{engagement_id}/responses-requested"),
     ("GET", "/engagements/{engagement_id}/progress"),
     ("GET", "/engagements/{engagement_id}/issues"),
+    ("GET", "/engagements/{engagement_id}/response-requests"),
 }
 MUTATIONS = {
     ("POST", "/engagements/{engagement_id}/documents"): 201,
@@ -28,6 +29,7 @@ MUTATIONS = {
     ("POST", "/engagements/{engagement_id}/items/{item_id}/documents/{document_id}/link"): 200,
     ("DELETE", "/engagements/{engagement_id}/items/{item_id}/documents/{document_id}/link"): 404,
     ("POST", "/engagements/{engagement_id}/issues/{issue_id}/replies"): 201,
+    ("POST", "/engagements/{engagement_id}/response-requests/{response_request_id}/response"): 200,
     # No finalized report exists in this fixture; tests/test_workflow_routes.py covers the view.
     ("GET", "/engagements/{engagement_id}/report"): 404,
     ("POST", "/engagements/{engagement_id}/report/confirm"): 404,

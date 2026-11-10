@@ -172,3 +172,9 @@ suggested. Documents are served by the existing live workspace route. No live pr
 Workpaper save and independent review (preparer cannot review; edits clear review) and sample sets
 with per-item results, auditor-only. Contract: [`docs/kb/25-workpapers-samples-api.md`](kb/25-workpapers-samples-api.md).
 No live proof is claimed.
+
+## L2-6d findings and response requests (branch claude/project-thread-grvxp5)
+
+Auditor-only findings with server-enforced status moves and citation checks, explicit release of a
+client response request, and the client's single reply. Clients see only the released title and
+text. Contract: [`docs/kb/26-findings-api.md`](kb/26-findings-api.md). No live proof is claimed.

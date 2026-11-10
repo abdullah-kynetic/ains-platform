@@ -97,3 +97,11 @@ POST /auditor/engagements/{engagement_id}/workpapers/{request_id}/review auditor
 GET /auditor/engagements/{engagement_id}/samples auditor_scope
 POST /auditor/engagements/{engagement_id}/samples auditor_scope
 PATCH /auditor/samples/{set_id}/items/{sample_item_id} auditor_scope
+GET /auditor/engagements/{engagement_id}/findings auditor_scope
+POST /auditor/engagements/{engagement_id}/findings auditor_scope
+PUT /auditor/engagements/{engagement_id}/findings/{finding_record_id} auditor_scope
+POST /auditor/findings/{finding_record_id}/status auditor_scope
+DELETE /auditor/findings/{finding_record_id} auditor_scope
+POST /auditor/findings/{finding_record_id}/response-request auditor_scope
+GET /engagements/{engagement_id}/response-requests client_scope
+POST /engagements/{engagement_id}/response-requests/{response_request_id}/response client_scope

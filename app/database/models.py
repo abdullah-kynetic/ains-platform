@@ -789,3 +789,65 @@ class SampleItem(Base):
     note: Mapped[str] = mapped_column(Text, default="")
     updated_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Finding(Base):
+    """An auditor-authored finding. Internal: no client route ever returns any of these fields.
+
+    The client sees only a ``ResponseRequest`` the auditor explicitly writes and releases.
+    Status: draft, approved (human approval with a citation), issued (a response was requested),
+    responded (the client replied), closed. Distinct from ``FindingDraft`` (AI-era drafts).
+    """
+
+    __tablename__ = "findings"
+    __table_args__ = (
+        CheckConstraint(
+            "status in ('draft','approved','issued','responded','closed')", name="ck_finding_status"
+        ),
+        CheckConstraint(
+            "severity in ('low','moderate','high','critical')", name="ck_finding_severity"
+        ),
+        Index("ix_findings_records_firm_engagement", "firm_id", "engagement_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    title: Mapped[str] = mapped_column(String(255), default="")
+    rule: Mapped[str] = mapped_column(Text, default="")
+    condition: Mapped[str] = mapped_column(Text, default="")
+    cause: Mapped[str] = mapped_column(Text, default="")
+    effect: Mapped[str] = mapped_column(Text, default="")
+    recommendation: Mapped[str] = mapped_column(Text, default="")
+    severity: Mapped[str] = mapped_column(String(10), default="moderate")
+    citations: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    status: Mapped[str] = mapped_column(String(10), default="draft")
+    management_response: Mapped[str] = mapped_column(Text, default="")
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ResponseRequest(Base):
+    """What a client sees of a finding: only text the auditor wrote when releasing it."""
+
+    __tablename__ = "response_requests"
+    __table_args__ = (
+        UniqueConstraint("finding_id", name="uq_response_request_finding"),
+        CheckConstraint("status in ('open','responded')", name="ck_response_request_status"),
+        Index("ix_response_requests_firm_engagement", "firm_id", "engagement_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    finding_id: Mapped[str] = mapped_column(ForeignKey("findings.id"))
+    title: Mapped[str] = mapped_column(String(255))
+    request_text: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(10), default="open")
+    response: Mapped[str] = mapped_column(Text, default="")
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    responded_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    released_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    released_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
