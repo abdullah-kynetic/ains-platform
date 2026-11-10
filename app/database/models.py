@@ -869,3 +869,35 @@ class ReportSectionEdit(Base):
     body: Mapped[str] = mapped_column(Text)
     edited_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
     edited_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class EngagementSignoff(Base):
+    """Independence declaration, second-reviewer approval and partner signature for one engagement.
+
+    Every field is a recorded human action. ``signed_sections`` freezes the report text the partner
+    signed; ``partner_fingerprint`` is the SHA-256 of it, computed on the server.
+    """
+
+    __tablename__ = "engagement_signoffs"
+    __table_args__ = (UniqueConstraint("engagement_id", name="uq_signoff_engagement"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    independence_answers: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    conflicts: Mapped[str] = mapped_column(Text, default="")
+    safeguards: Mapped[str] = mapped_column(Text, default="")
+    independence_conclusion: Mapped[str | None] = mapped_column(String(20))
+    declared_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    declared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reviewer_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    reviewer_approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reviewer_note: Mapped[str] = mapped_column(Text, default="")
+    partner_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    partner_signed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    partner_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    signed_sections: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )

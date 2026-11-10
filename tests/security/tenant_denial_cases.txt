@@ -109,3 +109,11 @@ GET /auditor/engagements/{engagement_id}/report-draft auditor_scope
 PUT /auditor/engagements/{engagement_id}/report-draft/sections/{section_id} auditor_scope
 GET /auditor/engagements/{engagement_id}/report-draft/docx auditor_scope
 GET /auditor/engagements/{engagement_id}/report-draft/pdf auditor_scope
+GET /auditor/engagements/{engagement_id}/independence auditor_scope
+PUT /auditor/engagements/{engagement_id}/independence auditor_scope
+GET /auditor/engagements/{engagement_id}/signoff auditor_scope
+GET /auditor/engagements/{engagement_id}/signoff/blockers auditor_scope
+POST /auditor/engagements/{engagement_id}/signoff/review auditor_scope
+POST /auditor/engagements/{engagement_id}/signoff/partner auditor_scope
+POST /auditor/engagements/{engagement_id}/complete auditor_scope
+GET /engagements/{engagement_id}/signed-report client_scope

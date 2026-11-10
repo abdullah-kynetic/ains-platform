@@ -14,7 +14,14 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 from sqlalchemy import select
 
-from app.database.models import AuditLog, EngagementReport, ReportSectionEdit, User, UserRole
+from app.database.models import (
+    AuditLog,
+    EngagementReport,
+    EngagementSignoff,
+    ReportSectionEdit,
+    User,
+    UserRole,
+)
 from app.reports.draft import assembled_sections, draft_sections, render_docx, render_pdf
 
 from .engagements import DB, CurrentUser
@@ -89,6 +96,15 @@ def save_section(
     )
     if final is not None:
         raise HTTPException(409, "Final reports are locked. Reopen to edit.")
+    signed = db.scalar(
+        select(EngagementSignoff.id).where(
+            EngagementSignoff.engagement_id == engagement.id,
+            EngagementSignoff.firm_id == engagement.firm_id,
+            EngagementSignoff.partner_signed_at.is_not(None),
+        )
+    )
+    if signed is not None:
+        raise HTTPException(409, "The report is signed and locked.")
     row = db.scalar(
         select(ReportSectionEdit).where(
             ReportSectionEdit.engagement_id == engagement.id,
