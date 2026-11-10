@@ -231,5 +231,6 @@ class S3DocumentIngestor:
             egnyte_path=f"s3://{self.settings.s3_bucket}/{key}",
             sha256=digest,
             size_bytes=len(content),
-            version=result["VersionId"],
+            # Cloudflare R2 has no object versioning and returns no VersionId.
+            version=result.get("VersionId") or "1",
         )

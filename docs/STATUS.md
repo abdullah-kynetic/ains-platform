@@ -204,3 +204,10 @@ The legacy `POST /auditor/engagements/{id}/report/signoff` is untouched and stil
 `GET /engagements/{id}/invoices` gives the client their firm's sent and paid invoices
 (`app/api/client_invoices.py`, contract `docs/kb/30-client-invoices-api.md`). Overdue unpaid
 invoices also appear as auditor notifications. This completes L2-6 (groups a to h).
+
+## L2-7 storage, retention, export, erasure (branch lane2/l2-7-retention)
+
+R2 uploads no longer crash on the missing `VersionId`. `python -m app.retention export|plan|erase`
+exports one firm's client-visible data and erases stored files of engagements past the retention
+window (default 2190 days is a placeholder for the attorney). See
+`docs/kb/31-retention-export-erasure.md`. Checked against moto only; no live bucket.
