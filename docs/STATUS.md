@@ -16,7 +16,7 @@ Quoted exactly as PR #84 states them:
 
 - Normal suite: **339 passed + 1 skipped**.
 - PostgreSQL 16.15: **11 tests run** on real PostgreSQL. These are not part of the normal suite.
-- **CI has no PostgreSQL service** (`.github/workflows/*.yml` has no `postgres` entry). The PostgreSQL tests run only in manual runs, not on each pull request.
+- **CI now has a PostgreSQL 16 service** (`.github/workflows/ci.yml`, throwaway CI-only credentials, `KIEN_TEST_POSTGRES_URL`). The 11 PostgreSQL tests run on every pull request, each on a fresh database, and a CI step fails if any of them is skipped. Counts from the first CI run are recorded in the PR that added this.
 
 Other runs recorded in the evidence files use different counts, for example 350 passed + 1 skipped on b6de342 in [checkpoint-TEST-4](evidence/testing/checkpoint-TEST-4.md). Those runs were on other candidates. Do not mix the counts. Quote the #84 numbers unless a run is re-done and recorded.
 
@@ -64,3 +64,7 @@ Only #39 was closed. Rebuilds were not started: #40, #45 and #37 each need their
 2. Whether #40, #45 and #37 are rebuilt on `main` now, or after the VPS phase resumes.
 3. The partner-firm conflict in [VISION.md](VISION.md) needs legal and commercial advice before any decision.
 4. The items in the readiness checklist marked for Abdullah, starting with Phase 0.
+
+## Lane 2: report-ready rebuild
+
+DECISION: Rebuilt #40 on current main. Password-reset delivery already exists on main and is covered by `tests/test_password_reset.py`. Reverted the branch's `migrations/env.py` logging change: report notification delivery does not need to change Alembic's global logger configuration. Omitted the README change to preserve lane ownership; behavior is recorded here instead. Only active clients of the signed engagement's firm receive the generic report-ready notice. Mail exceptions do not undo sign-off; exception messages, addresses, keys and report content are not logged.

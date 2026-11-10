@@ -9,6 +9,10 @@
     "production": {
       "name": "ains-platform",
       "workers_dev": false,
+      // Public build-time setting (not a secret). Read by scripts/wrangler-public-api-url.mjs.
+      "vars": {
+        "NEXT_PUBLIC_API_URL": "https://api.kiensolutions.com"
+      },
       // Attach *.kiensolutions.com in Cloudflare as a route. Apex and www stay on the landing Worker.
       // See web/README.md. A wildcard custom domain is not supported.
       "services": [

@@ -1,8 +1,10 @@
 """Exercise the migration and concurrent appends in an isolated synthetic Postgres cluster."""
 
+import os
 import shutil
 import socket
 import subprocess
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -10,6 +12,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect, select, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
@@ -17,8 +20,28 @@ from app.audit import verify
 from app.database.models import AuditLog, Base
 
 
+def _external_postgres_engine():
+    """Use a fresh database on the server named by KIEN_TEST_POSTGRES_URL (CI service)."""
+    url = make_url(os.environ["KIEN_TEST_POSTGRES_URL"])
+    name = f"kien_test_{uuid.uuid4().hex}"
+    admin = create_engine(url, isolation_level="AUTOCOMMIT")
+    with admin.connect() as connection:
+        connection.execute(text(f'CREATE DATABASE "{name}"'))
+    engine = create_engine(url.set(database=name))
+    try:
+        yield engine
+    finally:
+        engine.dispose()
+        with admin.connect() as connection:
+            connection.execute(text(f'DROP DATABASE "{name}" WITH (FORCE)'))
+        admin.dispose()
+
+
 @pytest.fixture
 def postgres_engine(tmp_path):
+    if os.environ.get("KIEN_TEST_POSTGRES_URL"):
+        yield from _external_postgres_engine()
+        return
     candidates = sorted(Path("/usr/lib/postgresql").glob("*/bin/initdb"))
     initdb = shutil.which("initdb") or (str(candidates[-1]) if candidates else None)
     if not initdb:
