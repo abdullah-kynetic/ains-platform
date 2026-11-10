@@ -163,3 +163,12 @@ def test_build_on_host_rejects_bad_sha():
         ["bash", "deploy/build-on-host.sh", "not-a-sha;rm"], capture_output=True, text=True
     )
     assert result.returncode == 2
+
+
+def test_caddy_pinned_address_is_outside_the_dynamic_range():
+    import ipaddress
+
+    cfg = COMPOSE["networks"]["edge"]["ipam"]["config"][0]
+    caddy_ip = ipaddress.ip_address(SERVICES["caddy"]["networks"]["edge"]["ipv4_address"])
+    assert caddy_ip in ipaddress.ip_network(cfg["subnet"])
+    assert caddy_ip not in ipaddress.ip_network(cfg["ip_range"])

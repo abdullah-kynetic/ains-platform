@@ -176,6 +176,9 @@ networks:
     ipam:
       config:
         - subnet: 172.30.0.0/24
+          # Dynamic addresses come only from .128-.255, so Caddy's pinned .2 is never taken first
+          # by clamav/api/worker (that race made Caddy fail with "Address already in use").
+          ip_range: 172.30.0.128/25
 
 volumes:
   pgdata:
