@@ -50,6 +50,8 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
   threads, progress, report confirmation, invoice gate, stages). Contract for Lane 1:
   `docs/kb/23-workflow-api.md`. Migration `a120_workflow_routes`.
   Open decisions for Abdullah are at the end of that file.
+- **S-19** built on branch `lane2/s-19` (stacked on the workflow PR): authorized download routes, 60 s presigned links, evidence `app-s-19.md`. Live anonymous-403 check is Lane C.
+- Actions recovered at 20:43 UTC; #102 Security is green.
 - Still to do after it: #104 (S-12), S-19, then 4 (L2-6 a-h), 5-8.
 
 ## In progress

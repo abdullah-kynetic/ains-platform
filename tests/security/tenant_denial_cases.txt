@@ -75,3 +75,5 @@ POST /auditor/engagements/{engagement_id}/issues/{issue_id}/replies auditor_scop
 POST /auditor/engagements/{engagement_id}/issues/{issue_id}/resolve auditor_scope
 GET /engagements/{engagement_id}/report client_scope
 POST /engagements/{engagement_id}/report/confirm client_scope
+GET /engagements/{engagement_id}/documents/{document_id}/download client_scope
+GET /auditor/engagements/{engagement_id}/documents/{document_id}/download auditor_scope
