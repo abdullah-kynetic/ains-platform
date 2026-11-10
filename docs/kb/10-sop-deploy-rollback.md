@@ -34,3 +34,9 @@ Examples on record: `kien-api:na-447e7f2` with `rollback-na-447e7f2.yml`, backup
 
 ## AWS (future)
 `docs/deploy-aws.md` + `infra/aws` Terraform describe a single t4g.micro host. Do not apply without a separately approved plan and configured short-lived access; never request credentials or sign-in codes in chat.
+
+## Single-environment VPS (L1-3)
+
+The production stack runs on one VPS (`135.148.219.175`) with no staging host. Build on the host
+(`deploy/build-on-host.sh <sha>` → `kien-api:sha-<12>`), deploy with `deploy/deploy.sh <image>`, roll
+back with `deploy/rollback.sh`. Full steps: `docs/runbooks/vps-bringup.md`.

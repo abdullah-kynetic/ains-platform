@@ -2,7 +2,7 @@
 # Names only: HEALTHCHECK_PING_URL (Healthchecks.io style: success ping, "/fail" on failure).
 
 KIEN_COMPOSE_FILE=${KIEN_COMPOSE_FILE:-/opt/kien/deploy/docker-compose.prod.yml}
-KIEN_ENV_FILE=${KIEN_ENV_FILE:-/etc/kien/kien.env}
+KIEN_ENV_FILE=${KIEN_ENV_FILE:-/etc/kien/compose.env} # interpolation only; per-service secrets are env_file entries
 
 kien_compose() {
   docker compose -p kien --env-file "$KIEN_ENV_FILE" -f "$KIEN_COMPOSE_FILE" "$@"

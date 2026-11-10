@@ -1,14 +1,26 @@
-# Production stack for the dedicated Kien VPS (compose project "kien", directory /opt/kien).
-# Run with:  docker compose -p kien --env-file /etc/kien/kien.env -f deploy/docker-compose.prod.yml up -d
-# Secrets live only in /etc/kien/kien.env (root, mode 600). Variable NAMES: deploy/.env.example.
-# Only Caddy publishes ports. Postgres and the API publish nothing.
-# KIEN_IMAGE must be a digest from the image workflow, e.g. ghcr.io/abdullah-kynetic/ains-platform@sha256:...
+# Production stack for the single Kien VPS (compose project "kien", directory /opt/kien/deploy).
+# Run through deploy/deploy.sh, or by hand:
+#   docker compose -p kien --env-file /etc/kien/compose.env -f deploy/docker-compose.prod.yml up -d
+#
+# Secrets are split per service so each container only gets what it needs (all files root, mode 600;
+# variable NAMES only in deploy/env-examples/*.example):
+#   /etc/kien/compose.env   compose interpolation only, no secrets: KIEN_IMAGE, API_HOST
+#   /etc/kien/postgres.env  postgres only: POSTGRES_USER/PASSWORD/DB (bootstrap superuser)
+#   /etc/kien/migrate.env   migrate only: DATABASE_URL as kien_migrator (schema owner)
+#   /etc/kien/app.env       api + worker: DATABASE_URL as kien_app (DML only), session, CORS,
+#                           R2 storage and Resend keys
+#   /etc/kien/ai.env        ai-adapter only (profile "ai", AI_ENABLED=false until Stage 3)
+# ClamAV and Caddy get no env file at all, so they never see storage, email or DB secrets.
+#
+# Memory is tuned for the 3.7 GiB VPS. Long-running limits: postgres 768 + clamav 1200 + api 512 +
+# worker 384 + caddy 128 (+ ai-adapter 256 when enabled) = 2992m (3248m with AI). migrate (384m)
+# is one-shot and exits before api/worker start.
+# Only Caddy publishes ports. KIEN_IMAGE is the host-built tag kien-api:sha-<12> (build-on-host.sh).
 
 name: kien
 
 x-app: &app
-  image: ${KIEN_IMAGE:?set KIEN_IMAGE to an image digest}
-  env_file: /etc/kien/kien.env
+  image: ${KIEN_IMAGE:?set KIEN_IMAGE (kien-api:sha-<12>)}
   restart: unless-stopped
   read_only: true
   tmpfs: [/tmp]
@@ -17,16 +29,14 @@ x-app: &app
 
 services:
   postgres:
-    # TODO(deploy): pin by digest (postgres:16@sha256:...) once chosen on the new host.
+    # TODO(deploy): pin by digest (postgres:16@sha256:...) once recorded in deploy/RELEASES.md.
     image: postgres:16
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:?}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
-      POSTGRES_DB: ${POSTGRES_DB:?}
-    command: ["postgres", "-c", "shared_buffers=512MB", "-c", "max_connections=50"]
-    shm_size: 256m
-    mem_limit: 1200m
+    env_file: /etc/kien/postgres.env
+    command: ["postgres", "-c", "shared_buffers=256MB", "-c", "max_connections=30"]
+    shm_size: 128m
+    mem_limit: 768m
+    security_opt: ["no-new-privileges:true"]
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks: [backend]
@@ -39,16 +49,18 @@ services:
   migrate:
     <<: *app
     restart: "no"
+    env_file: /etc/kien/migrate.env
     command: ["alembic", "upgrade", "head"]
     environment:
       RUN_MIGRATIONS: "0" # the command above is the migration; skip the entrypoint's
     networks: [backend]
-    mem_limit: 400m
+    mem_limit: 384m
     depends_on:
       postgres: {condition: service_healthy}
 
   api:
     <<: *app
+    env_file: /etc/kien/app.env
     environment:
       RUN_MIGRATIONS: "0"
       ENV: production # the app refuses to start unless scanning is on
@@ -56,6 +68,7 @@ services:
       SESSION_COOKIE_SECURE: "true" # the app also refuses to start in production without it
       CLAMD_HOST: clamav
       CLAMD_PORT: "3310"
+      UPLOAD_MAX_CONCURRENT: "2" # each upload is buffered (up to 100 MB); keep inside 512m
     # Trust X-Forwarded-For only from Caddy's pinned address; spoofed headers from elsewhere are ignored.
     command:
       - uvicorn
@@ -67,7 +80,7 @@ services:
       - --proxy-headers
       - --forwarded-allow-ips=172.30.0.2
     expose: ["8000"]
-    mem_limit: 900m
+    mem_limit: 512m
     networks: [backend, edge]
     depends_on:
       migrate: {condition: service_completed_successfully}
@@ -81,24 +94,50 @@ services:
 
   worker:
     <<: *app
+    env_file: /etc/kien/app.env
     environment:
       RUN_MIGRATIONS: "0"
+      ENV: production
+      UPLOAD_SCAN_MODE: clamav
+      SESSION_COOKIE_SECURE: "true"
+      CLAMD_HOST: clamav
+      CLAMD_PORT: "3310"
     command: ["python", "-m", "app.worker", "--poll-seconds", "2"]
-    mem_limit: 400m
+    mem_limit: 384m
     networks: [backend, edge]
     depends_on:
       migrate: {condition: service_completed_successfully}
 
+  ai-adapter:
+    # Defined but OFF: only starts with `--profile ai`, and AI_ENABLED=false blocks every call anyway.
+    <<: *app
+    profiles: ["ai"]
+    env_file: /etc/kien/ai.env
+    environment:
+      RUN_MIGRATIONS: "0"
+      AI_ENABLED: "false"
+    command:
+      - python
+      - -c
+      - "import uvicorn; from ai_adapter.service import create_service; from ai_adapter.settings import AdapterSettings; uvicorn.run(create_service(AdapterSettings()), host='0.0.0.0', port=8100)"
+    expose: ["8100"]
+    mem_limit: 256m
+    volumes:
+      - ai_state:/var/lib/kien-ai
+    networks: [backend, edge]
+
   clamav:
-    # Malware scanner for uploads. Needs about 1.2 GB RAM for signatures: this is the main reason
-    # the stack outgrows 4 GB; revisit VPS size (plan section 12) or move scanning to its own host.
-    # TODO(deploy): pin by digest once chosen on the new host.
+    # Malware scanner for uploads. ConcurrentDatabaseReload=no stops clamd holding two signature
+    # databases in memory during reloads (the main reason it would otherwise need ~2.4 GB).
+    # TODO(deploy): pin by digest once recorded in deploy/RELEASES.md.
     image: clamav/clamav:1.4
     restart: unless-stopped
     environment:
       CLAMD_CONF_StreamMaxLength: 100M # must cover the 100 MB upload cap, or large uploads fail closed
       CLAMD_CONF_MaxFileSize: 100M
-    mem_limit: 1300m
+      CLAMD_CONF_ConcurrentDatabaseReload: "no"
+    mem_limit: 1200m
+    security_opt: ["no-new-privileges:true"]
     volumes:
       - clamav_db:/var/lib/clamav
     networks: [backend, edge] # edge only so freshclam can fetch signature updates
@@ -107,13 +146,14 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 180s
+      start_period: 300s
 
   caddy:
-    # TODO(deploy): pin by digest once chosen on the new host.
+    # TODO(deploy): pin by digest once recorded in deploy/RELEASES.md.
     image: caddy:2
     restart: unless-stopped
-    env_file: /etc/kien/kien.env
+    environment:
+      API_HOST: ${API_HOST:?set API_HOST in /etc/kien/compose.env}
     ports:
       - "80:80"
       - "443:443"
@@ -121,7 +161,8 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-    mem_limit: 200m
+    mem_limit: 128m
+    security_opt: ["no-new-privileges:true"]
     networks:
       edge:
         ipv4_address: 172.30.0.2
@@ -135,9 +176,13 @@ networks:
     ipam:
       config:
         - subnet: 172.30.0.0/24
+          # Dynamic addresses come only from .128-.255, so Caddy's pinned .2 is never taken first
+          # by clamav/api/worker (that race made Caddy fail with "Address already in use").
+          ip_range: 172.30.0.128/25
 
 volumes:
   pgdata:
   caddy_data:
   caddy_config:
   clamav_db:
+  ai_state:
