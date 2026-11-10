@@ -1,5 +1,6 @@
 """Opt-in error telemetry. Never forward application-supplied text or objects."""
 
+import logging
 from typing import Any
 
 import sentry_sdk
@@ -7,6 +8,47 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from app.config import Settings
+
+
+class PrivateServerLogFilter(logging.Filter):
+    """Keep operational status while withholding paths, queries and exception text."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.name == "uvicorn.access":
+            args = record.args if isinstance(record.args, tuple) and len(record.args) == 5 else ()
+            method = (
+                args[1]
+                if args
+                and isinstance(args[1], str)
+                and args[1] in {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
+                else "OTHER"
+            )
+            version = (
+                args[3]
+                if args and isinstance(args[3], str) and args[3] in {"1.0", "1.1", "2", "3"}
+                else "?"
+            )
+            status = args[4] if args and type(args[4]) is int else 0
+            # Preserve the five-argument shape required by Uvicorn's AccessFormatter.
+            record.msg = '%s - "%s %s HTTP/%s" %d'
+            record.args = ("[withheld]", method, "[withheld]", version, status)
+            record.exc_info = record.exc_text = record.stack_info = None
+        elif record.exc_info or record.exc_text or record.stack_info:
+            record.msg = "Application error (details withheld)"
+            record.args = ()
+            record.exc_info = record.exc_text = record.stack_info = None
+        return True
+
+
+_SERVER_LOG_FILTER = PrivateServerLogFilter()
+
+
+def configure_private_logging() -> None:
+    """Install once per logger, independently of whether Sentry is enabled."""
+    for name in ("uvicorn.access", "uvicorn.error"):
+        logger = logging.getLogger(name)
+        if _SERVER_LOG_FILTER not in logger.filters:
+            logger.addFilter(_SERVER_LOG_FILTER)
 
 
 def scrub_event(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any]:

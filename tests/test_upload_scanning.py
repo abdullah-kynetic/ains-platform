@@ -4,6 +4,7 @@ The scanner is a fake clamd speaking the INSTREAM protocol; no real antivirus or
 Real ClamAV integration is NOT RUN here.
 """
 
+import hashlib
 import io
 import socket
 import struct
@@ -111,7 +112,11 @@ async def test_infected_file_is_quarantined_by_rejection_with_hash_only_audit(cl
         await screen(settings_for(clamd()), content=b"%PDF-1.4 " + BAD)
     assert err.value.status_code == 422
     assert err.value.audit["reason"] == "quarantined"
-    assert err.value.audit["signature"] == "Synthetic.Test.Signature"
+    assert (
+        err.value.audit["signature_sha256"]
+        == hashlib.sha256(b"Synthetic.Test.Signature").hexdigest()
+    )
+    assert set(err.value.audit) == {"reason", "sha256", "signature_sha256"}
     assert BAD.decode() not in str(err.value.audit)
 
 
