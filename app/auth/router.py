@@ -31,7 +31,7 @@ from .security import (
     new_magic_link_token,
     new_mfa_recovery_code,
     new_totp_secret,
-    verify_password,
+    verify_and_rehash_password,
     verify_totp,
 )
 
@@ -172,10 +172,16 @@ def _require_auditor_mfa(db: Session, user: User, code: str | None) -> None:
 
 def _password_user(db: Session, email: str, password: str) -> User:
     user = db.scalar(select(User).where(User.email == _normalize_email(email)))
-    if not user or not user.is_active or not verify_password(password, user.password_hash):
+    valid, upgraded = (
+        verify_and_rehash_password(password, user.password_hash)
+        if user and user.is_active else (False, None)
+    )
+    if not valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
         )
+    if upgraded:
+        user.password_hash = upgraded
     return user
 
 
@@ -234,7 +240,8 @@ def _issue_session(
     db.flush()
     try:
         token = create_session_token(
-            user_id=user.id, session_id=auth_session.id, settings=settings, now=now
+            user_id=user.id, session_id=auth_session.id, settings=settings, now=now,
+            role=user.role.value, firm_id=user.firm_id,
         )
     except RuntimeError:
         raise HTTPException(
@@ -472,6 +479,7 @@ def sign_out(
     response: Response,
     user: CurrentUser,
     db: DB,
+    settings: AuthSettings,
 ) -> None:
     # Revoking all current sessions is conservative and appropriate for the first release.
     for auth_session in db.scalars(
@@ -479,4 +487,7 @@ def sign_out(
     ):
         auth_session.revoked_at = datetime.now(UTC)
     db.commit()
-    response.delete_cookie(SESSION_COOKIE, path="/")
+    response.delete_cookie(
+        SESSION_COOKIE, path="/", secure=settings.session_cookie_secure,
+        httponly=True, samesite="lax",
+    )
