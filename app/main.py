@@ -8,7 +8,7 @@ from app.auth.invitations import auditor_router as invitation_auditor_router
 from app.auth.invitations import public_router as invitation_public_router
 from app.config import get_settings
 from app.cors import PortalCORSMiddleware, portal_origin_allowed
-from app.monitoring import init_sentry
+from app.monitoring import configure_private_logging, init_sentry
 from app.origin_check import OriginCheckMiddleware
 from app.ratelimit import RateLimitMiddleware
 
@@ -36,6 +36,7 @@ def enforce_production_safety(settings) -> None:
 def create_app() -> FastAPI:
     settings = get_settings()
     enforce_production_safety(settings)
+    configure_private_logging()
     init_sentry(settings)
     application = FastAPI(title="Kien Solutions", version="0.1.0")
     # Added before CORS so CORS stays outermost and 429 responses carry CORS headers.

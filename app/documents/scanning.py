@@ -2,10 +2,11 @@
 
 Fail closed: when scanning is enabled and the scanner is unreachable, errors or times out, the
 upload is refused and nothing is stored. Infected uploads are quarantined by rejection: no bytes
-are kept or delivered; only the hash, name and signature are written to the audit trail.
+are kept or delivered; only content and signature hashes are written to the audit trail.
 """
 
 import asyncio
+import hashlib
 import io
 import socket
 import struct
@@ -109,6 +110,8 @@ async def screen_upload(
     filename: str,
     scanner: Scanner | None = None,
 ) -> None:
+    # User filenames and scanner-provided text may contain private content.
+    del filename
     check_archive_bounds(content, suffix)
     scanner = scanner or get_scanner(settings)
     if scanner is None:
@@ -119,7 +122,7 @@ async def screen_upload(
         raise UploadRejected(
             503,
             "Upload could not be checked right now. Please try again later.",
-            {"reason": "scan_failed", "sha256": sha256, "filename": filename},
+            {"reason": "scan_failed", "sha256": sha256},
         ) from None
     if signature is not None:
         raise UploadRejected(
@@ -127,8 +130,7 @@ async def screen_upload(
             "This file was blocked by a safety check. Please contact your auditor.",
             {
                 "reason": "quarantined",
-                "signature": signature,
+                "signature_sha256": hashlib.sha256(signature.encode()).hexdigest(),
                 "sha256": sha256,
-                "filename": filename,
             },
         )
