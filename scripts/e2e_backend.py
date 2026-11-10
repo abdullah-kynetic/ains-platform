@@ -13,7 +13,8 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 PORT_DEFAULT = 8000
-ORIGIN = "http://kynetic.localhost:3100"
+FIRM_SLUG = "kynetic"
+ORIGIN = f"http://{FIRM_SLUG}.localhost:3100"
 MFA_SECRET = "JBSWY3DPEHPK3PXP"  # synthetic TOTP secret, test only
 CLIENT_PASSWORD = "synthetic-client-password"
 AUDITOR_PASSWORD = "synthetic-auditor-password"
@@ -49,7 +50,7 @@ def seed() -> None:
     Base.metadata.create_all(get_engine())
     now = datetime.now(UTC)
     with get_session_factory()() as db:
-        firm = Firm(name="Synthetic E2E Securities", slug="synthetic-e2e")
+        firm = Firm(name="Synthetic E2E Securities", slug=FIRM_SLUG)
         db.add(firm)
         db.flush()
         auditor = User(
