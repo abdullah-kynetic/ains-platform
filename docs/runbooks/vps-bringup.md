@@ -13,11 +13,11 @@ sudo bash deploy/bootstrap/harden.sh
 
 | File | Used by | Example |
 |---|---|---|
-| `/etc/kien/compose.env` | compose interpolation (no secrets) | `deploy/env/compose.env.example` |
-| `/etc/kien/postgres.env` | postgres | `deploy/env/postgres.env.example` |
-| `/etc/kien/migrate.env` | migrate (`kien_migrator`) | `deploy/env/migrate.env.example` |
-| `/etc/kien/app.env` | api, worker (`kien_app`, R2, Resend, session) | `deploy/env/app.env.example` |
-| `/etc/kien/ai.env` | ai-adapter (profile `ai`, off) | `deploy/env/ai.env.example` |
+| `/etc/kien/compose.env` | compose interpolation (no secrets) | `deploy/env-examples/compose.env.example` |
+| `/etc/kien/postgres.env` | postgres | `deploy/env-examples/postgres.env.example` |
+| `/etc/kien/migrate.env` | migrate (`kien_migrator`) | `deploy/env-examples/migrate.env.example` |
+| `/etc/kien/app.env` | api, worker (`kien_app`, R2, Resend, session) | `deploy/env-examples/app.env.example` |
+| `/etc/kien/ai.env` | ai-adapter (profile `ai`, off) | `deploy/env-examples/ai.env.example` |
 | `/etc/kien/db-roles.env` | `bootstrap/db-roles.sh` | `KIEN_MIGRATOR_PASSWORD`, `KIEN_APP_PASSWORD`, `KIEN_BACKUP_PASSWORD` |
 | `/etc/kien/restic.env`, `restic.pass`, `rclone.conf` | backups | `deploy/backup/restic.env.example` |
 

@@ -3,7 +3,7 @@
 #   docker compose -p kien --env-file /etc/kien/compose.env -f deploy/docker-compose.prod.yml up -d
 #
 # Secrets are split per service so each container only gets what it needs (all files root, mode 600;
-# variable NAMES only in deploy/env/*.example):
+# variable NAMES only in deploy/env-examples/*.example):
 #   /etc/kien/compose.env   compose interpolation only, no secrets: KIEN_IMAGE, API_HOST
 #   /etc/kien/postgres.env  postgres only: POSTGRES_USER/PASSWORD/DB (bootstrap superuser)
 #   /etc/kien/migrate.env   migrate only: DATABASE_URL as kien_migrator (schema owner)

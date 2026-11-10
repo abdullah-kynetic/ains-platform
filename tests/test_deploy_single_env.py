@@ -28,7 +28,11 @@ def _mb(value: str) -> int:
 
 
 def test_no_staging_host_anywhere():
-    for path in [DEPLOY / "Caddyfile", DEPLOY / "docker-compose.prod.yml", *DEPLOY.glob("env/*")]:
+    for path in [
+        DEPLOY / "Caddyfile",
+        DEPLOY / "docker-compose.prod.yml",
+        *DEPLOY.glob("env-examples/*"),
+    ]:
         assert "STAGING_HOST" not in path.read_text(), path
     assert not (DEPLOY / ".env.example").exists()
 
@@ -74,7 +78,7 @@ def test_each_service_gets_only_its_own_env_file():
 
 
 def test_env_examples_hold_names_only_and_split_secrets():
-    files = {p.name: p.read_text() for p in (DEPLOY / "env").glob("*.example")}
+    files = {p.name: p.read_text() for p in (DEPLOY / "env-examples").glob("*.example")}
     assert set(files) >= {
         "compose.env.example",
         "postgres.env.example",
