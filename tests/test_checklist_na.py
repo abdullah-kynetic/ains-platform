@@ -59,46 +59,27 @@ def test_na_rejects_mismatched_firm_and_unassigned_auditor(backend):
     assert client.post(path, json={"not_applicable": True}).status_code == 403
 
 
-def test_client_direct_toggle_actor_and_auditor_visibility(backend):
+def test_client_direct_na_is_refused_and_auditor_toggle_records_the_auditor(backend):
     client, factory, ids, _, _ = backend
     sign_in_client(client)
     path = f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/na"
-    assert client.post(path, json={"not_applicable": True}).status_code == 200
+    # Clients request N/A with a reason (see test_workflow_routes.py); a direct declaration
+    # no longer auto-approves.
+    assert client.post(path, json={"not_applicable": True}).status_code == 409
     data = client.get("/engagements/current").json()
     item = next(i for s in data["sections"] for i in s["items"] if i["id"] == ids["item_a"])
-    assert item["status"] == "not_applicable" and item["naMarkedByRole"] == "client"
-    assert data["collectionProgress"] == {"total": 1, "done": 1}
-    assert client.post(path, json={"not_applicable": False}).status_code == 200
-    assert client.post(path, json={"not_applicable": True}).status_code == 200
+    assert item["status"] == "requested" and item["naMarkedByRole"] is None
     sign_in_auditor(client)
-    workspace = client.get(f"/auditor/engagements/{ids['engagement_a']}/workspace")
-    assert workspace.status_code == 200
-    assert workspace.json()["requests"][-1]["naMarkedByRole"] == "client"
     auditor_path = "/auditor" + path
-    assert client.post(auditor_path, json={"not_applicable": False}).status_code == 200
     assert client.post(auditor_path, json={"not_applicable": True}).status_code == 200
-    assert (
-        client.get(f"/auditor/engagements/{ids['engagement_a']}/workspace").json()["requests"][-1][
-            "naMarkedByRole"
-        ]
-        == "auditor"
-    )
-    sign_in_client(client)
-    assert client.post(path, json={"not_applicable": False}).status_code == 200
+    workspace = client.get(f"/auditor/engagements/{ids['engagement_a']}/workspace").json()
+    assert workspace["requests"][-1]["naMarkedByRole"] == "auditor"
+    assert client.post(auditor_path, json={"not_applicable": False}).status_code == 200
     with factory() as db:
         events = db.scalars(
             select(AuditLog).where(AuditLog.action.in_(["request.na_set", "request.na_unset"]))
         ).all()
-        assert [event.details["actor_role"] for event in events] == [
-            "client",
-            "client",
-            "client",
-            "auditor",
-            "auditor",
-            "client",
-        ]
-        for event in events:
-            assert db.get(User, event.actor_id).role.value == event.details["actor_role"]
+        assert [event.details["actor_role"] for event in events] == ["auditor", "auditor"]
         assert db.get(ChecklistItemInstance, ids["item_a"]).status == ClientStatus.REQUESTED
 
 
@@ -150,8 +131,8 @@ def test_restricted_na_stays_excluded_and_rejects_uploads(backend):
     client, _, ids, ingestor, _ = backend
     sign_in_client(client)
     base = f"/engagements/{ids['engagement_a']}/items/{ids['restricted_a']}"
-    for value in [True, False]:
-        assert client.post(base + "/na", json={"not_applicable": value}).status_code == 200
+    for value, expected in [(True, 409), (False, 200)]:
+        assert client.post(base + "/na", json={"not_applicable": value}).status_code == expected
         data = client.get("/engagements/current").json()
         assert data["collectionProgress"] == {"total": 1, "done": 0}
         assert client.post(

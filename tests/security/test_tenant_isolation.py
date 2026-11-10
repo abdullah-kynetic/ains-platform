@@ -18,6 +18,7 @@ from tests.test_route_isolation import (
     _example,
     _seed_internal_material,
 )
+from tests.test_workflow_routes import real_workflow_rows
 
 CASES = [
     line.split()
@@ -97,6 +98,7 @@ def test_foreign_client_scope_is_denied_on_every_registered_client_route(backend
         "engagement_id": original["engagement_a"],
         "item_id": original["item_a"],
     }
+    ids.update(real_workflow_rows(_factory, original))
     sign_in_client(client, "beta-client@example.test")
     for method, path, case in CASES:
         if case != "client_scope":
@@ -119,6 +121,7 @@ def test_revoked_assignment_denies_real_resources_and_filters_collections(backen
     }
     _seed_internal_material(factory, original)
     ids["finding_id"] = _real_finding(factory, original)
+    ids.update(real_workflow_rows(factory, original))
     sign_in_auditor(client)
     invoice = client.post("/auditor/invoices", json=_invoice_body(original))
     assert invoice.status_code == 201

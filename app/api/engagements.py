@@ -28,6 +28,7 @@ from app.database.models import (
 from app.database.session import get_db
 from app.documents import DocumentIngestor, get_document_ingestor
 from app.documents.scanning import UploadRejected
+from app.workflow import allocate_document_number
 
 router = APIRouter(tags=["engagements"])
 DB = Annotated[Session, Depends(get_db)]
@@ -45,6 +46,7 @@ class FileView(APIModel):
     uploaded_at: datetime
     sha256: str
     feedback: str | None
+    number: str | None
 
 
 class ItemView(APIModel):
@@ -92,6 +94,7 @@ class DocumentView(APIModel):
     size: int
     sha256: str
     version: str
+    number: str | None
     status: ClientStatus
 
 
@@ -146,6 +149,7 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
                         size=document.size_bytes,
                         uploaded_at=document.created_at,
                         sha256=document.sha256,
+                        number=document.number,
                         feedback=(
                             {
                                 "unreadable": "Please replace with a readable copy.",
@@ -244,6 +248,7 @@ def current_engagement(user: CurrentUser, db: DB) -> EngagementView:
             size=document.size_bytes,
             uploaded_at=document.created_at,
             sha256=document.sha256,
+            number=document.number,
             feedback=None,
         )
         for document in documents
@@ -323,6 +328,7 @@ async def upload_document(
         sha256=stored.sha256,
         version=stored.version,
     )
+    document.number = allocate_document_number(db, engagement)
     before = {"status": item.status, "assessment": item.assessment}
     item.status = ClientStatus.CHECKING
     item.assessment = None
@@ -339,6 +345,7 @@ async def upload_document(
             entity_id=item.id,
             details={
                 "document_id": document.id,
+                "number": document.number,
                 "before": before,
                 "after": {"status": item.status, "assessment": None, "sha256": document.sha256},
             },
@@ -352,6 +359,7 @@ async def upload_document(
         size=document.size_bytes,
         sha256=document.sha256,
         version=document.version,
+        number=document.number,
         status=item.status,
     )
 
@@ -386,6 +394,7 @@ async def upload_unassigned_document(
         sha256=stored.sha256,
         version=stored.version,
     )
+    document.number = allocate_document_number(db, engagement)
     db.add(document)
     db.flush()
     db.add(CheckJob(firm_id=engagement.firm_id, document_id=document.id))
@@ -407,5 +416,6 @@ async def upload_unassigned_document(
         size=document.size_bytes,
         sha256=document.sha256,
         version=document.version,
+        number=document.number,
         status=ClientStatus.CHECKING,
     )

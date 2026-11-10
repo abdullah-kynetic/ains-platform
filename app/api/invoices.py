@@ -16,6 +16,7 @@ from app.invoicing import (
     assigned,
     create_invoice,
     record,
+    require_report_confirmed,
     transition,
     visible,
 )
@@ -170,6 +171,8 @@ def update(invoice_id: str, payload: InvoiceInput, user: CurrentUser, db: DB):
 @router.post("/{invoice_id}/sent")
 def sent(invoice_id: str, user: CurrentUser, db: DB):
     invoice = load(invoice_id, user, db, lock=True)
+    if invoice.status == "draft":
+        require_report_confirmed(db, invoice)
     transition(db, invoice, user, "sent")
     db.commit()
     return view(invoice)

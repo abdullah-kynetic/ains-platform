@@ -50,6 +50,8 @@ def invoices():
                 auditor_id=u.id,
                 review_period_start=date(2025, 1, 1),
                 review_period_end=date(2025, 12, 31),
+                # Issuing needs the client's report confirmation (see test_workflow_routes.py).
+                report_confirmed_at=datetime.now(UTC),
             )
             for u in users[:3]
         ]
