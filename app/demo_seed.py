@@ -7,13 +7,13 @@ sets a sign-in password for both synthetic users).
 
 from __future__ import annotations
 
-import os
 from datetime import date
 
 from sqlalchemy import select
 
 from app.auth.security import hash_password
 from app.checklist.catalog import initialize_engagement
+from app.config import get_settings
 from app.database.models import Engagement, Firm, User, UserRole
 from app.database.session import get_session_factory
 
@@ -23,7 +23,7 @@ CLIENT_EMAIL = "demo-client@example.com"
 
 
 def seed() -> str:
-    password = os.environ.get("DEMO_PASSWORD") or None
+    password = get_settings().demo_password.get_secret_value() or None
     with get_session_factory()() as session:
         firm = session.scalar(select(Firm).where(Firm.slug == FIRM_SLUG))
         if firm is None:
