@@ -110,3 +110,11 @@ POST /auditor/engagements/{engagement_id}/workpapers/{request_id}/review auditor
 GET /auditor/engagements/{engagement_id}/samples auditor
 POST /auditor/engagements/{engagement_id}/samples auditor
 PATCH /auditor/samples/{set_id}/items/{sample_item_id} auditor
+GET /auditor/engagements/{engagement_id}/findings auditor
+POST /auditor/engagements/{engagement_id}/findings auditor
+PUT /auditor/engagements/{engagement_id}/findings/{finding_record_id} auditor
+POST /auditor/findings/{finding_record_id}/status auditor
+DELETE /auditor/findings/{finding_record_id} auditor
+POST /auditor/findings/{finding_record_id}/response-request auditor
+GET /engagements/{engagement_id}/response-requests client
+POST /engagements/{engagement_id}/response-requests/{response_request_id}/response client

@@ -123,9 +123,38 @@ def real_workflow_rows(factory, ids):
             items=[SampleItem(firm_id=ids["firm_a"], position=0, reference="ITEM-001")],
         )
         db.add(sample)
+        from app.database.models import Finding, ResponseRequest
+
+        finding = Finding(
+            firm_id=ids["firm_a"],
+            engagement_id=ids["engagement_a"],
+            title="FINDING-MARKER-7c1 internal title",
+            rule="FINDING-MARKER-7c1 rule",
+            condition="FINDING-MARKER-7c1 condition",
+            cause="cause",
+            effect="effect",
+            recommendation="recommendation",
+            severity="high",
+            citations=[{"document": "synthetic-proof.txt", "page": 1}],
+            status="issued",
+            created_by_id=ids["auditor"],
+        )
+        db.add(finding)
+        db.flush()
+        request = ResponseRequest(
+            firm_id=ids["firm_a"],
+            engagement_id=ids["engagement_a"],
+            finding_id=finding.id,
+            title="Synthetic request",
+            request_text="Please describe the process.",
+            released_by_id=ids["auditor"],
+        )
+        db.add(request)
         db.flush()
         db.commit()
         return {
+            "finding_record_id": finding.id,
+            "response_request_id": request.id,
             "document_id": document.id,
             "issue_id": issue.id,
             "request_id": "AML-BD-004",

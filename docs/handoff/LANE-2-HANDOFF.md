@@ -65,8 +65,11 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
 - **Done: L2-6c** (branch `lane2/l2-6c-workpapers-samples`): workpapers (save, independent review)
   and sample sets, migration `a123_workpapers_samples`. Contract and decisions:
   `docs/kb/25-workpapers-samples-api.md`.
-- **Next:** L2-6d (findings, response-request release, client response requests and replies),
-  then e-h, L2-7 to L2-10.
+- **Merged:** #110 (L2-6c workpapers and samples).
+- **Done: L2-6d** (branch `claude/project-thread-grvxp5`): findings CRUD and status, explicit
+  response-request release, client response requests and one reply. Migration
+  `a124_findings_responses`. Contract and decisions: `docs/kb/26-findings-api.md`.
+- **Next:** L2-6e (report draft, sections, docx and PDF, client reports), then f-h, L2-7 to L2-10.
 
 ## In progress
 
