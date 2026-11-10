@@ -21,53 +21,89 @@ depends_on: str | Sequence[str] | None = None
 TS = sa.DateTime(timezone=True)
 
 
+def _columns(table: str) -> set[str]:
+    return {c["name"] for c in inspect(op.get_bind()).get_columns(table)}
+
+
+def _add_missing(table: str, columns: list[sa.Column]) -> None:
+    """Idempotent: schemas built from the current models already have these columns."""
+    existing = _columns(table)
+    missing = [c for c in columns if c.name not in existing]
+    if missing:
+        with op.batch_alter_table(table) as batch:
+            for column in missing:
+                batch.add_column(column)
+
+
 def upgrade() -> None:
-    with op.batch_alter_table("engagements") as batch:
-        batch.add_column(sa.Column("checklist_sent_at", TS, nullable=True))
-        batch.add_column(sa.Column("checklist_sent_by_id", sa.String(36), nullable=True))
-        batch.add_column(sa.Column("client_submitted_at", TS, nullable=True))
-        batch.add_column(sa.Column("report_confirmed_at", TS, nullable=True))
-        batch.add_column(sa.Column("report_confirmed_by_id", sa.String(36), nullable=True))
-        batch.add_column(sa.Column("report_confirmed_sha256", sa.String(64), nullable=True))
-        batch.add_column(
-            sa.Column("document_seq", sa.Integer(), nullable=False, server_default="0")
-        )
-    with op.batch_alter_table("checklist_item_instances") as batch:
-        batch.add_column(sa.Column("na_request_reason", sa.Text(), nullable=True))
-        batch.add_column(sa.Column("na_decision_note", sa.Text(), nullable=True))
-        batch.add_column(sa.Column("na_decided_at", TS, nullable=True))
-        batch.add_column(sa.Column("submitted_at", TS, nullable=True))
-        batch.add_column(sa.Column("submitted_by_id", sa.String(36), nullable=True))
-    with op.batch_alter_table("documents") as batch:
-        batch.add_column(sa.Column("number", sa.String(20), nullable=True))
-        batch.create_unique_constraint(
-            "uq_document_engagement_number", ["engagement_id", "number"]
-        )
+    _add_missing(
+        "engagements",
+        [
+            sa.Column("checklist_sent_at", TS, nullable=True),
+            sa.Column("checklist_sent_by_id", sa.String(36), nullable=True),
+            sa.Column("client_submitted_at", TS, nullable=True),
+            sa.Column("report_confirmed_at", TS, nullable=True),
+            sa.Column("report_confirmed_by_id", sa.String(36), nullable=True),
+            sa.Column("report_confirmed_sha256", sa.String(64), nullable=True),
+            sa.Column("document_seq", sa.Integer(), nullable=False, server_default="0"),
+        ],
+    )
+    _add_missing(
+        "checklist_item_instances",
+        [
+            sa.Column("na_request_reason", sa.Text(), nullable=True),
+            sa.Column("na_decision_note", sa.Text(), nullable=True),
+            sa.Column("na_decided_at", TS, nullable=True),
+            sa.Column("submitted_at", TS, nullable=True),
+            sa.Column("submitted_by_id", sa.String(36), nullable=True),
+        ],
+    )
+    _add_missing("documents", [sa.Column("number", sa.String(20), nullable=True)])
+    uniques = {u["name"] for u in inspect(op.get_bind()).get_unique_constraints("documents")}
+    if "uq_document_engagement_number" not in uniques:
+        with op.batch_alter_table("documents") as batch:
+            batch.create_unique_constraint(
+                "uq_document_engagement_number", ["engagement_id", "number"]
+            )
 
     bind = op.get_bind()
     bind.execute(
         sa.text(
-            "UPDATE engagements SET checklist_sent_at = created_at WHERE upper(status) <> 'DRAFT'"
+            "UPDATE engagements SET checklist_sent_at = created_at "
+            "WHERE checklist_sent_at IS NULL AND upper(status) <> 'DRAFT'"
         )
     )
-    engagements = bind.execute(sa.text("SELECT id FROM engagements")).scalars().all()
-    for engagement_id in engagements:
-        rows = bind.execute(
-            sa.text(
-                "SELECT id FROM documents WHERE engagement_id = :e ORDER BY created_at, id"
-            ),
-            {"e": engagement_id},
-        ).scalars().all()
-        for sequence, document_id in enumerate(rows, 1):
+    engagements = bind.execute(sa.text("SELECT id, document_seq FROM engagements")).all()
+    for engagement_id, seq in engagements:
+        rows = (
+            bind.execute(
+                sa.text(
+                    "SELECT id FROM documents WHERE engagement_id = :e AND number IS NULL "
+                    "ORDER BY created_at, id"
+                ),
+                {"e": engagement_id},
+            )
+            .scalars()
+            .all()
+        )
+        for document_id in rows:
+            seq += 1
             bind.execute(
                 sa.text("UPDATE documents SET number = :n WHERE id = :d"),
-                {"n": f"1.{sequence}", "d": document_id},
+                {"n": f"1.{seq}", "d": document_id},
             )
-        bind.execute(
-            sa.text("UPDATE engagements SET document_seq = :n WHERE id = :e"),
-            {"n": len(rows), "e": engagement_id},
-        )
+        if rows:
+            bind.execute(
+                sa.text("UPDATE engagements SET document_seq = :n WHERE id = :e"),
+                {"n": seq, "e": engagement_id},
+            )
 
+    tables = set(inspect(bind).get_table_names())
+    if "document_item_links" not in tables:
+        _create_tables()
+
+
+def _create_tables() -> None:
     op.create_table(
         "document_item_links",
         sa.Column("id", sa.String(36), primary_key=True),
@@ -123,9 +159,7 @@ def upgrade() -> None:
     )
     op.create_index("ix_document_issues_firm_id", "document_issues", ["firm_id"])
     op.create_index("ix_document_issues_engagement_id", "document_issues", ["engagement_id"])
-    op.create_index(
-        "ix_document_issues_item_instance_id", "document_issues", ["item_instance_id"]
-    )
+    op.create_index("ix_document_issues_item_instance_id", "document_issues", ["item_instance_id"])
     op.create_index("ix_document_issues_document_id", "document_issues", ["document_id"])
     op.create_index(
         "ix_document_issues_firm_engagement", "document_issues", ["firm_id", "engagement_id"]
