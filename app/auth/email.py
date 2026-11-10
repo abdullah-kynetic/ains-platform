@@ -70,7 +70,11 @@ class ResendSender:
 
 
 def notify_report_ready(
-    settings: Settings, *, recipients: list[str], firm_name: str, review_period: str,
+    settings: Settings,
+    *,
+    recipients: list[str],
+    firm_name: str,
+    review_period: str,
     firm_slug: str | None = None,
 ) -> None:
     """Tell client users a signed report is ready. Never raises, never includes findings.

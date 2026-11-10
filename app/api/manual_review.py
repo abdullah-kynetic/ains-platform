@@ -176,10 +176,14 @@ ACTIVITY_COPY: dict[str, tuple[str, str, str]] = {
         "Applicability response saved",
     ),
     "request.na_set": (
-        "questionnaire", "marked N/A for", "Applicability declaration recorded; no audit finding",
+        "questionnaire",
+        "marked N/A for",
+        "Applicability declaration recorded; no audit finding",
     ),
     "request.na_unset": (
-        "questionnaire", "undid N/A for", "Previous request state restored",
+        "questionnaire",
+        "undid N/A for",
+        "Previous request state restored",
     ),
     "representation.submitted": (
         "questionnaire",
@@ -384,13 +388,9 @@ def pipeline(user: CurrentUser, db: DB):
 
 
 @router.patch("/engagements/{engagement_id}/pipeline-stage")
-def move_pipeline_stage(
-    engagement_id: str, payload: PipelineMove, user: CurrentUser, db: DB
-):
+def move_pipeline_stage(engagement_id: str, payload: PipelineMove, user: CurrentUser, db: DB):
     require_auditor(user)
-    engagement = db.scalar(
-        visible_engagements(user).where(Engagement.id == engagement_id)
-    )
+    engagement = db.scalar(visible_engagements(user).where(Engagement.id == engagement_id))
     if engagement is None:
         raise HTTPException(404, "Engagement not found")
     if payload.stage == "complete":
@@ -470,9 +470,7 @@ def tasks(user: CurrentUser, db: DB):
 
 
 @router.post("/engagements/{engagement_id}/tasks", status_code=201)
-def create_task(
-    engagement_id: str, payload: TaskCreate, user: CurrentUser, db: DB
-):
+def create_task(engagement_id: str, payload: TaskCreate, user: CurrentUser, db: DB):
     require_auditor(user)
     engagement = _get_engagement(db, user, engagement_id)
     task = AuditorTask(
@@ -569,9 +567,7 @@ def update_task(task_id: str, payload: TaskUpdate, user: CurrentUser, db: DB):
 @router.get("/activity")
 def activity(user: CurrentUser, db: DB):
     require_auditor(user)
-    engagements = db.scalars(
-        visible_engagements(user).options(selectinload(Engagement.firm))
-    ).all()
+    engagements = db.scalars(visible_engagements(user).options(selectinload(Engagement.firm))).all()
     if not engagements:
         return []
     engagement_ids = [engagement.id for engagement in engagements]

@@ -26,9 +26,16 @@ def test_finish_refreshes_a_user_loaded_before_another_request_finished(backend)
         assert stale_user.onboarding_finished_at == finished_at
     with factory() as db:
         assert db.get(User, ids["client_a"]).onboarding_state == "completed"
-        assert len(db.scalars(select(AuditLog).where(
-            AuditLog.actor_id == ids["client_a"], AuditLog.action.like("onboarding.%")
-        )).all()) == 1
+        assert (
+            len(
+                db.scalars(
+                    select(AuditLog).where(
+                        AuditLog.actor_id == ids["client_a"], AuditLog.action.like("onboarding.%")
+                    )
+                ).all()
+            )
+            == 1
+        )
 
 
 @pytest.mark.parametrize("role", ["client", "auditor"])
@@ -61,9 +68,11 @@ def test_session_onboarding_is_terminal_across_new_logins(backend, role, action)
         assert fresh.get("/auth/session").json()["user"]["onboarding_state"] == action
     with factory() as db:
         assert db.get(User, user_id).onboarding_finished_at == finished_at
-        events = db.scalars(select(AuditLog).where(
-            AuditLog.actor_id == user_id, AuditLog.action.like("onboarding.%")
-        )).all()
+        events = db.scalars(
+            select(AuditLog).where(
+                AuditLog.actor_id == user_id, AuditLog.action.like("onboarding.%")
+            )
+        ).all()
         assert len(events) == 1
 
 
@@ -72,22 +81,25 @@ def test_invite_accepted_user_starts_pending_in_session_and_password_login(backe
 
     client, factory, ids, _, _ = backend
     sign_in_auditor(client)
-    created = client.post(f"/auditor/engagements/{ids['engagement_a']}/invitations", json={
-        "email": "synthetic-onboarding@example.test", "name": "Synthetic Onboarding Client"
-    })
+    created = client.post(
+        f"/auditor/engagements/{ids['engagement_a']}/invitations",
+        json={"email": "synthetic-onboarding@example.test", "name": "Synthetic Onboarding Client"},
+    )
     assert created.status_code == 201
     client.cookies.clear()
-    accepted = client.post("/auth/invitations/accept", json={
-        "token": invitation_token(created.json()), "password": "synthetic-password-123"
-    })
+    accepted = client.post(
+        "/auth/invitations/accept",
+        json={"token": invitation_token(created.json()), "password": "synthetic-password-123"},
+    )
     assert accepted.status_code == 200
     user = accepted.json()["user"]
     assert user["onboarding_state"] is None
     assert client.get("/auth/session").json()["user"]["onboarding_state"] is None
     client.cookies.clear()
-    signed_in = client.post("/auth/password", json={
-        "email": "synthetic-onboarding@example.test", "password": "synthetic-password-123"
-    })
+    signed_in = client.post(
+        "/auth/password",
+        json={"email": "synthetic-onboarding@example.test", "password": "synthetic-password-123"},
+    )
     assert signed_in.status_code == 200
     assert signed_in.json()["user"]["onboarding_state"] is None
     with factory() as db:

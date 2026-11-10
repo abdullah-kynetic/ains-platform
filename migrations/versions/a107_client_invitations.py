@@ -33,9 +33,7 @@ def upgrade():
         sa.UniqueConstraint("accepted_user_id"),
         sa.UniqueConstraint("email", name="uq_client_invitations_email"),
     )
-    op.create_index(
-        "ix_client_invitations_email", "client_invitations", ["email"], unique=False
-    )
+    op.create_index("ix_client_invitations_email", "client_invitations", ["email"], unique=False)
     op.create_index(
         "ix_client_invitations_engagement_id",
         "client_invitations",

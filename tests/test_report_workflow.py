@@ -44,7 +44,7 @@ def test_report_prefill_edit_finalize_lock_reopen_and_audit(invoices):
     content = report["content"]
     content["sections"][0]["html"] = (
         '<p onclick="bad()"><strong>Human scope</strong>'
-        '<script>bad()</script><img src=x onerror=bad()></p>'
+        "<script>bad()</script><img src=x onerror=bad()></p>"
     )
     content["item_findings"]["AML-BD-001"] = "Synthetic per-item finding"
     saved = client.patch(path, json={"version": report["version"], "content": content})

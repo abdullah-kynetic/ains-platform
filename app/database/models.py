@@ -113,6 +113,56 @@ class Firm(Base):
         return require_logo_url(value)
 
 
+class Practice(Base):
+    """The auditing practice: the team, branding, rubric and templates auditors work under.
+
+    Distinct from ``Firm``, which is a client broker-dealer. Every practice route derives the
+    practice from the signed-in user, never from a request id.
+    """
+
+    __tablename__ = "practices"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    name: Mapped[str] = mapped_column(String(120))
+    tagline: Mapped[str] = mapped_column(String(200), default="")
+    logo_url: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    @validates("logo_url")
+    def _validate_logo_url(self, _key: str, value: str | None) -> str | None:
+        from app.tenancy import require_logo_url
+
+        return require_logo_url(value)
+
+
+class PracticeRubricItem(Base):
+    """Partner-set override for one catalog request. No row means defaults (empty, enabled)."""
+
+    __tablename__ = "practice_rubric_items"
+    __table_args__ = (UniqueConstraint("practice_id", "request_id", name="uq_practice_rubric"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    practice_id: Mapped[str] = mapped_column(ForeignKey("practices.id"), index=True)
+    request_id: Mapped[str] = mapped_column(String(20))
+    criteria: Mapped[str] = mapped_column(Text, default="")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    updated_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class PracticeTemplate(Base):
+    __tablename__ = "practice_templates"
+    __table_args__ = (Index("ix_practice_templates_practice", "practice_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    practice_id: Mapped[str] = mapped_column(ForeignKey("practices.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    kind: Mapped[str] = mapped_column(String(12))
+    description: Mapped[str] = mapped_column(String(500), default="")
+    request_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (UniqueConstraint("firm_id", "email", name="uq_users_firm_email"),)
@@ -131,6 +181,9 @@ class User(Base):
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     onboarding_state: Mapped[str | None] = mapped_column(String(12))
     onboarding_finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Auditor team membership (the auditing practice, not a client firm). Clients leave both unset.
+    practice_id: Mapped[str | None] = mapped_column(ForeignKey("practices.id"), index=True)
+    team_role: Mapped[str | None] = mapped_column(String(12))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     firm: Mapped[Firm | None] = relationship(back_populates="users")

@@ -180,7 +180,8 @@ def _password_user(db: Session, email: str, password: str) -> User:
     user = db.scalar(select(User).where(User.email == _normalize_email(email)))
     valid, upgraded = (
         verify_and_rehash_password(password, user.password_hash)
-        if user and user.is_active else (False, None)
+        if user and user.is_active
+        else (False, None)
     )
     if not valid:
         raise HTTPException(
@@ -249,8 +250,12 @@ def _issue_session(
     db.flush()
     try:
         token = create_session_token(
-            user_id=user.id, session_id=auth_session.id, settings=settings, now=now,
-            role=user.role.value, firm_id=user.firm_id,
+            user_id=user.id,
+            session_id=auth_session.id,
+            settings=settings,
+            now=now,
+            role=user.role.value,
+            firm_id=user.firm_id,
         )
     except RuntimeError:
         raise HTTPException(
@@ -509,6 +514,9 @@ def sign_out(
         auth_session.revoked_at = datetime.now(UTC)
     db.commit()
     response.delete_cookie(
-        SESSION_COOKIE, path="/", secure=settings.session_cookie_secure,
-        httponly=True, samesite="lax",
+        SESSION_COOKIE,
+        path="/",
+        secure=settings.session_cookie_secure,
+        httponly=True,
+        samesite="lax",
     )

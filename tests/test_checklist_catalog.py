@@ -40,8 +40,10 @@ def test_initialization_records_an_independent_catalog_snapshot():
     from app.database.models import Engagement, EngagementStatus
 
     engagement = Engagement(
-        firm_id="synthetic-firm", status=EngagementStatus.DRAFT,
-        review_period_start=date(2025, 1, 1), review_period_end=date(2025, 12, 31),
+        firm_id="synthetic-firm",
+        status=EngagementStatus.DRAFT,
+        review_period_start=date(2025, 1, 1),
+        review_period_end=date(2025, 12, 31),
     )
     initialize_engagement(engagement)
     assert engagement.checklist_version == "aml_bd_v1"

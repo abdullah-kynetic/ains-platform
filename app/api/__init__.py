@@ -7,6 +7,7 @@ from .auditor import router as auditor_router
 from .client_profiles import router as client_profiles_router
 from .downloads import router as downloads_router
 from .engagements import router as engagements_router
+from .firm import router as firm_router
 from .intake import router as intake_router
 from .invoices import router as invoices_router
 from .manual_review import router as manual_review_router
@@ -22,6 +23,7 @@ router.include_router(reports_router)
 router.include_router(invoices_router)
 router.include_router(audit_log_router)
 router.include_router(auditor_router)
+router.include_router(firm_router)
 router.include_router(engagements_router)
 router.include_router(questionnaire_router)
 router.include_router(intake_router)

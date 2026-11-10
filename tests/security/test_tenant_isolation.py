@@ -50,11 +50,14 @@ def test_every_protected_route_has_registered_denial_and_shared_identity_checks(
             if path == "/auditor/workspaces"
             else "client_scope"
             if kind == "client"
+            else "practice_scope"
+            if path.startswith("/auditor/firm/")
             else "auditor_scope"
         )
         assert by_route[method, path] == case
     assert all(
-        case in {"client_scope", "auditor_scope", "new_workspace", "session_claims"}
+        case
+        in {"client_scope", "auditor_scope", "new_workspace", "session_claims", "practice_scope"}
         for _, _, case in CASES
     )
     for route in client.app.routes:
@@ -146,7 +149,7 @@ def test_revoked_assignment_denies_real_resources_and_filters_collections(backen
             engagement.auditor_id = None
         db.commit()
     for method, path, case in CASES:
-        if case != "auditor_scope":
+        if case != "auditor_scope":  # practice routes: tests/test_firm_routes.py
             continue
         response = _send(client, method, path, ids)
         scoped = "{" in path or path.startswith("/auditor/audit-log") or method != "GET"
