@@ -68,3 +68,7 @@ Only #39 was closed. Rebuilds were not started: #40, #45 and #37 each need their
 ## Lane 2: report-ready rebuild
 
 DECISION: Rebuilt #40 on current main. Password-reset delivery already exists on main and is covered by `tests/test_password_reset.py`. Reverted the branch's `migrations/env.py` logging change: report notification delivery does not need to change Alembic's global logger configuration. Omitted the README change to preserve lane ownership; behavior is recorded here instead. Only active clients of the signed engagement's firm receive the generic report-ready notice. Mail exceptions do not undo sign-off; exception messages, addresses, keys and report content are not logged.
+
+### Additional portal ownership blocker
+
+BLOCKED(Lane 1): the inherited #45 branch changed `tests/test_deployment_migration.py` to expect `a119_firm_logo_url`. That file matches Lane 1's `tests/test_deploy*.py` ownership. Lane 2 removed that inherited change from #96. Lane 1 must update the assertion from `a117_response_requests` to `a119_firm_logo_url` (or make the single-head check migration-independent) before #96 can pass the full gate. Earlier 409-passed results were before this ownership correction; the final candidate must be checked again.
