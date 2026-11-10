@@ -106,7 +106,9 @@ test("sign-out ends the session", async ({ page }) => {
 test("invitation: shows the invite, sets a password and signs the client in", async ({ page }) => {
   await page.goto(`/accept-invitation?token=${INVITE_TOKEN}`);
   await expect(page.getByRole("heading", { name: "Accept client invitation" })).toBeVisible();
-  await expect(page.getByText("Synthetic E2E Securities")).toBeVisible();
+  await expect(
+    page.getByRole("paragraph").filter({ hasText: /^Synthetic E2E Securities$/ }),
+  ).toBeVisible();
   await page.getByLabel("Create password").fill("a-new-synthetic-password-1");
   await page.getByLabel("Confirm password").fill("a-new-synthetic-password-1");
   await page.getByRole("button", { name: "Set password and activate account" }).click();

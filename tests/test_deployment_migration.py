@@ -8,9 +8,15 @@ from sqlalchemy import create_engine, inspect
 from app.database.models import Base
 
 
+def test_deployment_has_one_current_migration_head():
+    # Additive migrations from another lane must not require a stale revision snapshot.
+    # get_current_head raises if the graph has competing heads.
+    head = ScriptDirectory.from_config(Config("alembic.ini")).get_current_head()
+    assert head is not None
+
+
 def test_password_recovery_migration_up_and_down():
     config = Config("alembic.ini")
-    assert ScriptDirectory.from_config(config).get_heads() == ["a117_response_requests"]
     engine = create_engine("sqlite://")
     tables = [
         table
