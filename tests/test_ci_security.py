@@ -46,6 +46,12 @@ def test_scanner_propagates_failure_without_leaking_raw_output(tmp_path, scanner
         path.write_text(stub)
         path.chmod(0o755)
     (tmp_path / 'web').mkdir()
+    import shutil
+
+    for name in ['docs/security/accepted-risks.md', '.github/workflows/image.yml']:
+        target = tmp_path / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(SCRIPT.parents[2] / name, target)
     result = subprocess.run(
         ['bash', str(SCRIPT), scanner], cwd=tmp_path,
         env={**os.environ, 'PATH': f'{tools}:{os.environ["PATH"]}',
@@ -64,11 +70,11 @@ def test_unknown_scanner_is_rejected(tmp_path):
     assert not (tmp_path / 'security-reports').exists()
 
 
-def test_codeql_exception_has_reason_and_expiry_and_no_findings_are_suppressed():
+def test_codeql_exception_has_reason_and_expiry_and_findings_are_explicit():
     risks = Path('docs/security/accepted-risks.md').read_text()
     assert 'CodeQL' in risks and 'Private repository' in risks
     assert re.search(r'2027-02-09', risks)
-    assert 'No scanner finding is currently suppressed' in risks
+    assert 'Only the explicitly recorded findings below are suppressed' in risks
 
 
 @pytest.mark.parametrize('scanner,payload', [
@@ -149,3 +155,71 @@ def test_failure_annotations_keep_only_metadata_and_fixed_diagnostic_labels(tmp_
     assert 'rule%0A::warning::injected' in result.stdout
     assert 'network-denied' in result.stdout
     assert json.loads(report.read_text())['diagnostics'] == ['network-denied']
+
+
+def test_approved_risks_generate_only_exact_scoped_suppressions(tmp_path):
+    import json
+    import runpy
+    from datetime import date
+
+    policy = runpy.run_path(str(SCRIPT.with_name('policy.py')))
+    entries = policy['accepted_risks'](Path('docs/security/accepted-risks.md'), date(2026, 11, 10))
+    assert len(entries) == 4
+    policy['generate'](tmp_path, entries)
+    ignored = (tmp_path / 'gitleaksignore').read_text().splitlines()
+    assert len(ignored) == 3
+    assert all(re.fullmatch(r'[0-9a-f]{40}:.+:generic-api-key:[0-9]+', line) for line in ignored)
+    config = json.loads((tmp_path / 'zizmor.yml').read_text())
+    line = Path('.github/workflows/image.yml').read_text().splitlines().index('  workflow_run:') + 1
+    assert config == {'rules': {'dangerous-triggers': {'ignore': [f'image.yml:{line}']}}}
+
+
+@pytest.mark.parametrize('change', ['expired', 'missing-reason', 'broad-fingerprint', 'too-long'])
+def test_invalid_risks_fail_closed(tmp_path, change):
+    import json
+    import runpy
+    from datetime import date
+
+    policy = runpy.run_path(str(SCRIPT.with_name('policy.py')))
+    entries = policy['accepted_risks'](Path('docs/security/accepted-risks.md'), date(2026, 11, 10))
+    if change == 'expired':
+        entries[0]['expires'] = '2026-11-10'
+    elif change == 'missing-reason':
+        entries[0]['reason'] = ''
+    elif change == 'broad-fingerprint':
+        entries[1]['fingerprint'] = '*'
+    else:
+        entries[0]['expires'] = '2027-02-09'
+    source = tmp_path / 'accepted-risks.md'
+    source.write_text('```json\n' + json.dumps(entries) + '\n```')
+    with pytest.raises(ValueError):
+        policy['accepted_risks'](source, date(2026, 11, 10))
+
+
+def test_uv_resolution_has_a_seven_day_dependency_cooldown():
+    import tomllib
+
+    config = tomllib.loads(Path('pyproject.toml').read_text())
+    assert config['tool']['uv']['exclude-newer'] == '7 days'
+
+
+def test_container_findings_include_fix_versions_in_one_annotation(tmp_path):
+    import json
+
+    source, report = tmp_path / 'raw.json', tmp_path / 'safe.json'
+    source.write_text(json.dumps({'Results': [{
+        'Target': 'debian', 'Vulnerabilities': [
+            {'VulnerabilityID': f'CVE-SYNTHETIC-{i}', 'Severity': 'HIGH',
+             'PkgName': 'fixture-package', 'InstalledVersion': '1', 'FixedVersion': '2',
+             'Description': 'synthetic-sensitive-output'} for i in range(20)
+        ],
+    }]}))
+    result = subprocess.run([
+        'python3', str(SCRIPT.with_name('report.py')), 'trivy-image', '1', str(source), str(report),
+    ], capture_output=True, text=True)
+    assert result.returncode == 0
+    assert result.stdout.count('::error title=Security finding metadata::') == 1
+    assert 'CVE-SYNTHETIC-19' in result.stdout
+    assert 'synthetic-sensitive-output' not in result.stdout + report.read_text()
+    row = json.loads(report.read_text())['findings'][0]
+    assert (row['package'], row['installed'], row['fixed']) == ('fixture-package', '1', '2')

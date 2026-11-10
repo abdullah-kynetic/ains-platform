@@ -11,6 +11,7 @@ mkdir -p security-reports
 umask 077
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
+python3 "$script_dir/policy.py" --output-dir "$scratch"
 scan() {
   case "$scanner" in
     pip-audit)
@@ -19,7 +20,7 @@ scan() {
     npm) (cd web && npm audit --omit=dev --audit-level=high --json > "$scratch/findings.json") ;;
     gitleaks)
       docker run --rm -v "$PWD:/repo:ro" -v "$scratch:/reports" -w /repo \
-        ghcr.io/gitleaks/gitleaks:v8.30.0 git --redact --report-format json --report-path /reports/findings.json --exit-code 1 . ;;
+        ghcr.io/gitleaks/gitleaks:v8.30.0 git --redact --gitleaks-ignore-path /reports/gitleaksignore --report-format json --report-path /reports/findings.json --exit-code 1 . ;;
     trufflehog)
       docker run --rm -v "$PWD:/repo:ro" -w /repo \
         trufflesecurity/trufflehog:3.93.3 git file://. --only-verified --fail --json > "$scratch/findings.json" ;;
@@ -35,7 +36,7 @@ scan() {
       uvx semgrep scan --config p/python --config p/typescript \
         --config p/owasp-top-ten --config p/secrets --error --json > "$scratch/findings.json" ;;
     bandit) uvx bandit -r app ai_adapter -ll -ii -f json > "$scratch/findings.json" ;;
-    zizmor) uvx zizmor --format json .github/workflows > "$scratch/findings.json" ;;
+    zizmor) uvx zizmor --config "$scratch/zizmor.yml" --format json .github/workflows > "$scratch/findings.json" ;;
   esac
 }
 # Keep errexit active inside scan: an export/build failure must not be hidden

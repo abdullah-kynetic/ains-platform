@@ -15,8 +15,9 @@ def findings(scanner: str, raw: str) -> list[dict]:
             return []
     rows = []
 
-    def add(rule, location, severity="unknown"):
-        rows.append({"id": str(rule), "location": str(location), "severity": str(severity)})
+    def add(rule, location, severity="unknown", **metadata):
+        rows.append({"id": str(rule), "location": str(location), "severity": str(severity),
+                     **{key: str(value) for key, value in metadata.items() if value}})
 
     if scanner == "pip-audit":
         for dep in data.get("dependencies", []):
@@ -39,7 +40,12 @@ def findings(scanner: str, raw: str) -> list[dict]:
             for category, key in [("Vulnerabilities", "VulnerabilityID"),
                                   ("Misconfigurations", "ID"), ("Secrets", "RuleID")]:
                 for entry in result.get(category, []):
-                    add(entry.get(key), result.get("Target"), entry.get("Severity"))
+                    metadata = {}
+                    if category == "Vulnerabilities":
+                        metadata = {"package": entry.get("PkgName"),
+                                    "installed": entry.get("InstalledVersion"),
+                                    "fixed": entry.get("FixedVersion")}
+                    add(entry.get(key), result.get("Target"), entry.get("Severity"), **metadata)
     elif scanner == "semgrep":
         for entry in data.get("results", []):
             add(entry.get("check_id"), entry.get("path"), entry.get("extra", {}).get("severity"))
@@ -88,6 +94,8 @@ if __name__ == "__main__":
 
         summary = f"{scanner}: exit {status}; findings={len(rows)}; diagnostics={diagnostics}"
         print("::error title=Security scan failed::" + escape(summary))
-        for row in rows:
-            metadata = f"{row['id']} | {row['location']} | {row['severity']}"
-            print("::error title=Security finding metadata::" + escape(metadata))
+        metadata = [" | ".join(str(value) for value in row.values()) for row in rows]
+        if metadata:
+            # GitHub retains only a limited number of error annotations per step.
+            # Aggregate safe metadata so later package findings remain retrievable.
+            print("::error title=Security finding metadata::" + escape("\n".join(metadata)))
