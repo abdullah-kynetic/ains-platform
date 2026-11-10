@@ -84,3 +84,12 @@ def test_image_source_must_be_on_canonical_main_before_registry_login(tmp_path):
     assert steps[0]['with']['fetch-depth'] == 0
     assert steps[1]['run'] == 'bash .github/scripts/verify-image-source.sh'
     assert any(step.get('uses', '').startswith('docker/login-action@') for step in steps[2:])
+
+
+def test_runtime_base_is_digest_pinned_and_dependencies_remain_frozen():
+    import re
+
+    dockerfile = Path('Dockerfile').read_text()
+    assert re.search(r'^FROM python:3\.12-alpine@sha256:[a-f0-9]{64}$', dockerfile, re.M)
+    assert 'uv sync --frozen --no-dev' in dockerfile
+    assert '\nUSER ains\n' in dockerfile

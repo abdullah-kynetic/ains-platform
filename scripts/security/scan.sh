@@ -29,6 +29,9 @@ scan() {
         fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --exit-code 1 --format json . > "$scratch/findings.json" ;;
     trivy-image)
       docker build -t kien-api:ci .
+      docker run --rm --read-only --cap-drop ALL --security-opt no-new-privileges \
+        --tmpfs /tmp -v "$PWD/.github/scripts/image-smoke.py:/app/smoke.py:ro" \
+        --entrypoint python kien-api:ci /app/smoke.py
       docker save -o "$scratch/image.tar" kien-api:ci
       docker run --rm -v "$scratch:/scan:ro" aquasec/trivy:0.69.3 \
         image --input /scan/image.tar --severity HIGH,CRITICAL --exit-code 1 --format json > "$scratch/findings.json" ;;

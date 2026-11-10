@@ -223,3 +223,40 @@ def test_container_findings_include_fix_versions_in_one_annotation(tmp_path):
     assert 'synthetic-sensitive-output' not in result.stdout + report.read_text()
     row = json.loads(report.read_text())['findings'][0]
     assert (row['package'], row['installed'], row['fixed']) == ('fixture-package', '1', '2')
+
+
+def test_security_scans_source_without_creating_generated_dependency_fixtures():
+    commands = [step.get('run', '') for step in WORKFLOW['jobs']['scan']['steps']]
+    assert 'uv lock --check' in commands
+    assert not any(
+        token in command for command in commands for token in ['uv sync', 'npm ci', 'uv run']
+    )
+    # Frozen application installation remains enforced by CI's separate jobs.
+
+
+def test_image_runtime_failure_prevents_saving_or_scanning_the_image(tmp_path):
+    import shutil
+
+    tools = tmp_path / 'bin'
+    tools.mkdir()
+    docker = tools / 'docker'
+    docker.write_text(
+        '#!/bin/sh\necho "$*" >> "$DOCKER_CALLS"\n'
+        'case "$*" in *"/app/smoke.py"*) exit 17;; esac\nexit 0\n'
+    )
+    docker.chmod(0o755)
+    for name in ['docs/security/accepted-risks.md', '.github/workflows/image.yml']:
+        target = tmp_path / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(SCRIPT.parents[2] / name, target)
+    log = tmp_path / 'docker.log'
+    result = subprocess.run(
+        ['bash', str(SCRIPT), 'trivy-image'], cwd=tmp_path,
+        env={**os.environ, 'PATH': f'{tools}:{os.environ["PATH"]}', 'DOCKER_CALLS': str(log)},
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 17
+    calls = log.read_text().splitlines()
+    assert calls[0] == 'build -t kien-api:ci .'
+    assert '/app/smoke.py' in calls[1]
+    assert len(calls) == 2
