@@ -135,3 +135,4 @@ GET /auditor/notifications auditor
 POST /auditor/notifications/read-all auditor
 POST /auditor/notifications/{notification_id}/read auditor
 GET /auditor/search auditor
+GET /engagements/{engagement_id}/invoices client
