@@ -104,3 +104,9 @@ PUT /auditor/firm/request-templates/{template_id} auditor
 DELETE /auditor/firm/request-templates/{template_id} auditor
 GET /auditor/engagements/{engagement_id}/checklist-tests auditor
 PATCH /auditor/engagements/{engagement_id}/checklist-tests/{request_id} auditor
+GET /auditor/engagements/{engagement_id}/workpapers auditor
+PUT /auditor/engagements/{engagement_id}/workpapers/{request_id} auditor
+POST /auditor/engagements/{engagement_id}/workpapers/{request_id}/review auditor
+GET /auditor/engagements/{engagement_id}/samples auditor
+POST /auditor/engagements/{engagement_id}/samples auditor
+PATCH /auditor/samples/{set_id}/items/{sample_item_id} auditor

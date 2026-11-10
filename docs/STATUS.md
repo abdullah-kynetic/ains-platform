@@ -166,3 +166,9 @@ create inactive members and send no email; logo upload waits for L2-7. No live p
 `GET/PATCH /auditor/engagements/{id}/checklist-tests[/{requestId}]` store the auditor's own
 pass, partial, fail or na per request (audit-logged, auditor-only). No conclusion is derived or
 suggested. Documents are served by the existing live workspace route. No live proof is claimed.
+
+## L2-6c workpapers and samples (branch lane2/l2-6c-workpapers-samples)
+
+Workpaper save and independent review (preparer cannot review; edits clear review) and sample sets
+with per-item results, auditor-only. Contract: [`docs/kb/25-workpapers-samples-api.md`](kb/25-workpapers-samples-api.md).
+No live proof is claimed.

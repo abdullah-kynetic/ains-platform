@@ -110,8 +110,28 @@ def real_workflow_rows(factory, ids):
                 body="Synthetic request.",
             )
         )
+        from app.database.models import SampleItem, SampleSet
+
+        sample = SampleSet(
+            firm_id=ids["firm_a"],
+            engagement_id=ids["engagement_a"],
+            area="Synthetic proof",
+            population=5,
+            sample_size=1,
+            method="Synthetic",
+            created_by_id=ids["auditor"],
+            items=[SampleItem(firm_id=ids["firm_a"], position=0, reference="ITEM-001")],
+        )
+        db.add(sample)
+        db.flush()
         db.commit()
-        return {"document_id": document.id, "issue_id": issue.id, "request_id": "AML-BD-004"}
+        return {
+            "document_id": document.id,
+            "issue_id": issue.id,
+            "request_id": "AML-BD-004",
+            "set_id": sample.id,
+            "sample_item_id": sample.items[0].id,
+        }
 
 
 def actions(factory):

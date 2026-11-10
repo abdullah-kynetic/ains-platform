@@ -16,6 +16,7 @@ from .reports import router as reports_router
 from .tenant import router as tenant_router
 from .testing import router as testing_router
 from .workflow import router as workflow_router
+from .workpapers import router as workpapers_router
 
 router = APIRouter()
 router.include_router(tenant_router)
@@ -31,6 +32,7 @@ router.include_router(intake_router)
 router.include_router(manual_review_router)
 router.include_router(workflow_router)
 router.include_router(testing_router)
+router.include_router(workpapers_router)
 router.include_router(downloads_router)
 
 __all__ = ["router"]

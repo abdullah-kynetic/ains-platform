@@ -91,3 +91,9 @@ PUT /auditor/firm/request-templates/{template_id} practice_scope
 DELETE /auditor/firm/request-templates/{template_id} practice_scope
 GET /auditor/engagements/{engagement_id}/checklist-tests auditor_scope
 PATCH /auditor/engagements/{engagement_id}/checklist-tests/{request_id} auditor_scope
+GET /auditor/engagements/{engagement_id}/workpapers auditor_scope
+PUT /auditor/engagements/{engagement_id}/workpapers/{request_id} auditor_scope
+POST /auditor/engagements/{engagement_id}/workpapers/{request_id}/review auditor_scope
+GET /auditor/engagements/{engagement_id}/samples auditor_scope
+POST /auditor/engagements/{engagement_id}/samples auditor_scope
+PATCH /auditor/samples/{set_id}/items/{sample_item_id} auditor_scope
