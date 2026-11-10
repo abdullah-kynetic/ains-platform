@@ -111,7 +111,7 @@ def real_workflow_rows(factory, ids):
             )
         )
         db.commit()
-        return {"document_id": document.id, "issue_id": issue.id}
+        return {"document_id": document.id, "issue_id": issue.id, "request_id": "AML-BD-004"}
 
 
 def actions(factory):

@@ -102,3 +102,5 @@ GET /auditor/firm/request-templates auditor
 POST /auditor/firm/request-templates auditor
 PUT /auditor/firm/request-templates/{template_id} auditor
 DELETE /auditor/firm/request-templates/{template_id} auditor
+GET /auditor/engagements/{engagement_id}/checklist-tests auditor
+PATCH /auditor/engagements/{engagement_id}/checklist-tests/{request_id} auditor

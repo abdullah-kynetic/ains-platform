@@ -342,6 +342,10 @@ class ChecklistItemInstance(Base):
     na_request_reason: Mapped[str | None] = mapped_column(Text)
     na_decision_note: Mapped[str | None] = mapped_column(Text)
     na_decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Auditor's own test result for this request (pass, partial, fail or na); never inferred.
+    conclusion: Mapped[str | None] = mapped_column(String(8))
+    conclusion_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    conclusion_updated_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     # Client submitted this item for auditor review.
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     submitted_by_id: Mapped[str | None] = mapped_column(String(36))

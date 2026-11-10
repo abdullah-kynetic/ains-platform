@@ -89,3 +89,5 @@ GET /auditor/firm/request-templates practice_scope
 POST /auditor/firm/request-templates practice_scope
 PUT /auditor/firm/request-templates/{template_id} practice_scope
 DELETE /auditor/firm/request-templates/{template_id} practice_scope
+GET /auditor/engagements/{engagement_id}/checklist-tests auditor_scope
+PATCH /auditor/engagements/{engagement_id}/checklist-tests/{request_id} auditor_scope
