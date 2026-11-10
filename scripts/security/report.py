@@ -56,13 +56,38 @@ def findings(scanner: str, raw: str) -> list[dict]:
 
 
 if __name__ == "__main__":
-    scanner, status, source, target = sys.argv[1:]
+    scanner, status, source, target, *logs = sys.argv[1:]
     try:
         rows = findings(scanner, Path(source).read_text())
     except (OSError, AttributeError, TypeError):
         rows = []
+    diagnostics = []
+    if logs:
+        try:
+            log = Path(logs[0]).read_text(errors="replace").lower()
+        except OSError:
+            log = ""
+        for label, needles in {
+            "certificate-verification": ["certificate verify failed", "unknown authority"],
+            "network-denied": ["domain forbidden", "403 forbidden"],
+            "network-unavailable": ["connection refused", "connection timed out"],
+            "read-only-filesystem": ["read-only file system"],
+        }.items():
+            if any(needle in log for needle in needles):
+                diagnostics.append(label)
     Path(target).write_text(json.dumps({
         "scanner": scanner, "exit_status": int(status), "findings": rows,
+        "diagnostics": diagnostics,
         "note": "Only finding IDs, locations and severities are exported. "
                 "Nonzero status without findings can indicate a tool or network error.",
     }, indent=2) + "\n")
+
+    if int(status):
+        def escape(value):
+            return str(value).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+        summary = f"{scanner}: exit {status}; findings={len(rows)}; diagnostics={diagnostics}"
+        print("::error title=Security scan failed::" + escape(summary))
+        for row in rows:
+            metadata = f"{row['id']} | {row['location']} | {row['severity']}"
+            print("::error title=Security finding metadata::" + escape(metadata))

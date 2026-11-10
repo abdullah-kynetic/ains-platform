@@ -128,3 +128,24 @@ def test_ci_installs_from_frozen_lockfiles():
     commands = [step.get('run') for job in workflow['jobs'].values() for step in job['steps']]
     assert 'uv sync --frozen' in commands
     assert 'npm ci' in commands
+
+
+def test_failure_annotations_keep_only_metadata_and_fixed_diagnostic_labels(tmp_path):
+    import json
+
+    source, log, report = (tmp_path / name for name in ['findings.json', 'raw.log', 'safe.json'])
+    source.write_text(json.dumps({'results': [{
+        'check_id': 'rule\n::warning::injected', 'path': 'example.ts',
+        'extra': {'severity': 'ERROR', 'lines': 'synthetic-sensitive-output'},
+    }]}))
+    log.write_text('Domain forbidden: synthetic-sensitive-output')
+    result = subprocess.run([
+        'python3', str(SCRIPT.with_name('report.py')), 'semgrep', '2',
+        str(source), str(report), str(log),
+    ], capture_output=True, text=True)
+    assert result.returncode == 0
+    assert 'synthetic-sensitive-output' not in result.stdout + report.read_text()
+    assert '\n::warning::injected' not in result.stdout
+    assert 'rule%0A::warning::injected' in result.stdout
+    assert 'network-denied' in result.stdout
+    assert json.loads(report.read_text())['diagnostics'] == ['network-denied']

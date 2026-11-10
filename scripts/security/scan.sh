@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Reports intentionally contain status only: scanner output may contain secrets.
+# Export only allowlisted finding metadata; raw scanner output may contain secrets.
 set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 scanner=${1:?Usage: scan.sh <scanner>}
@@ -46,6 +46,6 @@ result=$?
 set -e
 printf 'Scanner: %s\nExit status: %s\n' "$scanner" "$result" \
   > "security-reports/$scanner.txt"
-python3 "$script_dir/report.py" "$scanner" "$result" "$scratch/findings.json" "security-reports/$scanner.json"
+python3 "$script_dir/report.py" "$scanner" "$result" "$scratch/findings.json" "security-reports/$scanner.json" "$scratch/raw.log"
 cat "security-reports/$scanner.txt"
 exit "$result"
