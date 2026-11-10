@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select } from "@/components/ui/select";
 import { PageHeader, Stat } from "@/components/shell/page";
 import { LoadState } from "@/components/ui/load-state";
+import { USE_MOCKS } from "@/lib/api";
 import { getPipeline, movePipelineStage, type PipelineEngagement, type PipelineStage } from "@/lib/workflow-api";
 
 const stages: { id: PipelineStage; label: string; description: string }[] = [
@@ -45,6 +46,8 @@ export function AuditorPipelineBoard() {
   const [engagements, setEngagements] = useState<PipelineEngagement[]>([]);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [moving, setMoving] = useState<string | null>(null);
+  const [asOf] = useState(() => new Date().setHours(0, 0, 0, 0));
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     getPipeline()
@@ -59,11 +62,14 @@ export function AuditorPipelineBoard() {
     const engagement = engagements.find((item) => item.id === engagementId);
     if (!engagement || engagement.stage === stage) return;
     setError("");
+    setMoving(engagementId);
     try {
       await movePipelineStage(engagementId, stage);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to move this engagement.");
       return;
+    } finally {
+      setMoving(null);
     }
     setEngagements((current) =>
       current.map((item) =>
@@ -71,7 +77,7 @@ export function AuditorPipelineBoard() {
       ),
     );
     setNotice(
-      `${engagement.firm} moved to ${stageLabel(stage)} in this synthetic preview. No report was signed or finalized.`,
+      `${engagement.firm} moved to ${stageLabel(stage)}${USE_MOCKS ? " in this synthetic preview" : ""}. No report was signed or finalized.`,
     );
   }
 
@@ -79,8 +85,8 @@ export function AuditorPipelineBoard() {
     <>
       <PageHeader
         title="Audit pipeline"
-        description="Move synthetic engagements through the independent AML test workflow. Pipeline movement coordinates work; it never signs a report or finalizes a finding."
-        badge={<Badge variant="brand">Synthetic preview</Badge>}
+        description="Move engagements through the independent AML test workflow. Pipeline movement coordinates work; it never signs a report or finalizes a finding."
+        badge={USE_MOCKS ? <Badge variant="brand">Synthetic preview</Badge> : undefined}
       />
 
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -98,8 +104,12 @@ export function AuditorPipelineBoard() {
         />
         <Stat
           label="Due soon"
-          value="3"
-          hint="Synthetic deadlines within 30 days"
+          value={active.filter((entry) => {
+            if (!entry.due) return false;
+            const remaining = new Date(`${entry.due}T00:00:00`).getTime() - asOf;
+            return remaining >= 0 && remaining <= 30 * 24 * 60 * 60 * 1000;
+          }).length}
+          hint="Deadlines within the next 30 days"
           icon={<CalendarDays className="size-4" />}
         />
         <Stat
@@ -200,7 +210,7 @@ export function AuditorPipelineBoard() {
                           className="grid size-7 place-items-center rounded-full bg-foreground text-xs font-semibold text-background"
                           title={`Assigned to ${engagement.assignee}`}
                         >
-                          Q
+                          {engagement.assignee.split(" ").filter(Boolean).map((part) => part[0]).slice(0, 2).join("") || "—"}
                         </span>
                       </div>
 
@@ -219,6 +229,7 @@ export function AuditorPipelineBoard() {
                           className="mt-[var(--space-2)]"
                           aria-label={`Move ${engagement.firm} to stage`}
                           value={engagement.stage}
+                          disabled={moving === engagement.id}
                           onChange={(event) =>
                             moveEngagement(
                               engagement.id,

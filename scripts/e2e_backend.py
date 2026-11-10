@@ -7,6 +7,7 @@ browser test exercises the real /auth/* routes. Never point this at a real datab
 """
 
 import argparse
+import hashlib
 import os
 import sys
 from datetime import UTC, date, datetime, timedelta
@@ -28,6 +29,9 @@ USERS = {
 
 
 def configure(db_path: Path) -> None:
+    # Browser flows share one loopback IP; keep their aggregate traffic below a finite
+    # test-only limit. Account lockout remains enabled; this is not rate-limit proof.
+    os.environ["API_RATE_LIMIT_PER_MINUTE"] = "1200"
     os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{db_path}"
     os.environ["SESSION_SECRET"] = "synthetic-e2e-session-secret-not-for-real-use-0000"
     os.environ["SESSION_COOKIE_SECURE"] = "false"
@@ -36,10 +40,15 @@ def configure(db_path: Path) -> None:
 
 
 def seed() -> None:
+    from sqlalchemy import select
+
     from app.auth.security import hash_invitation_token, hash_password
+    from app.checklist.catalog import initialize_engagement
     from app.database.models import (
+        AuditLog,
         Base,
         ClientInvitation,
+        Document,
         Engagement,
         Firm,
         User,
@@ -78,11 +87,41 @@ def seed() -> None:
         engagement = Engagement(
             firm_id=firm.id,
             auditor_id=auditor.id,
+            due_date=date.today(),
             review_period_start=date(2025, 1, 1),
             review_period_end=date(2025, 12, 31),
         )
         db.add(engagement)
         db.flush()
+        initialize_engagement(engagement)
+        db.flush()
+        client = db.scalar(select(User).where(User.email == USERS["client"]))
+        item = next(item for item in engagement.items if item.item_key == "AML-BD-001")
+        # Receipt metadata only: these review tests do not claim upload or storage proof.
+        document = Document(
+            firm_id=firm.id, engagement_id=engagement.id, item_instance_id=item.id,
+            uploaded_by_id=client.id, original_name="synthetic-review-policy.pdf",
+            content_type="application/pdf", size_bytes=28,
+            egnyte_path="/synthetic-e2e/receipt-only/policy.pdf",
+            sha256=hashlib.sha256(b"synthetic-review-policy").hexdigest(),
+        )
+        db.add(document)
+        db.flush()
+        db.add(AuditLog(
+            firm_id=firm.id, actor_id=client.id, action="document.created",
+            entity_type="checklist_item_instance", entity_id=item.id,
+            details={"document_id": document.id},
+        ))
+        other_firm = Firm(name="Synthetic Other Firm", slug="synthetic-other")
+        db.add(other_firm)
+        db.flush()
+        other_engagement = Engagement(
+            id="synthetic-other-engagement", firm_id=other_firm.id,
+            review_period_start=date(2025, 1, 1), review_period_end=date(2025, 12, 31),
+        )
+        db.add(other_engagement)
+        db.flush()
+        initialize_engagement(other_engagement)
         db.add(
             ClientInvitation(
                 firm_id=firm.id,

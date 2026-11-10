@@ -19,14 +19,19 @@ fixture["configure"](Path(sys.argv[2]))
 fixture["seed"]()
 
 from sqlalchemy import select
-from app.database.models import Firm, User, UserRole
+from app.database.models import Document, Engagement, Firm, User, UserRole
 from app.database.session import get_session_factory
 
 with get_session_factory()() as db:
-    firm = db.scalar(select(Firm))
+    firm = db.scalar(select(Firm).where(Firm.slug == "kynetic"))
     assert firm.slug == "kynetic"
     assert urlsplit(fixture["ORIGIN"]).hostname == f"{firm.slug}.localhost"
     clients = db.scalars(select(User).where(User.role == UserRole.CLIENT)).all()
+    other = db.get(Engagement, "synthetic-other-engagement")
+    assert other is not None and other.firm_id != firm.id
+    document = db.scalar(select(Document))
+    assert document.firm_id == firm.id and document.item_instance_id
+    assert document.original_name == "synthetic-review-policy.pdf"
     assert len(clients) == 2
     assert all(client.firm_id == firm.id for client in clients)
 '''

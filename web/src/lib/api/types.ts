@@ -68,9 +68,9 @@ export type EngagementDocument = {
   requestId: string;
   name: string;
   sha256: string;
-  pages: number;
+  pages: number | null;
   uploadedAt: string;
-  uploadedBy: string;
+  uploadedBy: string | null;
   /** Document-level feedback only (unreadable, wrong period, missing pages). Never findings. */
   feedback: string | null;
 };
