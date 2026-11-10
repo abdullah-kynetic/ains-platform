@@ -36,6 +36,22 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
 - **L2-5 S-01 through S-06** — Auth proofs. [#99](https://github.com/abdullah-kynetic/ains-platform/pull/99) **confirmed merged** Monday, Nov 9, 2026, 5:07 PM Pacific Time (America/Los_Angeles) (`merged_at` 2026-11-10T01:07:21Z, merge commit `083daba`). Branch was `lane2/l2-5`. Evidence in `docs/security/evidence/app-s-01.md` through `app-s-06.md`. PR body: 15 security tests passed; broader auth/reset/API suite 70 passed. Fixes shipped: auditor sessions are revoked when MFA is disabled, and on role or firm change (including rollback). Sign-out remains available after MFA disablement. Legacy tokens without role/firm claims need a fresh sign-in after deploy. No model, frozen-path, web-source, server or deployment changes.
 - Related Lane 1 merge that unblocked the portal: [#98](https://github.com/abdullah-kynetic/ains-platform/pull/98) (live fixture host + current migration head). Not a Lane 2 item.
 
+## Update 2026-11-10 (Claude Code, Lane 2)
+
+- **GitHub Actions outage.** From about 19:46 UTC every job on every new push fails in 1-2 seconds
+  with no steps (CI and Security, even on a docs-only PR). Re-run did not help. Nothing can be
+  merged until it recovers; this is not a code failure. Check the account's Actions billing and
+  spending limit first.
+- **#102** now carries the `krb5-libs` pin cherry-picked from #103 (commit `40e2fd5`; Dockerfile
+  exception recorded here) and main merged in. Local: ruff clean, 535 passed, 1 skipped
+  (PostgreSQL tests cannot run locally; CI is authoritative). Merge it when CI and Security are green.
+- **Workflow PR** (branch `claude/project-thread-grvxp5`, stacked on #102): steps 1-9 of Next 3 in
+  one tested slice (dispatch, reasoned N/A, document numbers, links and submit, issue flags and
+  threads, progress, report confirmation, invoice gate, stages). Contract for Lane 1:
+  `docs/kb/23-workflow-api.md`. Migration `a120_workflow_routes`.
+  Open decisions for Abdullah are at the end of that file.
+- Still to do after it: #104 (S-12), S-19, then 4 (L2-6 a-h), 5-8.
+
 ## In progress
 
 ### 1. PR #102 — S-07 through S-15 except S-12 (open, not mergeable until the image scan is green)
