@@ -48,10 +48,9 @@ report the client confirmed cannot be reopened.
 
 ## Decisions to review (Lane 2 made these; Abdullah can overrule)
 
-1. The client report view sends the human-authored sections only. The final report's sections can
-   contain the findings text an auditor chose to publish, so the client sees findings only
-   through a report a human finalized. Item-level findings, the status snapshot and internal
-   fields are never sent.
+1. Clients never see findings. The client report view withholds the findings section (by
+   its template heading), item-level findings and the status snapshot. It sends the other
+   human-authored sections and the hash. Abdullah decides whether to ever release findings.
 2. An engagement invoice with no `engagementId` is not gated (manual invoices stay possible).
 3. The checklist stays readable by the client before dispatch; uploads were already blocked for
    draft engagements. Lane 1 should use `checklistSentAt` to gate the screen.

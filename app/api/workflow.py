@@ -35,6 +35,7 @@ from app.database.models import (
     User,
     UserRole,
 )
+from app.reports import ReportGenerator
 from app.workflow import (
     ISSUE_KINDS,
     ISSUE_REASON,
@@ -706,6 +707,9 @@ def _client_report_view(engagement: Engagement, report: EngagementReport) -> dic
     # Allowlist: the human-authored sections and the hash. Item findings, the status snapshot
     # and internal fields are never sent to the client.
     sections = report.content.get("sections", []) if isinstance(report.content, dict) else []
+    # Clients never see findings: the findings section is withheld until Abdullah decides.
+    hidden = ReportGenerator().template.findings_heading.strip().casefold()
+    sections = [s for s in sections if str(s.get("title", "")).strip().casefold() != hidden]
     return {
         "engagementId": engagement.id,
         "reportId": report.id,

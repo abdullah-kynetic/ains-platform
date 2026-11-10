@@ -565,6 +565,10 @@ def test_client_report_confirmation_flow_gates_the_invoice(backend):  # noqa: F8
         "confirmed", "confirmedAt",
     }  # fmt: skip
     assert not set(keys(view)) & FORBIDDEN and view["confirmed"] is False
+    from app.reports import ReportGenerator
+
+    heading = ReportGenerator().template.findings_heading
+    assert heading not in [section["title"] for section in view["sections"]]
     wrong = client.post(f"{report_path}/confirm", json={"contentSha256": "a" * 64})
     assert wrong.status_code == 409
     confirmed = client.post(
