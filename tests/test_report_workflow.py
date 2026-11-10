@@ -20,6 +20,7 @@ def test_report_prefill_edit_finalize_lock_reopen_and_audit(invoices):
     client, factory, ids, _ = invoices
     with factory() as db:
         engagement = db.get(Engagement, ids["engagements"][0])
+        engagement.report_confirmed_at = None  # a confirmed report cannot be reopened
         initialize_engagement(engagement)
         engagement.items[0].status = ClientStatus.NOT_APPLICABLE
         db.add(

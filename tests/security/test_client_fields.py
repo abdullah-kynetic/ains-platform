@@ -9,16 +9,28 @@ from tests.security.test_tenant_isolation import _send
 from tests.test_backend_api import sign_in_auditor, sign_in_client
 from tests.test_responses_requested import release
 from tests.test_route_isolation import INVENTORY, LEAKS, _seed_internal_material, fill
+from tests.test_workflow_routes import real_workflow_rows
 
 READS = {
     ("GET", "/engagements/current"),
     ("GET", "/engagements/{engagement_id}/questionnaire"),
     ("GET", "/engagements/{engagement_id}/responses-requested"),
+    ("GET", "/engagements/{engagement_id}/progress"),
+    ("GET", "/engagements/{engagement_id}/issues"),
 }
 MUTATIONS = {
     ("POST", "/engagements/{engagement_id}/documents"): 201,
     ("POST", "/engagements/{engagement_id}/items/{item_id}/documents"): 201,
-    ("POST", "/engagements/{engagement_id}/items/{item_id}/na"): 200,
+    ("POST", "/engagements/{engagement_id}/items/{item_id}/na"): 409,
+    ("POST", "/engagements/{engagement_id}/items/{item_id}/na-request"): 200,
+    ("POST", "/engagements/{engagement_id}/items/{item_id}/submit"): 409,
+    ("POST", "/engagements/{engagement_id}/submit"): 409,
+    ("POST", "/engagements/{engagement_id}/items/{item_id}/documents/{document_id}/link"): 200,
+    ("DELETE", "/engagements/{engagement_id}/items/{item_id}/documents/{document_id}/link"): 404,
+    ("POST", "/engagements/{engagement_id}/issues/{issue_id}/replies"): 201,
+    # No finalized report exists in this fixture; tests/test_workflow_routes.py covers the view.
+    ("GET", "/engagements/{engagement_id}/report"): 404,
+    ("POST", "/engagements/{engagement_id}/report/confirm"): 404,
     ("POST", "/engagements/{engagement_id}/items/{item_id}/representations"): 200,
     ("POST", "/engagements/{engagement_id}/questionnaire/answers"): 200,
     ("POST", "/engagements/{engagement_id}/questionnaire/items/{item_id}/na-review"): 403,
@@ -78,6 +90,7 @@ def test_client_mutation_responses_never_serialize_finding_fields(backend, metho
         db.get(ChecklistItemInstance, original["item_a"]).item_key = "AML-BD-012"
         db.commit()
     ids = {**original, "engagement_id": original["engagement_a"], "item_id": original["item_a"]}
+    ids.update(real_workflow_rows(factory, original))
     sign_in_client(client)
     response = _send(client, method, path, ids)
     assert response.status_code == expected, (method, path, response.status_code)

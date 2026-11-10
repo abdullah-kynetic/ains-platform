@@ -19,7 +19,7 @@ ITEM = {
     "naMarkedByRole", "naReviewState", "reason", "representation", "requestId", "restricted",
     "status", "title",
 }  # fmt: skip
-FILE = {"id", "name", "size", "sha256", "uploadedAt", "feedback"}
+FILE = {"id", "name", "size", "sha256", "uploadedAt", "feedback", "number"}
 CHECK_MARKER = "CHECK-DETAIL-MARKER-9d1"
 
 

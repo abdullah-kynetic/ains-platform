@@ -90,9 +90,7 @@ def assignment_owner(user: User):
 
 
 def assigned(db: Session, user: User, firm_id: str, engagement_id: str | None) -> None:
-    query = select(Engagement.id).where(
-        Engagement.firm_id == firm_id, assignment_owner(user)
-    )
+    query = select(Engagement.id).where(Engagement.firm_id == firm_id, assignment_owner(user))
     if engagement_id:
         query = query.where(Engagement.id == engagement_id)
     if not db.scalar(query.limit(1)):
@@ -202,6 +200,21 @@ def create_invoice(db: Session, user: User, payload: InvoiceInput) -> Invoice:
     apply_input(db, invoice, payload)
     record(db, invoice, user, "created", None)
     return invoice
+
+
+def require_report_confirmed(db: Session, invoice: Invoice) -> None:
+    """Issuing an engagement invoice needs the client's recorded report confirmation."""
+    if not invoice.engagement_id:
+        return
+    engagement = db.scalar(
+        select(Engagement).where(
+            Engagement.id == invoice.engagement_id, Engagement.firm_id == invoice.firm_id
+        )
+    )
+    if engagement is None or engagement.report_confirmed_at is None:
+        raise HTTPException(
+            409, "An invoice can be issued only after the client confirms the report"
+        )
 
 
 def transition(
