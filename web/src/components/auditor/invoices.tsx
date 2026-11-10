@@ -431,7 +431,7 @@ export function InvoiceForm({ id }: { id?: string }) {
           <fieldset disabled={busy} className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Client & dates</CardTitle>
+                <CardTitle>Client &amp; dates</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 <Field label="Client firm">
