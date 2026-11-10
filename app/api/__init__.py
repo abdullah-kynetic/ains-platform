@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from .audit_log import router as audit_log_router
 from .auditor import router as auditor_router
+from .client_invoices import router as client_invoices_router
 from .client_profiles import router as client_profiles_router
 from .downloads import router as downloads_router
 from .engagements import router as engagements_router
@@ -41,6 +42,7 @@ router.include_router(findings_router)
 router.include_router(report_draft_router)
 router.include_router(signoff_router)
 router.include_router(feed_router)
+router.include_router(client_invoices_router)
 router.include_router(downloads_router)
 
 __all__ = ["router"]

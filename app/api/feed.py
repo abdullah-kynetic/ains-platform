@@ -27,6 +27,7 @@ from app.database.models import (
     EngagementStatus,
     Finding,
     FindingDraft,
+    Invoice,
     NotificationRead,
     ResponseRequest,
     SampleSet,
@@ -169,6 +170,28 @@ def _derive(db, user: User) -> list[NotificationView]:
                         "deadline",
                     )
                 )
+    for invoice in db.scalars(
+        select(Invoice)
+        .where(
+            Invoice.firm_id.in_(firm_ids),
+            Invoice.auditor_id == user.id,
+            Invoice.status == "sent",
+            Invoice.due_date < date.today(),
+        )
+        .limit(20)
+    ):
+        if invoice.amount_paid_cents >= invoice.total_cents:
+            continue
+        out.append(
+            (
+                f"invoice-overdue-{invoice.id}",
+                datetime.combine(invoice.due_date, datetime.min.time(), tzinfo=UTC),
+                f"Invoice KIEN-{invoice.number:04d} is overdue",
+                f"Due {invoice.due_date.isoformat()}",
+                f"/auditor/invoices/{invoice.id}",
+                "invoice",
+            )
+        )
     uploads = db.execute(
         select(Document, User.role)
         .join(User, User.id == Document.uploaded_by_id)

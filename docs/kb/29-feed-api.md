@@ -20,7 +20,7 @@ Migration `a127_notification_reads`. Auditor-only; clients have no route. Synthe
 - **Notifications** are computed on each request from the caller's assigned engagements: deadline
   (due within 14 days or overdue, not complete), client upload (last 14 days), client response to a
   released request (last 14 days), reviewer approved, partner signed. Only read marks are stored
-  (`notification_reads`, per user). No `invoice` notifications yet (L2-6h).
+  (`notification_reads`, per user). `invoice`: own sent invoices past due and unpaid (added in L2-6h).
 - **Search** matches firm names, engagement status, finding title or rule, checklist request id or
   title, and document name or number, only within assigned engagements. Wildcard characters are
   escaped. It never searches document contents.

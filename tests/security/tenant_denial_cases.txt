@@ -122,3 +122,4 @@ GET /auditor/notifications auditor_scope
 POST /auditor/notifications/read-all auditor_scope
 POST /auditor/notifications/{notification_id}/read auditor_scope
 GET /auditor/search auditor_scope
+GET /engagements/{engagement_id}/invoices client_scope

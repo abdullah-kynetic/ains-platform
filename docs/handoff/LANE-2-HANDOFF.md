@@ -80,7 +80,11 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
 - **Done: L2-6g** (branch `lane2/l2-6g-activity`): per-engagement activity, derived notifications
   with read marks, search. Migration `a127_notification_reads`. Contract and decisions:
   `docs/kb/29-feed-api.md`.
-- **Next:** L2-6h (client invoices), then L2-7 to L2-10.
+- **Merged:** #114 (L2-6g activity, notifications, search).
+- **Done: L2-6h** (branch `lane2/l2-6h-client-invoices`): client invoice list plus overdue-invoice
+  notifications. No migration. Contract and decisions: `docs/kb/30-client-invoices-api.md`.
+  This finishes L2-6.
+- **Next:** L2-7 (storage complete), L2-8 (flows), L2-9 (pilot seed), L2-10 (readiness tracker).
 
 ## In progress
 

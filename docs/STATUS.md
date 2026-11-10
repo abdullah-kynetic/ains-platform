@@ -198,3 +198,9 @@ The legacy `POST /auditor/engagements/{id}/report/signoff` is untouched and stil
 `GET /auditor/engagements/{id}/activity`, `GET /auditor/notifications` (+ read, read-all) and
 `GET /auditor/search` are real (`app/api/feed.py`, migration `a127_notification_reads`, contract
 `docs/kb/29-feed-api.md`). All are scoped to assigned engagements; none returns entered text.
+
+## L2-6h client invoices (branch lane2/l2-6h-client-invoices)
+
+`GET /engagements/{id}/invoices` gives the client their firm's sent and paid invoices
+(`app/api/client_invoices.py`, contract `docs/kb/30-client-invoices-api.md`). Overdue unpaid
+invoices also appear as auditor notifications. This completes L2-6 (groups a to h).
