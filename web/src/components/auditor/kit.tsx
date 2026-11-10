@@ -61,3 +61,18 @@ export const FindingStatusBadge = ({ value }: { value: FindingStatus }) => <Badg
 export const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "—");
 export const fmtDateTime = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC" }) + " UTC" : "—");
 export const money = (cents: number) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+
+/** Keep a failed mutation visible and retain form values for retry. */
+export function useMutation() {
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState("");
+  const run = async <T,>(action: () => Promise<T>, onSuccess?: (result: T) => void) => {
+    if (busy) return;
+    setBusy(true);
+    setProblem("");
+    try { const result = await action(); onSuccess?.(result); }
+    catch (error) { setProblem(error instanceof Error ? error.message : "Unable to save. Try again."); }
+    finally { setBusy(false); }
+  };
+  return { busy, problem, run };
+}

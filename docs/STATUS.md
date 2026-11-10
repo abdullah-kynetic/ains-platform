@@ -106,3 +106,16 @@ S-01 through S-06 now have executable proofs in `tests/security/` and evidence u
 ## Portal rebuild recheck after Lane 1 fixes
 
 RESOLVED: #98 aligned the live fixture hostname with its synthetic firm and made the migration-head guard check the current single head. #96 merged current main, including #97 Security and #99 auth proofs. Its prior pre-auth full run passed 478 tests (12 skipped locally), and the corrected real local backend browser run passed all 8 tests. Fresh combined full CI, Security and independent verification are required before #96 merges. The auth/portal merge preserves request-time identity/MFA checks and portal firm binding; authenticated sign-out remains possible from any portal.
+
+### L1-7 firm contract detail
+
+Lane 1's firm-settings slice uses the existing team/rubric/template contract
+routes listed above. `FirmBranding` now uses `{name, tagline, logoUrl}` instead of
+`logoDataUrl`: `POST /auditor/firm/branding/logo` accepts multipart field `file`
+and returns `{logoUrl}` pointing to authenticated object storage (HTTPS or a
+same-origin path); PUT branding saves that URL, never file bytes/data URLs.
+The server must enforce allowed image types/size and authorization, last-partner
+protection, rubric approval and template ownership. These routes remain
+BLOCKED(Lane 2) until merged; current live pages show Not available yet and keep
+mutation controls disabled. The demo remains explicitly synthetic. No live logo
+storage, invitation delivery or firm-settings write proof is claimed.

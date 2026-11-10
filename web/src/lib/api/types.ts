@@ -166,7 +166,7 @@ export type TeamMember = {
   role: TeamRole;
   status: "active" | "invited";
 };
-export type FirmBranding = { name: string; logoDataUrl: string | null; tagline: string };
+export type FirmBranding = { name: string; logoUrl: string | null; tagline: string };
 export type RubricItem = {
   requestId: string;
   title: string;
