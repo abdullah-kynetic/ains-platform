@@ -172,3 +172,11 @@ def test_caddy_pinned_address_is_outside_the_dynamic_range():
     caddy_ip = ipaddress.ip_address(SERVICES["caddy"]["networks"]["edge"]["ipv4_address"])
     assert caddy_ip in ipaddress.ip_network(cfg["subnet"])
     assert caddy_ip not in ipaddress.ip_network(cfg["ip_range"])
+
+
+def test_deploy_script_has_no_trailing_and_lists_that_abort_under_set_e():
+    # `[ cond ] && cmd` as a statement exits the script under `set -e` when cond is false.
+    for script in ("deploy/deploy.sh", "deploy/rollback.sh"):
+        for line in Path(script).read_text().splitlines():
+            stripped = line.strip()
+            assert not re.match(r"^\[ .* \] && ", stripped), f"{script}: {stripped}"

@@ -21,30 +21,35 @@ avail=$(df --output=avail -k / | tail -1)
 
 prev=$(grep -E '^KIEN_IMAGE=' "$KIEN_ENV_FILE" | cut -d= -f2- || true)
 mkdir -p "$STATE"
-[ -n "$prev" ] && echo "$prev" > "$STATE/previous-image"
+if [ -n "$prev" ]; then echo "$prev" > "$STATE/previous-image"; fi
 sed -i "s#^KIEN_IMAGE=.*#KIEN_IMAGE=$image#" "$KIEN_ENV_FILE"
 grep -q '^KIEN_IMAGE=' "$KIEN_ENV_FILE" || echo "KIEN_IMAGE=$image" >> "$KIEN_ENV_FILE"
 
 kien_compose up -d --wait postgres
-[ -f /etc/kien/db-roles.env ] && "$HERE/bootstrap/db-roles.sh"
+roles() { if [ -f /etc/kien/db-roles.env ]; then "$HERE/bootstrap/db-roles.sh"; fi; }
+roles
 
 # Backup first if this image carries a migration the database has not run yet.
 pending=0
 if kien_compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select 1 from alembic_version"' >/dev/null 2>&1; then
   current=$(kien_compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select version_num from alembic_version"')
-  heads=$(docker run --rm --network none "$image" alembic heads 2>/dev/null | awk '{print $1}')
+  heads=$(docker run --rm --network none -e RUN_MIGRATIONS=0 "$image" alembic heads | awk '{print $1}')
   [ "$current" = "$heads" ] || pending=1
 fi
-if [ "$pending" = 1 ] && [ -f /etc/kien/restic.env ]; then
-  "$HERE/backup/backup.sh"
+if [ "$pending" = 1 ]; then
+  if [ -f /etc/kien/restic.env ]; then
+    "$HERE/backup/backup.sh"
+  else
+    echo "warning: migration pending but no /etc/kien/restic.env; skipping pre-deploy backup" >&2
+  fi
 fi
 
 kien_compose up -d clamav
 kien_compose run --rm migrate
-[ -f /etc/kien/db-roles.env ] && "$HERE/bootstrap/db-roles.sh" # grants for any new tables
+roles # grants for any new tables
 services=(api worker caddy)
 profile=()
-[ "${KIEN_AI:-0}" = 1 ] && { profile=(--profile ai); services+=(ai-adapter); }
+if [ "${KIEN_AI:-0}" = 1 ]; then profile=(--profile ai); services+=(ai-adapter); fi
 kien_compose "${profile[@]}" up -d --wait "${services[@]}"
 "$HERE/ops/healthcheck.sh"
 
