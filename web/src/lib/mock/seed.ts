@@ -215,7 +215,7 @@ export const seedTeam = (): TeamMember[] => [
   { id: "tm-4", name: "Abdullah (admin)", email: "admin@kien-synthetic.test", role: "admin", status: "active" },
   { id: "tm-5", name: "Chris Lindgren", email: "chris.lindgren@kien-synthetic.test", role: "auditor", status: "invited" },
 ];
-export const seedBranding = (): FirmBranding => ({ name: "Kien Solutions", logoDataUrl: null, tagline: "Independent AML testing for broker-dealers" });
+export const seedBranding = (): FirmBranding => ({ name: "Kien Solutions", logoUrl: null, tagline: "Independent AML testing for broker-dealers" });
 export const seedRubric = (): RubricItem[] =>
   catalog.requests.map((r) => ({ requestId: r.id, title: r.title, section: r.section, criteria: "", enabled: true }));
 

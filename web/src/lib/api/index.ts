@@ -13,3 +13,4 @@ export * from "./notifications";
 export * from "./search";
 export * from "./portal";
 export { listActivity } from "./log";
+export { NotAvailableError } from "./contract";
