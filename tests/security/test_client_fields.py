@@ -18,6 +18,7 @@ READS = {
     ("GET", "/engagements/{engagement_id}/progress"),
     ("GET", "/engagements/{engagement_id}/issues"),
     ("GET", "/engagements/{engagement_id}/response-requests"),
+    ("GET", "/engagements/{engagement_id}/signed-report"),
 }
 MUTATIONS = {
     ("POST", "/engagements/{engagement_id}/documents"): 201,

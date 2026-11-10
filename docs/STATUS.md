@@ -184,3 +184,11 @@ text. Contract: [`docs/kb/26-findings-api.md`](kb/26-findings-api.md). No live p
 Server-assembled report draft from the auditor's own conclusions, samples and non-draft findings,
 section edits, and real Word and PDF downloads, auditor-only. Contract:
 [`docs/kb/27-report-draft-api.md`](kb/27-report-draft-api.md). No live proof is claimed.
+
+## L2-6f independence and sign-off (branch lane2/l2-6f-signoff)
+
+Independence declaration, second-reviewer approval, partner signature, completion and the client's
+signed report are real routes (`app/api/signoff.py`, migration `a126_engagement_signoffs`,
+contract `docs/kb/28-signoff-api.md`). Every step is a recorded human action and is audit-logged.
+The legacy `POST /auditor/engagements/{id}/report/signoff` is untouched and still sends the
+"report ready" email; the new flow sends no email.

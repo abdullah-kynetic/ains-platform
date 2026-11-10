@@ -122,3 +122,11 @@ GET /auditor/engagements/{engagement_id}/report-draft auditor
 PUT /auditor/engagements/{engagement_id}/report-draft/sections/{section_id} auditor
 GET /auditor/engagements/{engagement_id}/report-draft/docx auditor
 GET /auditor/engagements/{engagement_id}/report-draft/pdf auditor
+GET /auditor/engagements/{engagement_id}/independence auditor
+PUT /auditor/engagements/{engagement_id}/independence auditor
+GET /auditor/engagements/{engagement_id}/signoff auditor
+GET /auditor/engagements/{engagement_id}/signoff/blockers auditor
+POST /auditor/engagements/{engagement_id}/signoff/review auditor
+POST /auditor/engagements/{engagement_id}/signoff/partner auditor
+POST /auditor/engagements/{engagement_id}/complete auditor
+GET /engagements/{engagement_id}/signed-report client

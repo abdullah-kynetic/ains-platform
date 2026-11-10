@@ -72,7 +72,11 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
 - **Done: L2-6e** (branch `lane2/l2-6e-report-draft`, stacked on #111): assembled report draft,
   section edits, real `.docx` and PDF downloads. Migration `a125_report_section_edits`. Contract and
   decisions: `docs/kb/27-report-draft-api.md`. Client reports wait for sign-off (L2-6f).
-- **Next:** L2-6f (independence, sign-off: review, partner, complete), then g-h, L2-7 to L2-10.
+- **Merged:** #112 (L2-6e report draft).
+- **Done: L2-6f** (branch `lane2/l2-6f-signoff`): independence, reviewer approval, partner
+  signature with server-computed fingerprint, completion, client signed report. Migration
+  `a126_engagement_signoffs`. Contract and decisions: `docs/kb/28-signoff-api.md`.
+- **Next:** L2-6g (activity, notifications, search), L2-6h (client invoices), then L2-7 to L2-10.
 
 ## In progress
 
