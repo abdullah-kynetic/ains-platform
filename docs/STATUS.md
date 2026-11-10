@@ -144,3 +144,13 @@ RESOLVED: #98 aligned the live fixture hostname with its synthetic firm and made
 L2-3 complete: #96 merged as `9a8a10a`; original #45 closed. Final combined backend: 493 passed, 12 skipped locally. Both local browser suites passed (82 mock, 8 real local API), including production-style aliases through a loopback-only test transport. Hosted CI/PostgreSQL, all nine Security jobs and independent security review passed. No server or deployment action occurred.
 
 L2-5 next tranche: S-07/S-08/S-09/S-10/S-11/S-13/S-14/S-15 have security-suite modules and per-control evidence; 53 security tests passed. Full gate/review pending. S-12 log privacy and S-19 authorized download are separate follow-ups. S-16 depends on Lane 1's #100 database roles; S-17 headers belong to Lane 1/Lane C; S-18 live encrypted/object-locked backup restore evidence belongs to Lane C. These operational controls are not marked Done.
+
+## Lane 2 workflow routes (2026-11-10)
+
+Built in the workflow PR: checklist dispatch, reasoned N/A with auditor decision, stable
+document numbers, client item links and submit, per-document issue flags with request threads,
+per-item and engagement progress, client report confirmation, the invoice gate and the derived
+stage pipeline. Contract: [`docs/kb/23-workflow-api.md`](kb/23-workflow-api.md). Requests to Lane 2
+rows for these flows are satisfied once the PR is merged; no live proof is claimed. Direct client
+N/A (`POST /engagements/{id}/items/{id}/na` with true) now returns 409; Lane 1 must move the
+client UI to `na-request`.

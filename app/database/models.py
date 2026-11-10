@@ -198,6 +198,15 @@ class Engagement(Base):
     review_period_start: Mapped[date] = mapped_column(Date)
     review_period_end: Mapped[date] = mapped_column(Date)
     due_date: Mapped[date | None] = mapped_column(Date)
+    # Recorded workflow events. Each is set once by an explicit human action and audit-logged.
+    checklist_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    checklist_sent_by_id: Mapped[str | None] = mapped_column(String(36))
+    client_submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    report_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    report_confirmed_by_id: Mapped[str | None] = mapped_column(String(36))
+    report_confirmed_sha256: Mapped[str | None] = mapped_column(String(64))
+    # Last allocated document sequence; document numbers are never reused or renumbered.
+    document_seq: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
@@ -276,6 +285,13 @@ class ChecklistItemInstance(Base):
         Enum(NAReviewState, native_enum=False)
     )
     na_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Client's required reason for a reasoned N/A request, and the auditor's decision note.
+    na_request_reason: Mapped[str | None] = mapped_column(Text)
+    na_decision_note: Mapped[str | None] = mapped_column(Text)
+    na_decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Client submitted this item for auditor review.
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    submitted_by_id: Mapped[str | None] = mapped_column(String(36))
     na_approved_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     # Legacy column also records the actor for direct client N/A declarations.
     na_marked_by: Mapped[User | None] = relationship(foreign_keys=[na_approved_by_id])
@@ -303,6 +319,7 @@ class Document(Base):
     __tablename__ = "documents"
     __table_args__ = (
         UniqueConstraint("item_instance_id", "egnyte_path", "version", name="uq_document_version"),
+        UniqueConstraint("engagement_id", "number", name="uq_document_engagement_number"),
         Index("ix_documents_firm_item", "firm_id", "item_instance_id"),
     )
 
@@ -320,6 +337,8 @@ class Document(Base):
     sha256: Mapped[str] = mapped_column(String(64), index=True)
     version: Mapped[str] = mapped_column(String(255), default="1")
     feedback_code: Mapped[str | None] = mapped_column(String(50))
+    # Stable citation such as "1.17"; assigned once per engagement at upload.
+    number: Mapped[str | None] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     item: Mapped[ChecklistItemInstance | None] = relationship(back_populates="documents")
@@ -584,4 +603,71 @@ class ClientContact(Base):
     email: Mapped[str] = mapped_column(String(320))
     phone: Mapped[str] = mapped_column(String(80))
     primary: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class DocumentItemLink(Base):
+    """A client-made link from an uploaded document to a checklist item."""
+
+    __tablename__ = "document_item_links"
+    __table_args__ = (
+        UniqueConstraint("item_instance_id", "document_id", name="uq_document_item_link"),
+        Index("ix_document_item_links_firm_engagement", "firm_id", "engagement_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    item_instance_id: Mapped[str] = mapped_column(
+        ForeignKey("checklist_item_instances.id"), index=True
+    )
+    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"), index=True)
+    linked_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class DocumentIssue(Base):
+    """An auditor flag on a document (or a missing document) and its request thread."""
+
+    __tablename__ = "document_issues"
+    __table_args__ = (
+        CheckConstraint(
+            "kind IN ('outdated', 'wrong_year', 'incorrect', 'missing')", name="ck_issue_kind"
+        ),
+        CheckConstraint("status IN ('open', 'resolved')", name="ck_issue_status"),
+        Index("ix_document_issues_firm_engagement", "firm_id", "engagement_id"),
+        Index("ix_document_issues_item_status", "item_instance_id", "status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    item_instance_id: Mapped[str] = mapped_column(
+        ForeignKey("checklist_item_instances.id"), index=True
+    )
+    document_id: Mapped[str | None] = mapped_column(ForeignKey("documents.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(12), default="open")
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    resolved_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    messages: Mapped[list[IssueMessage]] = relationship(
+        cascade="all, delete-orphan", order_by="IssueMessage.created_at"
+    )
+
+
+class IssueMessage(Base):
+    __tablename__ = "issue_messages"
+    __table_args__ = (Index("ix_issue_messages_firm_issue", "firm_id", "issue_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    issue_id: Mapped[str] = mapped_column(ForeignKey("document_issues.id"), index=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    author_role: Mapped[str] = mapped_column(String(12))
+    body: Mapped[str] = mapped_column(Text)
+    # Re-upload offered with this reply; must belong to the same engagement.
+    document_id: Mapped[str | None] = mapped_column(ForeignKey("documents.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

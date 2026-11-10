@@ -70,6 +70,9 @@ class NAChange(BaseModel):
 @router.post("/engagements/{engagement_id}/items/{item_id}/na")
 def change_na(engagement_id: str, item_id: str, payload: NAChange, user: CurrentUser, db: DB):
     _, item = intake_item(db, user, engagement_id, item_id)
+    if user.role == UserRole.CLIENT and payload.not_applicable:
+        # Clients no longer declare N/A directly; an auditor must decide a reasoned request.
+        raise HTTPException(409, "Request N/A with a reason; the auditor decides")
     record_na_change(db, item, user, payload.not_applicable)
     db.commit()
     return {"status": item.status}

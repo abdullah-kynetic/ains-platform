@@ -27,6 +27,7 @@ from app.database.models import (
     utcnow,
 )
 from app.tenancy import allocate_firm_slug
+from app.workflow import workflow_stage
 
 from .client_profiles import engagement_summary
 from .engagements import DB, CurrentUser, visible_engagements
@@ -374,6 +375,8 @@ def pipeline(user: CurrentUser, db: DB):
                 "progress": round(state["reviewed"] / state["total"] * 100),
                 "blockers": len(state["blockers"]),
                 "nextAction": _pipeline_next_action(stage, len(state["blockers"])),
+                "workflowStage": workflow_stage(db, engagement),
+                "checklistSentAt": engagement.checklist_sent_at,
                 "reportSigned": False,
             }
         )
@@ -715,6 +718,8 @@ def workspace(engagement_id: str, user: CurrentUser, db: DB):
                     else None
                 ),
                 "naReviewState": item.na_review_state,
+                "naRequestReason": item.na_request_reason,
+                "submittedAt": item.submitted_at,
                 "representation": item.representation,
                 "applicability": item.applicability_decision,
                 "assessment": item.assessment,
@@ -725,6 +730,7 @@ def workspace(engagement_id: str, user: CurrentUser, db: DB):
                         "name": doc.original_name,
                         "sha256": doc.sha256,
                         "version": doc.version,
+                        "number": doc.number,
                         "uploadedAt": doc.created_at,
                         "feedbackCode": doc.feedback_code,
                     }

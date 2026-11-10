@@ -142,6 +142,13 @@ def reopen(report_id: str, payload: ReportVersion, user: CurrentUser, db: DB):
     check_version(report, payload.version)
     if report.status != "final":
         raise HTTPException(409, "Only a final report can be reopened")
+    confirmed = db.scalar(
+        select(Engagement.report_confirmed_at).where(
+            Engagement.id == report.engagement_id, Engagement.firm_id == report.firm_id
+        )
+    )
+    if confirmed is not None:
+        raise HTTPException(409, "A report the client confirmed cannot be reopened")
     # The previous final hash remains in the immutable finalization audit event.
     record(db, report, user, "reopened")
     report.status = "draft"
