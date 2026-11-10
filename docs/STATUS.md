@@ -97,3 +97,7 @@ L2-5 security proof suite, L2-6 route groups (a)–(h), L2-7 storage retention/e
 L2-8 remaining end-to-end flows, L2-9 seed hooks, and L2-10 readiness tracker are not
 completed by this checkpoint. Existing tests are not a substitute for their required
 evidence. No server changes, real email delivery or Stage 1 gate completion is claimed.
+
+## L2-5 auth proof tranche
+
+S-01 through S-06 now have executable proofs in `tests/security/` and evidence under `docs/security/evidence/app-s-*.md`. Focused suite: 15 passed; broader auth/reset/API: 70 passed. The initial full run found one legacy N/A assignment test retaining a token after its auditor changed firms; it now asserts revocation and signs in again before checking assignment. Final full gate and independent review pending. Existing sessions without role/firm claims must sign in again after deployment. No deployment was performed. S-07 through S-15 and S-19 remain in progress; no complete L2-5 claim yet.
