@@ -69,3 +69,16 @@ def test_workflow_migration_downgrades_and_upgrades_with_backfill():
             inspect(connection).get_table_names()
         )
     engine.dispose()
+
+
+def test_workflow_migration_is_idempotent_on_current_schema():
+    """Postgres CI builds the schema from the models, then runs every migration over it."""
+    config = Config("alembic.ini")
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    with engine.begin() as connection:
+        config.attributes["connection"] = connection
+        command.stamp(config, "a119_firm_logo_url")
+        command.upgrade(config, "a120_workflow_routes")
+        assert "issue_messages" in inspect(connection).get_table_names()
+    engine.dispose()
