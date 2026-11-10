@@ -901,3 +901,16 @@ class EngagementSignoff(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
+
+
+class NotificationRead(Base):
+    """Which derived notifications an auditor has marked read. Notifications themselves are not
+    stored: they are computed from the auditor's own engagements on each request."""
+
+    __tablename__ = "notification_reads"
+    __table_args__ = (UniqueConstraint("user_id", "notification_id", name="uq_notification_read"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    notification_id: Mapped[str] = mapped_column(String(80))
+    read_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

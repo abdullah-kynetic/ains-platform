@@ -130,3 +130,8 @@ POST /auditor/engagements/{engagement_id}/signoff/review auditor
 POST /auditor/engagements/{engagement_id}/signoff/partner auditor
 POST /auditor/engagements/{engagement_id}/complete auditor
 GET /engagements/{engagement_id}/signed-report client
+GET /auditor/engagements/{engagement_id}/activity auditor
+GET /auditor/notifications auditor
+POST /auditor/notifications/read-all auditor
+POST /auditor/notifications/{notification_id}/read auditor
+GET /auditor/search auditor

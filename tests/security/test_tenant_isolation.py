@@ -125,6 +125,7 @@ def test_revoked_assignment_denies_real_resources_and_filters_collections(backen
     _seed_internal_material(factory, original)
     ids["finding_id"] = _real_finding(factory, original)
     ids.update(real_workflow_rows(factory, original))
+    ids["notification_id"] = "upload-synthetic"
     sign_in_auditor(client)
     invoice = client.post("/auditor/invoices", json=_invoice_body(original))
     assert invoice.status_code == 201
@@ -152,14 +153,17 @@ def test_revoked_assignment_denies_real_resources_and_filters_collections(backen
         if case != "auditor_scope":  # practice routes: tests/test_firm_routes.py
             continue
         response = _send(client, method, path, ids)
-        scoped = "{" in path or path.startswith("/auditor/audit-log") or method != "GET"
-        assert response.status_code == (404 if scoped else 200), (
+        own_state = path == "/auditor/notifications/read-all"  # only the caller's read marks
+        scoped = (
+            "{" in path or path.startswith("/auditor/audit-log") or method != "GET"
+        ) and not own_state
+        assert response.status_code == (404 if scoped else 204 if own_state else 200), (
             method,
             path,
             response.status_code,
         )
         assert not any(marker in response.text for marker in LEAKS)
-        if not scoped:
+        if not scoped and not own_state:
             # No metadata-only shell (firm names, contacts, IDs, counts) may survive.
             assert response.json() == [], path
     client.cookies.clear()
