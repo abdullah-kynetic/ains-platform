@@ -2,6 +2,9 @@
 
 import json
 
+import pytest
+
+from app.database.models import ChecklistItemInstance
 from tests.security.test_tenant_isolation import _send
 from tests.test_backend_api import sign_in_auditor, sign_in_client
 from tests.test_responses_requested import release
@@ -13,12 +16,12 @@ READS = {
     ("GET", "/engagements/{engagement_id}/responses-requested"),
 }
 MUTATIONS = {
-    ("POST", "/engagements/{engagement_id}/documents"),
-    ("POST", "/engagements/{engagement_id}/items/{item_id}/documents"),
-    ("POST", "/engagements/{engagement_id}/items/{item_id}/na"),
-    ("POST", "/engagements/{engagement_id}/items/{item_id}/representations"),
-    ("POST", "/engagements/{engagement_id}/questionnaire/answers"),
-    ("POST", "/engagements/{engagement_id}/questionnaire/items/{item_id}/na-review"),
+    ("POST", "/engagements/{engagement_id}/documents"): 201,
+    ("POST", "/engagements/{engagement_id}/items/{item_id}/documents"): 201,
+    ("POST", "/engagements/{engagement_id}/items/{item_id}/na"): 200,
+    ("POST", "/engagements/{engagement_id}/items/{item_id}/representations"): 200,
+    ("POST", "/engagements/{engagement_id}/questionnaire/answers"): 200,
+    ("POST", "/engagements/{engagement_id}/questionnaire/items/{item_id}/na-review"): 403,
 }
 FORBIDDEN = {
     "findings",
@@ -36,7 +39,7 @@ FORBIDDEN = {
 
 
 def test_every_client_read_contract_is_registered_for_field_review():
-    assert {(m, p) for m, p, kind in INVENTORY if kind == "client"} == READS | MUTATIONS
+    assert {(m, p) for m, p, kind in INVENTORY if kind == "client"} == READS | set(MUTATIONS)
 
 
 def check_fields(value):
@@ -64,14 +67,19 @@ def test_no_client_read_serializes_finding_fields_or_unreleased_material(backend
         assert not any(marker in json.dumps(response.json()) for marker in LEAKS)
 
 
-def test_client_mutation_responses_never_serialize_finding_fields(backend):
+@pytest.mark.parametrize(
+    "method,path,expected", [(m, p, status) for (m, p), status in MUTATIONS.items()]
+)
+def test_client_mutation_responses_never_serialize_finding_fields(backend, method, path, expected):
     client, factory, original, *_ = backend
     _seed_internal_material(factory, original)
+    with factory() as db:
+        # A real unrestricted conditional request makes the declaration endpoint succeed.
+        db.get(ChecklistItemInstance, original["item_a"]).item_key = "AML-BD-012"
+        db.commit()
     ids = {**original, "engagement_id": original["engagement_a"], "item_id": original["item_a"]}
     sign_in_client(client)
-    for method, path in sorted(MUTATIONS):
-        response = _send(client, method, path, ids)
-        # Some existing declaration/review paths intentionally refuse a client action.
-        assert response.status_code in {200, 201, 403, 409}, (method, path, response.status_code)
-        check_fields(response.json())
-        assert not any(marker in response.text for marker in LEAKS)
+    response = _send(client, method, path, ids)
+    assert response.status_code == expected, (method, path, response.status_code)
+    check_fields(response.json())
+    assert not any(marker in response.text for marker in LEAKS)
