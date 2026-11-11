@@ -191,3 +191,38 @@ test("4. The client uploads numbered documents, maps them to requests and submit
   await expect(auditor.getByTestId("client-item-AML-BD-002")).toContainText("With auditor");
   expect((await callApi(auditor, AUDITOR_ORIGIN, "/auditor/engagements/synthetic-other-engagement/items/x/accept", "POST")).status).toBe(404);
 });
+
+test("5. Quentin flags a document; the client replies in Messages; Quentin resolves", async ({ browser }) => {
+  const auditor = await auditorPage(browser);
+  await auditor.goto(`${AUDITOR_ORIGIN}/auditor/engagements/${state.engagementId}/client-checklist`);
+  const row = auditor.getByTestId("client-item-AML-BD-002");
+  await row.getByRole("button", { name: "Flag AML-BD-002" }).click();
+  await auditor.getByLabel("Problem type").selectOption("outdated");
+  await auditor.getByLabel("Which document").selectOption({ label: "1.2 · synthetic-cip-procedures.pdf" });
+  await auditor.getByLabel(/Note to the client/).fill("This policy is dated 2023. Please send the 2025 version.");
+  await auditor.getByRole("button", { name: "Send to client" }).click();
+  await expect(row).toContainText("Needs information");
+  await expect(auditor.getByTestId("issue-threads")).toContainText("This policy is dated 2023");
+
+  const client = await clientPage(browser);
+  const portal = portalOrigin(state.slug);
+  await client.goto(`${portal}/messages`);
+  const thread = client.locator("[data-testid^=issue-]").first();
+  await expect(thread).toContainText("This policy is dated 2023");
+  await thread.getByLabel("Reply").fill("Uploading the 2025 version now.");
+  await thread.getByRole("button", { name: "Send reply" }).click();
+  await expect(thread).toContainText("Uploading the 2025 version now.");
+  // Clients never see findings or auditor-only fields.
+  await expect(client.getByText(/finding/i)).toHaveCount(0);
+
+  await auditor.reload();
+  const t = auditor.getByTestId("issue-threads").locator("[data-testid^=issue-]").first();
+  await expect(t).toContainText("Uploading the 2025 version now.");
+  await t.getByRole("button", { name: "Mark resolved" }).click();
+  await expect(t).toContainText("Resolved");
+  await expect(auditor.getByTestId("client-item-AML-BD-002")).toContainText("With auditor");
+
+  // Isolation: threads of this firm are invisible and unwritable from another engagement id.
+  expect((await callApi(auditor, AUDITOR_ORIGIN, "/auditor/engagements/synthetic-other-engagement/issues")).status).toBe(404);
+  expect((await callApi(client, portal, "/engagements/synthetic-other-engagement/issues")).status).toBe(404);
+});
