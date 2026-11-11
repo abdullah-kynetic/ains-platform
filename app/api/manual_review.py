@@ -16,6 +16,7 @@ from app.database.models import (
     AuditorTask,
     ChecklistItemInstance,
     Document,
+    DocumentItemLink,
     Engagement,
     EngagementStatus,
     FindingDraft,
@@ -693,11 +694,26 @@ def workspace(engagement_id: str, user: CurrentUser, db: DB):
         )
     ).all()
     instances = {item.item_key: item for item in items}
+    # Documents the client mapped to a request (links) belong on it too, so they can be cited.
+    linked: dict[str, list[Document]] = {}
+    for link, doc in db.execute(
+        select(DocumentItemLink, Document)
+        .join(Document, Document.id == DocumentItemLink.document_id)
+        .where(
+            DocumentItemLink.engagement_id == engagement.id,
+            DocumentItemLink.firm_id == engagement.firm_id,
+            Document.firm_id == engagement.firm_id,
+        )
+        .order_by(Document.created_at)
+    ):
+        linked.setdefault(link.item_instance_id, []).append(doc)
     requests = []
     for definition in catalog.requests:
         item = instances.get(definition.id)
         if item is None:
             continue
+        own = {d.id for d in item.documents}
+        item_docs = [*item.documents, *(d for d in linked.get(item.id, []) if d.id not in own)]
         requests.append(
             {
                 "id": item.id,
@@ -730,7 +746,7 @@ def workspace(engagement_id: str, user: CurrentUser, db: DB):
                         "uploadedAt": doc.created_at,
                         "feedbackCode": doc.feedback_code,
                     }
-                    for doc in item.documents
+                    for doc in item_docs
                 ],
             }
         )

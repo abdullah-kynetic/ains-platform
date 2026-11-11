@@ -196,3 +196,16 @@ files are frozen until Abdullah's Stage 2 sign-off.
 
 - Backend: `uv sync --frozen && uv run ruff check . && uv run pytest -q`
 - Web (`web/`): `npm ci && npm run lint && npm run typecheck && npm run test:unit && npm run test:e2e`
+
+
+## Phase 2, step 2: demo run and browser tests
+
+- `scripts/demo.sh serve` starts (web 200, API `/health` ok). I could not click through it by hand in this
+  container; the headless journey is the click-through, and it now covers every DEMO.md step.
+- Live journey is 8 tests: new test 5b (auditor records and approves a finding, releases a response
+  request; the client sees only the request text and answers; auditor sees the answer and closes the
+  finding). Test 6 sets conclusions 1 to 5 through the screen (rest by API for speed) and now creates
+  and sends the invoice through the Create invoice screen.
+- Bug found and fixed by 5b: the auditor workspace listed only documents uploaded straight to a
+  request, not documents the client mapped to it, so finding citations had no documents to pick.
+  Workspace now includes linked documents (same firm and engagement only). Test in `tests/test_checklist_na.py`.

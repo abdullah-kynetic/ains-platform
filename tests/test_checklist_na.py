@@ -162,3 +162,42 @@ def test_reasoned_na_undo_restores_prior_status_and_feedback(backend):
         assert item.status == ClientStatus.ACTION_NEEDED_MORE
         assert item.client_reason == "Please provide missing pages."
         assert item.representation is None
+
+def test_workspace_lists_documents_the_client_linked_to_a_request(backend):
+    from app.database.models import Document, DocumentItemLink
+
+    client, factory, ids, _, _ = backend
+    with factory() as db:
+        document = Document(
+            firm_id=ids["firm_a"],
+            engagement_id=ids["engagement_a"],
+            item_instance_id=None,
+            uploaded_by_id=ids["client_a"],
+            original_name="synthetic-linked.pdf",
+            size_bytes=3,
+            egnyte_path="/synthetic/linked",
+            sha256="c" * 64,
+            version="1",
+            number="1.9",
+        )
+        db.add(document)
+        db.flush()
+        db.add(
+            DocumentItemLink(
+                firm_id=ids["firm_a"],
+                engagement_id=ids["engagement_a"],
+                item_instance_id=ids["item_a"],
+                document_id=document.id,
+                linked_by_id=ids["client_a"],
+            )
+        )
+        db.commit()
+    sign_in_auditor(client)
+    rows = client.get(f"/auditor/engagements/{ids['engagement_a']}/workspace").json()["requests"]
+    names = [d["name"] for r in rows for d in r["documents"]]
+    assert names == ["synthetic-linked.pdf"]
+    # The other firm's engagement never shows it.
+    other = client.get(f"/auditor/engagements/{ids['engagement_b']}/workspace")
+    assert other.status_code in {200, 404}
+    if other.status_code == 200:
+        assert "synthetic-linked.pdf" not in other.text
