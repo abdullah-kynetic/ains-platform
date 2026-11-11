@@ -103,3 +103,42 @@ test("2. Quentin sends the numbered checklist; the client sees it was sent", asy
   expect((progress.body as { stage: string; items: unknown[] }).stage).toBe("checklist_sent");
   expect((progress.body as { items: unknown[] }).items).toHaveLength(34);
 });
+
+test("3. The client asks for N/A with reasons; Quentin approves one and rejects one", async ({ browser }) => {
+  const client = await clientPage(browser);
+  const portal = portalOrigin(state.slug);
+  await client.goto(`${portal}/checklist`);
+  for (const [request, reason] of [
+    ["AML-BD-020", "The firm does not open accounts for foreign financial institutions."],
+    ["AML-BD-021", "The firm has no private banking accounts."],
+  ]) {
+    const row = client.getByTestId(`request-${request}`);
+    await row.getByRole("button", { name: `Does not apply: ${request}` }).click();
+    await row.getByLabel(`Why does ${request} not apply to your firm?`).fill(reason);
+    await row.getByRole("button", { name: "Send to auditor" }).click();
+    await expect(row).toContainText("Waiting for your auditor");
+  }
+  // Clients can no longer declare N/A directly.
+  const progress = (await callApi(client, portal, `/engagements/${state.engagementId}/progress`)).body as { items: { id: string; requestId: string }[] };
+  const itemId = (rid: string) => progress.items.find((i) => i.requestId === rid)!.id;
+  expect((await callApi(client, portal, `/engagements/${state.engagementId}/items/${itemId("AML-BD-022")}/na`, "POST", { not_applicable: true })).status).toBe(409);
+  // A client cannot decide its own request.
+  expect((await callApi(client, portal, `/auditor/engagements/${state.engagementId}/items/${itemId("AML-BD-020")}/na-request/decision`, "POST", { decision: "accept" })).status).toBe(403);
+
+  const auditor = await auditorPage(browser);
+  await auditor.goto(`${AUDITOR_ORIGIN}/auditor/engagements/${state.engagementId}/client-checklist`);
+  await auditor.getByTestId("na-request-AML-BD-020").getByRole("button", { name: "Approve N/A" }).click();
+  await expect(auditor.getByTestId("na-request-AML-BD-020")).toHaveCount(0);
+  const reject = auditor.getByTestId("na-request-AML-BD-021");
+  await reject.getByLabel("Note to the client (required to reject)").fill("Please confirm in writing; the questionnaire says private banking exists.");
+  await reject.getByRole("button", { name: "Reject" }).click();
+  await expect(auditor.getByTestId("na-request-AML-BD-021")).toHaveCount(0);
+  await expect(auditor.getByTestId("client-item-AML-BD-020")).toContainText("Does not apply");
+  await expect(auditor.getByTestId("client-item-AML-BD-021")).toContainText("N/A rejected");
+  // Quentin cannot decide on another firm's items.
+  expect((await callApi(auditor, AUDITOR_ORIGIN, `/auditor/engagements/synthetic-other-engagement/items/${itemId("AML-BD-021")}/na-request/decision`, "POST", { decision: "accept" })).status).toBe(404);
+
+  await client.reload();
+  await expect(client.getByTestId("section-na")).toContainText("AML-BD-020");
+  await expect(client.getByTestId("request-AML-BD-021")).toContainText("Your auditor needs this request: Please confirm in writing");
+});

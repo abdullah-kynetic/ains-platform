@@ -4,7 +4,7 @@
  * synthetic in-browser store otherwise, so the mock build and its browser tests still run.
  * Every field here is client-safe: no findings, internal notes or assessments.
  */
-import { apiRequest, USE_MOCKS } from "../api";
+import { apiRequest, getEngagement, USE_MOCKS } from "../api";
 import { delay, readStore, updateStore, uid } from "../mock/store";
 import catalog from "../../../.generated/catalog.json";
 
@@ -20,7 +20,7 @@ export type NARequest = {
   decisionNote: string | null;
   requestedAt: string | null;
 };
-export type DocRef = { id: string; number: string | null; name: string };
+export type DocRef = { id: string; number: string | null; name: string; feedback?: string | null };
 export type ProgressItem = {
   id: string;
   number: number;
@@ -96,7 +96,21 @@ export async function sendChecklist(engagementId: string): Promise<{ sentAt: str
 
 export async function getProgress(engagementId: string, role: "auditor" | "client"): Promise<Progress> {
   if (!USE_MOCKS) return apiRequest(`${role === "auditor" ? "/auditor" : ""}/engagements/${e(engagementId)}/progress`);
-  return delay(derive(store(engagementId)));
+  return delay(await withLegacyMock(derive(store(engagementId))));
+}
+
+/** Mock build only: reflect the older synthetic screens (questionnaire N/A, file feedback). */
+async function withLegacyMock(progress: Progress): Promise<Progress> {
+  const legacy = await getEngagement().catch(() => null);
+  if (!legacy) return progress;
+  const byId = new Map(legacy.sections.flatMap((s) => s.items).map((i) => [i.id, i]));
+  for (const item of progress.items) {
+    const old = byId.get(item.id);
+    if (!old) continue;
+    if (old.status === "not_applicable" && item.status !== "na") item.status = "na";
+    for (const f of old.files) if (!item.documents.some((d) => d.id === f.id)) item.documents.push({ id: f.id, number: null, name: f.name, feedback: f.feedback ?? null });
+  }
+  return progress;
 }
 
 // --- step 3: reasoned N/A ---------------------------------------------------------------------
@@ -118,8 +132,8 @@ export async function decideNA(engagementId: string, itemId: string, decision: "
 
 export async function linkDocument(engagementId: string, itemId: string, documentId: string, linked: boolean): Promise<unknown> {
   if (!USE_MOCKS) return apiRequest(`/engagements/${e(engagementId)}/items/${e(itemId)}/documents/${e(documentId)}/link`, { method: linked ? "POST" : "DELETE" });
-  return delay(mutateItem(engagementId, itemId, (i, all) => {
-    const doc = all.docs.find((d) => d.id === documentId);
+  const doc = (await listEngagementDocuments()).find((d) => d.id === documentId);
+  return delay(mutateItem(engagementId, itemId, (i) => {
     i.documents = i.documents.filter((d) => d.id !== documentId);
     if (linked && doc) i.documents.push(doc);
   }));
@@ -145,25 +159,17 @@ export async function acceptItem(engagementId: string, itemId: string): Promise<
   return delay(mutateItem(engagementId, itemId, (i) => { i.status = "accepted"; }));
 }
 
-/** Synthetic mock only: register an uploaded file so it can be mapped. */
-export function mockRegisterUpload(engagementId: string, name: string): DocRef {
-  let created: DocRef = { id: "", number: null, name };
-  mutate(engagementId, (d) => {
-    d.seq += 1;
-    created = { id: uid("doc"), number: `1.${d.seq}`, name };
-    d.docs.push(created);
+/** Every document of the engagement (linked or not), numbered, for mapping to requests. */
+export async function listEngagementDocuments(): Promise<DocRef[]> {
+  const current = await getEngagement();
+  const seen = new Map<string, DocRef>();
+  const files = [...current.sections.flatMap((s) => s.items.flatMap((i) => i.files)), ...(current.unassignedDocuments ?? [])] as { id: string; name: string; number?: string | null; feedback?: string | null }[];
+  files.forEach((f, index) => {
+    // The mock build has no server numbering; give synthetic files a stable display number.
+    const number = f.number ?? (USE_MOCKS ? `1.${index + 1}` : null);
+    if (!seen.has(f.id)) seen.set(f.id, { id: f.id, number, name: f.name, feedback: f.feedback ?? null });
   });
-  return created;
-}
-
-export async function listEngagementDocuments(engagementId: string): Promise<DocRef[]> {
-  if (!USE_MOCKS) {
-    const current = await apiRequest<{ sections: { items: { files: { id: string; name: string; number: string | null }[] }[] }[]; unassignedDocuments?: { id: string; name: string; number: string | null }[] }>("/engagements/current");
-    const seen = new Map<string, DocRef>();
-    for (const f of [...current.sections.flatMap((s) => s.items.flatMap((i) => i.files)), ...(current.unassignedDocuments ?? [])]) seen.set(f.id, { id: f.id, number: f.number, name: f.name });
-    return [...seen.values()].sort((a, b) => docOrder(a.number) - docOrder(b.number));
-  }
-  return delay(store(engagementId).docs);
+  return [...seen.values()].sort((a, b) => docOrder(a.number) - docOrder(b.number));
 }
 
 const docOrder = (n: string | null) => (n ? Number(n.split(".")[1] ?? 0) : 1e9);
@@ -179,7 +185,7 @@ export async function flagIssue(engagementId: string, itemId: string, input: { k
   if (!USE_MOCKS) return post(`/auditor/engagements/${e(engagementId)}/items/${e(itemId)}/issues`, input);
   let issue!: Issue;
   mutate(engagementId, (d) => {
-    const doc = d.docs.find((x) => x.id === input.documentId);
+    const doc = d.items.flatMap((i) => i.documents).find((x) => x.id === input.documentId);
     issue = { id: uid("iss"), itemId, kind: input.kind, status: "open", document: doc ? { id: doc.id, number: doc.number } : null, createdAt: new Date().toISOString(), resolvedAt: null, awaiting: "client", messages: [{ id: uid("msg"), authorRole: "auditor", body: input.note, documentNumber: null, createdAt: new Date().toISOString() }] };
     d.issues.push(issue);
     const item = d.items.find((i) => i.id === itemId);
@@ -193,7 +199,7 @@ export async function replyIssue(engagementId: string, issueId: string, role: "a
   let issue!: Issue;
   mutate(engagementId, (d) => {
     issue = d.issues.find((i) => i.id === issueId)!;
-    const doc = d.docs.find((x) => x.id === documentId);
+    const doc = d.items.flatMap((i) => i.documents).find((x) => x.id === documentId);
     issue.messages.push({ id: uid("msg"), authorRole: role, body, documentNumber: doc?.number ?? null, createdAt: new Date().toISOString() });
     issue.awaiting = role === "client" ? "auditor" : "client";
   });
@@ -217,8 +223,6 @@ export async function resolveIssue(engagementId: string, issueId: string, note?:
 type MockFlow = {
   checklistSentAt: string | null;
   clientSubmittedAt: string | null;
-  seq: number;
-  docs: DocRef[];
   items: ProgressItem[];
   issues: Issue[];
 };
@@ -227,8 +231,6 @@ const key = (id: string) => `kien-mock-flow-v1-${id}`;
 const seed = (): MockFlow => ({
   checklistSentAt: null,
   clientSubmittedAt: null,
-  seq: 0,
-  docs: [],
   issues: [],
   items: catalog.requests.map((r, index) => ({ id: r.id, number: index + 1, requestId: r.id, title: r.title, status: "not_started" as ItemState, openIssues: 0, naRequest: null, documents: [] })),
 });

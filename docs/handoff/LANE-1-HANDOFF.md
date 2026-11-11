@@ -13,8 +13,8 @@ Read first: `CLAUDE.md`, `AGENTS.md`, `docs/BUILD-PLAN.md`, `docs/handoff/LANE-2
 | --- | --- | --- | --- |
 | 0 | Two-practice isolation test + this route list | [#120](https://github.com/abdullah-kynetic/ains-platform/pull/120) | merged |
 | 1 | New client onboarding | [#121](https://github.com/abdullah-kynetic/ains-platform/pull/121) | merged |
-| 2 | Checklist sent to client | step-2 PR | done: engagement Overview "Client checklist" card (send, stage, counts); client stage banner on Overview and Checklist. Client: `web/src/lib/api/flow.ts` (all workflow routes, steps 2-5, with a synthetic mock for the mock build) |
-| 3 | Client N/A with reason; Quentin approves or rejects | | not started |
+| 2 | Checklist sent to client | [#122](https://github.com/abdullah-kynetic/ains-platform/pull/122) | merged: engagement Overview "Client checklist" card (send, stage, counts); client stage banner on Overview and Checklist. Client: `web/src/lib/api/flow.ts` (all workflow routes, steps 2-5, with a synthetic mock for the mock build) |
+| 3 | Client N/A with reason; Quentin approves or rejects | step-3 PR | done: client Checklist rebuilt on `/engagements/{id}/progress` (numbers, status, linked document numbers, N/A request with reason, rejection note, search); new auditor tab **Client checklist** (`…/client-checklist`) to approve or reject each N/A request |
 | 4 | Client uploads (numbered `1.n`) and maps items to documents | | not started |
 | 5 | Quentin flags problems and sends requests; client responds | | not started |
 | 6 | Report, client confirmation, invoice | | not started |
@@ -22,6 +22,10 @@ Read first: `CLAUDE.md`, `AGENTS.md`, `docs/BUILD-PLAN.md`, `docs/handoff/LANE-2
 | 8 | Seeded synthetic demo script + `DEMO.md` | | not started |
 
 Blockers: none yet.
+
+Known inconsistency (not changed here, needs a decision): the questionnaire's own "No, mark N/A"
+path (`POST /engagements/{id}/questionnaire/items/{iid}/na-review`) is older than the reasoned N/A
+flow and is not part of the demo. The checklist screen shows such items as N/A.
 
 ## How the live browser tests run (added in step 1)
 

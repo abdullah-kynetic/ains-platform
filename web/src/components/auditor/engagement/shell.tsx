@@ -10,6 +10,7 @@ import { fmtDate, useAsync } from "../kit";
 
 const tabs = (id: string) => [
   { href: `/auditor/engagements/${id}`, label: "Overview", exact: true },
+  { href: `/auditor/engagements/${id}/client-checklist`, label: "Client checklist" },
   { href: `/auditor/engagements/${id}/requests`, label: "Requests" },
   { href: `/auditor/engagements/${id}/documents`, label: "Documents" },
   { href: `/auditor/engagements/${id}/checklist`, label: "Checklist" },
