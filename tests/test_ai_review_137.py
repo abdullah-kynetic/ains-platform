@@ -134,3 +134,13 @@ def test_injection_text_cannot_add_extra_model_calls_or_change_scope():
     assert len(model.requests) == 1
     req = model.requests[0]
     assert (req.firm_id, req.engagement_id, req.document_id) == ("f", "e", "d1")
+
+
+@pytest.mark.xfail(strict=True, reason="review 137 re-check: words run together are not matched")
+@pytest.mark.parametrize(
+    "text",
+    ["SuspiciousActivityReport", "suspiciousactivityreport.pdf", "SuspiciousActivityRpt_Q3"],
+)
+def test_run_together_sar_phrase_is_blocked(text):
+    # Common in CamelCase file names and in PDFs whose text extraction drops the spaces.
+    assert sar_content_reason(text)
