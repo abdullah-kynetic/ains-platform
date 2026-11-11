@@ -163,6 +163,7 @@ def test_reasoned_na_undo_restores_prior_status_and_feedback(backend):
         assert item.client_reason == "Please provide missing pages."
         assert item.representation is None
 
+
 def test_workspace_lists_documents_the_client_linked_to_a_request(backend):
     from app.database.models import Document, DocumentItemLink
 

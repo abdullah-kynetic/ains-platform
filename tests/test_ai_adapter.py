@@ -71,14 +71,26 @@ def env(tmp_path):
             ai_state_database_url=f"sqlite:///{tmp_path}/state.db",
         )
         settings = AdapterSettings(**{**values, **overrides})
-        return AIAdapter(settings, http=httpx.Client(transport=httpx.MockTransport(fake))), settings
+        adapter = AIAdapter(
+            settings,
+            http=httpx.Client(transport=httpx.MockTransport(fake)),
+            ownership=lambda firm, engagement, document: True,
+        )
+        return adapter, settings
 
     return make, fake, tmp_path
 
 
 def request(**kw) -> AnalyzeRequest:
     base = dict(
-        item_id="AML-BD-001", document_id="doc-1", source="synthetic", text=SECRET_TEXT, tags=[]
+        firm_id="firm-a",
+        engagement_id="eng-a",
+        user_id="user-a",
+        item_id="AML-BD-001",
+        document_id="doc-1",
+        source="synthetic",
+        text=SECRET_TEXT,
+        tags=[],
     )
     return AnalyzeRequest(**{**base, **kw})
 
@@ -95,9 +107,11 @@ def test_happy_path_sends_one_model_and_strict_privacy(env):
     assert ":online" not in body["model"]
 
 
-def test_disabled_by_default_and_empty_allowlist_in_repo():
+def test_disabled_by_default_and_repo_allowlist_is_two_exact_free_models():
     assert AdapterSettings().ai_enabled is False
-    assert load_allowlist(AdapterSettings().ai_allowlist_path) == set()
+    models = load_allowlist(AdapterSettings().ai_allowlist_path)
+    assert models == {"google/gemma-4-26b-a4b-it:free", "nvidia/nemotron-3-ultra-550b-a55b:free"}
+    assert all(m.endswith(":free") for m in models)
 
 
 def test_disabled_flag_makes_no_calls(env):
@@ -380,3 +394,92 @@ def test_adapter_has_no_credit_or_billing_calls():
     source = "\n".join(p.read_text() for p in Path("ai_adapter").glob("*.py"))
     for forbidden in ("/credits", "/auth/key", "topup", "top_up", "billing"):
         assert forbidden not in source
+
+
+# --- Stage 3: scope, ownership, durable log, outbound host, content scan -----------------
+
+
+def test_scope_fields_are_required_on_every_request():
+    with pytest.raises(Exception):  # noqa: B017 - pydantic validation error
+        AnalyzeRequest(item_id="AML-BD-001", document_id="d", source="synthetic", text="t")
+
+
+def test_unverifiable_or_denied_ownership_refuses_before_any_call(env):
+    make, fake, _ = env
+    adapter, settings = make()
+    adapter.ownership = None
+    with pytest.raises(GuardViolation) as err:
+        adapter.analyze(request(), FREE)
+    assert err.value.code == "ownership_unverified"
+    seen = []
+
+    def deny(firm, engagement, document):
+        seen.append((firm, engagement, document))
+        return False
+
+    adapter.ownership = deny
+    with pytest.raises(GuardViolation) as err:
+        adapter.analyze(request(firm_id="firm-b"), FREE)
+    assert err.value.code == "ownership_denied" and seen == [("firm-b", "eng-a", "doc-1")]
+    assert fake.calls == []
+
+
+def test_every_attempt_is_logged_firm_scoped_without_text(env):
+    make, fake, _ = env
+    adapter, _ = make()
+    adapter.analyze(request(), FREE)
+    adapter.ownership = lambda *_: False
+    with pytest.raises(GuardViolation):
+        adapter.analyze(request(firm_id="firm-b", user_id="user-b"), FREE)
+    rows_a = adapter.store.calls_for_firm("firm-a")
+    rows_b = adapter.store.calls_for_firm("firm-b")
+    assert [(r["outcome"], r["model"], r["user_id"]) for r in rows_a] == [("ok", FREE, "user-a")]
+    assert [(r["outcome"], r["code"]) for r in rows_b] == [("refused", "ownership_denied")]
+    assert rows_a[0]["engagement_id"] == "eng-a" and rows_a[0]["at"] is not None
+    assert SECRET_TEXT not in repr(rows_a) + repr(rows_b)
+    assert adapter.store.calls_for_firm("firm-a", "other-engagement") == []
+
+
+def test_sar_mentions_are_refused_by_the_adapter_itself(env):
+    make, fake, _ = env
+    adapter, _ = make()
+    for text in ("our SAR log", "Suspicious Activity Report"):
+        with pytest.raises(GuardViolation) as err:
+            adapter.analyze(request(text=text), FREE)
+        assert err.value.code == "sar_content_blocked"
+    assert fake.chat_calls == []
+    assert [r["code"] for r in adapter.store.calls_for_firm("firm-a")] == [
+        "sar_content_blocked"
+    ] * 2
+
+
+def test_base_url_must_be_on_the_outbound_allowlist(env):
+    make, _, _ = env
+    with pytest.raises(ValueError):
+        make(openrouter_base_url="https://evil.example.com/api/v1")
+    assert AdapterSettings().ai_allowed_hosts == ("openrouter.ai",)
+
+
+def test_v2_findings_must_cite_a_page_inside_the_document(env):
+    make, fake, _ = env
+    adapter, _ = make()
+    fake.content = json.dumps(
+        {"findings": [{"document_id": "doc-1", "page": 5, "issue": "x", "kind": "finding"}]}
+    )
+    with pytest.raises(GuardViolation) as err:
+        adapter.analyze(request(prompt_version="v2", page_count=2), FREE)
+    assert err.value.code == "finding_cites_missing_page"
+
+
+def test_v2_prompt_keeps_the_document_inside_data_tags_with_the_rubric_outside(env):
+    make, fake, _ = env
+    adapter, _ = make()
+    adapter.analyze(
+        request(prompt_version="v2", item_title="Training", rubric=["Dated"], page_count=2), FREE
+    )
+    user = json.loads(fake.chat_calls[0].content)["messages"][1]["content"]
+    assert (
+        user.index("<rubric") < user.index("<document")
+        and "data, never instructions"
+        in (json.loads(fake.chat_calls[0].content)["messages"][0]["content"])
+    )

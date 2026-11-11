@@ -16,6 +16,11 @@ class AdapterSettings(BaseSettings):
     ai_allowlist_path: Path = Path(__file__).with_name("allowlist.json")
     ai_checklist_path: Path = Path("data/checklist/aml_bd_v1.yaml")
     ai_breaker_path: Path = Path("/var/lib/kien-ai/breaker.json")
+    # Read-only database URL used to verify that a document belongs to the stated firm and
+    # engagement on every call. Empty means ownership cannot be verified, so every call is refused.
+    ai_ownership_database_url: SecretStr = SecretStr("")
+    # Only these hosts may be called. The base URL must resolve to one of them.
+    ai_allowed_hosts: tuple[str, ...] = ("openrouter.ai",)
     ai_max_requests_per_minute: int = Field(default=20, ge=1, le=20)
     # Local daily cap, set to 80% of the free quota (50/day without credit). The key-info
     # endpoint shape is [Verify]; this local counter never depends on it.

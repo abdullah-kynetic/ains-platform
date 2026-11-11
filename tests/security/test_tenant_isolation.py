@@ -8,7 +8,16 @@ from sqlalchemy import select
 
 from app.auth.dependencies import get_authenticated_user, get_current_user
 from app.auth.security import new_invitation_token
-from app.database.models import AuditorTask, ClientInvitation, Engagement, EngagementReport
+from app.config import get_settings
+from app.database.models import (
+    AiDraft,
+    AiRun,
+    AuditorTask,
+    ClientInvitation,
+    Document,
+    Engagement,
+    EngagementReport,
+)
 from tests.test_auditor_assignment import _invoice_body, _real_finding
 from tests.test_backend_api import sign_in_auditor, sign_in_client
 from tests.test_route_isolation import (
@@ -126,6 +135,41 @@ def test_revoked_assignment_denies_real_resources_and_filters_collections(backen
     ids["finding_id"] = _real_finding(factory, original)
     ids.update(real_workflow_rows(factory, original))
     ids["notification_id"] = "upload-synthetic"
+    # Turn AI analysis on so its routes reach the scope check instead of the off-switch 404.
+    live = client.app.dependency_overrides[get_settings]().model_copy(
+        update={"ai_analysis_enabled": True}
+    )
+    client.app.dependency_overrides[get_settings] = lambda: live
+    with factory() as db:
+        document = Document(
+            firm_id=ids["firm_id"],
+            engagement_id=ids["engagement_id"],
+            uploaded_by_id=ids["client_a"],
+            original_name="synthetic.txt",
+            size_bytes=1,
+            egnyte_path="/synthetic/ai",
+            sha256="f" * 64,
+        )
+        run = AiRun(
+            firm_id=ids["firm_id"], engagement_id=ids["engagement_id"], started_by_id=ids["auditor"]
+        )
+        db.add_all([document, run])
+        db.flush()
+        draft = AiDraft(
+            firm_id=ids["firm_id"],
+            engagement_id=ids["engagement_id"],
+            run_id=run.id,
+            kind="finding",
+            item_key="AML-BD-004",
+            document_id=document.id,
+            page=1,
+            title="t",
+            body="b",
+            model="m",
+        )
+        db.add(draft)
+        db.commit()
+        ids["draft_id"] = draft.id
     sign_in_auditor(client)
     invoice = client.post("/auditor/invoices", json=_invoice_body(original))
     assert invoice.status_code == 201

@@ -955,3 +955,55 @@ class NotificationRead(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     notification_id: Mapped[str] = mapped_column(String(80))
     read_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AiRun(Base):
+    """One auditor-started AI analysis. Holds counts and skip reasons, never document text."""
+
+    __tablename__ = "ai_runs"
+    __table_args__ = (Index("ix_ai_runs_firm_engagement", "firm_id", "engagement_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    started_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    models: Mapped[list[str]] = mapped_column(JSON, default=list)
+    documents_analyzed: Mapped[int] = mapped_column(Integer, default=0)
+    skipped: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AiDraft(Base):
+    """An AI-written draft for the auditor. Internal: no client route ever returns these.
+
+    Status moves only by an auditor action: pending -> accepted | rejected. Accepting copies the
+    draft into an ordinary draft ``Finding`` that still needs the normal human approval and
+    release flow before a client can see anything.
+    """
+
+    __tablename__ = "ai_drafts"
+    __table_args__ = (
+        CheckConstraint("status in ('pending','accepted','rejected')", name="ck_ai_draft_status"),
+        CheckConstraint(
+            "kind in ('finding','document_flag','client_request')", name="ck_ai_draft_kind"
+        ),
+        Index("ix_ai_drafts_firm_engagement", "firm_id", "engagement_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("firms.id"), index=True)
+    engagement_id: Mapped[str] = mapped_column(ForeignKey("engagements.id"), index=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("ai_runs.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(20))
+    item_key: Mapped[str] = mapped_column(String(120))
+    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"))
+    page: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(String(255))
+    body: Mapped[str] = mapped_column(Text)
+    model: Mapped[str] = mapped_column(String(120))
+    status: Mapped[str] = mapped_column(String(10), default="pending")
+    edited: Mapped[bool] = mapped_column(Boolean, default=False)
+    finding_id: Mapped[str | None] = mapped_column(ForeignKey("findings.id"))
+    decided_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

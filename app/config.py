@@ -105,6 +105,13 @@ class Settings(BaseSettings):
     # Comma-separated invitee emails for app.pilot_seed, matched to its firms in order.
     pilot_invitee_emails: str = ""
 
+    # Stage 3 AI analysis (auditor drafts). Off by default: when false every AI route returns 404.
+    # AI_SERVICE_URL is the private address of the separate AI service; AI_SERVICE_TOKEN is the
+    # credential this API presents to it. Neither has a default value in the repository.
+    ai_analysis_enabled: bool = False
+    ai_service_url: str = ""
+    ai_service_token: SecretStr = SecretStr("")
+
     # Extra exact browser origins (wildcards are deliberately unsupported). With
     # PORTAL_BASE_DOMAIN set, the apex, www, auditor and https://<known firm slug>.<domain>
     # are also allowed, read from the firms table.

@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { releaseResponseRequest, deleteDraftFinding, findingBlockers, listDocuments, listFindings, saveFinding, setFindingStatus, type Citation, type Finding, type FindingInput, type Severity } from "@/lib/api/index";
+import { AiAnalysisPanel } from "./ai-analysis";
 import { FindingStatusBadge, Loading, MockNotice, SeverityBadge, fmtDate, useAsync } from "../kit";
 
 const RULES = ["FINRA Rule 3310(a): risk-based AML program", "FINRA Rule 3310(b): suspicious activity detection and reporting", "FINRA Rule 3310(c): independent testing", "FINRA Rule 3310(d): AML compliance person", "FINRA Rule 3310(e): ongoing training", "BSA: Customer Identification Program pillar", "BSA: Customer due diligence pillar", "BSA: suspicious activity monitoring pillar", "BSA: OFAC / sanctions screening"];
@@ -84,6 +85,7 @@ export function FindingsTab({ id }: { id: string }) {
       <PageHeader title="Findings" description="Findings stay on your side. To get a management response, release a short request you write; the client never sees the finding itself."
         actions={<Button onClick={() => setEditing("new")}><Plus aria-hidden />New finding</Button>} />
       <MockNotice />
+      <AiAnalysisPanel engagementId={id} onAccepted={reload} />
       {problem && <p role="alert" className="status-note mb-4" data-tone="warning">{problem}</p>}
       {!data ? <Loading error={error} retry={reload} label="Loading findings…" /> : data.findings.length === 0 ? (
         <EmptyState icon={FileWarning} title="No findings" description="Record a finding when a test shows a gap against a rule." action={<Button onClick={() => setEditing("new")}>New finding</Button>} />

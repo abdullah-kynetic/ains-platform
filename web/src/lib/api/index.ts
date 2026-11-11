@@ -6,6 +6,7 @@ export * from "./documents";
 export * from "./workpapers";
 export * from "./samples";
 export * from "./findings";
+export * from "./ai-analysis";
 export * from "./report";
 export * from "./signoff";
 export * from "./firm";

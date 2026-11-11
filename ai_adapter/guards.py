@@ -1,8 +1,10 @@
 """Guard rails: allowlist, price check, kill switch and breaker, SAR block, rate limit."""
 
 import json
+import re
 import threading
 import time
+import unicodedata
 from collections import deque
 from collections.abc import Callable
 from decimal import Decimal, InvalidOperation
@@ -21,6 +23,32 @@ class GuardViolation(Exception):
     def __init__(self, code: str):
         super().__init__(code)
         self.code = code
+
+
+# Content scan: SAR / suspicious activity report filings must never reach a model. Fails closed
+# on any mention, including odd casing, spacing, punctuation, full-width letters and zero-width
+# characters. Ordinary AML policy text that merely names SAR procedures is blocked too: a person
+# reviews those files, not a model.
+_SAR_PATTERNS = (
+    re.compile(r"\bs[\W_]*a[\W_]*r[\W_]*s?\b"),  # SAR, S.A.R., s a r, SARs
+    re.compile(r"suspicious[\W_]*activit(?:y|ies)[\W_]*(?:report|filing|narrative)"),
+    re.compile(r"suspicious[\W_]*transaction[\W_]*report"),
+    re.compile(r"fincen[\W_]*(?:form[\W_]*)?111\b"),
+)
+_INVISIBLE = dict.fromkeys(
+    [0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF, 0x00AD, 0x180E] + list(range(0x202A, 0x202F)), None
+)
+
+
+def sar_content_reason(*texts: str) -> str | None:
+    """Return a short reason code when any text mentions SAR material, else None."""
+    for raw in texts:
+        folded = unicodedata.normalize("NFKC", raw).translate(_INVISIBLE).casefold()
+        # A letter-by-letter SAR spelled with newlines is still one match: \W covers whitespace.
+        for pattern in _SAR_PATTERNS:
+            if pattern.search(folded):
+                return "sar_content"
+    return None
 
 
 FORBIDDEN_MODEL_MARKERS = (":online", "openrouter/")
