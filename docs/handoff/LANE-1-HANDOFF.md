@@ -220,3 +220,17 @@ files are frozen until Abdullah's Stage 2 sign-off.
 - Tests: `tests/test_isolation_probe.py`; route and denial registries updated.
 - For the live server: add `ISOLATION_PROBE_ENABLED=true` to the demo environment only, with the
   seeded second firm (`Synthetic Other Firm`).
+
+## Phase 2, step 4: security headers
+
+- API: `app/security_headers.py` (outermost middleware) adds HSTS, X-Frame-Options DENY, nosniff,
+  Referrer-Policy, Permissions-Policy and a lock-everything CSP to every response, including 401,
+  404 and 429. `/docs`, `/redoc` and `/openapi.json` get all but the CSP. Caddy still adds its own at
+  the edge (`deploy/` untouched). Test: `tests/test_security_headers.py`.
+- Web: `web/scripts/security-headers.mjs` (used by `next.config.ts`) adds a CSP to the headers the app
+  already sent. `connect-src` is this site, the configured API origin and a public Sentry host if set.
+  Dev adds `unsafe-eval` and websockets for hot reload only. Unit test: `security-headers.test.mjs`.
+- Live journey test 8 reads the real response headers from the browser for web and API and fails on
+  any CSP violation the browser reports during the whole journey (none).
+- Open item: `script-src` still has `'unsafe-inline'` because Next.js writes inline bootstrap scripts.
+  Removing it needs a per-request nonce (proxy) and dynamic rendering on the Worker. Not done here.

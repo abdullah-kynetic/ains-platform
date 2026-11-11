@@ -21,14 +21,24 @@ const state: { slug: string; engagementId: string; firmId: string } = {
   firmId: "",
 };
 
+/** Any browser-reported CSP violation during the journey fails the last test. */
+const cspViolations: string[] = [];
+function watchCsp(page: Page) {
+  page.on("console", (message) => {
+    if (/content security policy/i.test(message.text())) cspViolations.push(message.text());
+  });
+}
+
 async function auditorPage(browser: Browser): Promise<Page> {
   const page = await (await browser.newContext()).newPage();
+  watchCsp(page);
   await signInAt(page, AUDITOR_ORIGIN, QUENTIN, AUDITOR_PASSWORD, true, "/auditor");
   return page;
 }
 
 async function clientPage(browser: Browser): Promise<Page> {
   const page = await (await browser.newContext()).newPage();
+  watchCsp(page);
   await signInAt(page, portalOrigin(state.slug), CLIENT_EMAIL, CLIENT_PASSWORD, false, "/");
   return page;
 }
@@ -374,4 +384,23 @@ test("7. Quentin runs the isolation check and reads the firm's audit log", async
   await auditor.getByLabel("Action", { exact: true }).fill("");
   await auditor.getByRole("button", { name: "Verify chain" }).click();
   await expect(auditor.getByRole("status").filter({ hasText: "Chain verified" })).toBeVisible();
+});
+
+test("8. Security headers are on the web app and the API, and the journey broke no CSP rule", async ({ browser }) => {
+  // The browser resolves *.localhost; Node's request client cannot.
+  const page = await (await browser.newContext()).newPage();
+  const web = (await page.goto(`${AUDITOR_ORIGIN}/sign-in`))!.headers();
+  await page.goto(`${AUDITOR_ORIGIN}/sign-in`);
+  // Cross-origin scripts only see a few headers, so read them from the network response itself.
+  const seen = page.waitForResponse((r) => r.url() === "http://kynetic.localhost:8000/health");
+  await page.evaluate(() => void fetch("http://kynetic.localhost:8000/health"));
+  const api = (await seen).headers();
+  for (const [where, headers] of [["web", web], ["api", api]] as const) {
+    for (const name of ["content-security-policy", "strict-transport-security", "x-frame-options", "referrer-policy", "permissions-policy"]) {
+      expect(headers[name], `${name} on ${where}`).toBeTruthy();
+    }
+    expect(headers["x-frame-options"]).toBe("DENY");
+    expect(headers["content-security-policy"]).toContain("frame-ancestors 'none'");
+  }
+  expect(cspViolations).toEqual([]);
 });
