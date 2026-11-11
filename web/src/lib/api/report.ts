@@ -1,3 +1,4 @@
+import { apiRequest, USE_MOCKS } from "../api";
 import { delay, readStore, updateStore } from "../mock/store";
 import { getChecklistTests } from "./checklist";
 import { listFindings } from "./findings";
@@ -12,6 +13,7 @@ const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "
 /** Sections assembled from approved findings plus tested results. Drafts are never included. */
 // TODO(backend): GET /auditor/engagements/{id}/report-draft -> ReportDraft (server assembles from stored findings)
 export async function buildReport(engagementId: string): Promise<ReportDraft> {
+  if (!USE_MOCKS) return apiRequest(`/auditor/engagements/${encodeURIComponent(engagementId)}/report-draft`);
   const [summary, tests, findings, samples] = await Promise.all([getEngagementSummary(engagementId), getChecklistTests(engagementId), listFindings(engagementId), listSamples(engagementId)]);
   const edits = readStore<Record<string, string>>(key(engagementId), () => ({}));
   const count = (c: string) => tests.filter((t) => t.conclusion === c).length;
@@ -29,6 +31,10 @@ export async function buildReport(engagementId: string): Promise<ReportDraft> {
 
 // TODO(backend): PUT /auditor/engagements/{id}/report-draft/sections/{sectionId}
 export async function saveReportSection(engagementId: string, sectionId: string, body: string): Promise<void> {
+  if (!USE_MOCKS) {
+    await apiRequest(`/auditor/engagements/${encodeURIComponent(engagementId)}/report-draft/sections/${encodeURIComponent(sectionId)}`, { method: "PUT", body: JSON.stringify({ body }) });
+    return;
+  }
   updateStore(key(engagementId), () => ({} as Record<string, string>), (e) => { e[sectionId] = body; });
   logActivity(engagementId, `Edited report section “${sectionId}”.`);
   return delay(undefined, 0);

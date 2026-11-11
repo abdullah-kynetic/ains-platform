@@ -6,7 +6,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import ConfigDict, Field
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from app.database.models import (
     AuditLog,
@@ -180,16 +180,9 @@ def add_contact(firm_id: str, payload: ContactInput, user: CurrentUser, db: DB):
 @router.get("/engagements/{engagement_id}/summary", response_model=EngagementSummaryView)
 def get_summary(engagement_id: str, user: CurrentUser, db: DB):
     require_auditor(user)
-    entry = db.scalar(
-        select(Engagement)
-        .join(Firm, Firm.id == Engagement.firm_id)
-        .where(
-            Engagement.id == engagement_id,
-            Engagement.auditor_id == user.id,
-            Engagement.firm_id == Firm.id,
-        )
-        .options(selectinload(Engagement.firm), selectinload(Engagement.auditor))
-    )
-    if not entry:
-        raise HTTPException(404, "Engagement not found")
+    # Read-only. The assigned auditor, or a reviewer or partner of the assignee's practice, so a
+    # second reviewer can open the file they are asked to approve.
+    from .workpapers import _engagement_for_review
+
+    entry = _engagement_for_review(db, user, engagement_id)
     return engagement_summary(entry)

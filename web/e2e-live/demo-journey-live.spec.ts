@@ -226,3 +226,77 @@ test("5. Quentin flags a document; the client replies in Messages; Quentin resol
   expect((await callApi(auditor, AUDITOR_ORIGIN, "/auditor/engagements/synthetic-other-engagement/issues")).status).toBe(404);
   expect((await callApi(client, portal, "/engagements/synthetic-other-engagement/issues")).status).toBe(404);
 });
+
+test("6. Quentin concludes, a second reviewer approves, Quentin signs; the client confirms; an invoice is issued", async ({ browser }) => {
+  test.setTimeout(180_000);
+  const REVIEWER = "e2e-reviewer@example.test";
+  const auditor = await auditorPage(browser);
+  const audit = `/auditor/engagements/${state.engagementId}`;
+
+  // Conclusions: one through the screen, the rest through the same route the screen calls.
+  await auditor.goto(`${AUDITOR_ORIGIN}${audit}/checklist`);
+  await auditor.getByLabel(/Conclusion for AML-BD-001 /).selectOption("pass");
+  await expect(auditor.getByLabel(/Conclusion for AML-BD-001 /)).toHaveValue("pass");
+  const tests = (await callApi(auditor, AUDITOR_ORIGIN, `${audit}/checklist-tests`)).body as { requestId: string; conclusion: string | null }[];
+  expect(tests).toHaveLength(34);
+  const open = tests.filter((x) => x.conclusion === null);
+  for (let i = 0; i < open.length; i += 6) {
+    const results = await Promise.all(open.slice(i, i + 6).map((t) => callApi(auditor, AUDITOR_ORIGIN, `${audit}/checklist-tests/${t.requestId}`, "PATCH", { conclusion: "pass" })));
+    for (const r of results) expect(r.status).toBe(200);
+  }
+
+  // Independence is declared on its screen.
+  await auditor.goto(`${AUDITOR_ORIGIN}${audit}/independence`);
+  await expect(auditor.getByLabel("No", { exact: true })).toHaveCount(5);
+  for (const radio of await auditor.getByLabel("No", { exact: true }).all()) await radio.check();
+  await auditor.getByRole("button", { name: "Declare independence" }).click();
+  await expect(auditor.getByText("Independent", { exact: true })).toBeVisible();
+
+  // The preparer cannot approve their own file; a second reviewer can.
+  await auditor.goto(`${AUDITOR_ORIGIN}${audit}/sign-off`);
+  await expect(auditor.getByText("Checklist, samples, workpapers, findings and independence are all complete.")).toBeVisible();
+  const reviewer = await (await browser.newContext()).newPage();
+  await signInAt(reviewer, AUDITOR_ORIGIN, REVIEWER, AUDITOR_PASSWORD, true, "/auditor");
+  await reviewer.goto(`${AUDITOR_ORIGIN}${audit}/sign-off`);
+  await reviewer.getByLabel("Review note (optional)").fill("Reviewed the synthetic file.");
+  await reviewer.getByRole("button", { name: "Approve as second reviewer" }).click();
+  await expect(reviewer.getByText("Approved", { exact: false }).first()).toBeVisible();
+
+  // The partner (Quentin) signs by typing their name, then completes the engagement.
+  await auditor.reload();
+  await auditor.getByLabel("I have reviewed this report and approve the findings in it.").check();
+  await auditor.getByLabel("Type your full name to sign").fill("Synthetic Quentin");
+  await auditor.getByRole("button", { name: "Sign report" }).click();
+  await expect(auditor.getByText("Fingerprint").first()).toBeVisible();
+  const fingerprint = (await auditor.locator("code").first().textContent())!.trim();
+  expect(fingerprint).toMatch(/^[a-f0-9]{64}$/);
+  await auditor.getByRole("button", { name: "Mark complete" }).click();
+  await expect(auditor.getByText("Completed", { exact: false }).first()).toBeVisible();
+
+  // The client finds the signed report (no findings) and confirms it.
+  const client = await clientPage(browser);
+  const portal = portalOrigin(state.slug);
+  await client.goto(`${portal}/report`);
+  await expect(client.getByText(fingerprint)).toBeVisible();
+  await expect(client.getByText(/Finding \d/)).toHaveCount(0);
+  await client.getByRole("button", { name: "Confirm I received this report" }).click();
+  await expect(client.getByTestId("report-confirmed")).toBeVisible();
+
+  // Only now can an invoice be issued; the client then sees it.
+  state.firmId = ((await callApi(auditor, AUDITOR_ORIGIN, `${audit}/summary`)).body as { clientId: string }).clientId;
+  const today = new Date().toISOString().slice(0, 10);
+  const due = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const invoice = await callApi(auditor, AUDITOR_ORIGIN, "/auditor/invoices", "POST", {
+    firmId: state.firmId, engagementId: state.engagementId, issueDate: today, dueDate: due,
+    lineItems: [{ description: "Synthetic Rule 3310 independent test", quantity: "1", rateCents: 150000 }],
+  });
+  expect(invoice.status).toBe(201);
+  expect((await callApi(auditor, AUDITOR_ORIGIN, `/auditor/invoices/${(invoice.body as { id: string }).id}/sent`, "POST")).status).toBe(200);
+  await client.goto(`${portal}/invoices`);
+  await expect(client.getByText("$1,500.00")).toBeVisible();
+
+  // Isolation: the client cannot read the auditor's sign-off, and the other engagement is unreachable.
+  expect((await callApi(client, portal, `${audit}/signoff`)).status).toBe(403);
+  expect((await callApi(auditor, AUDITOR_ORIGIN, "/auditor/engagements/synthetic-other-engagement/signoff")).status).toBe(404);
+  expect((await callApi(client, portal, "/engagements/synthetic-other-engagement/signed-report")).status).toBe(404);
+});

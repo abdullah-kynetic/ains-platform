@@ -125,7 +125,7 @@ export function SignoffTab({ id }: { id: string }) {
           <div className="grid gap-3">
             <p className="text-sm"><span className="text-muted">Report fingerprint to be signed </span><code className="break-all text-xs">{fingerprint}</code></p>
             <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-0.5 size-4 accent-foreground" checked={attest} onChange={(e) => setAttest(e.target.checked)} />I have reviewed this report and approve the findings in it.</label>
-            <Field label={`Type “${signoff.partner.name}” to sign`}><Input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" /></Field>
+            <Field label={signoff.partner.name ? `Type “${signoff.partner.name}” to sign` : "Type your full name to sign"}><Input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" /></Field>
             <div><Button disabled={!signoff.reviewer.approvedAt || !attest || !typed.trim()} onClick={() => void run(() => partnerSign(id, typed))}>Sign report</Button>{!signoff.reviewer.approvedAt && <span className="ml-3 text-xs text-muted">Needs the second reviewer first.</span>}</div>
           </div>
         ))}

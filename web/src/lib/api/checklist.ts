@@ -1,3 +1,4 @@
+import { apiRequest, USE_MOCKS } from "../api";
 import { delay, readStore, updateStore } from "../mock/store";
 import { seedChecklist } from "../mock/seed";
 import { logActivity } from "./log";
@@ -13,11 +14,13 @@ export function sortChecklist(tests: ChecklistTest[]): ChecklistTest[] {
 
 // TODO(backend): GET /auditor/engagements/{id}/checklist-tests -> ChecklistTest[] (34 rows)
 export async function getChecklistTests(engagementId: string): Promise<ChecklistTest[]> {
+  if (!USE_MOCKS) return sortChecklist(await apiRequest<ChecklistTest[]>(`/auditor/engagements/${encodeURIComponent(engagementId)}/checklist-tests`));
   return delay(sortChecklist(readStore(key(engagementId), () => seedChecklist(engagementId))));
 }
 
 // TODO(backend): PATCH /auditor/engagements/{id}/checklist-tests/{requestId} {conclusion}; audit-logged server-side
 export async function setConclusion(engagementId: string, requestId: string, conclusion: Conclusion | null): Promise<ChecklistTest[]> {
+  if (!USE_MOCKS) return sortChecklist(await apiRequest<ChecklistTest[]>(`/auditor/engagements/${encodeURIComponent(engagementId)}/checklist-tests/${encodeURIComponent(requestId)}`, { method: "PATCH", body: JSON.stringify({ conclusion }) }));
   const next = updateStore(key(engagementId), () => seedChecklist(engagementId), (rows) => {
     const row = rows.find((r) => r.requestId === requestId);
     if (row) { row.conclusion = conclusion; row.updatedAt = new Date().toISOString(); }

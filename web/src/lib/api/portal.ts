@@ -66,6 +66,7 @@ export async function respondToRequest(id: string, text: string): Promise<Respon
 
 // TODO(backend): GET /client/reports -> ClientPortalReport[]; only signed reports are `available`
 export async function listPortalReports(): Promise<ClientPortalReport[]> {
+  if (!USE_MOCKS) return [await apiRequest<ClientPortalReport>(`/engagements/${encodeURIComponent(await clientEngagementId())}/signed-report`)];
   return delay([
     { id: "rep-2025", period: "Jan–Dec 2025", available: false, signedOn: null, signedBy: null, fingerprint: null, sections: [] },
     {
@@ -80,8 +81,18 @@ export async function listPortalReports(): Promise<ClientPortalReport[]> {
   ]);
 }
 
+/** Client confirms the signed report by its fingerprint. POST /engagements/{id}/signed-report/confirm; this unlocks invoicing. */
+export async function confirmPortalReport(fingerprint: string): Promise<void> {
+  if (!USE_MOCKS) {
+    await apiRequest(`/engagements/${encodeURIComponent(await clientEngagementId())}/signed-report/confirm`, { method: "POST", body: JSON.stringify({ fingerprint }) });
+    return;
+  }
+  return delay(undefined, 0);
+}
+
 // TODO(backend): GET /client/invoices -> ClientPortalInvoice[] (issuing firm's invoices for this client only)
 export async function listPortalInvoices(): Promise<ClientPortalInvoice[]> {
+  if (!USE_MOCKS) return apiRequest(`/engagements/${encodeURIComponent(await clientEngagementId())}/invoices`);
   return delay([
     { id: "inv-1", number: "KIEN-0007", issued: "2026-10-01", due: "2026-10-31", amountCents: 1_250_000, status: "overdue" },
     { id: "inv-2", number: "KIEN-0004", issued: "2025-11-30", due: "2025-12-30", amountCents: 1_100_000, status: "paid" },
