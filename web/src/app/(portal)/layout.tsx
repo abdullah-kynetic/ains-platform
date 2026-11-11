@@ -36,6 +36,7 @@ const auditorItems: NavItem[] = [
   { href: "/auditor/invoices", label: "Invoices", icon: "Receipt", group: "Engagements" },
   { href: "/auditor/firm", label: "Firm settings", icon: "Landmark", group: "Firm" },
   { href: "/auditor/audit-log", label: "Audit Log", icon: "History", group: "Firm" },
+  { href: "/auditor/isolation", label: "Isolation proof", icon: "ShieldCheck", group: "Firm" },
   { href: "/auditor/settings", label: "My account", icon: "Settings", group: "Firm" },
 ];
 

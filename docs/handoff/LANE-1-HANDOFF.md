@@ -18,7 +18,7 @@ Read first: `CLAUDE.md`, `AGENTS.md`, `docs/BUILD-PLAN.md`, `docs/handoff/LANE-2
 | 4 | Client uploads (numbered `1.n`) and maps items to documents | | not started |
 | 5 | Quentin flags problems and sends requests; client responds | document flags and threads (auditor Client checklist tab, client Messages) | flags done; finding response requests wired in `lib/api` but no live test yet |
 | 6 | Report, client confirmation, invoice | checklist conclusions, independence, sign-off (reviewer, partner, complete), client report confirm, client invoices | done; live test 6. Conclusions beyond the first and invoice creation use the API in the test (screens exist: Checklist tab, `/auditor/invoices`) |
-| 7 | Firm-isolation proof screen and audit log view | | not started |
+| 7 | Firm-isolation proof screen and audit log view | `/auditor/isolation` (live check with a foreign id, 404s shown) and `/auditor/audit-log` (filter, verify chain) | done; live test 7 + mock render test. The proof uses a random id; real foreign ids are proven by `tests/test_two_practice_isolation.py` |
 | 8 | Seeded synthetic demo script + `DEMO.md` | | not started |
 
 Blockers: none yet.

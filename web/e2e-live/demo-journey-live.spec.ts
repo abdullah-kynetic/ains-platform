@@ -300,3 +300,22 @@ test("6. Quentin concludes, a second reviewer approves, Quentin signs; the clien
   expect((await callApi(auditor, AUDITOR_ORIGIN, "/auditor/engagements/synthetic-other-engagement/signoff")).status).toBe(404);
   expect((await callApi(client, portal, "/engagements/synthetic-other-engagement/signed-report")).status).toBe(404);
 });
+
+test("7. Quentin runs the isolation check and reads the firm's audit log", async ({ browser }) => {
+  const auditor = await auditorPage(browser);
+  await auditor.goto(`${AUDITOR_ORIGIN}/auditor/isolation`);
+  await auditor.getByRole("button", { name: "Run isolation check" }).click();
+  await expect(auditor.getByTestId("isolation-result")).toContainText("Isolation holds");
+  await expect(auditor.getByText("Not refused")).toHaveCount(0);
+
+  await auditor.goto(`${AUDITOR_ORIGIN}/auditor/audit-log`);
+  await auditor.getByLabel("Firm").selectOption({ label: FIRM });
+  // Step 6 left a trail in this firm's chain, and only this firm's.
+  await auditor.getByLabel("Action", { exact: true }).fill("report.confirmed");
+  await expect(auditor.getByRole("cell", { name: "report.confirmed" }).first()).toBeVisible();
+  await auditor.getByLabel("Action", { exact: true }).fill("signoff.reviewed");
+  await expect(auditor.getByRole("cell", { name: "signoff.reviewed" }).first()).toBeVisible();
+  await auditor.getByLabel("Action", { exact: true }).fill("");
+  await auditor.getByRole("button", { name: "Verify chain" }).click();
+  await expect(auditor.getByRole("status").filter({ hasText: "Chain verified" })).toBeVisible();
+});
