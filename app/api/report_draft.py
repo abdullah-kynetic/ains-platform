@@ -72,7 +72,10 @@ def _view(engagement, sections) -> ReportDraftView:
     response_model_by_alias=True,
 )
 def get_report_draft(engagement_id: str, db: DB, user: CurrentUser) -> ReportDraftView:
-    engagement = _engagement(db, user, engagement_id)
+    # Read-only: a reviewer or partner of the assignee's practice reads the draft they approve.
+    from .workpapers import _engagement_for_review
+
+    engagement = _engagement_for_review(db, user, engagement_id)
     return _view(engagement, draft_sections(db, engagement, user))
 
 

@@ -17,7 +17,7 @@ Read first: `CLAUDE.md`, `AGENTS.md`, `docs/BUILD-PLAN.md`, `docs/handoff/LANE-2
 | 3 | Client N/A with reason; Quentin approves or rejects | step-3 PR | done: client Checklist rebuilt on `/engagements/{id}/progress` (numbers, status, linked document numbers, N/A request with reason, rejection note, search); new auditor tab **Client checklist** (`…/client-checklist`) to approve or reject each N/A request |
 | 4 | Client uploads (numbered `1.n`) and maps items to documents | | not started |
 | 5 | Quentin flags problems and sends requests; client responds | document flags and threads (auditor Client checklist tab, client Messages) | flags done; finding response requests wired in `lib/api` but no live test yet |
-| 6 | Report, client confirmation, invoice | | not started |
+| 6 | Report, client confirmation, invoice | checklist conclusions, independence, sign-off (reviewer, partner, complete), client report confirm, client invoices | done; live test 6. Conclusions beyond the first and invoice creation use the API in the test (screens exist: Checklist tab, `/auditor/invoices`) |
 | 7 | Firm-isolation proof screen and audit log view | | not started |
 | 8 | Seeded synthetic demo script + `DEMO.md` | | not started |
 
@@ -161,6 +161,11 @@ Not `/client/response-requests` (the old mock comment). See `docs/kb/26-findings
 
 The sign-off needs **three different people** in one practice: the assigned auditor, a reviewer
 (or second partner), and the signing partner. The demo seed must create all three.
+
+Step 6 backend notes:
+- `/engagements/current` now falls back to the latest completed engagement so the client can find the signed report and invoices.
+- A reviewer or partner of the assignee's practice can now read `/auditor/engagements/{eid}/summary` and `/report-draft` (read only; edits still need the assigned auditor).
+- The sign-off screen asks the partner to type their full name; the server checks it against the signer's account name.
 
 ### 7. Firm-isolation proof and audit log
 

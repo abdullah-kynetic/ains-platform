@@ -1,3 +1,4 @@
+import { apiRequest, USE_MOCKS } from "../api";
 import { delay, readStore, updateStore, uid } from "../mock/store";
 import { seedSamples } from "../mock/seed";
 import { logActivity } from "./log";
@@ -8,6 +9,7 @@ const all = () => readStore<SampleSet[]>(key, seedSamples);
 
 // TODO(backend): GET /auditor/engagements/{id}/samples -> SampleSet[]
 export async function listSamples(engagementId: string): Promise<SampleSet[]> {
+  if (!USE_MOCKS) return apiRequest(`/auditor/engagements/${encodeURIComponent(engagementId)}/samples`);
   return delay(all().filter((s) => s.engagementId === engagementId));
 }
 

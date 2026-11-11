@@ -80,6 +80,8 @@ def test_journey_from_testing_to_invoice(backend):  # noqa: F811
 
     # 5. The client reads the signed report (no findings), then confirms it by fingerprint.
     sign_in_client(client)
+    # A completed engagement is still the client's current one, so the browser can find it.
+    assert client.get("/engagements/current").json()["id"] == eid
     report = client.get(f"/engagements/{eid}/signed-report")
     assert report.json()["available"] is True and report.json()["confirmed"] is False
     assert "FINDING-INTERNAL" not in report.text
@@ -112,3 +114,25 @@ def test_journey_from_testing_to_invoice(backend):  # noqa: F811
         assert row.details["fingerprint"] == fingerprint and row.firm_id == ids["firm_a"]
         assert db.scalar(select(ResponseRequest.status)) == "responded"
         assert db.scalar(select(User.id).where(User.email == "partner-a@example.test"))
+
+
+def test_second_reviewer_can_open_the_summary_but_a_stranger_cannot(backend):  # noqa: F811
+    client, factory, ids, *_ = backend
+    _teammates(factory, ids)
+    eid = ids["engagement_a"]
+    _sign_in(client, "reviewer-a@example.test")
+    assert client.get(f"/auditor/engagements/{eid}/summary").status_code == 200
+    sign_in_client(client)
+    assert client.get(f"/auditor/engagements/{eid}/summary").status_code == 403
+
+
+def test_second_reviewer_can_read_but_not_edit_the_report_draft(backend):  # noqa: F811
+    client, factory, ids, *_ = backend
+    _teammates(factory, ids)
+    eid = ids["engagement_a"]
+    _sign_in(client, "reviewer-a@example.test")
+    assert client.get(f"/auditor/engagements/{eid}/report-draft").status_code == 200
+    edit = client.put(
+        f"/auditor/engagements/{eid}/report-draft/sections/scope", json={"body": "changed"}
+    )
+    assert edit.status_code == 404

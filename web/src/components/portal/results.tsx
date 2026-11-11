@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/label";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { downloadWord, listResponseRequests, listPortalInvoices, listPortalReports, respondToRequest, type ResponseRequest } from "@/lib/api/index";
+import { confirmPortalReport, downloadWord, listResponseRequests, listPortalInvoices, listPortalReports, respondToRequest, type ResponseRequest } from "@/lib/api/index";
 import { Loading, MockNotice, fmtDate, money, useAsync } from "@/components/auditor/kit";
 
 function ResponseForm({ request, onDone }: { request: ResponseRequest; onDone: () => void }) {
@@ -66,6 +66,7 @@ export function PortalReport() {
               <CardContent className="report-print-area grid gap-4">
                 <p className="text-sm text-muted">Signed by {r.signedBy} on {fmtDate(r.signedOn)}. Fingerprint <code className="break-all text-xs">{r.fingerprint}</code></p>
                 {r.sections.map((s) => <div key={s.id}><h3 className="text-sm font-semibold">{s.title}</h3><p className="text-sm leading-relaxed">{s.body}</p></div>)}
+                {r.fingerprint ? <ConfirmReport fingerprint={r.fingerprint} confirmed={!!r.confirmed} onDone={reload} /> : null}
               </CardContent>
             </Card>
           ) : (
@@ -74,6 +75,23 @@ export function PortalReport() {
         </div>
       )}
     </AuthGate>
+  );
+}
+
+function ConfirmReport({ fingerprint, confirmed, onDone }: { fingerprint: string; confirmed: boolean; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  if (confirmed) return <p role="status" className="status-note" data-tone="success" data-testid="report-confirmed">You confirmed this report.</p>;
+  return (
+    <div className="grid gap-2 border-t border-border pt-4">
+      <p className="text-sm text-muted">Confirming tells your auditor you received this signed report. It does not change the report.</p>
+      <div>
+        <Button size="sm" disabled={busy} onClick={() => { setBusy(true); setError(""); confirmPortalReport(fingerprint).then(onDone).catch((e: Error) => setError(e.message)).finally(() => setBusy(false)); }}>
+          {busy ? "Confirming…" : "Confirm I received this report"}
+        </Button>
+      </div>
+      {error ? <p role="alert" className="text-sm text-warning-foreground">{error}</p> : null}
+    </div>
   );
 }
 

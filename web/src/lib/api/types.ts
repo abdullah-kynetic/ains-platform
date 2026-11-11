@@ -218,6 +218,8 @@ export type ClientPortalReport = {
   signedBy: string | null;
   fingerprint: string | null;
   sections: ReportSection[];
+  confirmed?: boolean;
+  confirmedAt?: string | null;
 };
 export type ClientPortalInvoice = {
   id: string;

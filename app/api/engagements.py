@@ -197,17 +197,22 @@ def _serialize_engagement(engagement: Engagement) -> EngagementView:
     response_model_by_alias=True,
 )
 def current_engagement(user: CurrentUser, db: DB) -> EngagementView:
-    engagement = db.scalar(
-        visible_engagements(user)
-        .where(Engagement.status != EngagementStatus.COMPLETE)
-        .options(
-            selectinload(Engagement.firm),
-            selectinload(Engagement.items).selectinload(ChecklistItemInstance.documents),
-            selectinload(Engagement.items).selectinload(ChecklistItemInstance.na_marked_by),
+    def _latest(*conditions: object) -> Engagement | None:
+        return db.scalar(
+            visible_engagements(user)
+            .where(*conditions)
+            .options(
+                selectinload(Engagement.firm),
+                selectinload(Engagement.items).selectinload(ChecklistItemInstance.documents),
+                selectinload(Engagement.items).selectinload(ChecklistItemInstance.na_marked_by),
+            )
+            .order_by(Engagement.created_at.desc())
+            .limit(1)
         )
-        .order_by(Engagement.created_at.desc())
-        .limit(1)
-    )
+
+    # Prefer the active engagement; once it is complete the portal still needs it to show the
+    # signed report and invoices.
+    engagement = _latest(Engagement.status != EngagementStatus.COMPLETE) or _latest()
     if not engagement:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active engagement")
     db.add(
