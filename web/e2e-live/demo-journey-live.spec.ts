@@ -234,16 +234,61 @@ test("5. Quentin flags a document; the client replies in Messages; Quentin resol
   expect((await callApi(client, portal, "/engagements/synthetic-other-engagement/issues")).status).toBe(404);
 });
 
+test("5b. Quentin records a finding and asks for a management response; the client answers without ever seeing the finding", async ({ browser }) => {
+  test.setTimeout(120_000);
+  const auditor = await auditorPage(browser);
+  const audit = `/auditor/engagements/${state.engagementId}`;
+  await auditor.goto(`${AUDITOR_ORIGIN}${audit}/findings`);
+  await auditor.getByRole("button", { name: "New finding" }).first().click();
+  await auditor.getByLabel("Title", { exact: true }).fill("Synthetic training log is incomplete");
+  await auditor.getByLabel("Rule cited").fill("FINRA Rule 3310(e)");
+  await auditor.getByLabel("Condition").fill("SECRETFINDINGCONDITION: two staff have no training record.");
+  await auditor.getByLabel("Cause").fill("SECRETFINDINGCAUSE");
+  await auditor.getByLabel("Effect").fill("SECRETFINDINGEFFECT");
+  await auditor.getByLabel("Recommendation").fill("SECRETFINDINGRECOMMENDATION");
+  await auditor.getByRole("button", { name: "Add citation" }).click();
+  await auditor.getByLabel("Citation 1 document").selectOption({ index: 1 });
+  await auditor.getByLabel("Citation 1 page").fill("2");
+  await auditor.getByRole("button", { name: "Save draft" }).click();
+  await auditor.getByRole("button", { name: "Approve", exact: true }).click();
+  await auditor.getByRole("button", { name: "Request response" }).click();
+  await auditor.getByLabel("Title for the client").fill("Training records for two staff");
+  await auditor.getByLabel("Request", { exact: true }).fill("Please confirm when training records for two staff will be completed.");
+  await auditor.getByRole("button", { name: "Release to client" }).click();
+  await expect(auditor.getByText("Requested from the client; awaiting their response.")).toBeVisible();
+
+  // The client sees only the request the auditor wrote, never the finding.
+  const client = await clientPage(browser);
+  const portal = portalOrigin(state.slug);
+  await client.goto(`${portal}/responses`);
+  await expect(client.getByRole("heading", { name: "Training records for two staff" })).toBeVisible();
+  await expect(client.getByText("Please confirm when training records")).toBeVisible();
+  const page = await client.locator("body").innerText();
+  expect(page).not.toMatch(/SECRETFINDING|Synthetic training log is incomplete|Rule 3310\(e\)/);
+  await client.getByLabel("Your response").fill("Training will be completed by 15 January.");
+  await client.getByRole("button", { name: "Submit response" }).click();
+  await expect(client.getByText("Response sent")).toBeVisible();
+
+  // Quentin sees the response on the finding and closes it.
+  await auditor.goto(`${AUDITOR_ORIGIN}${audit}/findings`);
+  await expect(auditor.getByText("Training will be completed by 15 January.")).toBeVisible();
+  await auditor.getByRole("button", { name: "Close finding" }).click();
+  await expect(auditor.getByText("Closed", { exact: true }).first()).toBeVisible();
+});
+
 test("6. Quentin concludes, a second reviewer approves, Quentin signs; the client confirms; an invoice is issued", async ({ browser }) => {
   test.setTimeout(180_000);
   const REVIEWER = "e2e-reviewer@example.test";
   const auditor = await auditorPage(browser);
   const audit = `/auditor/engagements/${state.engagementId}`;
 
-  // Conclusions: one through the screen, the rest through the same route the screen calls.
+  // Conclusions: the first five through the screen, the rest through the same route the screen calls.
   await auditor.goto(`${AUDITOR_ORIGIN}${audit}/checklist`);
-  await auditor.getByLabel(/Conclusion for AML-BD-001 /).selectOption("pass");
-  await expect(auditor.getByLabel(/Conclusion for AML-BD-001 /)).toHaveValue("pass");
+  for (const n of ["001", "002", "003", "004", "005"]) {
+    const select = auditor.getByLabel(new RegExp(`Conclusion for AML-BD-${n} `));
+    await select.selectOption("pass");
+    await expect(select).toHaveValue("pass");
+  }
   const tests = (await callApi(auditor, AUDITOR_ORIGIN, `${audit}/checklist-tests`)).body as { requestId: string; conclusion: string | null }[];
   expect(tests).toHaveLength(34);
   const open = tests.filter((x) => x.conclusion === null);
@@ -290,15 +335,18 @@ test("6. Quentin concludes, a second reviewer approves, Quentin signs; the clien
   await expect(client.getByTestId("report-confirmed")).toBeVisible();
 
   // Only now can an invoice be issued; the client then sees it.
+  await auditor.goto(`${AUDITOR_ORIGIN}/auditor/invoices/new`);
+  await auditor.getByLabel("Client firm").selectOption({ label: FIRM });
+  await auditor.getByLabel("Engagement (optional)").selectOption({ index: 1 });
+  await auditor.getByLabel("Issue date").fill(new Date().toISOString().slice(0, 10));
+  await auditor.getByLabel("Due date").fill(new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10));
+  await auditor.getByLabel("Description 1").fill("Synthetic Rule 3310 independent test");
+  await auditor.getByLabel("Quantity 1").fill("1");
+  await auditor.getByLabel(/Rate 1/).fill("1500");
+  await auditor.getByRole("button", { name: "Save draft" }).click();
+  await auditor.getByRole("button", { name: "Mark sent" }).click();
+  await expect(auditor.getByText("Sent", { exact: true }).first()).toBeVisible();
   state.firmId = ((await callApi(auditor, AUDITOR_ORIGIN, `${audit}/summary`)).body as { clientId: string }).clientId;
-  const today = new Date().toISOString().slice(0, 10);
-  const due = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
-  const invoice = await callApi(auditor, AUDITOR_ORIGIN, "/auditor/invoices", "POST", {
-    firmId: state.firmId, engagementId: state.engagementId, issueDate: today, dueDate: due,
-    lineItems: [{ description: "Synthetic Rule 3310 independent test", quantity: "1", rateCents: 150000 }],
-  });
-  expect(invoice.status).toBe(201);
-  expect((await callApi(auditor, AUDITOR_ORIGIN, `/auditor/invoices/${(invoice.body as { id: string }).id}/sent`, "POST")).status).toBe(200);
   await client.goto(`${portal}/invoices`);
   await expect(client.getByText("$1,500.00")).toBeVisible();
 
