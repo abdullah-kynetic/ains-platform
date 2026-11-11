@@ -38,6 +38,7 @@ POST /auditor/invoices/{invoice_id}/sent auditor
 POST /auditor/invoices/{invoice_id}/paid auditor
 POST /auditor/invoices/{invoice_id}/void auditor
 GET /auditor/audit-log auditor
+GET /auditor/isolation-probe auditor
 GET /auditor/audit-log/verify-chain auditor
 GET /auditor/queue auditor
 PATCH /auditor/findings/{finding_id} auditor

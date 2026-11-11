@@ -27,6 +27,7 @@ POST /auditor/invoices/{invoice_id}/sent auditor_scope
 POST /auditor/invoices/{invoice_id}/paid auditor_scope
 POST /auditor/invoices/{invoice_id}/void auditor_scope
 GET /auditor/audit-log auditor_scope
+GET /auditor/isolation-probe auditor_scope
 GET /auditor/audit-log/verify-chain auditor_scope
 GET /auditor/queue auditor_scope
 PATCH /auditor/findings/{finding_id} auditor_scope

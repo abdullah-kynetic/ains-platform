@@ -209,3 +209,14 @@ files are frozen until Abdullah's Stage 2 sign-off.
 - Bug found and fixed by 5b: the auditor workspace listed only documents uploaded straight to a
   request, not documents the client mapped to it, so finding citations had no documents to pick.
   Workspace now includes linked documents (same firm and engagement only). Test in `tests/test_checklist_na.py`.
+
+## Phase 2, step 3: isolation screen uses a real second-firm id
+
+- New `GET /auditor/isolation-probe` returns `{foreignEngagementId, foreignFirmId}`: a real engagement
+  of a firm the caller is not assigned to. Gated by `ISOLATION_PROBE_ENABLED` (off by default, answers
+  404; on only for the synthetic demo). Auditors only; clients get 403, anonymous 401.
+- `/auditor/isolation` calls it first, probes with those ids, and states whether the id was real or a
+  random fallback. The live journey asserts "real engagement of another firm".
+- Tests: `tests/test_isolation_probe.py`; route and denial registries updated.
+- For the live server: add `ISOLATION_PROBE_ENABLED=true` to the demo environment only, with the
+  seeded second firm (`Synthetic Other Firm`).

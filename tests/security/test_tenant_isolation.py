@@ -155,7 +155,9 @@ def test_revoked_assignment_denies_real_resources_and_filters_collections(backen
         response = _send(client, method, path, ids)
         own_state = path == "/auditor/notifications/read-all"  # only the caller's read marks
         scoped = (
-            "{" in path or path.startswith("/auditor/audit-log") or method != "GET"
+            "{" in path
+            or path.startswith(("/auditor/audit-log", "/auditor/isolation-probe"))
+            or method != "GET"
         ) and not own_state
         assert response.status_code == (404 if scoped else 204 if own_state else 200), (
             method,
