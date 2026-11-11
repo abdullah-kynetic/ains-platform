@@ -39,3 +39,8 @@ test("a public Sentry DSN host is allowed, nothing else", () => {
   const csp = contentSecurityPolicy({ ...prod, NEXT_PUBLIC_SENTRY_DSN: "https://k@o1.ingest.sentry.io/2" });
   assert.match(csp, /https:\/\/o1\.ingest\.sentry\.io/);
 });
+
+test("an unset API URL falls back like the app does", () => {
+  assert.match(contentSecurityPolicy({}, true), /http:\/\/localhost:8000/);
+  assert.match(contentSecurityPolicy({}, false), /https:\/\/api\.kiensolutions\.com/);
+});

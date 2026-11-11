@@ -21,7 +21,11 @@ export function apiConnectSources(apiUrl) {
 }
 
 export function contentSecurityPolicy(env, development = false) {
-  const connect = ["'self'", ...apiConnectSources(env.NEXT_PUBLIC_API_URL)];
+  // Same fallback as src/lib/api.ts: an unset API URL means the local API in dev, the real one otherwise.
+  const apiUrl =
+    env.NEXT_PUBLIC_API_URL?.trim() ||
+    (development ? "http://localhost:8000" : "https://api.kiensolutions.com");
+  const connect = ["'self'", ...apiConnectSources(apiUrl)];
   const dsn = env.NEXT_PUBLIC_SENTRY_DSN?.trim();
   if (dsn) {
     try {
