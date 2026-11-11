@@ -96,6 +96,10 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
   states). Details and logins: `docs/kb/33-pilot-seed.md`.
 - **Merged:** #116 (L2-7), #117 (L2-8). **Next:** L2-9 is PR #118; L2-10 (readiness tracker) is PR #119.
 
+- **Done 2026-11-11 (demo thread, step 0):** `tests/test_two_practice_isolation.py` proves two
+  practices and two client firms are sealed from each other on every route (reads, writes, lists,
+  search, team, audit log). Web route list for the demo: `docs/handoff/LANE-1-HANDOFF.md`.
+
 ## In progress
 
 ### 1. PR #102 — S-07 through S-15 except S-12 (open, not mergeable until the image scan is green)
