@@ -39,6 +39,17 @@ export function audienceForHost(
   return "both";
 }
 
+/**
+ * Firm branding is looked up from the host's firm label. The auditor host is not a firm, so the API
+ * answers 404 there; asking would turn the auditor sign-in into the "Unknown firm" page.
+ */
+export function hostHasFirmBranding(
+  host: string | null | undefined,
+  auditorHost: string = process.env.NEXT_PUBLIC_AUDITOR_HOST || DEFAULT_AUDITOR_HOST,
+): boolean {
+  return audienceForHost(host, auditorHost) !== "auditor";
+}
+
 /** Browser helper; server and unknown contexts fall back to the demo behaviour. */
 export function currentAudience(): Audience {
   return typeof window === "undefined" ? "both" : audienceForHost(window.location.host);
