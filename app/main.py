@@ -11,6 +11,7 @@ from app.cors import PortalCORSMiddleware, portal_origin_allowed
 from app.monitoring import configure_private_logging, init_sentry
 from app.origin_check import OriginCheckMiddleware
 from app.ratelimit import RateLimitMiddleware
+from app.security_headers import SecurityHeadersMiddleware
 
 
 def enforce_production_safety(settings) -> None:
@@ -53,6 +54,8 @@ def create_app() -> FastAPI:
     # Outermost. Exact CORS_ORIGINS entries plus, when PORTAL_BASE_DOMAIN is set, the apex, www,
     # auditor and https://<known firm slug>.<domain>. No wildcard is ever sent.
     application.add_middleware(PortalCORSMiddleware)
+    # Outermost of all, so every response (errors, 429, CORS preflight) carries the headers.
+    application.add_middleware(SecurityHeadersMiddleware)
     from app.auth.onboarding import router as onboarding_router
     from app.auth.reset import router as reset_router
 
