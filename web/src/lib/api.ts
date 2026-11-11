@@ -827,4 +827,6 @@ export type UploadReceipt = {
   sha256: string;
   version: string;
   status: string;
+  /** Engagement document number such as "1.17", assigned by the server at upload. */
+  number?: string | null;
 };

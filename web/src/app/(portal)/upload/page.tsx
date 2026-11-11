@@ -127,6 +127,7 @@ function ClientUploadCenter() {
         >
           {data.unassignedDocuments.map((document) => (
             <p key={document.id}>
+              {document.number ? <span className="font-mono text-brand-hover">{document.number} </span> : null}
               <span>{document.name}</span> · Received ·{" "}
               <span className="break-all text-xs text-muted">
                 SHA-256: {document.sha256}
@@ -144,8 +145,8 @@ function ClientUploadCenter() {
         }}
       >
         <p className="text-sm text-muted">
-          Drop files here or select multiple files. Files are attached to your
-          engagement for auditor review. Do not upload restricted documents.
+          Drop files here or select multiple files. Each file gets a document
+          number (like 1.17); map documents to requests on the Checklist. Do not upload restricted documents.
           Maximum 100 MB per file.
         </p>
         <label className="grid gap-2">
@@ -181,7 +182,9 @@ function ClientUploadCenter() {
                 <p className="break-all font-medium">{pending.file.name}</p>
                 <p role="status">
                   {pending.state === "received"
-                    ? "Received"
+                    ? pending.receipt?.number
+                      ? `Received as document ${pending.receipt.number}`
+                      : "Received"
                     : pending.state === "uploading"
                       ? "Uploading…"
                       : pending.state === "error"

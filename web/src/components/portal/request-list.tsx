@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress as Bar } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadState } from "@/components/ui/load-state";
-import { getProgress, ITEM_LABEL, listEngagementDocuments, requestNA, type DocRef, type ItemState, type Progress, type ProgressItem } from "@/lib/api/flow";
+import { getProgress, ITEM_LABEL, linkDocument, listEngagementDocuments, requestNA, submitAll, submitItem, type DocRef, type ItemState, type Progress, type ProgressItem } from "@/lib/api/flow";
 
 const tone: Record<ItemState, "default" | "brand" | "success" | "warning" | "info"> = {
   not_started: "default",
@@ -50,6 +50,7 @@ export function RequestList({ engagementId }: { engagementId: string }) {
           </span>
         </div>
         <Bar value={progress.percentSubmitted} />
+        {open ? <SubmitAll engagementId={engagementId} onDone={load} /> : null}
       </div>
       <label className="grid max-w-xl gap-2 text-sm font-medium">
         Search document requests
@@ -68,7 +69,7 @@ export function RequestList({ engagementId }: { engagementId: string }) {
             </summary>
             <div className="mt-3">
               {section.rows.map((item) => (
-                <RequestRow key={item.id} item={item} engagementId={engagementId} open={open} onChanged={load} />
+                <RequestRow key={item.id} item={item} engagementId={engagementId} open={open} documents={documents} onChanged={load} />
               ))}
             </div>
           </details>
@@ -77,13 +78,41 @@ export function RequestList({ engagementId }: { engagementId: string }) {
   );
 }
 
-function RequestRow({ item, engagementId, open, onChanged }: { item: ProgressItem; engagementId: string; open: boolean; onChanged: () => void }) {
+function SubmitAll({ engagementId, onDone }: { engagementId: string; onDone: () => void }) {
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button
+        size="sm"
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          setNote("");
+          submitAll(engagementId)
+            .then((r) => { setNote(`${r.submitted.length} request${r.submitted.length === 1 ? "" : "s"} with your auditor. ${r.notReady.length} still need documents or a decision.`); onDone(); })
+            .catch((e: Error) => setNote(e.message))
+            .finally(() => setBusy(false));
+        }}
+      >
+        {busy ? "Submitting…" : "Submit all ready requests"}
+      </Button>
+      {note ? <p role="status" className="text-sm text-muted">{note}</p> : null}
+    </div>
+  );
+}
+
+function RequestRow({ item, engagementId, open, documents, onChanged }: { item: ProgressItem; engagementId: string; open: boolean; documents: DocRef[]; onChanged: () => void }) {
   const [asking, setAsking] = useState(false);
+  const [choice, setChoice] = useState("");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const pending = item.naRequest?.state === "pending";
   const canAsk = open && !pending && item.status !== "na" && item.status !== "restricted" && item.status !== "accepted";
+  const editable = open && (item.status === "not_started" || item.status === "needs_info");
+  const unlinked = documents.filter((d) => !item.documents.some((x) => x.id === d.id));
+  const canSubmit = open && item.status === "not_started" && item.documents.length > 0 && !pending;
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
@@ -120,9 +149,35 @@ function RequestRow({ item, engagementId, open, onChanged }: { item: ProgressIte
             <li key={d.id} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5">
               <FileText aria-hidden className="size-3.5" /> <span className="font-mono">{d.number}</span> {d.name}
               {d.feedback ? <span className="text-warning-foreground">· {d.feedback}</span> : null}
+              {editable ? (
+                <button type="button" className="ml-1 underline underline-offset-2" aria-label={`Unlink ${d.number ?? d.name} from ${item.requestId}`} onClick={() => void run(() => linkDocument(engagementId, item.id, d.id, false))}>
+                  Unlink
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>
+      ) : null}
+      {editable && unlinked.length ? (
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="grid gap-1 text-xs font-medium" htmlFor={`map-${item.id}`}>
+            Map a document to {item.requestId}
+            <select id={`map-${item.id}`} className="h-8 rounded-md border border-border bg-surface px-2 text-sm" value={choice} onChange={(e) => setChoice(e.target.value)}>
+              <option value="">Choose a document…</option>
+              {unlinked.map((d) => <option key={d.id} value={d.id}>{d.number ? `${d.number} · ` : ""}{d.name}</option>)}
+            </select>
+          </label>
+          <Button size="sm" variant="outline" disabled={!choice || busy} onClick={() => void run(async () => { await linkDocument(engagementId, item.id, choice, true); setChoice(""); })}>
+            Map
+          </Button>
+        </div>
+      ) : null}
+      {canSubmit ? (
+        <div>
+          <Button size="sm" disabled={busy} onClick={() => void run(() => submitItem(engagementId, item.id))} aria-label={`Submit ${item.requestId} to auditor`}>
+            Submit to auditor
+          </Button>
+        </div>
       ) : null}
       {pending ? <p className="text-sm text-muted">N/A requested: “{item.naRequest!.reason}”. Waiting for your auditor.</p> : null}
       {item.naRequest?.state === "rejected" ? (

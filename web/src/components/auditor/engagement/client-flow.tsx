@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress as Bar } from "@/components/ui/progress";
-import { decideNA, getProgress, ITEM_LABEL, sendChecklist, STAGE_LABEL, type ProgressItem } from "@/lib/api/flow";
+import { acceptItem, decideNA, getProgress, ITEM_LABEL, sendChecklist, STAGE_LABEL, type ProgressItem } from "@/lib/api/flow";
 import { Textarea } from "@/components/ui/textarea";
 import { Loading, fmtDateTime, useAsync } from "../kit";
 
@@ -101,6 +101,7 @@ export function ClientItemsPanel({ id }: { id: string }) {
                   {item.documents.map((d) => <Badge key={d.id} variant="default">{d.number}</Badge>)}
                   {item.naRequest?.state === "rejected" ? <Badge variant="warning">N/A rejected</Badge> : null}
                   <Badge variant={item.status === "needs_info" ? "warning" : item.status === "accepted" ? "success" : "brand"}>{ITEM_LABEL[item.status]}</Badge>
+                  {item.status === "submitted" && item.openIssues === 0 ? <AcceptButton engagementId={id} item={item} onDone={reload} /> : null}
                 </span>
               </li>
             ))}
@@ -141,5 +142,19 @@ function NADecisionRow({ engagementId, item, onDone }: { engagementId: string; i
       </div>
       {error ? <p role="alert" className="text-sm text-warning-foreground">{error}</p> : null}
     </li>
+  );
+}
+
+function AcceptButton({ engagementId, item, onDone }: { engagementId: string; item: ProgressItem; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  return (
+    <>
+      <Button size="sm" variant="outline" disabled={busy} aria-label={`Accept ${item.requestId} for testing`}
+        onClick={() => { setBusy(true); setError(""); acceptItem(engagementId, item.id).then(onDone).catch((e: Error) => setError(e.message)).finally(() => setBusy(false)); }}>
+        Accept for testing
+      </Button>
+      {error ? <span role="alert" className="text-xs text-warning-foreground">{error}</span> : null}
+    </>
   );
 }
