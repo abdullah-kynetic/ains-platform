@@ -26,28 +26,59 @@ class GuardViolation(Exception):
 
 
 # Content scan: SAR / suspicious activity report filings must never reach a model. Fails closed
-# on any mention, including odd casing, spacing, punctuation, full-width letters and zero-width
-# characters. Ordinary AML policy text that merely names SAR procedures is blocked too: a person
-# reviews those files, not a model.
-_SAR_PATTERNS = (
-    re.compile(r"\bs[\W_]*a[\W_]*r[\W_]*s?\b"),  # SAR, S.A.R., s a r, SARs
-    re.compile(r"suspicious[\W_]*activit(?:y|ies)[\W_]*(?:report|filing|narrative)"),
-    re.compile(r"suspicious[\W_]*transaction[\W_]*report"),
-    re.compile(r"fincen[\W_]*(?:form[\W_]*)?111\b"),
-)
+# on any mention. Text is folded first (NFKD, invisible characters dropped, look-alike Cyrillic and
+# Greek letters mapped to Latin, case folded) and then reduced to letters separated by single
+# spaces, so "SAR_Q3_2026", "SAR2026", "S.A.R." and "S A R" all read as the word SAR. Ordinary AML
+# policy text that merely names SAR procedures is blocked too: a person reviews those, not a model.
+_CONFUSABLES = str.maketrans(
+    {
+        # Cyrillic
+        "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "х": "x", "у": "y", "і": "i",
+        "ј": "j", "ѕ": "s", "к": "k", "м": "m", "н": "h", "т": "t", "в": "b", "г": "r",
+        "ԁ": "d", "ӏ": "l", "ѵ": "v", "ԛ": "q", "ԝ": "w", "ь": "b", "ё": "e", "ї": "i",
+        # Greek
+        "α": "a", "ε": "e", "ο": "o", "ρ": "p", "τ": "t", "υ": "u", "ν": "v", "ι": "i",
+        "κ": "k", "ς": "s", "σ": "s", "η": "n", "μ": "u", "β": "b", "χ": "x", "γ": "y",
+        # Other Latin look-alikes
+        "ı": "i", "ɑ": "a", "ɡ": "g", "ʀ": "r",
+    }
+)  # fmt: skip
 _INVISIBLE = dict.fromkeys(
-    [0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF, 0x00AD, 0x180E] + list(range(0x202A, 0x202F)), None
+    [0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF, 0x00AD, 0x180E, 0x034F]
+    + list(range(0x202A, 0x202F))
+    + list(range(0x2066, 0x206A)),
+    None,
 )
+_SAR_PATTERNS = (
+    re.compile(r"\bs ?a ?r(?: ?s)?\b"),  # SAR, SARs, S A R, SAR_Q3 (non-letters became spaces)
+    re.compile(r"\bsar(?:narrative|filing|report|decision|referral|log)"),  # SARnarrative
+    re.compile(r"\bsuspicious activit(?:y|ies) (?:report|rpt|filing|narrative|form)"),
+    re.compile(r"\b(?:report|reports|rpt|rpts|reporting|filing|filings|filed|file) "
+               r"(?:of|on|for|about) suspicious (?:activit|transaction)"),
+    re.compile(r"\bsuspicious (?:activit(?:y|ies)|transactions?) (?:rpts?|reps?)\b"),
+    re.compile(r"\bsuspicious transaction report"),
+    re.compile(r"\bfincen (?:form )?sar"),
+    re.compile(r"\bbsa e ?filing"),
+)  # fmt: skip
+
+
+_FORM_111 = re.compile(r"fincen[^a-z0-9]*(?:form[^a-z0-9]*)?111(?!\d)")
+
+
+def _fold(raw: str, keep_digits: bool = False) -> str:
+    text = unicodedata.normalize("NFKD", raw).translate(_INVISIBLE).casefold()
+    text = "".join(ch for ch in text if not unicodedata.combining(ch)).translate(_CONFUSABLES)
+    return " ".join(re.sub(r"[^a-z0-9]+" if keep_digits else r"[^a-z]+", " ", text).split())
 
 
 def sar_content_reason(*texts: str) -> str | None:
     """Return a short reason code when any text mentions SAR material, else None."""
     for raw in texts:
-        folded = unicodedata.normalize("NFKC", raw).translate(_INVISIBLE).casefold()
-        # A letter-by-letter SAR spelled with newlines is still one match: \W covers whitespace.
-        for pattern in _SAR_PATTERNS:
-            if pattern.search(folded):
-                return "sar_content"
+        folded = _fold(raw)
+        if any(pattern.search(folded) for pattern in _SAR_PATTERNS) or _FORM_111.search(
+            _fold(raw, keep_digits=True)
+        ):
+            return "sar_content"
     return None
 
 

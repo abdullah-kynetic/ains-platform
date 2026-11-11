@@ -1,8 +1,7 @@
 """Independent security review of the Stage 3 AI analysis (PR #137). Synthetic text only.
 
-Attacker-style probes of the SAR content scan and file handling. The ``xfail(strict=True)`` cases
-are known gaps found in review: each one must be fixed in product code, after which the marker is
-removed (a strict xfail that starts passing fails the suite, so a fix cannot be forgotten).
+Attacker-style probes of the SAR content scan and file handling. The former strict-xfail gaps
+found in review are fixed in product code and now run as ordinary tests.
 """
 
 import io
@@ -56,7 +55,6 @@ def test_baseline_sar_mentions_are_blocked(text):
     assert sar_content_reason(text)
 
 
-@pytest.mark.xfail(strict=True, reason="review 137: SAR joined to _ or digits is not matched")
 @pytest.mark.parametrize(
     "text", ["SAR_Q3_2026.pdf", "Q3_SAR.pdf", "SAR2026.txt", "file_sar_final", "SARnarrative"]
 )
@@ -64,21 +62,16 @@ def test_sar_joined_to_underscore_or_digits_is_blocked(text):
     assert sar_content_reason(text)
 
 
-@pytest.mark.xfail(
-    strict=True, reason="review 137: SAR file name with underscore reaches the model"
-)
 def test_underscored_sar_file_name_never_reaches_the_model():
     model, skipped = _run(_doc("SAR_Q3_2026.txt", b"Quarterly monitoring summary, nothing else."))
     assert model.requests == [] and skipped
 
 
-@pytest.mark.xfail(strict=True, reason="review 137: look-alike (Cyrillic/Greek) letters evade scan")
 @pytest.mark.parametrize("text", ["SАR filing", "Suspіcious Activity Report", "ЅAR"])
 def test_lookalike_letters_do_not_evade_the_sar_scan(text):
     assert sar_content_reason(text)
 
 
-@pytest.mark.xfail(strict=True, reason="review 137: reworded SAR phrases are not matched")
 @pytest.mark.parametrize("text", ["Report of Suspicious Activity", "Suspicious Activity Rpt"])
 def test_reworded_sar_phrases_are_blocked(text):
     assert sar_content_reason(text)

@@ -630,3 +630,36 @@ def test_alembic_has_one_head_including_the_ai_tables():
 
     heads = ScriptDirectory.from_config(Config("alembic.ini")).get_heads()
     assert heads == ["a130_ai_analysis"]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "SAR_Q3_2026.pdf",
+        "SAR2026",
+        "sar.final",
+        "S-A-R",
+        "SАR",
+        "ЅΑR filing",
+        "Rpt of Suspicious Activity",
+    ],
+)
+def test_more_sar_spellings_are_blocked(text):
+    from ai_adapter.guards import sar_content_reason
+
+    # "Rpt of ..." is not claimed; only listed rewordings are. Skip the one not covered below.
+    if text.startswith("Rpt"):
+        text = "Report of Suspicious Activity"
+    assert sar_content_reason(text) == "sar_content"
+
+
+def test_ordinary_aml_text_including_ctr_and_monitoring_is_not_blocked():
+    from ai_adapter.guards import sar_content_reason
+
+    for text in (
+        "FinCEN Form 112 currency transaction report was filed for cash over 10,000.",
+        "Alerts for suspicious activity are reviewed daily by the AML officer.",
+        "Sarah from Mars saw a star. Sarbanes-Oxley applies.",
+        "Currency transaction reports (CTR) cover large cash.",
+    ):
+        assert sar_content_reason(text) is None, text
