@@ -142,3 +142,52 @@ test("3. The client asks for N/A with reasons; Quentin approves one and rejects 
   await expect(client.getByTestId("section-na")).toContainText("AML-BD-020");
   await expect(client.getByTestId("request-AML-BD-021")).toContainText("Your auditor needs this request: Please confirm in writing");
 });
+
+const pdf = (name: string) => ({ name, mimeType: "application/pdf", buffer: Buffer.from(`%PDF-1.4\n% Synthetic demo document: ${name}\n%%EOF\n`) });
+
+test("4. The client uploads numbered documents, maps them to requests and submits; Quentin accepts", async ({ browser }) => {
+  const client = await clientPage(browser);
+  const portal = portalOrigin(state.slug);
+  await client.goto(`${portal}/upload`);
+  await client.locator("input[type=file]").setInputFiles([
+    pdf("synthetic-aml-policy.pdf"),
+    pdf("synthetic-cip-procedures.pdf"),
+    pdf("synthetic-training-log.pdf"),
+  ]);
+  await client.getByLabel("I have checked the files for this engagement.").check();
+  await client.getByRole("button", { name: "Confirm and upload" }).click();
+  for (const n of ["1.1", "1.2", "1.3"]) await expect(client.getByText(`Received as document ${n}`)).toBeVisible();
+
+  await client.goto(`${portal}/checklist`);
+  for (const [request, doc] of [["AML-BD-001", "1.1"], ["AML-BD-001", "1.2"], ["AML-BD-002", "1.2"], ["AML-BD-003", "1.3"]]) {
+    const row = client.getByTestId(`request-${request}`);
+    const select = row.getByLabel(`Map a document to ${request}`);
+    const value = await select.locator("option", { hasText: `${doc} ·` }).getAttribute("value");
+    await select.selectOption(value!);
+    await row.getByRole("button", { name: "Map", exact: true }).click();
+    await expect(row.getByLabel(`Documents for ${request}`)).toContainText(doc);
+  }
+  // Unmapping works and is reversible.
+  const first = client.getByTestId("request-AML-BD-001");
+  await first.getByRole("button", { name: "Unlink 1.2 from AML-BD-001" }).click();
+  await expect(first.getByLabel("Documents for AML-BD-001")).not.toContainText("1.2");
+  await first.getByRole("button", { name: "Submit AML-BD-001 to auditor" }).click();
+  await expect(first).toContainText("With auditor");
+  await client.getByRole("button", { name: "Submit all ready requests" }).click();
+  await expect(client.getByRole("status").filter({ hasText: "with your auditor." })).toContainText("3 requests with your auditor");
+  await expect(client.getByTestId("request-AML-BD-003")).toContainText("With auditor");
+
+  // Isolation: the client cannot upload to, or link into, another firm's engagement.
+  const docs = (await callApi(client, portal, "/engagements/current")).body as { unassignedDocuments: { id: string; number: string }[] };
+  expect(docs.unassignedDocuments.map((d) => d.number).sort()).toEqual(["1.1", "1.2", "1.3"]);
+  expect((await callApi(client, portal, `/engagements/synthetic-other-engagement/items/x/documents/${docs.unassignedDocuments[0].id}/link`, "POST")).status).toBe(404);
+
+  const auditor = await auditorPage(browser);
+  await auditor.goto(`${AUDITOR_ORIGIN}/auditor/engagements/${state.engagementId}/client-checklist`);
+  const row = auditor.getByTestId("client-item-AML-BD-001");
+  await expect(row).toContainText("1.1");
+  await row.getByRole("button", { name: "Accept AML-BD-001 for testing" }).click();
+  await expect(row).toContainText("Accepted for testing");
+  await expect(auditor.getByTestId("client-item-AML-BD-002")).toContainText("With auditor");
+  expect((await callApi(auditor, AUDITOR_ORIGIN, "/auditor/engagements/synthetic-other-engagement/items/x/accept", "POST")).status).toBe(404);
+});

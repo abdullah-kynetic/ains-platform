@@ -144,14 +144,15 @@ export async function submitItem(engagementId: string, itemId: string): Promise<
   return delay(mutateItem(engagementId, itemId, (i) => { i.status = "submitted"; }));
 }
 
-export async function submitAll(engagementId: string): Promise<{ submitted: number; notReady: number; stage: Stage }> {
+/** `submitted` and `notReady` are request ids (for example "AML-BD-001"). */
+export async function submitAll(engagementId: string): Promise<{ submitted: string[]; notReady: string[]; stage: Stage }> {
   if (!USE_MOCKS) return post(`/engagements/${e(engagementId)}/submit`);
-  let submitted = 0;
+  const submitted: string[] = [];
   const p = mutate(engagementId, (d) => {
-    for (const i of d.items) if (i.status === "not_started" && i.documents.length && i.naRequest?.state !== "pending") { i.status = "submitted"; submitted++; }
+    for (const i of d.items) if (i.status === "not_started" && i.documents.length && i.naRequest?.state !== "pending") { i.status = "submitted"; submitted.push(i.requestId); }
     d.clientSubmittedAt = new Date().toISOString();
   });
-  return delay({ submitted, notReady: p.items.filter((i) => i.status === "not_started").length, stage: p.stage });
+  return delay({ submitted, notReady: p.items.filter((i) => i.status === "not_started").map((i) => i.requestId), stage: p.stage });
 }
 
 export async function acceptItem(engagementId: string, itemId: string): Promise<unknown> {
