@@ -361,6 +361,7 @@ test("7. Quentin runs the isolation check and reads the firm's audit log", async
   await auditor.goto(`${AUDITOR_ORIGIN}/auditor/isolation`);
   await auditor.getByRole("button", { name: "Run isolation check" }).click();
   await expect(auditor.getByTestId("isolation-result")).toContainText("Isolation holds");
+  await expect(auditor.getByTestId("isolation-id-kind")).toContainText("real engagement of another firm");
   await expect(auditor.getByText("Not refused")).toHaveCount(0);
 
   await auditor.goto(`${AUDITOR_ORIGIN}/auditor/audit-log`);

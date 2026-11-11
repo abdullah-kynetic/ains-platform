@@ -93,6 +93,8 @@ class Settings(BaseSettings):
     auditor_mfa_enrollment_ttl_minutes: int = 10
     client_invitation_ttl_hours: int = 72
     invitation_preview_enabled: bool = False
+    # Demo only: lets the isolation screen fetch a real foreign engagement id (synthetic data).
+    isolation_probe_enabled: bool = False
     # Comma-separated invitee emails for app.pilot_seed, matched to its firms in order.
     pilot_invitee_emails: str = ""
 

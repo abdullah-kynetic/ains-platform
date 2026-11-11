@@ -13,6 +13,7 @@ from .findings import router as findings_router
 from .firm import router as firm_router
 from .intake import router as intake_router
 from .invoices import router as invoices_router
+from .isolation_probe import router as isolation_probe_router
 from .manual_review import router as manual_review_router
 from .questionnaire import router as questionnaire_router
 from .report_draft import router as report_draft_router
@@ -29,6 +30,7 @@ router.include_router(client_profiles_router)
 router.include_router(reports_router)
 router.include_router(invoices_router)
 router.include_router(audit_log_router)
+router.include_router(isolation_probe_router)
 router.include_router(auditor_router)
 router.include_router(firm_router)
 router.include_router(engagements_router)

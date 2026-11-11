@@ -46,6 +46,7 @@ def configure(db_path: Path) -> None:
     os.environ["CORS_ORIGINS"] = ORIGIN
     # One-time invitation links are returned to the auditor instead of emailed (no live email).
     os.environ["INVITATION_PREVIEW_ENABLED"] = "true"
+    os.environ["ISOLATION_PROBE_ENABLED"] = "true"
     os.environ["PORTAL_URL"] = ORIGIN
 
 
