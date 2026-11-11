@@ -48,6 +48,7 @@ export function WorkspaceCreate() {
             </CardHeader>
             <CardContent className="grid gap-4 text-sm text-muted">
               <p>The isolated workspace and all {created.requestCount} canonical requests were created and assigned to you.</p>
+              <p>Client portal name: <span className="font-mono text-foreground" data-testid="portal-slug">{created.slug}</span></p>
               <p className="rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-xs">No client login exists yet. Create a single-use invitation below when the workspace is ready for client access.</p>
               <ClientInvitations engagementId={created.id} firmId={created.firmId} firmName={created.firmName} />
               <div><Button onClick={() => setCreated(null)} variant="outline">Add another workspace</Button> <Link href="/auditor" className="ml-3 text-sm font-medium text-brand-hover hover:underline">Return to review queue</Link></div>

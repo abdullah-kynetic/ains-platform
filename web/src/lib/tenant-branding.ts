@@ -1,10 +1,10 @@
-import { API_URL } from "@/lib/api";
+import { apiBase } from "@/lib/api";
 import { interpretBrandingResponse, type BrandingLoad } from "@/lib/tenant";
 
 /** Public branding. The API reads the firm from this browser's Origin. */
 export async function fetchTenantBranding(): Promise<BrandingLoad> {
   try {
-    const response = await fetch(`${API_URL}/tenant/branding`, {
+    const response = await fetch(`${apiBase()}/tenant/branding`, {
       credentials: "include",
       cache: "no-store",
     });

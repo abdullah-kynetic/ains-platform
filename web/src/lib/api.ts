@@ -19,6 +19,20 @@ export const API_URL = (
     : "http://localhost:8000")
 ).replace(/\/$/, "");
 
+/**
+ * Base URL for API calls. Local multi-firm runs (the synthetic demo and live browser tests) may
+ * set NEXT_PUBLIC_API_URL to `http://{portal}:8000`: `{portal}` becomes this page's own
+ * `localhost` or `<firm>.localhost` host, so each firm portal reaches the API on its own host
+ * (host-only session cookie, one firm signal). Any other host leaves the placeholder in place and
+ * the request fails closed; production builds use a fixed https URL.
+ */
+export function apiBase(): string {
+  if (!API_URL.includes("{portal}")) return API_URL;
+  const host = typeof window === "undefined" ? "" : window.location.hostname.toLowerCase();
+  const local = host === "localhost" || /^[a-z0-9-]+\.localhost$/.test(host);
+  return local ? API_URL.replace("{portal}", host) : API_URL;
+}
+
 /** Playwright sets this so session and branding hit a mocked API. */
 export const LIVE_API_FLAG = "ains-e2e-live-api";
 
@@ -97,7 +111,7 @@ export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${apiBase()}${path}`, {
     ...init,
     credentials: "include",
     headers: {
@@ -675,7 +689,7 @@ export async function downloadDraftReport(
   format: "docx" | "pdf",
 ): Promise<void> {
   const response = await fetch(
-    `${API_URL}/auditor/engagements/${encodeURIComponent(engagementId)}/report?format=${format}`,
+    `${apiBase()}/auditor/engagements/${encodeURIComponent(engagementId)}/report?format=${format}`,
     { method: "POST", credentials: "include" },
   );
   if (!response.ok) throw await responseError(response);
@@ -700,7 +714,7 @@ export async function getEngagement(): Promise<Engagement> {
     }));
     return data;
   }
-  const response = await fetch(`${API_URL}/engagements/current`, {
+  const response = await fetch(`${apiBase()}/engagements/current`, {
     credentials: "include",
     cache: "no-store",
   });
@@ -762,7 +776,7 @@ export async function uploadDocument(
     const request = new XMLHttpRequest();
     request.open(
       "POST",
-      `${API_URL}/engagements/${encodeURIComponent(engagementId)}${itemId === null ? "" : `/items/${encodeURIComponent(itemId)}`}/documents`,
+      `${apiBase()}/engagements/${encodeURIComponent(engagementId)}${itemId === null ? "" : `/items/${encodeURIComponent(itemId)}`}/documents`,
     );
     request.withCredentials = true;
     request.timeout = 120000;

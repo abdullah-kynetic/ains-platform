@@ -11,8 +11,8 @@ Read first: `CLAUDE.md`, `AGENTS.md`, `docs/BUILD-PLAN.md`, `docs/handoff/LANE-2
 
 | Step | What | PR | State |
 | --- | --- | --- | --- |
-| 0 | Two-practice isolation test + this route list | this PR | done |
-| 1 | New client onboarding | | not started |
+| 0 | Two-practice isolation test + this route list | [#120](https://github.com/abdullah-kynetic/ains-platform/pull/120) | merged |
+| 1 | New client onboarding | step-1 PR | done (live test) |
 | 2 | Checklist sent to client | | not started |
 | 3 | Client N/A with reason; Quentin approves or rejects | | not started |
 | 4 | Client uploads (numbered `1.n`) and maps items to documents | | not started |
@@ -22,6 +22,21 @@ Read first: `CLAUDE.md`, `AGENTS.md`, `docs/BUILD-PLAN.md`, `docs/handoff/LANE-2
 | 8 | Seeded synthetic demo script + `DEMO.md` | | not started |
 
 Blockers: none yet.
+
+## How the live browser tests run (added in step 1)
+
+- `web/e2e-live/demo-journey-live.spec.ts` is the demo, one serial test per step, against the
+  **real** FastAPI app (`scripts/e2e_backend.py`, throwaway SQLite, synthetic users). CI runs it in
+  the new **Web journeys on the real backend** job (`npm run test:e2e:live`).
+- Hosts: the web app needs a known firm host locally, so the auditor uses
+  `http://kynetic.localhost:3100`; each new client firm uses `http://<slug>.localhost:3100`.
+- `NEXT_PUBLIC_API_URL=http://{portal}:8000` (live config) makes each page call the API on its own
+  host (`apiBase()` in `web/src/lib/api.ts`), so session cookies stay host-only and the API sees
+  one firm. The placeholder is honoured only on `localhost` / `<label>.localhost`.
+- The demo practice (`Synthetic Demo Practice`) has `e2e-quentin@example.test` (assigned auditor,
+  partner) and `e2e-reviewer@example.test` (reviewer); sign-off needs both.
+- `INVITATION_PREVIEW_ENABLED=true` in the test backend returns the one-time invitation link to the
+  auditor instead of emailing it.
 
 ## Rules that apply to every route below
 

@@ -37,3 +37,42 @@ export async function ownEngagement(page: Page): Promise<string> {
   expect(rows).toHaveLength(1);
   return rows[0].id;
 }
+
+/** Auditor host for the demo journey (the web app needs a known firm host locally). */
+export const AUDITOR_ORIGIN = "http://kynetic.localhost:3100";
+export const portalOrigin = (slug: string) => `http://${slug}.localhost:3100`;
+export const apiFor = (origin: string) => origin.replace(":3100", ":8000");
+
+export function totp(): string {
+  return execFileSync("../.venv/bin/python", ["-c",
+    'import runpy,pyotp; f=runpy.run_path("../scripts/e2e_backend.py"); print(pyotp.TOTP(f["MFA_SECRET"]).now())',
+  ], { encoding: "utf8" }).trim();
+}
+
+/** Sign in on a given origin. Auditors also pass MFA. Synthetic test-only credentials. */
+export async function signInAt(page: Page, origin: string, email: string, password: string, mfa: boolean, next = "/") {
+  await page.goto(`${origin}/sign-in?next=${encodeURIComponent(next)}`);
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  if (mfa) {
+    await page.getByLabel("Authenticator or recovery code").fill(totp());
+    await page.getByRole("button", { name: "Verify", exact: true }).click();
+  }
+  await expect(page).not.toHaveURL(/sign-in/);
+  const skip = page.getByRole("button", { name: "Skip tour" });
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+}
+
+/** Call the API from inside the page, so the page's own session cookie is used. */
+export async function callApi(page: Page, origin: string, path: string, method = "GET", data?: unknown) {
+  return page.evaluate(async ({ url, method, data }) => {
+    const response = await fetch(url, { method, credentials: "include",
+      ...(data === undefined ? {} : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
+    });
+    const text = await response.text();
+    let body: unknown = null;
+    try { body = JSON.parse(text); } catch { body = text; }
+    return { status: response.status, body };
+  }, { url: `${apiFor(origin)}${path}`, method, data });
+}
