@@ -15,7 +15,6 @@ import {
   downloadDraftReport,
   getAuditorQueue,
   reviewFinding,
-  reviewNotApplicable,
   type AuditorFinding,
   type AuditorQueueItem,
 } from "@/lib/api";
@@ -77,22 +76,6 @@ function FindingEditor({ finding, onUpdated }: { finding: AuditorFinding; onUpda
 }
 
 function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () => Promise<void> }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  async function decideNA(decision: "approve" | "reject") {
-    setBusy(true);
-    setError("");
-    try {
-      await reviewNotApplicable(item.engagementId, item.itemId, decision);
-      await onChanged();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not review this N/A answer.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -103,16 +86,6 @@ function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () =
         <CardDescription>{item.firmName}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        {item.naReviewState === "pending" ? (
-          <div className="rounded-lg border border-warning/30 bg-warning/5 p-4">
-            <p className="text-sm text-foreground">The firm answered that this item does not apply. Quentin must approve or reject that answer.</p>
-            <div className="mt-3 flex gap-2">
-              <Button size="sm" disabled={busy} onClick={() => void decideNA("approve")}>Approve N/A</Button>
-              <Button size="sm" variant="destructive" disabled={busy} onClick={() => void decideNA("reject")}>Reject N/A</Button>
-            </div>
-          </div>
-        ) : null}
-
         <section>
           <h3 className="mb-2 text-sm font-semibold">Evidence and automated checks</h3>
           {item.evidence.length ? item.evidence.map((evidence) => (
@@ -138,7 +111,6 @@ function ItemCard({ item, onChanged }: { item: AuditorQueueItem; onChanged: () =
             )) : <p className="text-sm text-muted">No finding drafts.</p>}
           </div>
         </section>
-        {error ? <p className="status-note" data-tone="danger">{error}</p> : null}
       </CardContent>
     </Card>
   );

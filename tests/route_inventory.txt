@@ -48,7 +48,6 @@ POST /engagements/{engagement_id}/items/{item_id}/documents client
 POST /engagements/{engagement_id}/documents client
 GET /engagements/{engagement_id}/questionnaire client
 POST /engagements/{engagement_id}/questionnaire/answers client
-POST /engagements/{engagement_id}/questionnaire/items/{item_id}/na-review client
 POST /engagements/{engagement_id}/items/{item_id}/representations client
 POST /engagements/{engagement_id}/items/{item_id}/na client
 POST /auditor/engagements/{engagement_id}/items/{item_id}/follow-up auditor
@@ -96,6 +95,8 @@ PATCH /auditor/firm/team/{member_id} auditor
 DELETE /auditor/firm/team/{member_id} auditor
 GET /auditor/firm/branding auditor
 PUT /auditor/firm/branding auditor
+GET /auditor/firm/signoff-settings auditor
+PUT /auditor/firm/signoff-settings auditor
 GET /auditor/firm/rubric auditor
 PUT /auditor/firm/rubric/{request_id} auditor
 GET /auditor/firm/request-templates auditor

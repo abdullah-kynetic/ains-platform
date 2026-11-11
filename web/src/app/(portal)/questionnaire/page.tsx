@@ -27,7 +27,6 @@ export default function QuestionnairePage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-  const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let active = true;
@@ -37,18 +36,10 @@ export default function QuestionnairePage() {
         const questionnaire = await getQuestionnaire(engagement.id);
         if (!active) return;
         setData(questionnaire);
-        setConfirmed(
-          Object.fromEntries(
-            questionnaire.questions.map((question) => [
-              question.itemId,
-              Boolean(question.representation),
-            ]),
-          ),
-        );
         setAnswers(
           Object.fromEntries(
             questionnaire.questions
-              .filter((question) => question.answer !== null)
+              .filter((question) => question.answer === true)
               .map((question) => [question.itemId, question.answer as boolean]),
           ),
         );
@@ -78,8 +69,6 @@ export default function QuestionnairePage() {
         Object.entries(answers).map(([itemId, applies]) => ({
           itemId,
           applies,
-          representation:
-            !applies && confirmed[itemId] ? "no_activity" : undefined,
         })),
       );
       setData(updated);
@@ -105,17 +94,13 @@ export default function QuestionnairePage() {
     );
 
   const unanswered = data.questions.filter(
-    (question) =>
-      answers[question.itemId] === undefined ||
-      (answers[question.itemId] === false &&
-        question.whenNo === "representation_required" &&
-        !confirmed[question.itemId]),
+    (question) => answers[question.itemId] !== true,
   ).length;
   return (
     <>
       <PageHeader
         title="Firm questionnaire"
-        description="Answer these yes-or-no questions so we only request documents that apply to your firm. No answers mark the request N/A directly; you can undo this on your checklist."
+        description="Confirm the conditional requests that apply to your firm. To mark one as not applicable, use “Does not apply” on the document checklist and give a reason."
       />
       <div className="grid gap-4">
         {data.questions.length === 0 ? (
@@ -159,39 +144,13 @@ export default function QuestionnairePage() {
                 >
                   Yes, this applies
                 </Button>
-                <Button
-                  disabled={busy}
-                  aria-pressed={answers[question.itemId] === false}
-                  variant={
-                    answers[question.itemId] === false ? "default" : "outline"
-                  }
-                  onClick={() => {
-                    setSaved(false);
-                    setAnswers((current) => ({
-                      ...current,
-                      [question.itemId]: false,
-                    }));
-                  }}
-                >
-                  No — mark N/A
-                </Button>
-                {answers[question.itemId] === false &&
-                  question.whenNo === "representation_required" && (
-                    <label className="flex w-full items-start gap-2 pt-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(confirmed[question.itemId])}
-                        onChange={(event) =>
-                          setConfirmed((current) => ({
-                            ...current,
-                            [question.itemId]: event.target.checked,
-                          }))
-                        }
-                      />
-                      I confirm the firm had no activity of this type during the
-                      review period.
-                    </label>
-                  )}
+                <p className="basis-full text-sm text-muted">
+                  Does not apply to your firm? Say so on the{" "}
+                  <Link href="/checklist" className="underline">
+                    document checklist
+                  </Link>{" "}
+                  with a reason. Your auditor decides.
+                </p>
               </CardContent>
             </Card>
           ))

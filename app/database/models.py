@@ -27,6 +27,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, validates
 
@@ -126,6 +127,11 @@ class Practice(Base):
     name: Mapped[str] = mapped_column(String(120))
     tagline: Mapped[str] = mapped_column(String(200), default="")
     logo_url: Mapped[str | None] = mapped_column(String(500))
+    # Sign-off: may the engagement's assigned auditor also sign as the partner? The second
+    # reviewer must still be a different person. Off unless a partner turns it on.
+    allow_auditor_as_signer: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false()
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     @validates("logo_url")

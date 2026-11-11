@@ -40,7 +40,6 @@ MUTATIONS = {
     ("GET", "/engagements/{engagement_id}/documents/{document_id}/download"): 501,
     ("POST", "/engagements/{engagement_id}/items/{item_id}/representations"): 200,
     ("POST", "/engagements/{engagement_id}/questionnaire/answers"): 200,
-    ("POST", "/engagements/{engagement_id}/questionnaire/items/{item_id}/na-review"): 403,
 }
 FORBIDDEN = {
     "findings",

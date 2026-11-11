@@ -18,7 +18,7 @@ The synthetic users, password and one-time-code seed are test-only constants at 
 People in the demo (all synthetic, one practice):
 
 - **Quentin** (partner): the assigned auditor, and the one who signs.
-- **A second reviewer**: approves the file. The reviewer and the signing partner must be different people.
+- **A second reviewer**: approves the file. The reviewer must be a different person from the signing partner. The demo practice allows the assigned auditor to sign (a per-practice setting).
 - **A client contact**: created by the invitation in step 1.
 
 ## Walkthrough
@@ -45,5 +45,4 @@ People in the demo (all synthetic, one practice):
 
 - Skipped by design: live email, card payments, real data, the AI items, secrets rotation doc, incident one-pager, audit-log checkpoint, invoice reminder emails.
 - The headless run sets conclusions 2 to 34 and creates the invoice through the API for speed. Those screens exist and are what you use by hand.
-- The questionnaire still has an older direct N/A path that differs from the reasoned N/A flow in step 3. Needs a decision.
 - Finding response requests (auditor releases a finding as a request, client answers) are wired to the real routes but have no browser test yet.

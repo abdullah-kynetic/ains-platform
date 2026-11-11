@@ -23,9 +23,16 @@ Read first: `CLAUDE.md`, `AGENTS.md`, `docs/BUILD-PLAN.md`, `docs/handoff/LANE-2
 
 Blockers: none yet.
 
-Known inconsistency (not changed here, needs a decision): the questionnaire's own "No, mark N/A"
-path (`POST /engagements/{id}/questionnaire/items/{iid}/na-review`) is older than the reasoned N/A
-flow and is not part of the demo. The checklist screen shows such items as N/A.
+Decided 2026-11-10 (Abdullah): the reasoned N/A flow is the only way to mark a request N/A. The
+questionnaire route `na-review` and the "No, mark N/A" button are removed; the questionnaire
+answers endpoint returns 422 if asked to mark N/A (tests: `test_backend_api.py`,
+`test_checklist_na.py`). The no-activity attestation (`/representations`) is unchanged.
+
+Sign-off decision (2026-11-10): the assigned auditor may also sign as partner when the practice
+setting `allow_auditor_as_signer` is on (`GET/PUT /auditor/firm/signoff-settings`, partner or admin
+to change; on for the demo practice, off by default elsewhere). The second reviewer must still be a
+different user. Changes log `practice.signoff_setting_changed`; `signoff.partner_signed` records
+`auditor_is_signer` and the setting. Migration `a128`. Tests: `tests/test_signoff_setting.py`.
 
 ## How the live browser tests run (added in step 1)
 

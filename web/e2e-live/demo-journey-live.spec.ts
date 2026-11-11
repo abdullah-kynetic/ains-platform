@@ -122,6 +122,13 @@ test("3. The client asks for N/A with reasons; Quentin approves one and rejects 
   const progress = (await callApi(client, portal, `/engagements/${state.engagementId}/progress`)).body as { items: { id: string; requestId: string }[] };
   const itemId = (rid: string) => progress.items.find((i) => i.requestId === rid)!.id;
   expect((await callApi(client, portal, `/engagements/${state.engagementId}/items/${itemId("AML-BD-022")}/na`, "POST", { not_applicable: true })).status).toBe(409);
+  // The questionnaire can no longer mark N/A either, and its old review route is gone.
+  const questionnaire = await callApi(client, portal, `/engagements/${state.engagementId}/questionnaire`);
+  const question = (questionnaire.body as { questions: { itemId: string }[] }).questions[0];
+  if (question) {
+    expect((await callApi(client, portal, `/engagements/${state.engagementId}/questionnaire/answers`, "POST", { answers: [{ itemId: question.itemId, applies: false }] })).status).toBe(422);
+    expect([404, 405]).toContain((await callApi(client, portal, `/engagements/${state.engagementId}/questionnaire/items/${question.itemId}/na-review`, "POST", { decision: "approve" })).status);
+  }
   // A client cannot decide its own request.
   expect((await callApi(client, portal, `/auditor/engagements/${state.engagementId}/items/${itemId("AML-BD-020")}/na-request/decision`, "POST", { decision: "accept" })).status).toBe(403);
 
