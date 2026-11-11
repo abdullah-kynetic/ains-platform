@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AuthGate, useSession } from "@/components/auth/session";
 import { PageHeader } from "@/components/shell/page";
 import { Input } from "@/components/ui/input";
-import { MFARecoveryCodes } from "@/components/auditor/mfa-recovery-codes";
+import { SignOutOtherDevices } from "@/components/auth/sign-out-other-devices";
 import { Button } from "@/components/ui/button";
 
 function Settings() {
@@ -30,7 +30,7 @@ function Settings() {
           aria-label="Settings sections"
           className="flex flex-wrap gap-[var(--space-2)] md:flex-col md:items-start"
         >
-          {["Profile", "MFA", "Firm", "Notifications"].map((name) => (
+          {["Profile", "Sign-in", "Firm", "Notifications"].map((name) => (
             <a
               key={name}
               href={`#settings-${name.toLowerCase()}`}
@@ -69,17 +69,14 @@ function Settings() {
             </div>
           </section>
           <section
-            id="settings-mfa"
+            id="settings-sign-in"
             className="scroll-mt-24 rounded-xl bg-card border border-border shadow-card p-4"
           >
-            <h2 className="text-lg font-semibold">MFA</h2>
+            <h2 className="text-lg font-semibold">Sign-in</h2>
             <p className="mt-2 text-sm text-muted">
-              Auditor access requires backend-enforced multi-factor
-              authentication. Preview preferences do not change account
-              security.
-            </p>
-            <p className="mt-4 rounded-md bg-elevated p-3 text-sm">
-              Security preferences preview · MFA policy is managed by Kien Solutions.
+              After your password, Kien emails a 6-digit code that expires in 10 minutes and
+              works once. You can remember a browser for 30 days. Preview preferences do not
+              change account security.
             </p>
           </section>
           <section
@@ -134,7 +131,7 @@ function Settings() {
         </div>
       </form>
       <div className="mt-6 max-w-3xl lg:ml-[204px]">
-        <MFARecoveryCodes />
+        <SignOutOtherDevices />
       </div>
     </>
   );

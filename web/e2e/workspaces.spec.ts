@@ -8,7 +8,6 @@ test("auditor creates a workspace and manages a single-use synthetic client invi
 
   await page.goto("/auditor/settings");
   await page.getByRole("button", { name: /Kien Operations/ }).click();
-  // MFA controls were deliberately removed with web authentication.
   await page.getByRole("link", { name: "Add client workspace" }).click();
   await expect(page.getByRole("heading", { name: "Add client workspace" })).toBeVisible();
   await page.getByLabel("Firm name").fill("Synthetic Gamma Securities");

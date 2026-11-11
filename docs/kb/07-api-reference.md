@@ -14,7 +14,8 @@ Base URL: `NEXT_PUBLIC_API_URL` (production api.kiensolutions.com, owner-supplie
 - `POST /auth/magic-link` · `POST /auth/magic-link/verify`
 - `POST /auth/password-reset/request` · `POST /auth/password-reset/confirm`
 - `GET /auth/invitations/{token}` · `POST /auth/invitations/accept`
-- `POST /auth/auditor/mfa/enrollment` · `POST /auth/auditor/mfa/enrollment/confirm` · `POST /auth/auditor/mfa/recovery-codes`
+- `POST /auth/password` (email + password; returns 401 `Email code required` after mailing a code, then repeat with `code` and optional `remember_device`) · `POST /auth/email-code/resend` · `POST /auth/sign-out-others` *(emailed code, 11 Nov; replaces the removed `/auth/auditor/mfa/*` routes)*
+- `POST /auditor/firm/team/{member_id}/devices/revoke` · `POST /auditor/firm/clients/{user_id}/devices/revoke` (partner/admin)
 - `GET /auth/onboarding` · `POST /auth/onboarding` (finish/skip walkthrough) *(merged, #57/#60)*
 
 ## Client engagement

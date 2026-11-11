@@ -2,13 +2,10 @@
 
 from datetime import UTC, datetime, timedelta
 
-import pyotp
-
 from app.database.models import AuthRateLimit
 from tests.test_backend_api import (  # noqa: F401
     AUDITOR_PASSWORD,
     CLIENT_PASSWORD,
-    MFA_SECRET,
     backend,
 )
 
@@ -63,21 +60,6 @@ def test_other_accounts_are_not_locked_by_one_email(backend):  # noqa: F811
     assert good(client, "beta-client@example.test").status_code == 200
 
 
-def test_wrong_mfa_codes_count_as_failures(backend):  # noqa: F811
-    client, *_ = backend
-    payload = {"email": "auditor@example.test", "password": AUDITOR_PASSWORD, "mfa_code": "000000"}
-    assert [client.post("/auth/password", json=payload).status_code for _ in range(5)] == [401] * 5
-    payload["mfa_code"] = pyotp.TOTP(MFA_SECRET).now()
-    assert client.post("/auth/password", json=payload).status_code == 429
-
-
-def test_enrollment_endpoints_share_the_password_lockout(backend):  # noqa: F811
-    client, *_ = backend
-    body = {"email": "enrolling-auditor@example.test", "password": "wrong-password"}
-    codes = [client.post("/auth/auditor/mfa/enrollment", json=body).status_code for _ in range(6)]
-    assert codes == [401] * 5 + [429]
-
-
 def test_magic_link_verify_locks_per_token(backend):  # noqa: F811
     client, *_ = backend
     token = "t" * 40
@@ -115,13 +97,3 @@ def test_distributed_guessing_hits_the_per_email_ceiling(backend):  # noqa: F811
         other = TestClient(client.app, client=(f"198.51.100.{n + 1}", 4000))
         codes.append(bad(other).status_code)
     assert codes == [401] * 6 + [429] * 2
-
-
-def test_correct_password_without_mfa_code_is_not_a_failure(backend):  # noqa: F811
-    client, *_ = backend
-    payload = {"email": "auditor@example.test", "password": AUDITOR_PASSWORD}
-    responses = [client.post("/auth/password", json=payload) for _ in range(8)]
-    assert {r.status_code for r in responses} == {401}
-    assert {r.json()["detail"] for r in responses} == {"MFA code required"}
-    payload["mfa_code"] = pyotp.TOTP(MFA_SECRET).now()
-    assert client.post("/auth/password", json=payload).status_code == 200

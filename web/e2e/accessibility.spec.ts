@@ -220,18 +220,6 @@ test("sign-in form has accessible labels and a useful failed-sign-in state", asy
       .filter({ hasText: "Email or password is incorrect" }),
   ).toBeVisible();
 
-  await page.goto("/account-setup");
-  await page
-    .getByLabel("Email", { exact: true })
-    .fill("auditor@example.invalid");
-  await page
-    .getByLabel("Password", { exact: true })
-    .fill("synthetic-only-password");
-  await page.getByRole("button", { name: "Set up auditor MFA" }).click();
-  await expect(page.getByText("SYNTHETICMFAPREVIEWONLY")).toBeVisible();
-  await page.getByLabel("Authenticator code").fill("123456");
-  await page.getByRole("button", { name: "Confirm and enable MFA" }).click();
-  await expect(page.getByText("Save these recovery codes now")).toBeVisible();
   expect(
     (
       await new AxeBuilder({ page })

@@ -12,7 +12,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Field } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { StatusNote } from "@/components/ui/status-note";
-import { ApiError, passwordSignIn, verifyMagicLink } from "@/lib/api";
+import {
+  ApiError,
+  EMAIL_CODE_REQUIRED,
+  passwordSignIn,
+  resendEmailCode,
+  verifyMagicLink,
+} from "@/lib/api";
 import { sanitizeSignInNext } from "@/lib/sign-in-next";
 import { signInErrorText } from "@/lib/sign-in-message";
 
@@ -22,10 +28,12 @@ function SignInForm() {
   const { session, refresh } = useSession();
   const next = sanitizeSignInNext(params.get("next"));
   const token = params.get("token");
-  const [step, setStep] = useState<"credentials" | "mfa">("credentials");
+  const [step, setStep] = useState<"credentials" | "code">("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
+  const [remember, setRemember] = useState(false);
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,23 +45,19 @@ function SignInForm() {
     setBusy(true);
     setError("");
     try {
-      if (token) await verifyMagicLink(token, code);
-      else await passwordSignIn(email.trim(), password, code);
+      if (token) await verifyMagicLink(token);
+      else await passwordSignIn(email.trim(), password, code, remember);
       await refresh();
       router.replace(next);
     } catch (caught) {
       if (
         caught instanceof ApiError &&
         caught.status === 401 &&
-        caught.message === "MFA code required"
+        caught.message === EMAIL_CODE_REQUIRED
       ) {
-        setStep("mfa");
-      } else if (
-        caught instanceof ApiError &&
-        caught.status === 403 &&
-        caught.message === "Auditor MFA enrollment is required"
-      ) {
-        router.push("/account-setup");
+        setCode("");
+        setNotice(`We emailed a 6-digit code to ${email.trim()}. It expires in 10 minutes.`);
+        setStep("code");
       } else if (caught instanceof ApiError) {
         setError(
           signInErrorText(
@@ -64,6 +68,28 @@ function SignInForm() {
       } else {
         setError("Sign-in could not be completed. Try again.");
       }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resend() {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await resendEmailCode(email.trim(), password);
+      setCode("");
+      setNotice("We sent a new code. The earlier one no longer works.");
+    } catch (caught) {
+      setError(
+        caught instanceof ApiError
+          ? signInErrorText(
+              { status: caught.status, message: caught.message, retryAfterSeconds: caught.retryAfterSeconds },
+              "credentials",
+            ).replace("Email or password is incorrect", "Could not send a new code. Try again.")
+          : "Could not send a new code. Try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -115,24 +141,51 @@ function SignInForm() {
                       />
                     </Field>
                   </>
-                ) : step === "mfa" ? (
-                  <Field label="Authenticator or recovery code" htmlFor="mfa">
-                    <Input
-                      key="mfa"
-                      id="mfa"
-                      autoComplete="one-time-code"
-                      required
-                      minLength={6}
-                      maxLength={32}
-                      autoFocus
-                      value={code}
-                      onChange={(event) => setCode(event.target.value)}
-                    />
-                  </Field>
+                ) : step === "code" ? (
+                  <>
+                    {notice ? (
+                      <StatusNote tone="info" role="status">
+                        {notice}
+                      </StatusNote>
+                    ) : null}
+                    <Field label="6-digit code from your email" htmlFor="email-code">
+                      <Input
+                        key="email-code"
+                        id="email-code"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        required
+                        minLength={6}
+                        maxLength={12}
+                        autoFocus
+                        value={code}
+                        onChange={(event) => setCode(event.target.value)}
+                      />
+                    </Field>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="size-5 accent-brand"
+                        checked={remember}
+                        onChange={(event) => setRemember(event.target.checked)}
+                      />
+                      Remember this browser for 30 days
+                    </label>
+                  </>
                 ) : null}
                 <Button type="submit" disabled={busy}>
-                  {busy ? "Signing in…" : step === "mfa" ? "Verify" : "Sign in"}
+                  {busy ? "Signing in…" : step === "code" ? "Verify" : "Sign in"}
                 </Button>
+                {step === "code" ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => void resend()}
+                  >
+                    Send a new code
+                  </Button>
+                ) : null}
                 {step === "credentials" && !token ? (
                   <a
                     href="/reset-password"

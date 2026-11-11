@@ -27,7 +27,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from scripts.e2e_backend import AUDITOR_PASSWORD, CLIENT_PASSWORD, MFA_SECRET
+from scripts.e2e_backend import AUDITOR_PASSWORD, CLIENT_PASSWORD
 
 FIRM_SLUG = "kynetic-flow"
 USERS = {
@@ -91,8 +91,6 @@ def seed_workflow_fixtures(db: Session) -> dict[str, Any]:
             accepted_at=now,
             **extra,
         )
-        if role == UserRole.AUDITOR:
-            user.mfa_secret, user.mfa_enabled = MFA_SECRET, True
         db.add(user)
         return user
 

@@ -21,7 +21,7 @@ import { FolderOpen } from "lucide-react";
 import { AuditorActivityFeed } from "@/components/auditor/activity-feed";
 import { AuditorUpcomingTasks } from "@/components/auditor/upcoming-tasks";
 import { ClientInvitations } from "@/components/auditor/client-invitations";
-import { MFARecoveryCodes } from "@/components/auditor/mfa-recovery-codes";
+import { SignOutOtherDevices } from "@/components/auth/sign-out-other-devices";
 import {
   setRequestNA,
   getClients,
@@ -117,7 +117,7 @@ function Dashboard() {
       </div>
       <EngagementDrawer client={selected} onClose={() => setSelected(null)} />
       <div className="mt-6">
-        <MFARecoveryCodes />
+        <SignOutOtherDevices />
       </div>
     </>
   );

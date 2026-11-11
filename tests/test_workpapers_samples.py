@@ -2,7 +2,6 @@
 
 from datetime import UTC, datetime
 
-import pyotp
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect, select
@@ -11,7 +10,6 @@ from app.auth.security import hash_password
 from app.database.models import AuditLog, Base, Document, Practice, SampleItem, User, UserRole
 from tests.test_backend_api import (
     AUDITOR_PASSWORD,
-    MFA_SECRET,
     backend,  # noqa: F401
     sign_in_auditor,
     sign_in_client,
@@ -65,8 +63,6 @@ def _teammates(factory, ids) -> None:
                     name=email.split("@")[0],
                     role=UserRole.AUDITOR,
                     password_hash=hash_password(AUDITOR_PASSWORD),
-                    mfa_secret=MFA_SECRET,
-                    mfa_enabled=True,
                     accepted_at=datetime.now(UTC),
                     practice_id=practice.id,
                     team_role=role,
@@ -82,7 +78,6 @@ def _sign_in(client, email: str) -> None:
         json={
             "email": email,
             "password": AUDITOR_PASSWORD,
-            "mfa_code": pyotp.TOTP(MFA_SECRET).now(),
         },
     )
     assert response.status_code == 200, response.text

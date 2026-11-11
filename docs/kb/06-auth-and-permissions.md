@@ -10,7 +10,7 @@ Web sign-in, setup, invitation acceptance, reset, sign-out and MFA controls are 
 - **Invite only.** No public sign-up. Auditors invite clients to a firm + engagement (`/auditor/engagements/{id}/invitations`); client accepts at `/accept-invitation` and sets a password.
 - Email + password (Argon2 hashes). Optional magic link. Password reset by emailed single-use token.
 - Session: signed token in the `ains_session` cookie, backed by `auth_sessions` (expiry + revocation checked server-side). `SESSION_COOKIE_SECURE` must be true in HTTPS environments.
-- **Auditor MFA:** TOTP (authenticator app). When enrolled, a second screen asks for the code or a one-use recovery code. Client MFA is not enforced.
+- **Emailed sign-in code (replaces the authenticator app, 11 Nov 2026):** staff and clients get a 6-digit code by email after the password. 10-minute expiry, single use, 5 wrong guesses burn it, resends limited. A correct code can remember the browser for 30 days (httpOnly cookie tied to user and firm). Users can sign out other devices; partners and admins can revoke remembered devices. All of it is audit-logged. With no email key the step is skipped (password only, warning in logs). Env: `EMAIL_SIGN_IN_CODES`, `RESEND_API_KEY`, `EMAIL_FROM`; see `docs/demo/DEPLOY-DEMO.md`.
 - Sign-in throttling via `auth_rate_limits`. No general API rate limits yet (planned).
 - Emails sent through Resend; if `RESEND_API_KEY` is missing, email endpoints return 503.
 

@@ -1,4 +1,6 @@
-# S-04: Auditor MFA and recovery codes
+# S-04: Auditor MFA and recovery codes (superseded 2026-11-11)
+
+> TOTP and recovery codes were replaced by an emailed 6-digit sign-in code with remembered browsers. New proof: `tests/security/test_email_codes.py`. The record below is the earlier TOTP evidence and no longer describes the code.
 
 Date: 2026-11-09 (America/Los_Angeles). Source commit: `3da653e6ecfc5accb78b8293daebdff9be64a708`.
 

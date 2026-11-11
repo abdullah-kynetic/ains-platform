@@ -20,7 +20,6 @@ from app.database.models import (
 )
 from tests.test_backend_api import (
     AUDITOR_PASSWORD,
-    MFA_SECRET,
     backend,  # noqa: F401
     sign_in_auditor,
     sign_in_client,
@@ -43,8 +42,6 @@ def _partner(factory, ids) -> None:
                 name="Pat Partner",
                 role=UserRole.AUDITOR,
                 password_hash=hash_password(AUDITOR_PASSWORD),
-                mfa_secret=MFA_SECRET,
-                mfa_enabled=True,
                 accepted_at=datetime.now(UTC),
                 practice_id=practice,
                 team_role="partner",

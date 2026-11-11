@@ -1,4 +1,4 @@
-"""Invalidate stale identity scopes and enforce auditor MFA on every authenticated request."""
+"""Invalidate stale identity scopes on every authenticated request."""
 
 from datetime import UTC, datetime
 
@@ -6,21 +6,13 @@ from fastapi import HTTPException
 from sqlalchemy import event, inspect, update
 from sqlalchemy.orm import Session
 
-from app.database.models import AuditLog, AuthSession, User, UserRole
+from app.database.models import AuditLog, AuthSession, User
 
 
-def assert_session_identity(
-    payload: dict[str, object], user: User, *, require_mfa: bool = True
-) -> None:
+def assert_session_identity(payload: dict[str, object], user: User) -> None:
     # Older tokens without bound identity claims require a fresh sign-in.
     if payload.get("role") != user.role.value or payload.get("firm_id") != user.firm_id:
         raise HTTPException(401, "Session is invalid or expired")
-    if (
-        require_mfa
-        and user.role == UserRole.AUDITOR
-        and (not user.mfa_enabled or not user.mfa_secret)
-    ):
-        raise HTTPException(403, "Auditor MFA enrollment is required")
 
 
 @event.listens_for(Session, "before_flush", insert=True)

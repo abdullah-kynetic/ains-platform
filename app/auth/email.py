@@ -114,3 +114,37 @@ def notify_report_ready(
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001 - sign-off must never fail on mail
             logger.warning("Report-ready email was not delivered (%s)", type(exc).__name__)
+
+
+class ResendCodeSender:
+    """Sends the emailed 6-digit sign-in code. The code is never logged."""
+
+    def __init__(self, settings: Settings):
+        self.settings = settings
+
+    def send(self, *, email: str, code: str, expires_at: datetime) -> None:
+        api_key = self.settings.resend_api_key.get_secret_value().strip()
+        if not api_key or not self.settings.email_from:
+            raise HTTPException(status_code=503, detail="Email delivery is not configured")
+        minutes = self.settings.email_code_ttl_minutes
+        try:
+            response = httpx.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "from": self.settings.email_from,
+                    "to": [email],
+                    "subject": f"Your {PRODUCT_NAME} sign-in code: {code}",
+                    "text": (
+                        f"Your {PRODUCT_NAME} sign-in code is {code}.\n"
+                        f"It expires in {minutes} minutes and works once.\n"
+                        "If you did not try to sign in, ignore this email and tell your "
+                        "administrator.\n"
+                        f"{PRODUCT_NAME} by {BRAND_NAME} — {BRAND_SITE}"
+                    ),
+                },
+                timeout=10,
+            )
+            response.raise_for_status()
+        except httpx.HTTPError:
+            raise HTTPException(status_code=503, detail="Email delivery unavailable") from None

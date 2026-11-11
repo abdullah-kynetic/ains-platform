@@ -13,9 +13,10 @@ What it creates (missing parts only, so it is safe to run twice):
   second firm).
 
 Passwords are random and written only to the credentials file (mode 600, never overwritten; use
-``-`` to send them to stdout for a private redirect) and never logged. Auditors enroll their
-authenticator at first sign-in, as everywhere else. It refuses to run if the database holds any
-other firm, so it can never mix synthetic data into real records.
+``-`` to send them to stdout for a private redirect) and never logged. Demo accounts have no
+authenticator: any old TOTP enrollment on them is switched off on every run (sign-in is email +
+password, plus an emailed code only when email delivery is configured). It refuses to run if
+the database holds any other firm, so it can never mix synthetic data into real records.
 """
 
 from __future__ import annotations
@@ -67,6 +68,7 @@ def seed(db: Session, *, credentials_file: str) -> dict[str, object]:
             )
             db.add(user)
             created.append(email)
+        user.mfa_enabled, user.mfa_secret, user.mfa_enrollment_expires_at = False, None, None
         return user
 
     practice = db.scalar(select(Practice).where(Practice.name == PRACTICE_NAME))

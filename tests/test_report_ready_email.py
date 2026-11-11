@@ -111,6 +111,7 @@ def test_signoff_emails_only_active_clients_of_that_firm(backend) -> None:  # no
             "resend_api_key": SecretStr(API_KEY),
             "email_from": FROM,
             "portal_url": "https://{slug}.kiensolutions.com",
+            "email_sign_in_codes": False,  # these tests sign in with a password only
         }
     )
     route = respx.post(RESEND_URL).mock(return_value=httpx.Response(200, json={"id": "x"}))
@@ -157,7 +158,11 @@ def test_signoff_succeeds_even_if_provider_fails(backend) -> None:  # noqa: F811
     client, factory, ids, _, _ = backend
     base = client.app.dependency_overrides[get_settings]()
     client.app.dependency_overrides[get_settings] = lambda: base.model_copy(
-        update={"resend_api_key": SecretStr(API_KEY), "email_from": FROM}
+        update={
+            "resend_api_key": SecretStr(API_KEY),
+            "email_from": FROM,
+            "email_sign_in_codes": False,
+        }
     )
     respx.post(RESEND_URL).mock(return_value=httpx.Response(500))
     with factory() as db:

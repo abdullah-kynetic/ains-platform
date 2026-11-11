@@ -9,10 +9,9 @@ Takes 5 to 15 minutes by hand, about 1 minute headless.
 | --- | --- |
 | `scripts/demo.sh test` | Runs steps 1 to 7 below in a headless browser from a clean database and reports pass or fail. Same as `cd web && npm run test:e2e:live`. |
 | `scripts/demo.sh serve` | Starts a clean seeded backend and the web app so you can click through. Auditor sign-in: `http://kynetic.localhost:3100/sign-in`. |
-| `scripts/demo.sh code` | Prints the current six-digit code the synthetic auditors need at sign-in. |
 
 Needs the Python venv (`uv sync --frozen`), `npm ci` in `web/`, and Chromium for the headless run (`npx playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to an installed Chromium).
-The synthetic users, password and one-time-code seed are test-only constants at the top of
+The synthetic users and passwords are test-only constants at the top of
 `scripts/e2e_backend.py`. Nothing here talks to a real server, sends email, or uses real documents.
 
 People in the demo (all synthetic, one practice):

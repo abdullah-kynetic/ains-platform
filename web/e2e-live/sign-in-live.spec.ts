@@ -1,4 +1,3 @@
-import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
 
 // Synthetic users seeded by scripts/e2e_backend.py. Test-only values.
@@ -7,16 +6,7 @@ const AUDITOR = "e2e-auditor@example.test";
 const LOCKOUT = "e2e-lockout@example.test";
 const CLIENT_PASSWORD = "synthetic-client-password";
 const AUDITOR_PASSWORD = "synthetic-auditor-password";
-const MFA_SECRET = "JBSWY3DPEHPK3PXP";
 const INVITE_TOKEN = "synthetic-invitation-token-0123456789abcdef";
-
-function totp(): string {
-  return execFileSync(
-    "../.venv/bin/python",
-    ["-c", `import pyotp,sys;print(pyotp.TOTP("${MFA_SECRET}").now())`],
-    { encoding: "utf8" },
-  ).trim();
-}
 
 /** The form's own alert, not Next.js's route announcer (also role=alert). */
 function alertText(page: Page) {
@@ -58,17 +48,11 @@ test("wrong password gives one generic message, never which part was wrong", asy
   await expect(alertText(page)).toHaveText("Email or password is incorrect");
 });
 
-test("auditor needs MFA: wrong code is rejected, right code returns to next", async ({ page }) => {
+test("auditor signs in with a password and returns to next (no authenticator, no email key)", async ({ page }) => {
   await page.goto("/sign-in?next=%2Fauditor");
   await fillCredentials(page, AUDITOR, AUDITOR_PASSWORD);
-  const code = page.getByLabel("Authenticator or recovery code");
-  await expect(code).toBeVisible();
-  await code.fill("000000");
-  await page.getByRole("button", { name: "Verify", exact: true }).click();
-  await expect(alertText(page)).toContainText("code is not valid");
-  await code.fill(totp());
-  await page.getByRole("button", { name: "Verify", exact: true }).click();
   await expect(page).toHaveURL(/\/auditor$/);
+  expect(await sessionStatus(page)).toBe(200);
 });
 
 test("an external next target is ignored", async ({ page }) => {

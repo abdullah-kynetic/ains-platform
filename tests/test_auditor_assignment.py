@@ -7,8 +7,6 @@ review_finding, or `visible()` scoping for invoices, makes these tests fail.
 
 from datetime import UTC, date, datetime, timedelta
 
-import pyotp
-
 from app.auth.security import hash_password
 from app.database.models import (
     ChecklistItemInstance,
@@ -19,12 +17,9 @@ from app.database.models import (
 )
 from tests.test_backend_api import (  # noqa: F401
     AUDITOR_PASSWORD,
-    MFA_SECRET,
     backend,
     sign_in_auditor,
 )
-
-SECOND_SECRET = "KRSXG5CTMVRXEZLU"
 
 
 def _second_auditor(factory) -> None:
@@ -35,8 +30,6 @@ def _second_auditor(factory) -> None:
                 name="Synthetic Auditor Two",
                 role=UserRole.AUDITOR,
                 password_hash=hash_password(AUDITOR_PASSWORD),
-                mfa_secret=SECOND_SECRET,
-                mfa_enabled=True,
                 accepted_at=datetime.now(UTC),
             )
         )
@@ -50,7 +43,6 @@ def _sign_in_second(client) -> None:
         json={
             "email": "auditor-two@example.test",
             "password": AUDITOR_PASSWORD,
-            "mfa_code": pyotp.TOTP(SECOND_SECRET).now(),
         },
     )
     assert response.status_code == 200

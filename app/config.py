@@ -89,8 +89,15 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = False
     session_ttl_hours: int = 12
     magic_link_ttl_minutes: int = 15
-    auditor_mfa_issuer: str = "Kien Solutions"
-    auditor_mfa_enrollment_ttl_minutes: int = 10
+    # Emailed sign-in code after email + password (replaces the authenticator app). It only runs
+    # when RESEND_API_KEY and EMAIL_FROM are set; otherwise sign-in is email + password alone.
+    # Set EMAIL_SIGN_IN_CODES=false to force password-only even when email is configured.
+    email_sign_in_codes: bool = True
+    email_code_ttl_minutes: int = Field(default=10, ge=1)
+    email_code_max_attempts: int = Field(default=5, ge=1)  # wrong guesses before a code is burned
+    email_code_resend_seconds: int = Field(default=30, ge=0)  # wait between sends
+    email_code_max_sends_per_hour: int = Field(default=5, ge=1)
+    trusted_device_days: int = Field(default=30, ge=1)  # "remember this browser"
     client_invitation_ttl_hours: int = 72
     invitation_preview_enabled: bool = False
     # Demo only: lets the isolation screen fetch a real foreign engagement id (synthetic data).
@@ -112,6 +119,15 @@ class Settings(BaseSettings):
         if cleaned and any(char in cleaned for char in "/:?#@ "):
             raise ValueError("PORTAL_BASE_DOMAIN must be a bare hostname")
         return cleaned
+
+    @property
+    def email_codes_active(self) -> bool:
+        """Emailed sign-in codes run only when the flag is on and email delivery is configured."""
+        return bool(
+            self.email_sign_in_codes
+            and self.resend_api_key.get_secret_value().strip()
+            and self.email_from.strip()
+        )
 
     def parsed_cors_origins(self) -> list[str]:
         return [

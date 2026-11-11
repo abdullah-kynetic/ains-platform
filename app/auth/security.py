@@ -1,4 +1,4 @@
-"""Password, MFA, magic-link, and signed-session primitives."""
+"""Password, magic-link, and signed-session primitives."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 import jwt
-import pyotp
 from pwdlib import PasswordHash
 
 from app.config import Settings
@@ -29,28 +28,6 @@ def verify_and_rehash_password(password: str, password_hash: str | None) -> tupl
     if not password_hash:
         return False, None
     return PASSWORD_HASH.verify_and_update(password, password_hash)
-
-
-def verify_totp(secret: str | None, code: str | None) -> bool:
-    return bool(secret and code and pyotp.TOTP(secret).verify(code, valid_window=1))
-
-
-def new_totp_secret() -> str:
-    return pyotp.random_base32()
-
-
-def new_mfa_recovery_code() -> str:
-    raw = secrets.token_hex(12).upper()
-    return "-".join(raw[index : index + 4] for index in range(0, len(raw), 4))
-
-
-def normalize_mfa_recovery_code(code: str) -> str:
-    return code.replace("-", "").replace(" ", "").upper()
-
-
-def hash_mfa_recovery_code(code: str) -> str:
-    normalized = normalize_mfa_recovery_code(code)
-    return hashlib.sha256(normalized.encode()).hexdigest()
 
 
 def new_magic_link_token() -> tuple[str, str]:

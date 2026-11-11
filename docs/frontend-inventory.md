@@ -6,7 +6,7 @@ Contracts: [`web/src/lib/api/types.ts`](../web/src/lib/api/types.ts) (camelCase)
 
 ## Auth and hosts (demo phase)
 
-- Web sign-in is restored (password, auditor MFA enrolment and recovery codes, invitation, reset, sign-out) and calls `/auth/*`. Only the synthetic demo build skips it. Not yet verified: wrong-portal refusal (the backend has no firm-host check or `/tenant/branding` route in this branch).
+- Web sign-in is restored (password then emailed code with remember-this-browser, invitation, reset, sign-out, sign out other devices) and calls `/auth/*`. Only the synthetic demo build skips it. Not yet verified: wrong-portal refusal (the backend has no firm-host check or `/tenant/branding` route in this branch).
 - `audienceForHost()` (`web/src/lib/audience.ts`) maps hosts to an audience: `<firm>.kiensolutions.com` is client, `NEXT_PUBLIC_AUDITOR_HOST` (default `auditor.kiensolutions.com`) is auditor, and preview/localhost/workers.dev/apex are both (role switcher). It narrows the UI only; once auth is back, a session whose role does not match the host must be refused.
 - An auditor at `/` is redirected to `/auditor` (Today).
 
@@ -44,7 +44,7 @@ Contracts: [`web/src/lib/api/types.ts`](../web/src/lib/api/types.ts) (camelCase)
 | `/auditor/firm/rubric` | Per-request scope and pass criteria | `RubricTab` |
 | `/auditor/firm/templates` | Request-list templates (introducing, retail, self-clearing, custom) | `TemplatesTab` |
 | `/auditor/notifications` | Notifications centre | `auditor/notifications.tsx` |
-| `/auditor/settings` | My account, MFA recovery (existing) | existing |
+| `/auditor/settings` | My account, sign out other devices (existing) | existing |
 | Cmd/Ctrl-K | Global search (clients, engagements, findings, requests, documents) | `shell/command-palette.tsx` |
 
 Client sidebar Results group: Responses requested, Report, Invoices.

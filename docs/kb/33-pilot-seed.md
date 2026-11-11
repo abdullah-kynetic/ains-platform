@@ -19,7 +19,7 @@ Invitations:
 - With `--send`, each newly created invitation is emailed through Resend once. A failed delivery
   rolls that invitation back so the next run retries.
 - Refuses to run if `ENV=production` and `INVITATION_PREVIEW_ENABLED` is on.
-- The auditor gets a password only if `DEMO_PASSWORD` is set. Auditors still enroll MFA.
+- The auditor gets a password only if `DEMO_PASSWORD` is set. Sign-in then uses an emailed code when email is configured.
 
 Running it with `--send` emails real inboxes: only do that with Abdullah's go-ahead and a Resend
 key. This build ran the seed only against in-memory test databases, with the email call replaced.
@@ -29,7 +29,7 @@ key. This build ran the seed only against in-memory test databases, with the ema
 `seed_workflow_fixtures(session)` (or `uv run python -m scripts.e2e_seed`) adds a separate firm,
 `kynetic-flow` (browse at `http://kynetic-flow.localhost:3100`), with its own auditor, reviewer,
 partner and client, so the original `e2e-auditor` still sees exactly one engagement.
-Logins use the same test-only passwords and TOTP secret as `scripts/e2e_backend.py`:
+Logins use the same test-only passwords as `scripts/e2e_backend.py`:
 `flow-auditor`, `flow-reviewer`, `flow-partner` (all `@example.test`, auditor password) and
 `flow-client@example.test` (client password).
 

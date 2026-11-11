@@ -30,7 +30,7 @@ New clients, engagement summaries/tabs, workpapers, samples, structured findings
 | Tasks (priority, due date, complete) and upcoming tasks | `auditor_tasks`, `upcoming-tasks.tsx` | Merged |
 | Activity feed and hash-chained audit log with chain verification | `auditor/audit-log`, `app/audit.py` | Merged |
 | Create/switch firm workspaces; client invitations (create, resend, revoke) | `auditor/workspaces/new`, `client-invitations.tsx` | Merged |
-| Settings: MFA enrollment, recovery codes | `auditor/settings` | Merged |
+| Settings: sign out other devices | `auditor/settings` | Merged |
 | Legacy report draft (DOCX/PDF) + hash sign-off | `app/reports/generator.py`, `/report/signoff` | Merged |
 | **Editable reports**: per-engagement report, snapshot of firm/period/34 statuses, per-item findings, sanitized rich text, finalize with attestation + SHA-256, audited reopen, print view | `auditor/reports`, `app/api/reports.py`, migration `a114` | Merged (#56) |
 | **Invoicing**: draft/sent/paid/void, partial payments, per-issuer numbering, filters incl. computed overdue, 6 currencies, print to PDF; shared within issuing auditor firm | `auditor/invoices`, `app/invoicing.py`, migration `a112` | Merged (#53, #54) |
@@ -39,7 +39,7 @@ New clients, engagement summaries/tabs, workpapers, samples, structured findings
 | Feature | Status |
 | --- | --- |
 | Invite-only sign-in, magic link, password reset, invitations, setup | Backend merged; web flows temporarily removed |
-| Auditor TOTP MFA + one-use recovery codes | Backend merged; web controls temporarily removed |
+| Emailed 6-digit sign-in code, remembered browser (30 days), revoke devices (replaces auditor TOTP) | Backend and web merged |
 | **First sign-in walkthrough**: 3-step tour per role, shown only when `onboarding_state` is null; finish/skip/close/Escape all save to the account (works across devices) | Merged (#57 + #60) |
 | Theme switch Light/Dark/System with sliding highlight and circular reveal, sits above the account block | Merged (#52) |
 | Resizable/collapsible sidebar (200–360 px, saved), phone navigation sheet, command palette | Merged |

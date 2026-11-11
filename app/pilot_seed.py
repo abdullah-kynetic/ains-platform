@@ -13,7 +13,8 @@ Rules:
   auditor resends them from the invitations screen, which issues a fresh link.
 * An invitation is emailed only when this run creates it. If delivery fails, that invitation is
   rolled back so the next run can try again.
-* The auditor gets a password only when ``DEMO_PASSWORD`` is set; auditors still enroll MFA.
+* The auditor gets a password only when ``DEMO_PASSWORD`` is set; sign-in then also uses an
+  emailed code when email is configured.
 """
 
 from __future__ import annotations

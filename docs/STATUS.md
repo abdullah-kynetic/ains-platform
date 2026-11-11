@@ -139,6 +139,17 @@ firm ownership, assignment, role and workflow transitions; UI state is not autho
 
 RESOLVED: #98 aligned the live fixture hostname with its synthetic firm and made the migration-head guard check the current single head. #96 merged current main, including #97 Security and #99 auth proofs. Its prior pre-auth full run passed 478 tests (12 skipped locally), and the corrected real local backend browser run passed all 8 tests. Fresh combined full CI, Security and independent verification are required before #96 merges. The auth/portal merge preserves request-time identity/MFA checks and portal firm binding; authenticated sign-out remains possible from any portal.
 
+## Emailed sign-in codes replace TOTP (2026-11-11, branch claude/project-thread-v5w3qb)
+
+After email + password, staff and clients get a 6-digit code by email (10 minutes, single use, 5 guesses,
+resend and send limits). A correct code can remember the browser for 30 days (httpOnly cookie bound to
+user and firm). Users can sign out other devices; partners/admins can revoke a team member's or an
+assigned client's remembered devices. Audit: code sent, accepted, failed, device remembered, device
+revoked. No Resend key (or `EMAIL_SIGN_IN_CODES=false`): password only, with a warning logged on every
+sign-in. TOTP endpoints, recovery codes and the auditor-MFA session check are removed; the old columns
+and table stay (additive migrations only). Migration `a129_email_sign_in_codes`. Demo seeds no longer
+enrol TOTP. Tests: `tests/security/test_email_codes.py`. Env names: `docs/demo/DEPLOY-DEMO.md`.
+
 ## Lane 2 continuation checkpoint
 
 L2-3 complete: #96 merged as `9a8a10a`; original #45 closed. Final combined backend: 493 passed, 12 skipped locally. Both local browser suites passed (82 mock, 8 real local API), including production-style aliases through a loopback-only test transport. Hosted CI/PostgreSQL, all nine Security jobs and independent security review passed. No server or deployment action occurred.

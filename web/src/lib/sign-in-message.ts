@@ -14,10 +14,11 @@ export function lockoutText(retryAfterSeconds?: number | null): string {
     : `Too many failed attempts. Try again in about ${minutes} minutes.`;
 }
 
-export function signInErrorText(failure: SignInFailure, step: "credentials" | "mfa"): string {
+export function signInErrorText(failure: SignInFailure, step: "credentials" | "code"): string {
   if (failure.status === 429) return lockoutText(failure.retryAfterSeconds);
   if (failure.status === 503) return "Sign-in is temporarily unavailable. Try again shortly.";
-  if (failure.status === 401 && step === "mfa") return "That code is not valid. Try again or use a recovery code.";
+  if (failure.status === 401 && step === "code")
+    return "That code is not valid or has expired. Try again or send a new code.";
   if (failure.status === 401) return "Email or password is incorrect";
   return "Sign-in could not be completed. Try again.";
 }

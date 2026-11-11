@@ -10,6 +10,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.auth.email import ResendSender
+from app.auth.email_code import revoke_devices
 from app.auth.security import hash_magic_link_token, hash_password, new_magic_link_token
 from app.config import Settings, get_settings
 from app.database.models import (
@@ -124,6 +125,8 @@ def confirm_reset(payload: ResetConfirm, db: DB) -> dict[str, str]:
         raise HTTPException(status_code=400, detail="Reset link is invalid or expired")
     user.password_hash = hash_password(payload.password)
     db.execute(update(AuthSession).where(AuthSession.user_id == user.id).values(revoked_at=now))
+    # A changed password also forgets remembered browsers, so the next sign-in needs a code.
+    revoke_devices(db, user, actor=user, reason="password_reset")
     for model in (PasswordResetToken, MagicLinkToken):
         db.execute(
             update(model)

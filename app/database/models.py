@@ -199,6 +199,8 @@ class User(Base):
 
 
 class MFARecoveryCode(Base):
+    """Retired with TOTP sign-in; the table is kept (additive migrations only), unused."""
+
     __tablename__ = "mfa_recovery_codes"
     __table_args__ = (
         Index("ix_mfa_recovery_codes_user_active", "user_id", "used_at", "revoked_at"),
@@ -502,6 +504,39 @@ class AuthSession(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class EmailSignInCode(Base):
+    """One emailed 6-digit sign-in code. Only a keyed hash is stored; single use; short-lived."""
+
+    __tablename__ = "email_sign_in_codes"
+    __table_args__ = (Index("ix_email_sign_in_codes_user_created", "user_id", "created_at"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    firm_id: Mapped[str | None] = mapped_column(ForeignKey("firms.id"), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class TrustedDevice(Base):
+    """A browser remembered after a correct emailed code. Bound to one user and firm."""
+
+    __tablename__ = "trusted_devices"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    firm_id: Mapped[str | None] = mapped_column(ForeignKey("firms.id"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    user_agent: Mapped[str | None] = mapped_column(String(200))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

@@ -228,7 +228,7 @@ Evidence file names: `docs/security/evidence/<id>.md` (one file per row). Each h
 | S-01 | Passwords hashed with Argon2id, never stored plain | `tests/security/test_password_hashing.py`: the stored hash starts with `$argon2id$`; verify and rehash work; plain text not found in the DB | 2 |
 | S-02 | Session cookie `HttpOnly`, `Secure` in production, `SameSite=Lax`, no `Domain` | `tests/security/test_cookies.py` (production settings) | 2 |
 | S-03 | CSRF: cross-site POST, PUT, PATCH and DELETE rejected (exact-origin allowlist) | `tests/test_origin_check.py`, plus `tests/security/test_csrf.py` covering every state-changing route in `route_inventory.txt` | 2 |
-| S-04 | TOTP MFA required for auditors; recovery codes single-use and hashed | `tests/security/test_auditor_mfa.py` (an auditor without MFA can't reach `/auditor/*`) | 2 |
+| S-04 | Emailed sign-in code (replaces TOTP, 11 Nov): hashed, expiring, single use, rate limited, remembered browser tied to user and firm, revocable, audit-logged | `tests/security/test_email_codes.py` | 2 |
 | S-05 | Clients are invite-only (no self sign-up); invitations expire and are single-use | `tests/security/test_invite_only.py`; `tests/test_auth_readiness.py` | 2 |
 | S-06 | Session expiry (12 h) and revocation (sign-out, password reset and role change revoke sessions) | `tests/security/test_sessions.py`: an expired token returns 401; a revoked `sid` returns 401; a reset revokes all of that user's sessions | 2 |
 | S-07 | Rate limiting and account lockout | `tests/test_rate_limit.py`, `tests/test_signin_lockout.py`, `tests/test_signin_lockout_postgres.py`; live brute-force check by Lane C (C9) | 2, C |

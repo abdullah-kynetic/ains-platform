@@ -3,7 +3,6 @@
 #
 #   scripts/demo.sh test    run steps 1 to 7 in a browser, headless, from a clean database
 #   scripts/demo.sh serve   start a clean seeded backend and web app to click through by hand
-#   scripts/demo.sh code    print the current one-time code for the synthetic auditors
 #
 # Synthetic data only. The database is a throwaway SQLite file, deleted at every start.
 # Refuses to run if DATABASE_URL points at Postgres. Does not touch deploy/ or compose files.
@@ -29,8 +28,5 @@ case "$mode" in
     cd web
     NEXT_PUBLIC_USE_MOCKS= NEXT_PUBLIC_API_URL='http://{portal}:8000' npm run dev -- --hostname 0.0.0.0 --port 3100
     ;;
-  code)
-    .venv/bin/python -c 'import runpy,pyotp; f=runpy.run_path("scripts/e2e_backend.py"); print(pyotp.TOTP(f["MFA_SECRET"]).now())'
-    ;;
-  *) echo "usage: scripts/demo.sh test|serve|code" >&2; exit 2;;
+  *) echo "usage: scripts/demo.sh test|serve" >&2; exit 2;;
 esac

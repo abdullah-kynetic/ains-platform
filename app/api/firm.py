@@ -17,8 +17,9 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
+from app.auth.email_code import revoke_devices
 from app.checklist.catalog import load_catalog
 from app.database.models import (
     AuditLog,
@@ -329,6 +330,47 @@ def remove_member(member_id: str, db: DB, user: CurrentUser) -> list[TeamMemberV
             session.revoked_at = datetime.now(UTC)
     db.commit()
     return _team(db, practice)
+
+
+class DevicesRevoked(BaseModel):
+    devices_forgotten: int
+
+
+@router.post(
+    "/team/{member_id}/devices/revoke", response_model=DevicesRevoked, response_model_by_alias=True
+)
+def revoke_member_devices(member_id: str, db: DB, user: CurrentUser) -> DevicesRevoked:
+    """A partner or admin makes a team member sign in with an emailed code again."""
+    practice = _practice(db, user)
+    _require(user, "partner", "admin")
+    member = _member(db, practice, member_id)
+    count = revoke_devices(db, member, actor=user, reason="revoked_by_admin")
+    db.commit()
+    return DevicesRevoked(devices_forgotten=count)
+
+
+@router.post("/clients/{user_id}/devices/revoke", response_model=DevicesRevoked)
+def revoke_client_devices(user_id: str, db: DB, user: CurrentUser) -> DevicesRevoked:
+    """Same for a client user of a firm this practice has an assigned engagement for."""
+    practice = _practice(db, user)
+    _require(user, "partner", "admin")
+    assigned = aliased(User)
+    client = db.scalar(
+        select(User).where(
+            User.id == user_id,
+            User.role == UserRole.CLIENT,
+            User.firm_id.in_(
+                select(Engagement.firm_id)
+                .join(assigned, assigned.id == Engagement.auditor_id)
+                .where(assigned.practice_id == practice.id)
+            ),
+        )
+    )
+    if client is None:
+        raise HTTPException(404, "Client user not found")
+    count = revoke_devices(db, client, actor=user, reason="revoked_by_admin")
+    db.commit()
+    return DevicesRevoked(devices_forgotten=count)
 
 
 # --- branding ----------------------------------------------------------------------------
