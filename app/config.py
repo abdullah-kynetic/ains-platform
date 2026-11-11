@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     s3_kms_key_id: str = ""
     s3_retention_days: int = Field(default=0, ge=0)
     s3_retention_mode: Literal["COMPLIANCE", "GOVERNANCE"] = "GOVERNANCE"
+    # How long evidence of a completed engagement is kept before a firm may ask for erasure.
+    # Placeholder until the attorney confirms the period (docs/kb/31-retention-export-erasure.md).
+    record_retention_days: int = Field(default=2190, ge=0)
     resend_api_key: SecretStr = SecretStr("")
     demo_password: SecretStr = SecretStr("")
     email_from: str = ""

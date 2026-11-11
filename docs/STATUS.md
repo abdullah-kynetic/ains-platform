@@ -210,3 +210,10 @@ invoices also appear as auditor notifications. This completes L2-6 (groups a to 
 The client can confirm the signed report by fingerprint, which unlocks invoicing for engagements
 that use the new sign-off path. `tests/test_end_to_end_flow.py` walks the whole journey. See
 `docs/kb/32-report-confirmation-and-journey.md`. Live email and DNS are not verified here.
+
+## L2-7 storage, retention, export, erasure (branch lane2/l2-7-retention)
+
+R2 uploads no longer crash on the missing `VersionId`. `python -m app.retention export|plan|erase`
+exports one firm's client-visible data and erases stored files of engagements past the retention
+window (default 2190 days is a placeholder for the attorney). See
+`docs/kb/31-retention-export-erasure.md`. Checked against moto only; no live bucket.
