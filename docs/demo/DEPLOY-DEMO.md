@@ -35,16 +35,46 @@ commit (`git -C /opt/kien pull --ff-only origin main` is not a rebase and keeps 
 3. `scripts/deploy-demo.sh deploy ghcr.io/abdullah-kynetic/ains-platform@sha256:<digest>`
    - takes a validated `pg_dump` first (`/opt/kien/kien-db-<tag>.dump`, mode 600),
    - writes `/opt/kien/rollback-<tag>.env` holding the image running now,
-   - pulls, runs `alembic upgrade head` (migration `a128` adds `practices.allow_auditor_as_signer`),
+   - pulls, runs `alembic upgrade head` (migrations `a128` adds `practices.allow_auditor_as_signer`; `a129` adds `email_sign_in_codes` and `trusted_devices`),
      recreates `api` and `worker` only, and waits for the API health check.
 4. Public check: `curl -sI https://api.kiensolutions.com/health` should show `200` and the security
    headers (HSTS, `X-Frame-Options: DENY`, `Content-Security-Policy`, `Referrer-Policy`,
    `Permissions-Policy`).
 5. Seed: `scripts/deploy-demo.sh seed`. It refuses if the database holds any firm other than the two
-   demo firms. Sign-ins are written to `/opt/kien/demo-credentials-<tag>.txt` (mode 600). Auditors set
-   up their authenticator at first sign-in. Delete that file after the demo.
+   demo firms. Sign-ins are written to `/opt/kien/demo-credentials-<tag>.txt` (mode 600). Demo accounts
+   have no authenticator (the seed switches any old enrollment off). Delete that file after the demo.
 6. Frontend deploy (item 3 above), then run the walkthrough (`DEMO.md`) against the live URL and fill in
    `docs/demo/LIVE-RUN.md`.
+
+## Sign-in settings (emailed code replaces the authenticator app)
+
+After email + password, staff and clients get a 6-digit code by email (10 minutes, single use, rate
+limited) and can remember the browser for 30 days. Settings go in the **app** env file (on the server
+that is `/etc/kien/app.env`; the older single-file layout used `/etc/kien/kien.env`). Names only here.
+
+| Variable | Needed? | Meaning |
+|---|---|---|
+| `RESEND_API_KEY` | secret, set by whoever has it | Resend key. **Leave unset for the demo as it stands** (live email is skipped): sign-in is then email + password only. |
+| `EMAIL_FROM` | with the key | Verified sender, for example a Kien address on the Resend domain. |
+| `EMAIL_SIGN_IN_CODES` | optional, default `true` | Set `false` to force password-only even when a key exists. |
+| `PORTAL_URL` / `PORTAL_BASE_DOMAIN` | already set | Unchanged. |
+| `SESSION_COOKIE_SECURE` | must be `true` in production | Also makes the remembered-browser cookie `Secure`. |
+| `EMAIL_CODE_TTL_MINUTES` (10), `EMAIL_CODE_MAX_ATTEMPTS` (5), `EMAIL_CODE_RESEND_SECONDS` (30), `EMAIL_CODE_MAX_SENDS_PER_HOUR` (5), `TRUSTED_DEVICE_DAYS` (30) | optional | Defaults shown; leave alone. |
+
+What to expect on the server:
+
+- **No Resend key (the demo):** nothing to do. Every sign-in logs the warning
+  `Email sign-in codes are OFF: RESEND_API_KEY / EMAIL_FROM are not set ...`. That line is expected.
+  `GET /auth/capabilities` returns `"email_code": false`.
+- **With a key and sender:** the sign-in screen shows a code step; `"email_code": true`. Test with a
+  throwaway address you control before real users.
+- Run the migration first (`a129`, additive). `AUDITOR_MFA_ISSUER` and `AUDITOR_MFA_ENROLLMENT_TTL_MINUTES`
+  are no longer read; they can stay in the file harmlessly.
+- Demo accounts: re-run `scripts/deploy-demo.sh seed`-style seeding is not required, but running the seed
+  again switches off any authenticator already enrolled on the demo auditors (it creates nothing that exists).
+- Audit log entries to look for: `auth.email_code_sent`, `auth.email_code_accepted`,
+  `auth.email_code_failed`, `auth.device_remembered`, `auth.device_revoked`.
+- Not tested live: the real Resend delivery path (tests use a fake sender).
 
 ## Rollback
 

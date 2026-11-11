@@ -12,8 +12,9 @@ it("never says which credential was wrong", () => {
   const text = signInErrorText({ status: 401, message: "Invalid email or password" }, "credentials");
   assert.equal(text, "Email or password is incorrect");
 });
-it("uses a code-specific message on the MFA step and a neutral one for other errors", () => {
-  assert.match(signInErrorText({ status: 401, message: "Invalid MFA code" }, "mfa"), /code is not valid/);
+it("uses a code-specific message on the code step and a neutral one for other errors", () => {
+  assert.match(signInErrorText({ status: 401, message: "Code is invalid or expired" }, "code"), /code is not valid/);
+  assert.match(signInErrorText({ status: 429, message: "x", retryAfterSeconds: 60 }, "code"), /Too many/);
   assert.match(signInErrorText({ status: 503, message: "x" }, "credentials"), /temporarily unavailable/);
   assert.match(signInErrorText({ status: 500, message: "x" }, "credentials"), /could not be completed/);
 });

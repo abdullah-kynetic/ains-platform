@@ -14,7 +14,6 @@ import json
 import re
 from datetime import UTC, date, datetime
 
-import pyotp
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
@@ -41,7 +40,6 @@ from app.database.models import (
 )
 from tests.test_backend_api import (  # noqa: F401
     AUDITOR_PASSWORD,
-    MFA_SECRET,
     backend,
     sign_in_client,
 )
@@ -225,8 +223,6 @@ def _setup(factory, ids):
             name=f"{MARK['b']} auditor",
             role=UserRole.AUDITOR,
             password_hash=hash_password(AUDITOR_PASSWORD),
-            mfa_secret=MFA_SECRET,
-            mfa_enabled=True,
             accepted_at=datetime.now(UTC),
             practice_id=two.id,
             team_role="partner",
@@ -250,7 +246,6 @@ def _sign_in_auditor(client: TestClient, email: str) -> None:
         json={
             "email": email,
             "password": AUDITOR_PASSWORD,
-            "mfa_code": pyotp.TOTP(MFA_SECRET).now(),
         },
     )
     assert response.status_code == 200, response.text

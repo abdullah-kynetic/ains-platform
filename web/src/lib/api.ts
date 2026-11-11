@@ -138,16 +138,6 @@ export type SessionUser = {
 
 export type SessionData = { user: SessionUser };
 
-export type AuditorMFAEnrollment = {
-  secret: string;
-  provisioning_uri: string;
-  expires_at: string;
-};
-
-export type AuditorMFAEnrollmentComplete = SessionData & {
-  recovery_codes: string[];
-};
-
 export type ClientInvitationStatus =
   | "pending"
   | "expired"
@@ -241,89 +231,49 @@ export async function getSession(): Promise<SessionData> {
   };
 }
 
+/** Thrown-by-message marker: the password was right and a code was emailed. */
+export const EMAIL_CODE_REQUIRED = "Email code required";
+
 export async function passwordSignIn(
   email: string,
   password: string,
-  mfaCode?: string,
+  code?: string,
+  rememberDevice = false,
 ): Promise<SessionData> {
   if (clientMocksEnabled()) {
     const normalized = email.trim().toLowerCase();
     const auditor = normalized === "auditor@example.invalid";
     if ((!auditor && normalized !== "client@example.invalid") || password !== "synthetic-only-password")
       throw new ApiError(401, "Invalid email or password");
-    if (auditor && !mfaCode) throw new ApiError(401, "MFA code required");
-    if (auditor && mfaCode !== "123456") throw new ApiError(401, "Invalid MFA code");
     localStorage.setItem("ains-synthetic-role", auditor ? "auditor" : "client");
     localStorage.removeItem("ains-synthetic-signed-out");
     return getSession();
   }
   return apiRequest<SessionData>("/auth/password", {
     method: "POST",
-    body: JSON.stringify({ email, password, mfa_code: mfaCode || null }),
+    body: JSON.stringify({
+      email,
+      password,
+      code: code || null,
+      remember_device: rememberDevice,
+    }),
   });
 }
 
-export async function startAuditorMFAEnrollment(
-  email: string,
-  password: string,
-): Promise<AuditorMFAEnrollment> {
-  if (USE_MOCKS)
-    return {
-      secret: "SYNTHETICMFAPREVIEWONLY",
-      provisioning_uri:
-        "otpauth://totp/Kien%20Solutions:synthetic-auditor?secret=SYNTHETICMFAPREVIEWONLY&issuer=Kien%20Solutions",
-      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-    };
-  return apiRequest<AuditorMFAEnrollment>("/auth/auditor/mfa/enrollment", {
+export async function resendEmailCode(email: string, password: string): Promise<void> {
+  if (clientMocksEnabled()) return;
+  await apiRequest<{ status: string }>("/auth/email-code/resend", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
 }
 
-export async function confirmAuditorMFAEnrollment(
-  email: string,
-  password: string,
-  code: string,
-): Promise<AuditorMFAEnrollmentComplete> {
-  if (USE_MOCKS) {
-    if (code !== "123456") throw new Error("Use synthetic code 123456.");
-    localStorage.setItem("ains-synthetic-role", "auditor");
-    localStorage.removeItem("ains-synthetic-signed-out");
-    return {
-      user: { ...mockSession.user, role: "auditor" },
-      recovery_codes: Array.from(
-        { length: 10 },
-        (_, index) => `DEMO-${String(index + 1).padStart(2, "0")}-NOT-A-REAL-CODE`,
-      ),
-    };
-  }
-  return apiRequest<AuditorMFAEnrollmentComplete>(
-    "/auth/auditor/mfa/enrollment/confirm",
-    {
-      method: "POST",
-      body: JSON.stringify({ email, password, code }),
-    },
-  );
-}
-
-export async function rotateAuditorMFARecoveryCodes(
-  code: string,
-): Promise<string[]> {
-  if (USE_MOCKS) {
-    if (code !== "123456") throw new Error("Use synthetic code 123456.");
-    return Array.from(
-      { length: 10 },
-      (_, index) => `ROTATED-${String(index + 1).padStart(2, "0")}-DEMO-ONLY`,
-    );
-  }
-  const result = await apiRequest<{ recovery_codes: string[] }>(
-    "/auth/auditor/mfa/recovery-codes",
-    {
-      method: "POST",
-      body: JSON.stringify({ code }),
-    },
-  );
-  return result.recovery_codes;
+export async function signOutOtherDevices(): Promise<{
+  sessions_ended: number;
+  devices_forgotten: number;
+}> {
+  if (clientMocksEnabled()) return { sessions_ended: 0, devices_forgotten: 0 };
+  return apiRequest("/auth/sign-out-others", { method: "POST" });
 }
 
 export async function requestMagicLink(email: string): Promise<void> {
@@ -335,17 +285,14 @@ export async function requestMagicLink(email: string): Promise<void> {
   });
 }
 
-export async function verifyMagicLink(
-  token: string,
-  mfaCode?: string,
-): Promise<SessionData> {
+export async function verifyMagicLink(token: string): Promise<SessionData> {
   if (USE_MOCKS)
     throw new Error(
       "Demo mode does not accept sign-in tokens. Use Open synthetic demo.",
     );
   return apiRequest<SessionData>("/auth/magic-link/verify", {
     method: "POST",
-    body: JSON.stringify({ token, mfa_code: mfaCode || null }),
+    body: JSON.stringify({ token }),
   });
 }
 

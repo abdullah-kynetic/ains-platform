@@ -268,7 +268,7 @@ Copied from main at `ddba2df` so a cold agent has it even if STATUS later moves.
 
 Decisions already made and shipped or agreed:
 
-- Sessions are revoked when auditor MFA is disabled and when role or firm changes (#99).
+- Sessions are revoked when role or firm changes (#99). Auditor TOTP and recovery codes were replaced on 2026-11-11 by an emailed 6-digit code with a 30-day remembered browser (migration a129, `tests/security/test_email_codes.py`); with no Resend key sign-in is password only.
 - Database URLs and demo passwords are `SecretStr` (#102, not yet merged).
 - N/A sorts last, original numbers are kept, undo restores the previous state; N/A is not auto-approved.
 - The invoice is issued only after client report confirmation; the auditor marks it paid.

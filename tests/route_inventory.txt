@@ -6,13 +6,12 @@ POST /auth/password-reset/request public
 POST /auth/password-reset/confirm public
 GET /auth/capabilities public
 POST /auth/password public
-POST /auth/auditor/mfa/enrollment public
-POST /auth/auditor/mfa/enrollment/confirm public
-POST /auth/auditor/mfa/recovery-codes session
+POST /auth/email-code/resend public
 POST /auth/magic-link public
 POST /auth/magic-link/verify public
 GET /auth/session session
 POST /auth/sign-out session
+POST /auth/sign-out-others session
 GET /auth/invitations/{token} public
 POST /auth/invitations/accept public
 GET /auditor/engagements/{engagement_id}/invitations auditor
@@ -94,6 +93,8 @@ GET /auditor/firm/team auditor
 POST /auditor/firm/team auditor
 PATCH /auditor/firm/team/{member_id} auditor
 DELETE /auditor/firm/team/{member_id} auditor
+POST /auditor/firm/team/{member_id}/devices/revoke auditor
+POST /auditor/firm/clients/{user_id}/devices/revoke auditor
 GET /auditor/firm/branding auditor
 PUT /auditor/firm/branding auditor
 GET /auditor/firm/signoff-settings auditor

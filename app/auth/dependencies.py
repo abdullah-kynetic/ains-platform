@@ -64,7 +64,7 @@ def get_authenticated_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Session is invalid or expired"
         )
-    assert_session_identity(payload, row.User, require_mfa=request.url.path != "/auth/sign-out")
+    assert_session_identity(payload, row.User)
     return row.User
 
 

@@ -140,14 +140,13 @@ def test_inventory_matches_the_running_application(backend):  # noqa: F811
         "/auth/capabilities",
         "/tenant/branding",
         "/auth/password",
+        "/auth/email-code/resend",
         "/auth/magic-link",
         "/auth/magic-link/verify",
         "/auth/password-reset/request",
         "/auth/password-reset/confirm",
         "/auth/invitations/{token}",
         "/auth/invitations/accept",
-        "/auth/auditor/mfa/enrollment",
-        "/auth/auditor/mfa/enrollment/confirm",
     }
 
 

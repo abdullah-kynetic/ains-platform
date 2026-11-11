@@ -43,8 +43,9 @@ The backend owns authentication and uses an HTTP-only `ains_session` cookie. The
 sign-up endpoint. Assigned auditors create firm-bound client invitations, and clients set a
 password while accepting the single-use, expiring token. Invitations can be rotated or revoked;
 an email cannot be invited into more than one firm. Client users may later sign in with a password
-or magic link. Auditors enroll TOTP MFA with their existing password and receive ten single-use,
-hashed recovery codes; replacing recovery codes requires a current authenticator code. Set
+or magic link. After the password, staff and clients get a 6-digit code by email (expires in 10 minutes,
+single use, rate limited) and can remember the browser for 30 days; the authenticator app is gone. With no
+`RESEND_API_KEY`/`EMAIL_FROM` the step is skipped and sign-in is email + password (logged as a warning). Set
 `SESSION_SECRET` to a long, random value before using sign-in. Set `RESEND_API_KEY`, `EMAIL_FROM` and `PORTAL_URL` to enable Resend delivery for
 magic links, invitations and password reset; unconfigured email returns 503. For synthetic local testing only,
 set `INVITATION_PREVIEW_ENABLED=true` to return an acceptance link to the auditor UI; never enable
@@ -152,7 +153,7 @@ not a clean audit opinion, completed rubric, or signed report.
 
 For an assigned, empty engagement, `POST /auditor/engagements/{id}/initialize` creates all
 34 instances from the YAML. Existing legacy instances are rejected rather than remapped.
-The synthetic demo includes an explicitly labeled client/auditor view switch and, for now, no web sign-in. The backend still requires authentication, auditor MFA and engagement assignment; web sign-in is restored before real data (see `docs/frontend-inventory.md`).
+The synthetic demo includes an explicitly labeled client/auditor view switch and, for now, no web sign-in. The backend still requires authentication, email-code sign-in (when email is configured) and engagement assignment; web sign-in is restored before real data (see `docs/frontend-inventory.md`).
 
 Auditors use `GET /auditor/queue` to see only their assigned engagements, including evidence,
 check timings, draft findings, and page citations. `PATCH /auditor/findings/{id}` accepts, edits,

@@ -1,10 +1,10 @@
 # Security
 
-> **Web sign-in status:** web sign-in is restored and calls the secured backend (password, auditor MFA, invitations, password reset, lockout messages, sign-out). The synthetic demo (`NEXT_PUBLIC_USE_MOCKS=true`) still opens as a demo user without sign-in. Verified by `web/e2e-live` against a local backend with synthetic users; not deployed. Backend enforces authentication, MFA, firm isolation and assignment. Screens and mocked calls are listed in [frontend-inventory.md](frontend-inventory.md).
+> **Web sign-in status:** web sign-in is restored and calls the secured backend (password with an emailed code, invitations, password reset, lockout messages, sign-out). The synthetic demo (`NEXT_PUBLIC_USE_MOCKS=true`) still opens as a demo user without sign-in. Verified by `web/e2e-live` against a local backend with synthetic users; not deployed. Backend enforces authentication, the emailed code (when email is configured), firm isolation and assignment. Screens and mocked calls are listed in [frontend-inventory.md](frontend-inventory.md).
 
 ## Assets and trust boundaries
 
-- **Protected data:** Client-uploaded AML evidence, identity/email, password hashes, session state, MFA secrets/recovery-code hashes, firm and engagement metadata, questionnaire responses, auditor notes/findings, draft reports, and audit logs.
+- **Protected data:** Client-uploaded AML evidence, identity/email, password hashes, session state, emailed-code hashes and remembered-device token hashes, firm and engagement metadata, questionnaire responses, auditor notes/findings, draft reports, and audit logs.
 - **Trusted/untrusted inputs:** Authenticated client/auditor requests, invitation/reset tokens, file names/content/type/size, tenant hostnames, browser input, environment configuration, object-storage/email provider responses. Treat all uploaded content and external error text as untrusted.
 - **Threats relevant to this product:** Cross-firm disclosure or write, access to unassigned engagements, role escalation, credential/token theft or replay, malicious/oversized uploads, path/key confusion, audit-log tampering, client disclosure of internal findings, accidental secret exposure, and processing restricted SAR material through an external model.
 - FastAPI owns data access. Browser state and route guards are usability controls only. PostgreSQL has no RLS-based tenant policy in the checked-in models; every query/API must enforce ownership and auditor assignment.
@@ -12,7 +12,7 @@
 ## Authentication and authorization
 
 - **Identity/session:** App-owned invite-based email/password auth. Passwords are hashed using `pwdlib` Argon2 support. A signed session token is carried in `ains_session` cookie and backed by `auth_sessions`; revocation/expiry checked server-side. Cookie security is controlled by `SESSION_COOKIE_SECURE`; require secure cookies in deployed HTTPS environments. Public signup is not implemented.
-- **MFA:** TOTP is available for auditors; login first accepts credentials and requests a code on a second screen only when enrolled. Recovery codes are hashed, single-use, and revocable. Enrollment has an expiry. Client MFA enforcement is not asserted.
+- **Second step (emailed code, replaces TOTP):** after email + password, staff and clients get a 6-digit code by email through Resend. Codes are stored only as keyed HMAC hashes, expire in 10 minutes, work once, burn after 5 wrong guesses, and sending is throttled (30 s between sends, 5 per hour per user). A correct code can remember the browser for 30 days with an httpOnly, SameSite=Lax cookie (Secure when `SESSION_COOKIE_SECURE`), bound to the user and firm and stored server-side as a hash. A user can sign out other devices; a partner or admin can revoke a team member's or an assigned client's remembered devices; a password reset forgets them all. Code sent, accepted, failed, device remembered and device revoked are audit-logged (never the code). **Fallback:** with no `RESEND_API_KEY`/`EMAIL_FROM` (or `EMAIL_SIGN_IN_CODES=false`) the step is skipped, sign-in is email + password only, and a warning is logged on every sign-in. That is a weaker setting: do not run production on it. Emailed codes are weaker than an authenticator app (anyone with the mailbox has the second step); this was a product decision.
 - **Roles and permissions:**
 
 | Action | Client firm user | Auditor |
@@ -24,7 +24,8 @@
 | Engagement/workspace creation, firm switching/invitations | Denied | Auditor-only routes; assignment/role checks apply |
 | Audit log and chain verification | Denied | Assigned engagements; firm-wide view requires all engagements assigned |
 | Report sign-off | Denied | Explicit assigned auditor action with artifact hash and attestation |
-| MFA enrollment/recovery management | Denied/not applicable | Authenticated auditor; valid current code required for sensitive rotation |
+| Sign out other devices | Own account only | Own account only |
+| Revoke remembered devices | Denied | Partner/admin, for own practice members and assigned clients only |
 
 - **Ownership/tenant checks:** Server filters tenant-owned records by `firm_id`; auditor routes additionally check assignment. APIs must deny cross-tenant access regardless of caller-controlled IDs or UI state. Firm mismatch in linked records is a service invariant because composite tenant foreign keys are not present.
 - **Recovery/revocation:** Invitation, magic-link, and reset tokens are stored hashed and expire/use once according to auth code; sessions can be revoked/expire. Account deactivation/admin lifecycle and comprehensive session revocation on password change require review; do not assume a central admin workflow exists.
@@ -48,7 +49,7 @@
 
 - **Data collected/purpose:** Email/name for auth and invitations; firm, engagement, checklist/questionnaire state for workflow; uploaded file bytes and hashes for evidence; action/actor/time/IP metadata for audit trail; optional telemetry. Keep telemetry/document contents minimal.
 - **Retention, deletion, access:** Unresolved: no approved retention/deletion schedule, legal hold procedure, user export process, or object/database cleanup procedure was found. Do not invent durations. Access is by role, firm, and assignment as above.
-- **Logging redaction:** Never log passwords, session/token values, MFA secrets/recovery codes, uploaded document bytes/content, provider bearer tokens, or full sensitive request payloads. Email code explicitly avoids provider body/token logging. Audit events should contain minimal metadata, not copied document content.
+- **Logging redaction:** Never log passwords, session/token values, sign-in codes, device tokens, uploaded document bytes/content, provider bearer tokens, or full sensitive request payloads. Email code explicitly avoids provider body/token logging. Audit events should contain minimal metadata, not copied document content.
 
 ## Dependencies and deployment
 
@@ -58,7 +59,7 @@
 
 ## Verification
 
-See [TESTING.md](TESTING.md) for permission-denial, firm-isolation, malformed/oversized upload, token/MFA, and secret exposure coverage. Residual risks include lack of confirmed malware scanning, operational retention/backup controls, broad non-auth rate limiting, and external audit-chain checkpointing. Owners and due dates: unresolved. This document does not establish regulatory compliance or a security certification.
+See [TESTING.md](TESTING.md) for permission-denial, firm-isolation, malformed/oversized upload, token/emailed-code, and secret exposure coverage. Residual risks include lack of confirmed malware scanning, operational retention/backup controls, broad non-auth rate limiting, and external audit-chain checkpointing. Owners and due dates: unresolved. This document does not establish regulatory compliance or a security certification.
 
 ## Invoice access
 

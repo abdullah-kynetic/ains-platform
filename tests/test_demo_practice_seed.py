@@ -70,3 +70,20 @@ def test_dash_sends_credentials_to_stdout_only(empty, capsys):
         summary = seed(db, credentials_file="-")
     out = capsys.readouterr().out
     assert "demo-quentin@example.test" in out and summary["passwordsWritten"] == 3
+
+
+def test_demo_accounts_have_no_authenticator_and_old_enrollment_is_switched_off(empty, tmp_path):
+    factory = empty
+    path = str(tmp_path / "creds.txt")
+    with factory() as db:
+        seed(db, credentials_file=path)
+        for user in db.scalars(select(User)):
+            assert user.mfa_enabled is False and user.mfa_secret is None
+        quentin = db.scalar(select(User).where(User.email == "demo-quentin@example.test"))
+        quentin.mfa_enabled, quentin.mfa_secret = True, "JBSWY3DPEHPK3PXP"  # old TOTP enrollment
+        db.commit()
+    with factory() as db:
+        seed(db, credentials_file=path)
+        db.expire_all()
+        quentin = db.scalar(select(User).where(User.email == "demo-quentin@example.test"))
+        assert quentin.mfa_enabled is False and quentin.mfa_secret is None

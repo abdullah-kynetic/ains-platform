@@ -12,7 +12,7 @@
 9. Never claim AWS's or any vendor's certifications as Kien's. Kien is not SOC 2 certified; SOC 2 is groundwork only.
 
 ## Controls in place (from code/docs)
-- Argon2 passwords, server-side revocable sessions, secure cookie flag, auditor TOTP MFA, hashed one-use recovery/reset/magic/invite tokens.
+- Argon2 passwords, server-side revocable sessions, secure cookie flag, emailed one-time sign-in codes with remembered-browser cookies, hashed one-use reset/magic/invite tokens.
 - Sign-in throttling (`auth_rate_limits`).
 - Upload validation: type/extension, size ≤100 MB, zero-byte rejection, SHA-256, firm-scoped storage keys, restricted-item rejection.
 - Hash-chained immutable audit log (DB triggers block edits). Limitation: a privileged DB admin could rewrite the chain; no external checkpoint.

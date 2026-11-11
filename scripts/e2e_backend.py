@@ -17,7 +17,6 @@ from pathlib import Path
 PORT_DEFAULT = 8000
 FIRM_SLUG = "kynetic"
 ORIGIN = f"http://{FIRM_SLUG}.localhost:3100"
-MFA_SECRET = "JBSWY3DPEHPK3PXP"  # synthetic TOTP secret, test only
 CLIENT_PASSWORD = "synthetic-client-password"
 AUDITOR_PASSWORD = "synthetic-auditor-password"
 INVITE_TOKEN = "synthetic-invitation-token-0123456789abcdef"
@@ -79,8 +78,6 @@ def seed() -> None:
             name="Synthetic E2E Auditor",
             role=UserRole.AUDITOR,
             password_hash=hash_password(AUDITOR_PASSWORD),
-            mfa_secret=MFA_SECRET,
-            mfa_enabled=True,
             accepted_at=now,
         )
         db.add(auditor)
@@ -94,8 +91,6 @@ def seed() -> None:
                     name=name,
                     role=UserRole.AUDITOR,
                     password_hash=hash_password(AUDITOR_PASSWORD),
-                    mfa_secret=MFA_SECRET,
-                    mfa_enabled=True,
                     accepted_at=now,
                     practice_id=practice.id,
                     team_role=team_role,

@@ -8,7 +8,6 @@ from datetime import UTC, date, datetime, timedelta
 from urllib.parse import parse_qs, urlparse
 
 import httpx
-import pyotp
 import pytest
 import respx
 from fastapi import Request
@@ -45,7 +44,6 @@ from app.tenancy import (
 
 CLIENT_PASSWORD = "synthetic-client-password"
 AUDITOR_PASSWORD = "synthetic-auditor-password"
-MFA_SECRET = "JBSWY3DPEHPK3PXP"
 BASE = "kiensolutions.com"
 
 
@@ -73,6 +71,7 @@ def _settings(**overrides: object) -> Settings:
         "cors_origins": "http://localhost:3000",
         "resend_api_key": SecretStr("synthetic-key"),
         "email_from": "synthetic@example.test",
+        "email_sign_in_codes": False,  # these tests are about portal hosts, not the emailed code
     }
     values.update(overrides)
     return Settings(_env_file=None, **values)  # type: ignore[arg-type]
@@ -273,8 +272,6 @@ def portal() -> Iterator[tuple[TestClient, sessionmaker[Session], dict[str, str]
             name="Synthetic Auditor",
             role=UserRole.AUDITOR,
             password_hash=hash_password(AUDITOR_PASSWORD),
-            mfa_secret=MFA_SECRET,
-            mfa_enabled=True,
             accepted_at=datetime.now(UTC),
         )
         db.add_all([client_a, client_b, inactive, auditor])
@@ -364,7 +361,6 @@ def test_cross_tenant_session_is_rejected_and_cookie_is_host_only(portal) -> Non
         json={
             "email": "auditor@example.test",
             "password": AUDITOR_PASSWORD,
-            "mfa_code": pyotp.TOTP(MFA_SECRET).now(),
         },
     )
     assert auditor.status_code == 200
@@ -648,7 +644,6 @@ def test_auditor_host_is_auditors_only_and_not_a_firm_slug(portal) -> None:
         json={
             "email": "auditor@example.test",
             "password": AUDITOR_PASSWORD,
-            "mfa_code": pyotp.TOTP(MFA_SECRET).now(),
         },
     )
     assert ok.status_code == 200

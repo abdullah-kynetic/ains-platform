@@ -1,4 +1,3 @@
-import { execFileSync } from "node:child_process";
 import { expect, type Page } from "@playwright/test";
 
 export const API = "http://kynetic.localhost:8000";
@@ -9,13 +8,6 @@ export async function signIn(page: Page, role: "auditor" | "client" = "auditor")
   await page.getByLabel("Email", { exact: true }).fill(`e2e-${role}@example.test`);
   await page.getByLabel("Password", { exact: true }).fill(`synthetic-${role}-password`);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  if (role === "auditor") {
-    const code = execFileSync("../.venv/bin/python", ["-c",
-      'import runpy,pyotp; f=runpy.run_path("../scripts/e2e_backend.py"); print(pyotp.TOTP(f["MFA_SECRET"]).now())',
-    ], { encoding: "utf8" }).trim();
-    await page.getByLabel("Authenticator or recovery code").fill(code);
-    await page.getByRole("button", { name: "Verify", exact: true }).click();
-  }
   await expect(page).not.toHaveURL(/sign-in/);
   const skip = page.getByRole("button", { name: "Skip tour" });
   if (await skip.isVisible()) await skip.click();
@@ -43,22 +35,12 @@ export const AUDITOR_ORIGIN = "http://kynetic.localhost:3100";
 export const portalOrigin = (slug: string) => `http://${slug}.localhost:3100`;
 export const apiFor = (origin: string) => origin.replace(":3100", ":8000");
 
-export function totp(): string {
-  return execFileSync("../.venv/bin/python", ["-c",
-    'import runpy,pyotp; f=runpy.run_path("../scripts/e2e_backend.py"); print(pyotp.TOTP(f["MFA_SECRET"]).now())',
-  ], { encoding: "utf8" }).trim();
-}
-
-/** Sign in on a given origin. Auditors also pass MFA. Synthetic test-only credentials. */
-export async function signInAt(page: Page, origin: string, email: string, password: string, mfa: boolean, next = "/") {
+/** Sign in on a given origin. The throwaway backend has no email key, so sign-in is email + password only. Synthetic test-only credentials. */
+export async function signInAt(page: Page, origin: string, email: string, password: string, _legacyMfaFlag: boolean, next = "/") {
   await page.goto(`${origin}/sign-in?next=${encodeURIComponent(next)}`);
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  if (mfa) {
-    await page.getByLabel("Authenticator or recovery code").fill(totp());
-    await page.getByRole("button", { name: "Verify", exact: true }).click();
-  }
   await expect(page).not.toHaveURL(/sign-in/);
   const skip = page.getByRole("button", { name: "Skip tour" });
   if (await skip.isVisible().catch(() => false)) await skip.click();

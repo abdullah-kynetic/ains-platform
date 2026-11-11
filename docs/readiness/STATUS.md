@@ -19,7 +19,7 @@ Last updated 2026-11-11. Synthetic data only until items 1, 2, 7, 31, 32, 37 and
 | 9 | Abdullah | Open | Insurance status unverified. |
 | 10 | Attorney | Open | Decision on moving past client files not given. |
 | 11 | Attorney | Open | Chatbot wording not provided. |
-| 12 | Claude | Done | `AUTH_REMOVED` no longer exists in `web/src`; real routes `/auth/*` (IMPL-4). Auth tests: `tests/security/test_sessions.py`, `test_auditor_mfa.py`. |
+| 12 | Claude | Done | `AUTH_REMOVED` no longer exists in `web/src`; real routes `/auth/*` (IMPL-4). Auth tests: `tests/security/test_sessions.py`, `tests/security/test_email_codes.py` (emailed code replaced TOTP, 11 Nov). |
 | 13 | Abdullah, Claude | Blocked | VPS size and SSH key from Abdullah; VPS, DNS and OVH stay on hold. Lane C owns the server. Not started. |
 | 14 | Claude | Partial | Upload scanning code and tests: `tests/test_upload_scanning.py`, `tests/security/test_upload_controls.py` (`UPLOAD_SCAN_MODE=clamav`, scan failure blocks upload). No live ClamAV run claimed. |
 | 15 | Claude | Done | `tests/test_rate_limit.py`, `tests/security/test_rate_limits.py`, `tests/test_signin_lockout.py` (Postgres variant runs in CI). |

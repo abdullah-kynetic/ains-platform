@@ -2,7 +2,6 @@
 
 from datetime import UTC, datetime
 
-import pyotp
 import pytest
 from sqlalchemy import select
 
@@ -18,7 +17,6 @@ from app.database.models import (
 )
 from tests.test_backend_api import (
     AUDITOR_PASSWORD,
-    MFA_SECRET,
     backend,  # noqa: F401
     sign_in_auditor,
     sign_in_client,
@@ -34,8 +32,6 @@ def _auditor(db, email: str, practice_id, role: str | None) -> User:
         name=email.split("@")[0],
         role=UserRole.AUDITOR,
         password_hash=hash_password(AUDITOR_PASSWORD),
-        mfa_secret=MFA_SECRET,
-        mfa_enabled=True,
         accepted_at=datetime.now(UTC),
         practice_id=practice_id,
         team_role=role,
@@ -52,7 +48,6 @@ def _sign_in(client, email: str) -> None:
         json={
             "email": email,
             "password": AUDITOR_PASSWORD,
-            "mfa_code": pyotp.TOTP(MFA_SECRET).now(),
         },
     )
     assert response.status_code == 200, response.text
@@ -292,7 +287,6 @@ def _sign_in_denied(client, email: str) -> None:
         json={
             "email": email,
             "password": AUDITOR_PASSWORD,
-            "mfa_code": pyotp.TOTP(MFA_SECRET).now(),
         },
     )
     assert response.status_code == 401

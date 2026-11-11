@@ -1,9 +1,9 @@
 # Explicit proof registry. A new protected route must register a scope-denial case.
 GET /auth/onboarding session_claims
 POST /auth/onboarding session_claims
-POST /auth/auditor/mfa/recovery-codes session_claims
 GET /auth/session session_claims
 POST /auth/sign-out session_claims
+POST /auth/sign-out-others session_claims
 GET /auditor/engagements/{engagement_id}/invitations auditor_scope
 POST /auditor/engagements/{engagement_id}/invitations auditor_scope
 POST /auditor/invitations/{invitation_id}/resend auditor_scope
@@ -81,6 +81,8 @@ GET /auditor/firm/team practice_scope
 POST /auditor/firm/team practice_scope
 PATCH /auditor/firm/team/{member_id} practice_scope
 DELETE /auditor/firm/team/{member_id} practice_scope
+POST /auditor/firm/team/{member_id}/devices/revoke practice_scope
+POST /auditor/firm/clients/{user_id}/devices/revoke practice_scope
 GET /auditor/firm/branding practice_scope
 PUT /auditor/firm/branding practice_scope
 GET /auditor/firm/signoff-settings practice_scope
