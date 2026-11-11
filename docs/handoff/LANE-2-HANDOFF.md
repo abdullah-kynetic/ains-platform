@@ -87,7 +87,10 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
 - **Done: L2-8** (branch `lane2/l2-8-signed-report-confirm`): the signed report can now be
   confirmed by the client (unlocks invoicing), plus one end-to-end journey test. Contract and
   decisions: `docs/kb/32-report-confirmation-and-journey.md`. Existing flows re-run, all pass.
-- **Next:** L2-7 is PR #116 (retention, export, erasure); then L2-9 (pilot seed), L2-10 (readiness tracker).
+- **Done: L2-9** (branch `lane2/l2-9-pilot-seed`, stacked on L2-8): `app/pilot_seed.py` (three
+  pilot firms, no send unless `--send`) and `scripts/e2e_seed.py` (firm `kynetic-flow` in four
+  states). Details and logins: `docs/kb/33-pilot-seed.md`.
+- **Next:** L2-10 (readiness tracker). L2-7 is PR #116 and L2-8 is PR #117.
 
 ## In progress
 
