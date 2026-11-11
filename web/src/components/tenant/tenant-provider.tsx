@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { clientMocksEnabled } from "@/lib/api";
 import { fetchTenantBranding } from "@/lib/tenant-branding";
 import { safeHostLabel, type TenantBranding } from "@/lib/tenant";
+import { hostHasFirmBranding } from "@/lib/audience";
 import { UnknownFirm } from "@/components/tenant/unknown-firm";
 
 export type TenantValue = {
@@ -23,7 +24,7 @@ export function TenantProvider({
   const value = useMemo(() => ({ slug, branding }), [slug, branding]);
 
   useEffect(() => {
-    if (clientMocksEnabled()) return;
+    if (clientMocksEnabled() || !hostHasFirmBranding(window.location.host)) return;
     let cancelled = false;
     fetchTenantBranding().then((result) => {
       if (cancelled) return;

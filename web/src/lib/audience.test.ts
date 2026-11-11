@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { audienceForHost, audienceRefusesRole } from "./audience.ts";
+import { audienceForHost, audienceRefusesRole, hostHasFirmBranding } from "./audience.ts";
 
 describe("audienceForHost", () => {
   it("serves firm subdomains as the client portal", () => {
@@ -30,5 +30,15 @@ describe("audienceRefusesRole", () => {
     assert.equal(audienceRefusesRole("auditor", "auditor"), false);
     assert.equal(audienceRefusesRole("both", "client"), false);
     assert.equal(audienceRefusesRole("both", "auditor"), false);
+  });
+});
+
+describe("hostHasFirmBranding", () => {
+  it("skips the firm branding lookup on the auditor host only", () => {
+    assert.equal(hostHasFirmBranding("auditor.kiensolutions.com"), false);
+    assert.equal(hostHasFirmBranding("Auditor.KienSolutions.com:443"), false);
+    assert.equal(hostHasFirmBranding("demo-securities.kiensolutions.com"), true);
+    assert.equal(hostHasFirmBranding("kynetic.localhost:3000"), true);
+    assert.equal(hostHasFirmBranding("auditor.example.test", "auditor.example.test"), false);
   });
 });
