@@ -91,6 +91,21 @@ Sign-in, invitation, reset and MFA screens are removed from the web app for the 
 | `listPortalReports` | `GET /client/reports` | `ClientPortalReport`; `available` only when signed |
 | `listPortalInvoices` | `GET /client/invoices` | `ClientPortalInvoice` |
 
+**CONTRACT-CHANGE (Lane 2, L2-6 and L2-8): the client calls above are implemented under the engagement,
+not under `/client/...`** (client routes must start with `/engagements/{id}`):
+
+| Mock call | Real route |
+| --- | --- |
+| `listResponseRequests` | `GET /engagements/{id}/response-requests` |
+| `respondToRequest` | `POST /engagements/{id}/response-requests/{rid}/response {text}` |
+| `listPortalReports` | `GET /engagements/{id}/signed-report` (one report per engagement; adds `confirmed`, `confirmedAt`) |
+| (new) confirm the signed report | `POST /engagements/{id}/signed-report/confirm {fingerprint}`; this unlocks invoicing |
+| `listPortalInvoices` | `GET /engagements/{id}/invoices` |
+| `signoffBlockers` | `GET /auditor/engagements/{id}/signoff/blockers` (server-computed) |
+| `listActivity` | `GET /auditor/engagements/{id}/activity` |
+
+Contracts and decisions: `docs/kb/23` to `docs/kb/32`.
+
 Every new path needs a cross-tenant denial test (`firm_id` filter, assigned engagements only).
 
 ## Not mocked

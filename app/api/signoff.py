@@ -117,6 +117,10 @@ class PartnerBody(Body):
     typed_name: str = Field(min_length=1, max_length=255)
 
 
+class ConfirmBody(Body):
+    fingerprint: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+
 class PortalSection(View):
     id: str
     title: str
@@ -131,6 +135,9 @@ class PortalReportView(View):
     signed_by: str | None
     fingerprint: str | None
     sections: list[PortalSection]
+    # Added in L2-8 (additive): the client's recorded confirmation, which unlocks invoicing.
+    confirmed: bool = False
+    confirmed_at: datetime | None = None
 
 
 def _auditor(user: User) -> None:
@@ -495,9 +502,52 @@ def client_signed_report(engagement_id: str, db: DB, user: CurrentUser) -> Porta
         signed_on=row.partner_signed_at.date().isoformat(),
         signed_by=_name(db, row.partner_id),
         fingerprint=row.partner_fingerprint,
+        confirmed=engagement.report_confirmed_at is not None,
+        confirmed_at=engagement.report_confirmed_at,
         sections=[
             PortalSection(id=s["id"], title=s["title"], body=s["body"])
             for s in row.signed_sections or []
             if not s["id"].startswith("finding-")
         ],
     )
+
+
+@router.post(
+    "/engagements/{engagement_id}/signed-report/confirm",
+    response_model=PortalReportView,
+    response_model_by_alias=True,
+)
+def confirm_signed_report(
+    engagement_id: str, body: ConfirmBody, db: DB, user: CurrentUser
+) -> PortalReportView:
+    """The client confirms the exact signed report by its fingerprint. Recorded once, audit-logged,
+    and it is what lets the auditor issue an invoice for this engagement."""
+    if user.role != UserRole.CLIENT:
+        raise HTTPException(403, "Client access required")
+    engagement = _get_engagement(db, user, engagement_id)
+    row = db.scalar(
+        select(EngagementSignoff).where(
+            EngagementSignoff.engagement_id == engagement.id,
+            EngagementSignoff.firm_id == engagement.firm_id,
+        )
+    )
+    if row is None or row.partner_signed_at is None or row.completed_at is None:
+        raise HTTPException(404, "No signed report")
+    if body.fingerprint != row.partner_fingerprint:
+        raise HTTPException(409, "The report changed. Reload it and confirm again.")
+    if engagement.report_confirmed_at is None:
+        engagement.report_confirmed_at = datetime.now(UTC)
+        engagement.report_confirmed_by_id = user.id
+        engagement.report_confirmed_sha256 = row.partner_fingerprint
+        db.add(
+            AuditLog(
+                firm_id=engagement.firm_id,
+                actor_id=user.id,
+                action="report.confirmed",
+                entity_type="engagement",
+                entity_id=engagement.id,
+                details={"fingerprint": row.partner_fingerprint, "flow": "signed_report"},
+            )
+        )
+        db.commit()
+    return client_signed_report(engagement_id, db, user)

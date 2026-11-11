@@ -84,10 +84,14 @@ Allowed edit paths: `app/**`, `migrations/**`, `tests/**` (not Lane 1's `tests/t
 - **Done: L2-6h** (branch `lane2/l2-6h-client-invoices`): client invoice list plus overdue-invoice
   notifications. No migration. Contract and decisions: `docs/kb/30-client-invoices-api.md`.
   This finishes L2-6.
+
 - **Done: L2-7** (branch `lane2/l2-7-retention`): R2 upload fix (no `VersionId`), retention rule,
   firm data export, confirmed erasure of stored files (operator CLI, no HTTP route). Contract and
   decisions: `docs/kb/31-retention-export-erasure.md`. Live R2 and ClamAV checks are Lane C.
-- **Next:** L2-8 (flows), L2-9 (pilot seed), L2-10 (readiness tracker).
+- **Done: L2-8** (branch `lane2/l2-8-signed-report-confirm`): the signed report can now be
+  confirmed by the client (unlocks invoicing), plus one end-to-end journey test. Contract and
+  decisions: `docs/kb/32-report-confirmation-and-journey.md`. Existing flows re-run, all pass.
+- **Merged:** #116 (L2-7). **Next:** L2-9 (pilot seed, PR #118), L2-10 (readiness tracker).
 
 ## In progress
 

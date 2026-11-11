@@ -209,6 +209,8 @@ def test_full_signoff_flow_and_client_report(backend):  # noqa: F811
         "signedBy",
         "fingerprint",
         "sections",
+        "confirmed",
+        "confirmedAt",
     }
     assert view["available"] is True and view["signedBy"] == "Pat Partner"
     assert view["fingerprint"] == fingerprint
