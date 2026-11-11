@@ -62,6 +62,17 @@ _SAR_PATTERNS = (
 )  # fmt: skip
 
 
+# The same key phrases with every separator removed: CamelCase names and PDF text extraction
+# often run the words together ("SuspiciousActivityReport.pdf").
+_COMPACT_PATTERNS = (
+    re.compile(r"suspiciousactivit(?:y|ies)(?:report|rpt|filing|narrative|form)"),
+    re.compile(r"(?:reports?|rpts?|reporting|filings?|filed|file)(?:of|on|for|about)suspicious"
+               r"(?:activit|transaction)"),
+    re.compile(r"suspicious(?:activit(?:y|ies)|transactions?)(?:rpts?|reps?)"),
+    re.compile(r"suspicioustransactionreport"),
+    re.compile(r"sar(?:narrative|filing|report|decision|referral)"),
+    re.compile(r"bsaefiling"),
+)  # fmt: skip
 _FORM_111 = re.compile(r"fincen[^a-z0-9]*(?:form[^a-z0-9]*)?111(?!\d)")
 
 
@@ -75,8 +86,11 @@ def sar_content_reason(*texts: str) -> str | None:
     """Return a short reason code when any text mentions SAR material, else None."""
     for raw in texts:
         folded = _fold(raw)
-        if any(pattern.search(folded) for pattern in _SAR_PATTERNS) or _FORM_111.search(
-            _fold(raw, keep_digits=True)
+        compact = folded.replace(" ", "")
+        if (
+            any(pattern.search(folded) for pattern in _SAR_PATTERNS)
+            or any(pattern.search(compact) for pattern in _COMPACT_PATTERNS)
+            or _FORM_111.search(_fold(raw, keep_digits=True))
         ):
             return "sar_content"
     return None
