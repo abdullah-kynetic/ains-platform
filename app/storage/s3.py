@@ -106,5 +106,32 @@ class S3Storage:
 
         return await asyncio.to_thread(read)
 
+    def delete_receipt(self, path: str) -> int:
+        """Remove an object and every stored version of it. Returns how many were deleted.
+
+        Raises on any refusal (for example an Object Lock retention), so the caller never
+        records an erasure that did not happen.
+        """
+        prefix = f"s3://{self.settings.s3_bucket}/"
+        if not path.startswith(prefix):
+            raise ValueError("Unexpected storage receipt")
+        key = path[len(prefix) :]
+        parts = key.split("/", 2)
+        if len(parts) != 3 or parts[0] != "firms":
+            raise ValueError("Invalid storage receipt")
+        self.key(parts[1], parts[2])
+        bucket = self.settings.s3_bucket
+        deleted = 0
+        if not self.is_r2:  # R2 keeps no versions.
+            page = self.client.list_object_versions(Bucket=bucket, Prefix=key)
+            for entry in [*page.get("Versions", []), *page.get("DeleteMarkers", [])]:
+                if entry["Key"] == key:
+                    self.client.delete_object(Bucket=bucket, Key=key, VersionId=entry["VersionId"])
+                    deleted += 1
+            if deleted:
+                return deleted
+        self.client.delete_object(Bucket=bucket, Key=key)
+        return 1
+
     async def aclose(self):
         self.client.close()
