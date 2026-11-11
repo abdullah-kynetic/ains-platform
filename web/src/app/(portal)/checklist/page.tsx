@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ListChecks } from "lucide-react";
+import { ChecklistStatus } from "@/components/portal/checklist-status";
 import { PageHeader } from "@/components/shell/page";
 import { Progress } from "@/components/ui/progress";
 import { LoadState } from "@/components/ui/load-state";
@@ -52,6 +53,8 @@ export default function ChecklistPage() {
           </Link>
         }
       />
+
+      <ChecklistStatus engagementId={data.id} />
 
       <div className="mb-4 grid gap-[var(--space-3)] rounded-xl bg-card p-4 border border-border shadow-card">
         <div className="flex flex-wrap justify-between gap-2 text-sm">

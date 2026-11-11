@@ -80,5 +80,26 @@ test("1. Quentin onboards a new client firm and the client accepts the invitatio
   expect(JSON.stringify(invites.body)).toContain("accepted");
 });
 
-// Later steps sign in again through these helpers.
-void clientPage;
+test("2. Quentin sends the numbered checklist; the client sees it was sent", async ({ browser }) => {
+  const client = await clientPage(browser);
+  await client.goto(`${portalOrigin(state.slug)}/`);
+  await expect(client.getByTestId("checklist-status")).toContainText("has not sent the checklist yet");
+
+  const auditor = await auditorPage(browser);
+  await auditor.goto(`${AUDITOR_ORIGIN}/auditor/engagements/${state.engagementId}`);
+  const card = auditor.getByTestId("client-checklist-card");
+  await expect(card.getByTestId("workflow-stage")).toHaveText("Checklist not sent");
+  await card.getByRole("button", { name: "Send checklist to client" }).click();
+  await expect(card.getByTestId("workflow-stage")).toHaveText("Checklist sent");
+  // Recorded once on the server: a second send is refused.
+  expect((await callApi(auditor, AUDITOR_ORIGIN, `/auditor/engagements/${state.engagementId}/checklist/send`, "POST")).status).toBe(409);
+  // Firm isolation: Quentin cannot send another firm's checklist; the client cannot send at all.
+  expect((await callApi(auditor, AUDITOR_ORIGIN, "/auditor/engagements/synthetic-other-engagement/checklist/send", "POST")).status).toBe(404);
+  expect((await callApi(client, portalOrigin(state.slug), `/auditor/engagements/${state.engagementId}/checklist/send`, "POST")).status).toBe(403);
+
+  await client.goto(`${portalOrigin(state.slug)}/checklist`);
+  await expect(client.getByTestId("checklist-status")).toContainText("Your auditor sent the checklist");
+  const progress = await callApi(client, portalOrigin(state.slug), `/engagements/${state.engagementId}/progress`);
+  expect((progress.body as { stage: string; items: unknown[] }).stage).toBe("checklist_sent");
+  expect((progress.body as { items: unknown[] }).items).toHaveLength(34);
+});
