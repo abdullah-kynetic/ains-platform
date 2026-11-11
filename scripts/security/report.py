@@ -16,8 +16,14 @@ def findings(scanner: str, raw: str) -> list[dict]:
     rows = []
 
     def add(rule, location, severity="unknown", **metadata):
-        rows.append({"id": str(rule), "location": str(location), "severity": str(severity),
-                     **{key: str(value) for key, value in metadata.items() if value}})
+        rows.append(
+            {
+                "id": str(rule),
+                "location": str(location),
+                "severity": str(severity),
+                **{key: str(value) for key, value in metadata.items() if value},
+            }
+        )
 
     if scanner == "pip-audit":
         for dep in data.get("dependencies", []):
@@ -37,14 +43,19 @@ def findings(scanner: str, raw: str) -> list[dict]:
                 add(entry.get("DetectorName"), source.get("file"), "verified secret")
     elif scanner.startswith("trivy-"):
         for result in data.get("Results", []):
-            for category, key in [("Vulnerabilities", "VulnerabilityID"),
-                                  ("Misconfigurations", "ID"), ("Secrets", "RuleID")]:
+            for category, key in [
+                ("Vulnerabilities", "VulnerabilityID"),
+                ("Misconfigurations", "ID"),
+                ("Secrets", "RuleID"),
+            ]:
                 for entry in result.get(category, []):
                     metadata = {}
                     if category == "Vulnerabilities":
-                        metadata = {"package": entry.get("PkgName"),
-                                    "installed": entry.get("InstalledVersion"),
-                                    "fixed": entry.get("FixedVersion")}
+                        metadata = {
+                            "package": entry.get("PkgName"),
+                            "installed": entry.get("InstalledVersion"),
+                            "fixed": entry.get("FixedVersion"),
+                        }
                     add(entry.get(key), result.get("Target"), entry.get("Severity"), **metadata)
     elif scanner == "semgrep":
         for entry in data.get("results", []):
@@ -55,7 +66,8 @@ def findings(scanner: str, raw: str) -> list[dict]:
     elif scanner == "zizmor":
         for entry in data:
             add(
-                entry.get("ident"), ".github/workflows",
+                entry.get("ident"),
+                ".github/workflows",
                 entry.get("determinations", {}).get("severity"),
             )
     return rows
@@ -74,8 +86,13 @@ if __name__ == "__main__":
         if isinstance(data, dict):
             for error in data.get("errors", []):
                 if isinstance(error, dict):
-                    errors.append({key: str(error[key]) for key in ["type", "level", "code", "path"]
-                                   if key in error and isinstance(error[key], (str, int))})
+                    errors.append(
+                        {
+                            key: str(error[key])
+                            for key in ["type", "level", "code", "path"]
+                            if key in error and isinstance(error[key], (str, int))
+                        }
+                    )
             accepted = [
                 {key: str(entry[key]) for key in ["id", "location", "expires", "review"]}
                 for entry in data.get("KienAcceptedFindings", [])
@@ -96,14 +113,25 @@ if __name__ == "__main__":
         }.items():
             if any(needle in log for needle in needles):
                 diagnostics.append(label)
-    Path(target).write_text(json.dumps({
-        "scanner": scanner, "exit_status": int(status), "findings": rows,
-        "diagnostics": diagnostics, "accepted_findings": accepted, "errors": errors,
-        "note": "Only finding IDs, locations and severities are exported. "
+    Path(target).write_text(
+        json.dumps(
+            {
+                "scanner": scanner,
+                "exit_status": int(status),
+                "findings": rows,
+                "diagnostics": diagnostics,
+                "accepted_findings": accepted,
+                "errors": errors,
+                "note": "Only finding IDs, locations and severities are exported. "
                 "Nonzero status without findings can indicate a tool or network error.",
-    }, indent=2) + "\n")
+            },
+            indent=2,
+        )
+        + "\n"
+    )
 
     if int(status):
+
         def escape(value):
             return str(value).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 

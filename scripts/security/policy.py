@@ -8,12 +8,19 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 NATIVE_FILES = {
-    '.gitleaks.toml', '.gitleaksignore', '.trivyignore', '.trivyignore.yaml',
-    '.semgrepignore', '.semgrep.yml', '.semgrep.yaml', '.bandit',
-    'zizmor.yml', 'zizmor.yaml',
+    ".gitleaks.toml",
+    ".gitleaksignore",
+    ".trivyignore",
+    ".trivyignore.yaml",
+    ".semgrepignore",
+    ".semgrep.yml",
+    ".semgrep.yaml",
+    ".bandit",
+    "zizmor.yml",
+    "zizmor.yaml",
 }
 INLINE = re.compile(
-    r'(?:#|//|/\*)\s*(?:nosec\b|nosemgrep\b|gitleaks:allow\b|zizmor:\s*ignore\b|trivy:ignore\b)'
+    r"(?:#|//|/\*)\s*(?:nosec\b|nosemgrep\b|gitleaks:allow\b|zizmor:\s*ignore\b|trivy:ignore\b)"
 )
 
 
@@ -21,11 +28,11 @@ def violations(paths: list[Path]) -> list[str]:
     errors = []
     for path in paths:
         if path.name in NATIVE_FILES:
-            errors.append(f'{path}: native suppression file is prohibited')
-        if path.parts[0] in {'app', 'ai_adapter', 'web', '.github'} and path.is_file():
-            text = path.read_text(errors='replace')
+            errors.append(f"{path}: native suppression file is prohibited")
+        if path.parts[0] in {"app", "ai_adapter", "web", ".github"} and path.is_file():
+            text = path.read_text(errors="replace")
             if INLINE.search(text):
-                errors.append(f'{path}: inline scanner suppression is prohibited')
+                errors.append(f"{path}: inline scanner suppression is prohibited")
     return errors
 
 
@@ -47,7 +54,8 @@ def accepted_risks(path: Path, today: date | None = None) -> list[dict]:
         approved = date.fromisoformat(entry["approved"])
         expires = date.fromisoformat(entry["expires"])
         if (
-            approved > today or expires <= today
+            approved > today
+            or expires <= today
             or not approved < expires <= approved + timedelta(days=90)
         ):
             raise ValueError("Expired or invalid accepted risk lifetime")
@@ -55,14 +63,14 @@ def accepted_risks(path: Path, today: date | None = None) -> list[dict]:
         if scanner == "gitleaks":
             fingerprint = entry.get("fingerprint", "")
             pattern = (
-                r"[0-9a-f]{40}:" + re.escape(scope) + ":"
-                + re.escape(finding) + r":[1-9][0-9]*"
+                r"[0-9a-f]{40}:" + re.escape(scope) + ":" + re.escape(finding) + r":[1-9][0-9]*"
             )
             if not re.fullmatch(pattern, fingerprint):
                 raise ValueError("Gitleaks exceptions require exact historical fingerprints")
             key = (scanner, fingerprint)
         elif (
-            scanner == "zizmor" and finding == "dangerous-triggers"
+            scanner == "zizmor"
+            and finding == "dangerous-triggers"
             and scope == ".github/workflows/image.yml"
         ):
             key = (scanner, finding, scope)
@@ -114,8 +122,14 @@ def apply_filter(scanner: str, status: int, path: Path, entries: list[dict]) -> 
         total += 1
         risk = approved.get((finding, scope))
         if risk:
-            accepted.append({"id": finding, "location": scope, "expires": risk["expires"],
-                             "review": risk["review"]})
+            accepted.append(
+                {
+                    "id": finding,
+                    "location": scope,
+                    "expires": risk["expires"],
+                    "review": risk["review"],
+                }
+            )
             return False
         remaining += 1
         return True
@@ -133,7 +147,8 @@ def apply_filter(scanner: str, status: int, path: Path, entries: list[dict]) -> 
             # Only misconfigurations can match approved AWS rules. Never secrets/vulns.
             remaining += len(result.get("Secrets") or []) + len(result.get("Vulnerabilities") or [])
             result["Misconfigurations"] = [
-                r for r in (result.get("Misconfigurations") or [])
+                r
+                for r in (result.get("Misconfigurations") or [])
                 if keep(r["ID"], result["Target"])
             ]
     data["KienAcceptedFindings"] = accepted
@@ -149,7 +164,7 @@ def filter_report(scanner: str, status: int, path: Path, entries: list[dict]) ->
         return status
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--filter-report", choices=["semgrep", "trivy-fs"])
@@ -165,7 +180,7 @@ if __name__ == '__main__':
         elif args.output_dir:
             generate(args.output_dir, entries)
         else:
-            files = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+            files = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
             errors = violations([Path(name) for name in files if name])
             for error in errors:
                 print(error)

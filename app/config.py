@@ -93,6 +93,8 @@ class Settings(BaseSettings):
     auditor_mfa_enrollment_ttl_minutes: int = 10
     client_invitation_ttl_hours: int = 72
     invitation_preview_enabled: bool = False
+    # Comma-separated invitee emails for app.pilot_seed, matched to its firms in order.
+    pilot_invitee_emails: str = ""
 
     # Extra exact browser origins (wildcards are deliberately unsupported). With
     # PORTAL_BASE_DOMAIN set, the apex, www, auditor and https://<known firm slug>.<domain>

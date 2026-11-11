@@ -211,6 +211,12 @@ The client can confirm the signed report by fingerprint, which unlocks invoicing
 that use the new sign-off path. `tests/test_end_to_end_flow.py` walks the whole journey. See
 `docs/kb/32-report-confirmation-and-journey.md`. Live email and DNS are not verified here.
 
+## L2-9 pilot seed and e2e seed (branch lane2/l2-9-pilot-seed)
+
+`python -m app.pilot_seed` creates three synthetic pilot firms, one auditor and engagements, and
+emails new invitations only with `--send`. `scripts/e2e_seed.py` adds the `kynetic-flow` firm in four
+known states for the e2e-live specs. See `docs/kb/33-pilot-seed.md`. Never run with real data.
+
 ## L2-7 storage, retention, export, erasure (branch lane2/l2-7-retention)
 
 R2 uploads no longer crash on the missing `VersionId`. `python -m app.retention export|plan|erase`

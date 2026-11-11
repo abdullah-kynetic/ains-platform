@@ -99,25 +99,36 @@ def seed() -> None:
         item = next(item for item in engagement.items if item.item_key == "AML-BD-001")
         # Receipt metadata only: these review tests do not claim upload or storage proof.
         document = Document(
-            firm_id=firm.id, engagement_id=engagement.id, item_instance_id=item.id,
-            uploaded_by_id=client.id, original_name="synthetic-review-policy.pdf",
-            content_type="application/pdf", size_bytes=28,
+            firm_id=firm.id,
+            engagement_id=engagement.id,
+            item_instance_id=item.id,
+            uploaded_by_id=client.id,
+            original_name="synthetic-review-policy.pdf",
+            content_type="application/pdf",
+            size_bytes=28,
             egnyte_path="/synthetic-e2e/receipt-only/policy.pdf",
             sha256=hashlib.sha256(b"synthetic-review-policy").hexdigest(),
         )
         db.add(document)
         db.flush()
-        db.add(AuditLog(
-            firm_id=firm.id, actor_id=client.id, action="document.created",
-            entity_type="checklist_item_instance", entity_id=item.id,
-            details={"document_id": document.id},
-        ))
+        db.add(
+            AuditLog(
+                firm_id=firm.id,
+                actor_id=client.id,
+                action="document.created",
+                entity_type="checklist_item_instance",
+                entity_id=item.id,
+                details={"document_id": document.id},
+            )
+        )
         other_firm = Firm(name="Synthetic Other Firm", slug="synthetic-other")
         db.add(other_firm)
         db.flush()
         other_engagement = Engagement(
-            id="synthetic-other-engagement", firm_id=other_firm.id,
-            review_period_start=date(2025, 1, 1), review_period_end=date(2025, 12, 31),
+            id="synthetic-other-engagement",
+            firm_id=other_firm.id,
+            review_period_start=date(2025, 1, 1),
+            review_period_end=date(2025, 12, 31),
         )
         db.add(other_engagement)
         db.flush()
