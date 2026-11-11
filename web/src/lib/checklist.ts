@@ -66,6 +66,8 @@ export type UploadedFile = {
   uploadedAt: string;
   sha256?: string;
   feedback?: string | null;
+  /** Stable engagement document number such as "1.17" (server-assigned). */
+  number?: string | null;
 };
 
 export type ChecklistItem = {
@@ -100,6 +102,7 @@ export type Engagement = {
     sha256: string;
     version?: string;
     uploadedAt: string;
+    number?: string | null;
   }[];
   id: string;
   firmName: string;

@@ -12,7 +12,7 @@ test.describe("auditor workspace (synthetic)", () => {
     const nav = page.getByRole("navigation").first();
     for (const group of ["Workspace", "Engagements", "Firm"]) await expect(nav.locator("p.nav-label", { hasText: new RegExp(`^${group}$`) })).toBeVisible();
     for (const tab of ["Overview", "Requests", "Documents", "Checklist", "Workpapers", "Samples", "Findings", "Report", "Independence", "Sign-off", "Activity"])
-      await expect(page.getByRole("navigation", { name: "Tabs" }).getByRole("link", { name: tab })).toBeVisible();
+      await expect(page.getByRole("navigation", { name: "Tabs" }).getByRole("link", { name: tab, exact: true })).toBeVisible();
   });
 
   test("checklist sorts Does not apply last and persists a change", async ({ page }) => {
