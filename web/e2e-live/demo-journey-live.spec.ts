@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { AUDITOR_ORIGIN, callApi, portalOrigin, signInAt } from "./helpers";
+import { AUDITOR_ORIGIN, apiFor, callApi, portalOrigin, signInAt } from "./helpers";
 
 /**
  * The Friday demo, one audit end to end on the REAL backend (scripts/e2e_backend.py), synthetic
@@ -392,8 +392,9 @@ test("8. Security headers are on the web app and the API, and the journey broke 
   const web = (await page.goto(`${AUDITOR_ORIGIN}/sign-in`))!.headers();
   await page.goto(`${AUDITOR_ORIGIN}/sign-in`);
   // Cross-origin scripts only see a few headers, so read them from the network response itself.
-  const seen = page.waitForResponse((r) => r.url() === "http://kynetic.localhost:8000/health");
-  await page.evaluate(() => void fetch("http://kynetic.localhost:8000/health"));
+  const healthUrl = `${apiFor(AUDITOR_ORIGIN)}/health`;
+  const seen = page.waitForResponse((r) => r.url() === healthUrl);
+  await page.evaluate((url) => void fetch(url), healthUrl);
   const api = (await seen).headers();
   for (const [where, headers] of [["web", web], ["api", api]] as const) {
     for (const name of ["content-security-policy", "strict-transport-security", "x-frame-options", "referrer-policy", "permissions-policy"]) {
