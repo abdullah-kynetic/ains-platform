@@ -56,3 +56,23 @@ first). Frontend: `wrangler rollback <previous-version-id>`.
 
 The script has only had a syntax check (`bash -n`). Names such as the `postgres` and `api` services and
 `deploy/lib.sh` come from the repo files and may differ on the server. Stop at the first surprise.
+
+## What the server actually runs (checked 2026-11-10)
+
+The script above was written from the repo, and the server differs. The deploy was done with the
+server's own scripts instead:
+
+- Compose interpolation file is `/etc/kien/compose.env`; secrets are split per service
+  (`postgres.env`, `migrate.env`, `app.env`, `ai.env`). There is no `/etc/kien/kien.env`.
+  App flags such as `ISOLATION_PROBE_ENABLED` go in `/etc/kien/app.env`.
+- Images are built on the host (`deploy/build-on-host.sh <sha>` from `/opt/kien/src/<sha>`), tagged
+  `kien-api:sha-<12>`, not pulled from GHCR by digest.
+- Deploys use `/opt/kien/deploy/deploy.sh <image>` (backup if a migration is pending, migrate, roles,
+  `api worker caddy`, health check). The server's `deploy/` folder comes from branch
+  `lane1/l1-3-deploy-single-env`, which is not on `main`; `main`'s `deploy/` would drop the memory
+  limits, so it was not copied over.
+- `deploy.sh` hung in `restic forget` because the R2 bucket's object lock refuses deletes (it only
+  happens when a second backup is taken on the same day). The database snapshot was already saved;
+  the forget was stopped and the remaining deploy steps were run by hand.
+- The seed runs with `docker compose ... run --rm -T --no-deps api python -m app.demo_practice_seed
+  --confirm-synthetic-demo --credentials-file -`, redirected to a private file.
