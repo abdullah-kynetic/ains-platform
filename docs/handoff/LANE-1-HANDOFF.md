@@ -234,3 +234,13 @@ files are frozen until Abdullah's Stage 2 sign-off.
   any CSP violation the browser reports during the whole journey (none).
 - Open item: `script-src` still has `'unsafe-inline'` because Next.js writes inline bootstrap scripts.
   Removing it needs a per-request nonce (proxy) and dynamic rendering on the Worker. Not done here.
+
+## Phase 2, steps 5 and 6: blocked on server access
+
+- Blocked: this session has no SSH client or key, no Cloudflare credentials, and `AGENTS.md` says code
+  agents never access servers. Nothing was deployed and no live run happened.
+- Ready for a person to run: `scripts/deploy-demo.sh` (backup, deploy by digest with a rollback file,
+  health check, seed, rollback; syntax-checked only), `app/demo_practice_seed.py` (two firms, Quentin
+  and a reviewer, one client contact, random passwords written only to a mode-600 file; tests in
+  `tests/test_demo_practice_seed.py`), `docs/demo/DEPLOY-DEMO.md` (exact steps and the decisions
+  needed), `docs/demo/LIVE-RUN.md` (empty results table; it states plainly that no run exists).
