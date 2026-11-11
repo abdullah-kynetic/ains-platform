@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress as Bar } from "@/components/ui/progress";
-import { acceptItem, decideNA, getProgress, ITEM_LABEL, sendChecklist, STAGE_LABEL, type ProgressItem } from "@/lib/api/flow";
+import { acceptItem, decideNA, getProgress, ITEM_LABEL, listIssues, sendChecklist, STAGE_LABEL, type ProgressItem } from "@/lib/api/flow";
+import { FlagForm, IssueThread } from "./issue-threads";
 import { Textarea } from "@/components/ui/textarea";
 import { Loading, fmtDateTime, useAsync } from "../kit";
 
@@ -71,9 +72,10 @@ export function ClientChecklistCard({ id }: { id: string }) {
 
 /** Steps 3 to 5: the client's items as the server sees them, with Quentin's decisions. */
 export function ClientItemsPanel({ id }: { id: string }) {
-  const { data, error, reload } = useAsync(() => getProgress(id, "auditor"), [id]);
+  const { data, error, reload } = useAsync(async () => ({ progress: await getProgress(id, "auditor"), issues: await listIssues(id, "auditor") }), [id]);
   if (!data) return <Loading error={error} retry={reload} label="Loading client checklist…" />;
-  const pending = data.items.filter((i) => i.naRequest?.state === "pending");
+  const { progress, issues } = { progress: data.progress, issues: data.issues };
+  const pending = progress.items.filter((i) => i.naRequest?.state === "pending");
   return (
     <div className="grid gap-4" data-testid="client-items">
       <ClientChecklistCard id={id} />
@@ -94,7 +96,7 @@ export function ClientItemsPanel({ id }: { id: string }) {
         <CardHeader><CardTitle>All requests</CardTitle></CardHeader>
         <CardContent>
           <ul className="divide-y divide-border text-sm">
-            {data.items.map((item) => (
+            {progress.items.map((item) => (
               <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-2" data-testid={`client-item-${item.requestId}`}>
                 <span><span className="font-mono text-xs text-brand-hover">{item.number}. {item.requestId}</span> {item.title}</span>
                 <span className="flex flex-wrap items-center gap-2">
@@ -102,10 +104,27 @@ export function ClientItemsPanel({ id }: { id: string }) {
                   {item.naRequest?.state === "rejected" ? <Badge variant="warning">N/A rejected</Badge> : null}
                   <Badge variant={item.status === "needs_info" ? "warning" : item.status === "accepted" ? "success" : "brand"}>{ITEM_LABEL[item.status]}</Badge>
                   {item.status === "submitted" && item.openIssues === 0 ? <AcceptButton engagementId={id} item={item} onDone={reload} /> : null}
+                  {item.status === "submitted" ? <FlagForm engagementId={id} item={item} onDone={reload} /> : null}
                 </span>
               </li>
             ))}
           </ul>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Document flags</CardTitle>
+          <CardDescription>What the client sees about a document. Findings stay with you.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {issues.length === 0 ? <p className="text-sm text-muted">No flags raised.</p> : (
+            <div className="grid gap-3" data-testid="issue-threads">
+              {issues.map((issue) => {
+                const item = progress.items.find((i) => i.id === issue.itemId);
+                return <IssueThread key={issue.id} engagementId={id} issue={issue} role="auditor" label={item ? `${item.number}. ${item.requestId}` : "Request"} onDone={reload} />;
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

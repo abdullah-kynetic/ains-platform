@@ -16,7 +16,7 @@ Read first: `CLAUDE.md`, `AGENTS.md`, `docs/BUILD-PLAN.md`, `docs/handoff/LANE-2
 | 2 | Checklist sent to client | [#122](https://github.com/abdullah-kynetic/ains-platform/pull/122) | merged: engagement Overview "Client checklist" card (send, stage, counts); client stage banner on Overview and Checklist. Client: `web/src/lib/api/flow.ts` (all workflow routes, steps 2-5, with a synthetic mock for the mock build) |
 | 3 | Client N/A with reason; Quentin approves or rejects | step-3 PR | done: client Checklist rebuilt on `/engagements/{id}/progress` (numbers, status, linked document numbers, N/A request with reason, rejection note, search); new auditor tab **Client checklist** (`…/client-checklist`) to approve or reject each N/A request |
 | 4 | Client uploads (numbered `1.n`) and maps items to documents | | not started |
-| 5 | Quentin flags problems and sends requests; client responds | | not started |
+| 5 | Quentin flags problems and sends requests; client responds | document flags and threads (auditor Client checklist tab, client Messages) | flags done; finding response requests wired in `lib/api` but no live test yet |
 | 6 | Report, client confirmation, invoice | | not started |
 | 7 | Firm-isolation proof screen and audit log view | | not started |
 | 8 | Seeded synthetic demo script + `DEMO.md` | | not started |

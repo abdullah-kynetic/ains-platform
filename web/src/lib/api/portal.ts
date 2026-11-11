@@ -1,3 +1,4 @@
+import { apiRequest, getEngagement, USE_MOCKS } from "../api";
 import { delay, readStore, updateStore } from "../mock/store";
 import { seedFindings } from "../mock/seed";
 import type { ClientPortalInvoice, ClientPortalReport, Finding, ResponseRequest } from "./types";
@@ -12,9 +13,18 @@ export const seedResponseRequests = (): StoredRequest[] => [
 ];
 const strip = (r: StoredRequest): ResponseRequest => ({ id: r.id, title: r.title, requestText: r.requestText, status: r.status, response: r.response, respondedAt: r.respondedAt, releasedAt: r.releasedAt });
 
-/** Auditor action: release one item to the client with text the auditor wrote. TODO(backend): POST /auditor/findings/{id}/response-request {title, requestText}; only for approved findings. */
+/** The signed-in client's engagement (client routes are scoped under /engagements/{id}). */
+export async function clientEngagementId(): Promise<string> {
+  return (await getEngagement()).id;
+}
+
+/** Auditor action: release one item to the client with text the auditor wrote. POST /auditor/findings/{id}/response-request {title, requestText}; only for approved findings. */
 export async function releaseResponseRequest(findingId: string, title: string, requestText: string): Promise<void> {
   if (!title.trim() || !requestText.trim()) throw new Error("Write a title and the request for the client.");
+  if (!USE_MOCKS) {
+    await apiRequest(`/auditor/findings/${encodeURIComponent(findingId)}/response-request`, { method: "POST", body: JSON.stringify({ title: title.trim(), requestText: requestText.trim() }) });
+    return;
+  }
   let engagementId = "";
   updateStore<Finding[]>(findingsKey, seedFindings, (rows) => {
     const f = rows.find((r) => r.id === findingId);
@@ -26,14 +36,20 @@ export async function releaseResponseRequest(findingId: string, title: string, r
   return delay(undefined, 0);
 }
 
-// TODO(backend): GET /client/response-requests -> ResponseRequest[] (only items an auditor explicitly released for the caller's firm)
+// GET /engagements/{id}/response-requests -> ResponseRequest[] (only items an auditor explicitly released for the caller's firm)
 export async function listResponseRequests(): Promise<ResponseRequest[]> {
+  if (!USE_MOCKS) return apiRequest(`/engagements/${encodeURIComponent(await clientEngagementId())}/response-requests`);
   return delay(readStore<StoredRequest[]>(requestsKey, seedResponseRequests).filter((r) => r.engagementId === "eng-synthetic-001").map(strip));
 }
 
-// TODO(backend): POST /client/response-requests/{id}/response {text}; only while status is "open"
+// POST /engagements/{id}/response-requests/{rid}/response {text}; only while status is "open"
 export async function respondToRequest(id: string, text: string): Promise<ResponseRequest[]> {
   if (!text.trim()) throw new Error("Write a response before submitting.");
+  if (!USE_MOCKS) {
+    const eid = encodeURIComponent(await clientEngagementId());
+    await apiRequest(`/engagements/${eid}/response-requests/${encodeURIComponent(id)}/response`, { method: "POST", body: JSON.stringify({ text: text.trim() }) });
+    return listResponseRequests();
+  }
   let engagementId = "eng-synthetic-001"; let findingId = "";
   updateStore<StoredRequest[]>(requestsKey, seedResponseRequests, (rows) => {
     const r = rows.find((x) => x.id === id);

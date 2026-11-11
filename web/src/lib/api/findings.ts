@@ -1,3 +1,4 @@
+import { apiRequest, USE_MOCKS } from "../api";
 import { delay, readStore, updateStore, uid } from "../mock/store";
 import { seedFindings } from "../mock/seed";
 import { logActivity } from "./log";
@@ -14,13 +15,19 @@ export function findingBlockers(f: Pick<Finding, "title" | "rule" | "condition" 
   return [...missing.map((k) => `Add the ${k}.`), ...(f.citations.length ? [] : ["Cite at least one document and page."])];
 }
 
-// TODO(backend): GET /auditor/engagements/{id}/findings -> Finding[]
+// GET /auditor/engagements/{id}/findings -> Finding[] (docs/kb/26-findings-api.md)
 export async function listFindings(engagementId: string): Promise<Finding[]> {
+  if (!USE_MOCKS) return apiRequest(`/auditor/engagements/${encodeURIComponent(engagementId)}/findings`);
   return delay(all().filter((f) => f.engagementId === engagementId));
 }
 
-// TODO(backend): POST/PUT /auditor/engagements/{id}/findings[/{findingId}]; editing an approved finding returns it to draft
+// POST/PUT /auditor/engagements/{id}/findings[/{findingId}]; editing an approved finding returns it to draft
 export async function saveFinding(engagementId: string, input: FindingInput, id?: string): Promise<Finding> {
+  if (!USE_MOCKS) {
+    const { title, rule, condition, cause, effect, recommendation, severity, citations } = input;
+    const base = `/auditor/engagements/${encodeURIComponent(engagementId)}/findings`;
+    return apiRequest(id ? `${base}/${encodeURIComponent(id)}` : base, { method: id ? "PUT" : "POST", body: JSON.stringify({ title, rule, condition, cause, effect, recommendation, severity, citations }) });
+  }
   let saved!: Finding;
   updateStore(key, seedFindings, (rows) => {
     const existing = rows.find((r) => r.id === id);
@@ -33,8 +40,9 @@ export async function saveFinding(engagementId: string, input: FindingInput, id?
 
 const allowed: Record<FindingStatus, FindingStatus[]> = { draft: ["approved"], approved: ["draft"], issued: ["closed"], responded: ["closed"], closed: [] };
 
-// TODO(backend): POST /auditor/findings/{id}/status {status}. Server enforces transitions, citations and that only an auditor acts.
+// POST /auditor/findings/{id}/status {status}. Server enforces transitions, citations and that only an auditor acts.
 export async function setFindingStatus(id: string, status: FindingStatus): Promise<Finding> {
+  if (!USE_MOCKS) return apiRequest(`/auditor/findings/${encodeURIComponent(id)}/status`, { method: "POST", body: JSON.stringify({ status }) });
   let result: Finding | undefined;
   updateStore(key, seedFindings, (rows) => {
     const f = rows.find((r) => r.id === id);
@@ -48,8 +56,9 @@ export async function setFindingStatus(id: string, status: FindingStatus): Promi
   return delay(result);
 }
 
-// TODO(backend): DELETE /auditor/findings/{id} (drafts only)
+// DELETE /auditor/findings/{id} (drafts only)
 export async function deleteDraftFinding(id: string): Promise<void> {
+  if (!USE_MOCKS) return apiRequest(`/auditor/findings/${encodeURIComponent(id)}`, { method: "DELETE" });
   updateStore(key, seedFindings, (rows) => rows.filter((r) => !(r.id === id && r.status === "draft")));
   return delay(undefined, 0);
 }
