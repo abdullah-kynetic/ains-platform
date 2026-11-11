@@ -271,6 +271,10 @@ Decisions already made and shipped or agreed:
 - Do not weaken portal host binding to make a fixture pass.
 - If you change `types.ts`, tell Lane 2; Lane 2 matches that file and will not silently diverge.
 
+## L2-10 readiness tracker (branch lane2/l2-10-readiness)
+
+`docs/readiness/STATUS.md` lists all 45 items with status, evidence and owner. Lane 2 can still do items 18, 20, 21, 23 and 28 without anyone's input; 13, 16 and 33 wait on Abdullah and Lane C; 39 to 45 wait on G2.
+
 ## Loop reminder
 
 From the Lane 2 prompt: branch `lane2/<item>` from `origin/main` (or reuse the named branch); catch up with `git merge origin/main`; smallest change; run the item tests, then `uv sync --frozen && uv run ruff check . && uv run pytest -q`; fix failures (max 3 attempts); open a PR with exact commands and results; independent verify (max 2 rounds); you merge on green with a merge commit; add a line to `docs/STATUS.md` and refresh this handoff's Done / In progress / Next. Never claim an unrun test passed. If Postgres cannot run locally, say so and rely on CI.
