@@ -564,12 +564,10 @@ export async function saveQuestionnaire(
         (question) => question.itemId === answer.itemId,
       );
       if (!question) throw new Error("Question not found.");
-      if (
-        !answer.applies &&
-        question.whenNo === "representation_required" &&
-        !answer.representation
-      )
-        throw new Error("Confirm the no-activity representation.");
+      if (!answer.applies)
+        throw new Error(
+          "The questionnaire cannot mark a request as not applicable. Use “Does not apply” on the document checklist and give a reason.",
+        );
       if (
         question.answer === answer.applies &&
         question.representation ===
@@ -657,17 +655,6 @@ export async function reviewFinding(
       method: "PATCH",
       body: JSON.stringify(decision),
     },
-  );
-}
-
-export async function reviewNotApplicable(
-  engagementId: string,
-  itemId: string,
-  decision: "approve" | "reject",
-): Promise<Question> {
-  return apiRequest<Question>(
-    `/engagements/${encodeURIComponent(engagementId)}/questionnaire/items/${encodeURIComponent(itemId)}/na-review`,
-    { method: "POST", body: JSON.stringify({ decision }) },
   );
 }
 

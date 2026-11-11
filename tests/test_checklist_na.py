@@ -141,7 +141,7 @@ def test_restricted_na_stays_excluded_and_rejects_uploads(backend):
     assert ingestor.calls == 0
 
 
-def test_questionnaire_na_undo_restores_prior_answer_and_feedback(backend):
+def test_reasoned_na_undo_restores_prior_status_and_feedback(backend):
     client, factory, ids, _, _ = backend
     with factory() as db:
         item = db.get(ChecklistItemInstance, ids["item_a"])
@@ -151,12 +151,11 @@ def test_questionnaire_na_undo_restores_prior_answer_and_feedback(backend):
         db.commit()
     sign_in_client(client)
     questionnaire = f"/engagements/{ids['engagement_a']}/questionnaire"
+    # The questionnaire can no longer mark N/A; the item keeps its status and answer.
     response = client.post(
         questionnaire + "/answers", json={"answers": [{"itemId": ids["item_a"], "applies": False}]}
     )
-    assert response.status_code == 200
-    path = f"/engagements/{ids['engagement_a']}/items/{ids['item_a']}/na"
-    assert client.post(path, json={"not_applicable": False}).status_code == 200
+    assert response.status_code == 422
     assert client.get(questionnaire).json()["questions"][0]["answer"] is True
     with factory() as db:
         item = db.get(ChecklistItemInstance, ids["item_a"])

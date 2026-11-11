@@ -26,6 +26,7 @@ from app.database.models import (
     EngagementSignoff,
     EngagementStatus,
     Finding,
+    Practice,
     SampleItem,
     SampleSet,
     User,
@@ -424,6 +425,13 @@ def partner_sign(engagement_id: str, body: PartnerBody, db: DB, user: CurrentUse
         raise HTTPException(409, "The second reviewer must approve first.")
     if row.reviewer_id == user.id:
         raise HTTPException(409, "The reviewer cannot also sign as partner.")
+    practice = db.get(Practice, user.practice_id) if user.practice_id else None
+    allowed = bool(practice and practice.allow_auditor_as_signer)
+    auditor_is_signer = user.id == engagement.auditor_id
+    if auditor_is_signer and not allowed:
+        raise HTTPException(
+            409, "This practice does not allow the assigned auditor to sign the report."
+        )
     if body.typed_name.strip().casefold() != user.name.strip().casefold():
         raise HTTPException(422, f"Type “{user.name}” exactly to sign.")
     _require_open(_blockers(db, engagement, row))
@@ -440,6 +448,8 @@ def partner_sign(engagement_id: str, body: PartnerBody, db: DB, user: CurrentUse
         "signoff.partner_signed",
         fingerprint=row.partner_fingerprint,
         section_count=len(sections),
+        auditor_is_signer=auditor_is_signer,
+        practice_allows_auditor_as_signer=allowed,
     )
     db.commit()
     return _signoff_view(db, engagement, row)

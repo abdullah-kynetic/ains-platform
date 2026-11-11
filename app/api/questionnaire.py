@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
 from app.checklist import ClientStatus
-from app.checklist.applicability import record_na_change, unset_na
+from app.checklist.applicability import record_na_change
 from app.checklist.catalog import load_catalog
 from app.database.models import (
     AuditLog,
@@ -59,10 +59,6 @@ class QuestionAnswer(APIModel):
 
 class QuestionnaireAnswers(APIModel):
     answers: list[QuestionAnswer] = Field(min_length=1, max_length=200)
-
-
-class NAReviewDecision(APIModel):
-    decision: Literal["approve", "reject"]
 
 
 def _get_engagement(db: Session, user: User, engagement_id: str) -> Engagement:
@@ -129,6 +125,16 @@ def answer_questionnaire(
             detail="Only firm users can answer the firm questionnaire",
         )
     engagement = _get_engagement(db, user, engagement_id)
+    # Decision (2026-11-10): the reasoned N/A flow is the only way to mark a request N/A. The
+    # client gives a reason and the auditor approves or rejects. The questionnaire marks none.
+    if any(not answer.applies for answer in payload.answers):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "The questionnaire cannot mark a request as not applicable. Use "
+                "'Does not apply' on the document checklist and give a reason."
+            ),
+        )
     answer_ids = {answer.item_id for answer in payload.answers}
     if len(answer_ids) != len(payload.answers):
         raise HTTPException(status_code=422, detail="Each questionnaire item may be answered once")
@@ -200,87 +206,3 @@ def answer_questionnaire(
         )
     db.commit()
     return _questionnaire(db, engagement)
-
-
-@router.post(
-    "/engagements/{engagement_id}/questionnaire/items/{item_id}/na-review",
-    response_model=QuestionView,
-    response_model_by_alias=True,
-)
-def review_not_applicable(
-    engagement_id: str,
-    item_id: str,
-    payload: NAReviewDecision,
-    user: CurrentUser,
-    db: DB,
-) -> QuestionView:
-    if user.role != UserRole.AUDITOR:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the assigned auditor can review N/A answers",
-        )
-    engagement = _get_engagement(db, user, engagement_id)
-    item = db.scalar(
-        select(ChecklistItemInstance).where(
-            ChecklistItemInstance.id == item_id,
-            ChecklistItemInstance.engagement_id == engagement.id,
-            ChecklistItemInstance.firm_id == engagement.firm_id,
-            ChecklistItemInstance.na_review_state == NAReviewState.PENDING,
-        )
-    )
-    if not item:
-        raise HTTPException(status_code=404, detail="Pending N/A answer not found")
-    catalog = load_catalog()
-    definition = catalog.get(item.item_key)
-    if not definition or not definition.conditions:
-        raise HTTPException(status_code=404, detail="Pending N/A answer not found")
-
-    before = {"applicable": item.applicable, "na_review_state": item.na_review_state}
-    if payload.decision == "approve":
-        record_na_change(db, item, user, True)
-    item.na_approved_by_id = user.id
-    item.applicability_decision = (
-        "not_applicable" if payload.decision == "approve" else "applicable"
-    )
-    item.assessment = None
-    if payload.decision == "approve":
-        item.na_review_state = NAReviewState.APPROVED
-        item.applicable = False
-    else:
-        unset_na(item)
-        item.na_review_state = NAReviewState.REJECTED
-        item.applicable = True
-        item.status = (
-            ClientStatus.RESTRICTED_DO_NOT_UPLOAD if item.restricted else ClientStatus.REQUESTED
-        )
-        item.client_reason = "The auditor confirmed that this requested item applies."
-    db.add(
-        AuditLog(
-            firm_id=engagement.firm_id,
-            actor_id=user.id,
-            action=(
-                "questionnaire.na_approved"
-                if payload.decision == "approve"
-                else "questionnaire.na_rejected"
-            ),
-            entity_type="checklist_item_instance",
-            entity_id=item.id,
-            details={
-                "before": before,
-                "actor_role": user.role.value,
-                "after": {"applicable": item.applicable, "na_review_state": item.na_review_state},
-            },
-        )
-    )
-    db.commit()
-    return QuestionView(
-        item_id=item.id,
-        section_title=next(
-            section.title for section in catalog.sections if section.id == definition.section
-        ),
-        question=definition.conditions.question,
-        answer=item.applicability_answer,
-        na_review_state=item.na_review_state,
-        when_no=definition.conditions.when_no,
-        representation=item.representation,
-    )

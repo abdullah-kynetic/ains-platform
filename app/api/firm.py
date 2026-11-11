@@ -357,6 +357,45 @@ def save_branding(body: BrandingBody, db: DB, user: CurrentUser) -> BrandingView
     return _branding(practice)
 
 
+# --- sign-off setting --------------------------------------------------------------------
+
+
+class SignoffSettingView(View):
+    allow_auditor_as_signer: bool
+
+
+class SignoffSettingBody(View):
+    allow_auditor_as_signer: bool
+
+
+@router.get("/signoff-settings", response_model=SignoffSettingView, response_model_by_alias=True)
+def get_signoff_settings(db: DB, user: CurrentUser) -> SignoffSettingView:
+    practice = _practice(db, user)
+    return SignoffSettingView(allow_auditor_as_signer=practice.allow_auditor_as_signer)
+
+
+@router.put("/signoff-settings", response_model=SignoffSettingView, response_model_by_alias=True)
+def save_signoff_settings(
+    body: SignoffSettingBody, db: DB, user: CurrentUser
+) -> SignoffSettingView:
+    practice = _practice(db, user)
+    _require(user, "partner", "admin")
+    before = practice.allow_auditor_as_signer
+    practice.allow_auditor_as_signer = body.allow_auditor_as_signer
+    _log(
+        db,
+        user,
+        practice,
+        "practice.signoff_setting_changed",
+        "practice",
+        practice.id,
+        allow_auditor_as_signer=body.allow_auditor_as_signer,
+        previous=before,
+    )
+    db.commit()
+    return SignoffSettingView(allow_auditor_as_signer=practice.allow_auditor_as_signer)
+
+
 # --- rubric ------------------------------------------------------------------------------
 
 

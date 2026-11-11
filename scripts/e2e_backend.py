@@ -83,7 +83,7 @@ def seed() -> None:
             accepted_at=now,
         )
         db.add(auditor)
-        practice = Practice(name=DEMO_PRACTICE)
+        practice = Practice(name=DEMO_PRACTICE, allow_auditor_as_signer=True)
         db.add(practice)
         db.flush()
         for email, name, team_role in DEMO_USERS.values():

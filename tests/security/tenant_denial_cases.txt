@@ -37,7 +37,6 @@ POST /engagements/{engagement_id}/items/{item_id}/documents client_scope
 POST /engagements/{engagement_id}/documents client_scope
 GET /engagements/{engagement_id}/questionnaire client_scope
 POST /engagements/{engagement_id}/questionnaire/answers client_scope
-POST /engagements/{engagement_id}/questionnaire/items/{item_id}/na-review client_scope
 POST /engagements/{engagement_id}/items/{item_id}/representations client_scope
 POST /engagements/{engagement_id}/items/{item_id}/na client_scope
 POST /auditor/engagements/{engagement_id}/items/{item_id}/follow-up auditor_scope
@@ -83,6 +82,8 @@ PATCH /auditor/firm/team/{member_id} practice_scope
 DELETE /auditor/firm/team/{member_id} practice_scope
 GET /auditor/firm/branding practice_scope
 PUT /auditor/firm/branding practice_scope
+GET /auditor/firm/signoff-settings practice_scope
+PUT /auditor/firm/signoff-settings practice_scope
 GET /auditor/firm/rubric practice_scope
 PUT /auditor/firm/rubric/{request_id} practice_scope
 GET /auditor/firm/request-templates practice_scope

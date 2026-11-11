@@ -36,7 +36,6 @@ from app.database.models import (
     FindingDraft,
     Firm,
     MFARecoveryCode,
-    NAReviewState,
     ReviewState,
     TaskPriority,
     User,
@@ -1132,7 +1131,7 @@ def test_representation_is_tenant_scoped_and_requires_confirmation(backend):
         assert item.representation == "no_activity" and item.status == ClientStatus.NOT_APPLICABLE
 
 
-def test_no_activity_question_requires_explicit_representation(backend):
+def test_questionnaire_refuses_no_answers_even_with_a_representation(backend):
     client, factory, ids, _, _ = backend
     with factory() as db:
         db.get(ChecklistItemInstance, ids["item_a"]).item_key = "AML-BD-012"
@@ -1142,7 +1141,10 @@ def test_no_activity_question_requires_explicit_representation(backend):
     answer = {"itemId": ids["item_a"], "applies": False}
     assert client.post(path, json={"answers": [answer]}).status_code == 422
     answer["representation"] = "no_activity"
-    assert client.post(path, json={"answers": [answer]}).status_code == 200
+    assert client.post(path, json={"answers": [answer]}).status_code == 422
+    with factory() as db:
+        item = db.get(ChecklistItemInstance, ids["item_a"])
+        assert item.applicable and item.status != ClientStatus.NOT_APPLICABLE
 
 
 def test_auditor_follow_up_and_document_replacement_feedback(backend):
@@ -1181,67 +1183,38 @@ def test_auditor_follow_up_and_document_replacement_feedback(backend):
     )
 
 
-def test_questionnaire_no_answer_directly_marks_na_and_remains_visible(backend) -> None:
+def test_questionnaire_no_longer_marks_na_and_the_old_review_route_is_gone(backend) -> None:
     client, factory, ids, _, _ = backend
     sign_in_client(client)
     questionnaire = client.get(f"/engagements/{ids['engagement_a']}/questionnaire")
     assert questionnaire.status_code == 200
-    assert questionnaire.json()["questions"] == [
-        {
-            "itemId": ids["item_a"],
-            "sectionTitle": "Transactions and payments",
-            "question": "Does the firm use clearing-firm AML reports?",
-            "answer": None,
-            "naReviewState": None,
-            "whenNo": "proposed_not_applicable",
-            "representation": None,
-        }
-    ]
+    assert len(questionnaire.json()["questions"]) == 1
 
-    answered = client.post(
+    # A "No" answer is refused with a pointer to the reasoned N/A flow, and changes nothing.
+    refused = client.post(
         f"/engagements/{ids['engagement_a']}/questionnaire/answers",
         json={"answers": [{"itemId": ids["item_a"], "applies": False}]},
     )
-    assert answered.status_code == 200
-    assert answered.json()["questions"][0]["naReviewState"] == "approved"
-    visible_ids = {
-        item["id"]
-        for section in client.get("/engagements/current").json()["sections"]
-        for item in section["items"]
-    }
-    assert ids["item_a"] in visible_ids
+    assert refused.status_code == 422
+    assert "document checklist" in refused.json()["detail"]
     with factory() as db:
         item = db.get(ChecklistItemInstance, ids["item_a"])
-        assert item and not item.applicable and item.status == ClientStatus.NOT_APPLICABLE
+        assert item and item.applicable and item.status != ClientStatus.NOT_APPLICABLE
 
-
-def test_only_assigned_auditor_can_reject_na_and_restore_item(backend) -> None:
-    client, factory, ids, _, _ = backend
-    sign_in_client(client)
-    with factory() as db:
-        item = db.get(ChecklistItemInstance, ids["item_a"])
-        item.na_review_state = NAReviewState.PENDING
-        item.applicable = False
-        item.status = ClientStatus.WITH_AUDITOR
-        db.commit()
-    forbidden = client.post(
-        f"/engagements/{ids['engagement_a']}/questionnaire/items/{ids['item_a']}/na-review",
-        json={"decision": "reject"},
+    # "Yes, this applies" still works.
+    ok = client.post(
+        f"/engagements/{ids['engagement_a']}/questionnaire/answers",
+        json={"answers": [{"itemId": ids["item_a"], "applies": True}]},
     )
-    assert forbidden.status_code == 403
+    assert ok.status_code == 200
 
+    # The older auditor review route no longer exists for anyone.
+    review = f"/engagements/{ids['engagement_a']}/questionnaire/items/{ids['item_a']}/na-review"
+    assert client.post(review, json={"decision": "approve"}).status_code in {404, 405}
     client.cookies.clear()
     sign_in_auditor(client)
-    reviewed = client.post(
-        f"/engagements/{ids['engagement_a']}/questionnaire/items/{ids['item_a']}/na-review",
-        json={"decision": "reject"},
-    )
-    assert reviewed.status_code == 200
-    assert reviewed.json()["naReviewState"] == "rejected"
-    with factory() as db:
-        item = db.get(ChecklistItemInstance, ids["item_a"])
-        assert item and item.applicable and item.status == ClientStatus.REQUESTED
-        assert item.na_approved_by_id == ids["auditor"]
+    assert client.post(review, json={"decision": "approve"}).status_code in {404, 405}
+    assert client.post(review, json={"decision": "reject"}).status_code in {404, 405}
 
 
 def test_questionnaire_answers_are_tenant_scoped(backend) -> None:
@@ -1252,28 +1225,6 @@ def test_questionnaire_answers_are_tenant_scoped(backend) -> None:
         json={"answers": [{"itemId": ids["item_b"], "applies": False}]},
     )
     assert response.status_code == 404
-
-
-def test_assigned_auditor_can_approve_na(backend) -> None:
-    client, factory, ids, _, _ = backend
-    sign_in_client(client)
-    with factory() as db:
-        item = db.get(ChecklistItemInstance, ids["item_a"])
-        item.na_review_state = NAReviewState.PENDING
-        item.applicable = False
-        item.status = ClientStatus.WITH_AUDITOR
-        db.commit()
-    client.cookies.clear()
-    sign_in_auditor(client)
-    response = client.post(
-        f"/engagements/{ids['engagement_a']}/questionnaire/items/{ids['item_a']}/na-review",
-        json={"decision": "approve"},
-    )
-    assert response.status_code == 200
-    assert response.json()["naReviewState"] == "approved"
-    with factory() as db:
-        item = db.get(ChecklistItemInstance, ids["item_a"])
-        assert item and not item.applicable and item.na_approved_by_id == ids["auditor"]
 
 
 async def test_worker_marks_durable_job_succeeded(backend) -> None:
