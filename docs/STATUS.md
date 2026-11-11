@@ -217,3 +217,7 @@ R2 uploads no longer crash on the missing `VersionId`. `python -m app.retention 
 exports one firm's client-visible data and erases stored files of engagements past the retention
 window (default 2190 days is a placeholder for the attorney). See
 `docs/kb/31-retention-export-erasure.md`. Checked against moto only; no live bucket.
+
+## Readiness tracker (L2-10)
+
+All 45 readiness items now have a status, evidence link and owner in [`readiness/STATUS.md`](readiness/STATUS.md): 3 Done, 13 Partial, 2 Blocked, 27 Open. Done means evidence was run; no live R2, ClamAV, email or VPS check is claimed.
