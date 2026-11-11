@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { getChecklistTests, getEngagementSummary, listActivity, listFindings, listSamples, sampleStats, signoffBlockers } from "@/lib/api/index";
 import { sectionName } from "@/lib/mock/seed";
 import { Loading, MockNotice, fmtDateTime, useAsync } from "../kit";
+import { ClientChecklistCard } from "./client-flow";
 
 export function Overview({ id }: { id: string }) {
   const { data, error, reload } = useAsync(async () => {
@@ -26,6 +27,7 @@ export function Overview({ id }: { id: string }) {
     <>
       <PageHeader title="Overview" description={summary ? `${summary.firmName}: ${summary.period} Rule 3310 independent test.` : undefined}
         actions={<Link href={`/auditor/engagements/${id}/checklist`} className={buttonVariants({ variant: "outline" })}>Open checklist</Link>} />
+      <ClientChecklistCard id={id} />
       <MockNotice />
       <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Checklist concluded" value={`${concluded} of ${tests.length}`} hint="Pass, partial, fail or does not apply" />

@@ -9,6 +9,7 @@ import {
   FileUp,
   ListTodo,
 } from "lucide-react";
+import { ChecklistStatus } from "@/components/portal/checklist-status";
 import { PageHeader, Stat } from "@/components/shell/page";
 import {
   Card,
@@ -54,6 +55,8 @@ export default function OverviewPage() {
           </Link>
         }
       />
+
+      <ChecklistStatus engagementId={data.id} />
 
       {USE_MOCKS ? (
         <div className="mb-[var(--space-5)] flex items-center gap-[var(--space-2)] text-xs leading-snug text-muted">
