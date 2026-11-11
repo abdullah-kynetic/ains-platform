@@ -28,7 +28,7 @@ export default defineConfig({
     },
     {
       command:
-        "NEXT_PUBLIC_USE_MOCKS= NEXT_PUBLIC_API_URL=http://kynetic.localhost:8000 npm run dev -- --hostname 0.0.0.0 --port 3100",
+        "NEXT_PUBLIC_USE_MOCKS= NEXT_PUBLIC_API_URL=http://{portal}:8000 npm run dev -- --hostname 0.0.0.0 --port 3100",
       url: "http://127.0.0.1:3100",
       reuseExistingServer: false,
       timeout: 120_000,

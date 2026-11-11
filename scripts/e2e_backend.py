@@ -20,6 +20,13 @@ MFA_SECRET = "JBSWY3DPEHPK3PXP"  # synthetic TOTP secret, test only
 CLIENT_PASSWORD = "synthetic-client-password"
 AUDITOR_PASSWORD = "synthetic-auditor-password"
 INVITE_TOKEN = "synthetic-invitation-token-0123456789abcdef"
+# Second, independent practice for the demo journey (web/e2e-live/demo-journey-live.spec.ts):
+# the assigned auditor (also a partner) and a separate reviewer, as sign-off requires.
+DEMO_PRACTICE = "Synthetic Demo Practice"
+DEMO_USERS = {
+    "auditor": ("e2e-quentin@example.test", "Synthetic Quentin", "partner"),
+    "reviewer": ("e2e-reviewer@example.test", "Synthetic Reviewer", "reviewer"),
+}
 USERS = {
     "client": "e2e-client@example.test",
     "lockout": "e2e-lockout@example.test",
@@ -36,6 +43,8 @@ def configure(db_path: Path) -> None:
     os.environ["SESSION_SECRET"] = "synthetic-e2e-session-secret-not-for-real-use-0000"
     os.environ["SESSION_COOKIE_SECURE"] = "false"
     os.environ["CORS_ORIGINS"] = ORIGIN
+    # One-time invitation links are returned to the auditor instead of emailed (no live email).
+    os.environ["INVITATION_PREVIEW_ENABLED"] = "true"
     os.environ["PORTAL_URL"] = ORIGIN
 
 
@@ -51,6 +60,7 @@ def seed() -> None:
         Document,
         Engagement,
         Firm,
+        Practice,
         User,
         UserRole,
     )
@@ -72,6 +82,23 @@ def seed() -> None:
             accepted_at=now,
         )
         db.add(auditor)
+        practice = Practice(name=DEMO_PRACTICE)
+        db.add(practice)
+        db.flush()
+        for email, name, team_role in DEMO_USERS.values():
+            db.add(
+                User(
+                    email=email,
+                    name=name,
+                    role=UserRole.AUDITOR,
+                    password_hash=hash_password(AUDITOR_PASSWORD),
+                    mfa_secret=MFA_SECRET,
+                    mfa_enabled=True,
+                    accepted_at=now,
+                    practice_id=practice.id,
+                    team_role=team_role,
+                )
+            )
         for key in ("client", "lockout"):
             db.add(
                 User(
