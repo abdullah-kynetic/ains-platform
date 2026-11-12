@@ -8,7 +8,7 @@ One job: point to the right document. Stores no rules of its own.
 - Reference (every run): `STATUS.md`
 
 ## Process
-1. Current scope and rules: `PROJECT-BRIEF.md` (it wins over older text), then `../CLAUDE.md`.
+1. Current scope and rules: `PROJECT-BRIEF.md` (it wins over older text), then `RULES.md`.
 2. Product and design: `PRD.md`, `ARCHITECTURE.md`, `DATABASE.md`, `SECURITY.md`, `DESIGN_SYSTEM.md`.
 3. AI: `AI-ANALYSIS.md`, `kb/16-ai-features-finra-chatbot.md`, `kb/17-model-policy.md`.
 4. Pipelines as stage contracts: [pipelines/ai-analysis](pipelines/ai-analysis/CONTEXT.md).
