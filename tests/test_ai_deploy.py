@@ -9,7 +9,23 @@ from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parent.parent
 OVERLAY = ROOT / "deploy" / "docker-compose.ai.yml"
-compose = yaml.safe_load(OVERLAY.read_text())
+
+
+class _Loader(yaml.SafeLoader):
+    """Read compose's custom tags (!override, !reset) as the plain value they wrap."""
+
+
+_Loader.add_multi_constructor(
+    "!",
+    lambda loader, suffix, node: (
+        loader.construct_mapping(node)
+        if isinstance(node, yaml.MappingNode)
+        else loader.construct_sequence(node)
+        if isinstance(node, yaml.SequenceNode)
+        else loader.construct_scalar(node)
+    ),
+)
+compose = yaml.load(OVERLAY.read_text(), Loader=_Loader)
 service = compose["services"]["ai-adapter"]
 
 
@@ -18,18 +34,18 @@ def test_overlay_only_adds_the_ai_service():
 
 
 def test_service_is_locked_down_and_not_published():
-    assert "ports" not in service  # reachable only from the private network
+    assert not service.get("ports")  # reachable only from the private network
     assert service["expose"] == ["8100"]
     assert service["read_only"] is True
     assert service["cap_drop"] == ["ALL"]
     assert "no-new-privileges:true" in service["security_opt"]
-    assert service["mem_limit"] == "300m"
+    assert service["mem_limit"] == "256m"  # never above the server base file
     assert service["command"][:2] == ["uvicorn", "ai_adapter.main:app"]
     assert "--workers" not in service["command"]  # counters live in one process
 
 
 def test_service_gets_only_the_ai_env_file_and_no_secret_values():
-    assert service["env_file"] == "/etc/kien/ai.env"
+    assert service["env_file"] == ["/etc/kien/ai.env"]
     text = OVERLAY.read_text()
     for env in service["environment"].values():
         assert "sk-" not in env and "@" not in env  # no key, no credentialed URL
@@ -41,6 +57,16 @@ def test_only_ai_service_joins_the_egress_network():
     assert "services" not in compose["networks"]["ai_egress"]
     assert compose["networks"]["ai_egress"]["ipam"]["config"][0]["subnet"] == "10.77.40.0/24"
     assert not compose["networks"]["ai_egress"].get("internal")  # it is the one way out
+
+
+def test_overlay_replaces_a_same_named_base_service_instead_of_merging_into_it():
+    text = OVERLAY.read_text()
+    # The server's own file may already define ai-adapter on "edge", AI_ENABLED hard-coded false.
+    # !override drops both: no route round the firewall, no hard-coded switch.
+    assert re.search(r"^    networks: !override$", text, re.M)
+    assert re.search(r"^    environment: !override$", text, re.M)
+    assert "edge" not in service["networks"]
+    assert "AI_ENABLED" not in service["environment"]  # comes only from /etc/kien/ai.env
 
 
 def test_overlay_does_not_touch_the_servers_deploy_files():

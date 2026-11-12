@@ -88,3 +88,14 @@ def test_run_in_flight_never_turns_a_denied_caller_into_a_409(ai):  # noqa: F811
     release.set()
     worker.join(10)
     assert denied.status_code == 404  # scope check comes first; 409 would confirm a hidden run
+
+
+def test_overlay_replaces_env_file_so_the_apps_secrets_never_reach_the_adapter():
+    # Compose APPENDS env_file lists. If the server's old ai-adapter reads the API env file
+    # (kien.env), the merged service would receive the API/Postgres secrets as well.
+    from pathlib import Path
+
+    text = (Path(__file__).resolve().parent.parent / "deploy" / "docker-compose.ai.yml").read_text()
+    assert "env_file: !override" in text
+    for tag in ("ports: !reset", "dns: !reset", "depends_on: !reset"):
+        assert tag in text

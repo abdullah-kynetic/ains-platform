@@ -7,14 +7,23 @@
 # The switch stays OFF until AI_ENABLED=true is set there AND AI_ANALYSIS_ENABLED=true is set for the API.
 # Assumes the base stack has a "backend" network that Postgres and the API share (as in
 # deploy/docker-compose.prod.yml); check with `config` before `up`.
+# The server's own base file may already define a switched-off ai-adapter (profile "ai", on the
+# internet-facing "edge" network, AI_ENABLED hard-coded "false"). Compose merges same-named services,
+# so `environment` and `networks` below use !override: the merged service must NOT keep "edge" (that
+# would bypass the egress firewall) and must NOT keep the hard-coded switch. Needs Docker Compose >= 2.24.
 
 services:
   ai-adapter:
-    image: ${AI_IMAGE:?set AI_IMAGE to the same image the api service runs}
+    image: ${AI_IMAGE:-${KIEN_IMAGE:?set AI_IMAGE (or KIEN_IMAGE) to the same image the api service runs}}
     restart: unless-stopped
     # Only the AI settings, never the API's or Postgres's secrets.
-    env_file: /etc/kien/ai.env
-    environment:
+    env_file: !override
+      - /etc/kien/ai.env
+    # Compose appends/merges these from a same-named base service; clear them so nothing is inherited.
+    ports: !reset []
+    dns: !reset []
+    depends_on: !reset {}
+    environment: !override
       AI_STATE_DATABASE_URL: sqlite:////var/lib/kien-ai/state.db
       AI_BREAKER_PATH: /var/lib/kien-ai/breaker.json
     # One process on purpose: the daily request counter and circuit breaker live in this process.
@@ -24,10 +33,10 @@ services:
     tmpfs: [/tmp]
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
-    mem_limit: 300m
+    mem_limit: 256m # same as the server base file; the overlay never raises a limit
     volumes:
       - ai_state:/var/lib/kien-ai
-    networks:
+    networks: !override
       - backend # reached by the API; read-only database role for the ownership check
       - ai_egress # the only route to the internet; see deploy/ai/egress-firewall.sh
     healthcheck:
