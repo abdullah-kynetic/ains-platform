@@ -1,4 +1,7 @@
 {
-  "_comment": "Exact OpenRouter model IDs ending in ':free'. Empty on purpose: nothing may be called until a person adds a model after checking it under strict privacy settings (data_collection=deny). Never add stealth, experimental, router or ':online' models.",
-  "models": []
+  "_comment": "Exact OpenRouter model IDs ending in ':free'. Free models only, no paid fallback. Listed as free on openrouter.ai/collections/free-models on 2026-11-11 and still price-checked to exactly zero on every call. Synthetic data only. Never add stealth, experimental, router or ':online' models.",
+  "models": [
+    {"id": "google/gemma-4-26b-a4b-it:free"},
+    {"id": "nvidia/nemotron-3-ultra-550b-a55b:free"}
+  ]
 }

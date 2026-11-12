@@ -1,0 +1,44 @@
+# DRAFT, needs Quentin's approval.
+#
+# A starting rubric for five core AML requests so the Stage 3 demo has something to judge against.
+# Written by a coding agent from general knowledge of FINRA Rule 3310 and the BSA, NOT reviewed or
+# approved by Quentin. These lines are prompts for a DRAFTING assistant only: the model never
+# decides, the auditor does. Until Quentin approves, treat every line as a placeholder.
+# The canonical checklist (data/checklist/aml_bd_v1.yaml) is untouched; its rubric fields stay
+# empty for Quentin.
+status: DRAFT, needs Quentin's approval
+items:
+  AML-BD-009:
+    topic: Customer Identification Program (CIP)
+    criteria:
+      - Each sampled file records the identifying information collected before account opening (name, date of birth, address, identification number).
+      - Identity verification is documented, with the method used and the date.
+      - Exceptions or unverified customers are escalated and the outcome is recorded.
+      - Dates fall within the review period.
+  AML-BD-012:
+    topic: Currency transaction reports (CTR) and large cash
+    criteria:
+      - The record shows how cash above the reporting threshold is identified and who reviews it.
+      - Reports or logs cover the whole review period with no unexplained gaps.
+      - Structuring indicators are reviewed and the review is dated and signed off.
+  AML-BD-004:
+    topic: Monitoring for suspicious activity (clearing-firm exception reports)
+    criteria:
+      - Alerts or exception reports cover the whole review period.
+      - Each alert shows who reviewed it, when, and the disposition.
+      - Alerts are closed within the time stated in the firm's procedures.
+      - Escalation to the AML officer is evidenced for unresolved items.
+  AML-BD-003:
+    topic: AML training
+    criteria:
+      - Training occurred at least once in the review period and the date is shown.
+      - Attendance or completion is recorded by named person, with missing people identified.
+      - Content covers the firm's AML procedures and red flags relevant to its business.
+      - Anyone who joined mid-period was trained in a reasonable time.
+  AML-BD-021:
+    topic: Independent testing and remediation
+    criteria:
+      - The most recent independent test is dated and falls in the required cycle.
+      - The tester is independent of the AML function and qualified.
+      - Findings from the test are listed with an owner and a target date.
+      - Remediation status is evidenced, and open items are explained.
