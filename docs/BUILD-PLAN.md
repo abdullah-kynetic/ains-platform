@@ -101,7 +101,7 @@ Unchanged from v1 Part 2(a):
 |---|---|---|
 | **G1: Stage 1 done** | Every row in Part 6 is green, with an evidence file in the repo | Slave Kien runs Part 6 and reports to Abdullah |
 | **G2: Stage 2 signed off** | Every Stage 2 skill was run, findings were fixed or accepted in writing, the final re-run is clean (no open High or Critical), and Abdullah says "Stage 2 signed off" | Abdullah |
-| **G3: Stage 3 start** | G2 is passed. No engine branch work, PR or merge happens before this | Slave Kien refuses to launch engine work before G2 |
+| **G3: Stage 3 start** | G2 is passed. No engine branch work, PR or merge happens before this | Superseded 2026-11-11: engine work proceeds under the PROJECT-BRIEF merge and review rules |
 
 ---
 
@@ -192,7 +192,7 @@ If PostgreSQL can't run in an agent sandbox, say so and rely on CI's Postgres jo
 | L2-1 | #37 rebuild (`claude/project-thread-3nrr4u`). **Merge first**; Lane 1 owns `web/package.json` and `wrangler.jsonc` after this | Production build embeds `https://api.kiensolutions.com`; close #37 | In `web/`: `npm run test:unit` (includes `scripts/wrangler-public-api-url.test.mjs`), `npm run build:cloudflare:production` |
 | L2-2 | #40 rebuild (`claude/resend-report-ready`, merge `main` in) | A mail failure never fails sign-off; no findings or report content in the email; no addresses logged; reset email confirmed on `main`; close #40 | `uv run pytest -q tests/test_report_ready_email.py tests/test_password_reset.py tests/test_report_workflow.py` |
 | L2-3 | #45 rebuild (`claude/project-thread-498tby`) with an **independent security review** | Doc migration names fixed; host-to-firm binding; wrong-portal sign-in returns 403 with no cookie; no cookie `Domain`; CORS allowlist; web tenant files match; close #45 | `uv run pytest -q tests/test_portal_tenancy.py tests/test_route_isolation.py tests/test_origin_check.py tests/test_backend_api.py tests/test_deployment_migration.py`; `npm run test:unit`; `npm run test:e2e` (tenant-host, tenant-api) |
-| L2-4 | Doc corrections | `STATUS.md` (AI adapter exists, single environment, mock gap, G1/G2/G3 gates); `CLAUDE.md` and `AGENTS.md` note: single environment, rule 7 paused, engine frozen until G2; readiness item 41 conflict recorded in `docs/kb/19-open-questions.md` | CI |
+| L2-4 | Doc corrections | `STATUS.md` (AI adapter exists, single environment, mock gap, G1/G2/G3 gates); `CLAUDE.md` and `AGENTS.md` note: single environment, rule 7 paused, engine freeze since lifted (2026-11-11); readiness item 41 conflict recorded in `docs/kb/19-open-questions.md` | CI |
 | L2-5 | **Security proof suite** (rows S-01 to S-20 in 4.5): one test module per control, plus an evidence file `docs/security/evidence/app-<id>.md` (what it proves, the command, the result, the commit) | Every row has a passing test | `uv run pytest -q tests/security/` (new folder) |
 | L2-6 | **Backend routes for every mocked contract**, in small PRs in this order: (a) firm team, branding (logo to R2), rubric, templates; (b) checklist tests and conclusions, documents; (c) workpapers and review, samples; (d) findings, response-request release, client response requests and replies; (e) report draft, sections, `.docx` and PDF, client reports; (f) independence, sign-off (review, partner, complete); (g) activity, notifications, search; (h) client invoices | Each route enforces `firm_id` and auditor assignment; has **a cross-tenant denial test**; writes the audit chain for state changes; matches `types.ts` exactly; is added to `tests/route_inventory.txt`; and clients get only allowlisted fields (`tests/test_client_view_allowlist.py` extended). Response requests never join finding fields | `uv run pytest -q tests/test_<group>.py tests/test_route_isolation.py tests/test_client_view_allowlist.py tests/test_responses_requested.py`; Postgres migration tests through CI |
 | L2-7 | **Storage complete** | Upload to R2 via the S3 API, with a short-lived download presign or a streamed download that checks authorization on every request; ClamAV scan before the file is stored as available (quarantine otherwise); server-side encryption at rest (R2 encrypts by default, which Lane C verifies); a documented retention rule plus deletion and export of one client's data on request (readiness item 25); SHA-256 fingerprints | `uv run pytest -q tests/test_s3_storage.py tests/test_upload_scanning.py tests/test_document_ingestion.py tests/test_storage_retention.py` (new); live check by Lane C (C5) |
@@ -202,7 +202,7 @@ If PostgreSQL can't run in an agent sandbox, say so and rely on CI's Postgres jo
 
 #### Lane C: Slave Kien on the VPS
 
-**New VPS (owner-provided 2026-11-09):** `135.148.219.175` (hostname `vps-8087ef2d`), Ubuntu 26.04, 2 vCPU, 3.7 GiB RAM. Slave Kien handles **all** VPS work over SSH. Codex has no SSH access. Never touch the old shared server `40.160.150.91`.
+**New VPS (owner-provided 2026-11-09):** `135.148.219.175` (hostname `vps-8087ef2d`), Ubuntu 26.04, 2 vCPU, 3.7 GiB RAM. Server work happens only on Abdullah's "go" (PROJECT-BRIEF); agents do not SSH on their own. Never touch the old shared server `40.160.150.91`.
 
 Same steps as v1 `PLAN.md` 3.7 Lane C, C0–C9. **C10 (AI eval) moves to Stage 3.** Additions:
 - **C1+:** add the evidence for S-21 (firewall) and S-22 (SSH hardening), as in 4.5.

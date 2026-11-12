@@ -149,4 +149,4 @@ Do not do these during the investor slot:
 
 ## 11. Where the rest lives
 
-Plan files that lived only on Slave Kien's computer (local deploy guide, bulk-upload plan, older build plans) are historical. Their still-valid content is this brief and [BUILD-PLAN.md](BUILD-PLAN.md). The Notion hub mirrors this brief.
+Plan files that lived only on Slave Kien's computer (local deploy guide, bulk-upload plan, older build plans) are historical. Their still-valid content is this brief and [BUILD-PLAN.md](BUILD-PLAN.md). A condensed copy of this brief is on the Notion hub: https://app.notion.com/p/416de1f1a268810bb096d6017b136d2a
