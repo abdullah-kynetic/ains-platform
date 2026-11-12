@@ -4,6 +4,14 @@ Run this once after the AI service is deployed and switched on, and again before
 
 Pass means every line below is "as expected". Write the result next to each step. Stop at the first surprise and leave the switch off.
 
+## Before the service is started (server operator)
+| # | Check | As expected |
+|---|---|---|
+| P1 | `ip route` on the VPS | Nothing covers `10.77.40.0/24` (OVH or VPN setups sometimes use 10.x). If something does, stop and pick another subnet in `deploy/docker-compose.ai.yml` and `deploy/ai/egress-firewall.sh` |
+| P2 | `docker compose ... config` with the overlay | Exits cleanly; `backend` is shared by Postgres and the API; existing memory limits unchanged |
+| P3 | `deploy/ai/egress-firewall.sh` (dry run), then `--apply` as root | Rules printed first; DNS only to the host's resolvers; 443 only to openrouter.ai |
+| P4 | After apply and `up`, from inside the adapter container: resolve `openrouter.ai`, then try any other host | openrouter.ai resolves and answers on 443; everything else is refused. If lookups fail, Docker's DNS differs from the host's resolvers: it fails closed, fix before switching on |
+
 ## Before you start
 | # | Check | As expected |
 |---|---|---|
