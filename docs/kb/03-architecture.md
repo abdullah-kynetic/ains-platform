@@ -7,7 +7,7 @@
 flowchart LR
   U[Client / Auditor browser] -->|HTTPS| CF[Cloudflare Workers<br/>Next.js 16 via OpenNext]
   U -->|API calls with ains_session cookie| CADDY[Caddy HTTPS<br/>api.kiensolutions.com]
-  subgraph OVH["Shared OVH VPS 40.160.150.91 (/opt/kien, compose project kien)"]
+  subgraph OVH["Kien OVH VPS 135.148.219.175 (/opt/kien, compose project kien)"]
     CADDY --> API[FastAPI container kien-api]
     API --> PG[(PostgreSQL 16)]
     W[Receipt-check worker app/worker.py] --> PG

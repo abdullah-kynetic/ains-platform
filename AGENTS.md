@@ -6,15 +6,11 @@ Kien by Kien Solutions is workflow software for independent AML testing of broke
 
 Read [PRD](docs/PRD.md), [Design System](docs/DESIGN_SYSTEM.md), [Architecture](docs/ARCHITECTURE.md), [Database](docs/DATABASE.md), [Security](docs/SECURITY.md), [Code Style](docs/CODE_STYLE.md), and [Testing](docs/TESTING.md). Keep them mutually consistent. Treat explicit unresolved items as unresolved, not approved design.
 
-## Stage gates (Abdullah, 2026-11-09)
+## Source of truth and stage gates (Abdullah, 2026-11-11)
 
-Use one production Worker and one API until pilot-ready; existing preview/demo
-Workers are frozen. Preview-first is paused for this phase. Code agents never
-access servers; Lane C operates the new VPS. Never access the old shared server.
-`audit_engine/**`, `ai_adapter/**` and `claude/engine-core` remain frozen until
-Abdullah signs off the Stage 2 security audit (G2), enabling Stage 3 (G3).
-No model calls in Stage 1. See [BUILD-PLAN.md](docs/BUILD-PLAN.md) for sequencing.
-These current stage gates supersede earlier "built alongside" scheduling text.
+Start with [docs/PROJECT-BRIEF.md](docs/PROJECT-BRIEF.md). It carries the merge-and-deploy rules and the real-document conditions and overrides older gate text.
+
+Use one production Worker and one API until pilot-ready; existing preview/demo Workers are frozen and preview-first is paused. The `audit_engine/**`, `ai_adapter/**` and `claude/engine-core` freeze is lifted for authorized Stage 3 work; those changes still need an independent security review (a fresh Claude thread, never the builder) before merge. Agents may merge their own PR with a merge commit only when the five merge conditions in the brief hold. Agents never SSH to a server, deploy, change DNS or enable `AI_ANALYSIS_ENABLED` in production; they hand Abdullah a deploy brief and wait for his "go". Never access the old shared server. See [BUILD-PLAN.md](docs/BUILD-PLAN.md) for historical sequencing; where it conflicts with the brief, the brief wins.
 
 ## Working rules
 

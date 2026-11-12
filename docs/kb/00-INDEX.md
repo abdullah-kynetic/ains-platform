@@ -18,6 +18,7 @@ AI is core and built alongside the workflow under the attorney's written sign-of
 
 | File | Topic |
 | --- | --- |
+| [../PROJECT-BRIEF.md](../PROJECT-BRIEF.md) | **Source of truth (2026-11-11/12):** vision, demo, state, rules, merge-and-deploy |
 | `/CLAUDE.md` (repo root) | Project instructions (formerly PROJECT_INSTRUCTIONS.md) |
 | 01-product-overview-prd.md | What Kien is, users, journeys, requirements |
 | 02-feature-inventory.md | Every feature as built, with status (live / preview / planned) |

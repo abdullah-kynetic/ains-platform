@@ -101,7 +101,7 @@ To opt in, set `STORAGE_BACKEND=egnyte`, then:
 
 1. In Egnyte's admin console (Apps & Integrations), create an Internal app and note its **Client ID** and **Client Secret**.
 2. In `.env` set:
-   - `EGNYTE_DOMAIN`: subdomain only, e.g. `quintonsfirm` (for quintonsfirm.egnyte.com)
+   - `EGNYTE_DOMAIN`: subdomain only, e.g. `examplefirm` (for examplefirm.egnyte.com)
    - `EGNYTE_API_KEY`: the **Client ID**
    - `EGNYTE_CLIENT_SECRET`: the **Client Secret**
    - `EGNYTE_USERNAME` / `EGNYTE_PASSWORD`: the Egnyte user the app acts as

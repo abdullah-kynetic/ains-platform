@@ -1,5 +1,7 @@
 # Lane 2 handoff for Claude Code
 
+> **Historical (superseded 2026-11-11):** kept for context only. Freezes, SSH/server and Stage 2 rules here are replaced by [PROJECT-BRIEF.md](../PROJECT-BRIEF.md). The brief wins.
+
 Snapshot verified Tuesday, Nov 10, 2026, 11:45 AM Pacific Time (America/Los_Angeles), against GitHub and `origin/main` at `ddba2df` (merge of [#101](https://github.com/abdullah-kynetic/ains-platform/pull/101)). Codex ran out of usage before it could finish this handoff; Slave Kien wrote it from the lane chats and then confirmed PR and branch state. Update the Done and In progress sections in each of your PRs so any agent can continue.
 
 ## Start here
