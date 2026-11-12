@@ -7,8 +7,7 @@ ROOT = Path(__file__).resolve().parent.parent
 FILES = [ROOT / "CONTEXT.md", ROOT / "docs" / "ICM-PLAN.md", *ROOT.glob("*/CONTEXT.md")]
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 TICK = re.compile(r"`([^`\s]+)`")
-# Paths that exist only after another open PR merges; remove each entry once it lands.
-PENDING = {"docs/PROJECT-BRIEF.md", "PROJECT-BRIEF.md"}
+PENDING: set[str] = set()  # paths that exist only after another open PR merges
 
 
 def _inputs(text: str) -> list[str]:

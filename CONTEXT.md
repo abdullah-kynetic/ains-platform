@@ -23,6 +23,6 @@ Every step ends at a human or test check. Software never approves a finding or s
 | running or adding tests | [tests/CONTEXT.md](tests/CONTEXT.md) |
 | demo, seeds, e2e backend | [scripts/CONTEXT.md](scripts/CONTEXT.md) |
 | checklist IDs or synthetic firms | [data/CONTEXT.md](data/CONTEXT.md) |
-| anything about scope, rules, deploy | [docs/PROJECT-BRIEF.md](docs/PROJECT-BRIEF.md) once merged (PR #138), else `CLAUDE.md` |
+| anything about scope, rules, deploy | [docs/PROJECT-BRIEF.md](docs/PROJECT-BRIEF.md) |
 
 Status is what exists on `main` plus the open PRs. Merged source does not mean deployed.
