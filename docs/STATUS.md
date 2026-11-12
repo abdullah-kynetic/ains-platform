@@ -1,12 +1,14 @@
 # Kien status (2026-11-09)
 
+> Newer: [docs/PROJECT-BRIEF.md](PROJECT-BRIEF.md) (2026-11-11/12) is the source of truth for scope, state and rules. Where this page disagrees, the brief wins.
+
 This page is the current status summary. It was checked against GitHub on 2026-11-09. Where a line says "not run", that check was not run.
 
 ## Where things stand
 
 - **Code on `main`:** PRs #78 to #88 are merged. Web sign-in is restored (real `/auth/*` routes). Only the synthetic demo build (`NEXT_PUBLIC_USE_MOCKS=true`) skips sign-in.
 - **Real client data:** none. Synthetic data only. The rule stays until the readiness checklist is complete and Abdullah changes it in writing. See [readiness checklist](readiness/readiness-checklist-2026-11-07.md).
-- **AI:** the separate `ai_adapter/` skeleton exists on main, is off, and has an empty allowlist. The engine and adapter are frozen until Stage 2 sign-off. No model calls in Stage 1. Rule 10 and readiness item 41 disagree about OpenRouter approval; see [open questions](kb/19-open-questions.md).
+- **AI:** the separate `ai_adapter/` skeleton exists on main, is off, and has an empty allowlist. The engine and adapter freeze is lifted for authorized Stage 3 work (see [project brief](PROJECT-BRIEF.md)); model calls are limited to OpenRouter `:free` models and stay off in production until Abdullah says go. Rule 10 and readiness item 41 disagree about OpenRouter approval; see [open questions](kb/19-open-questions.md).
 - **Hosting plan (Abdullah, 2026-11-09):** one production Worker (`ains-platform`) and one API until pilot-ready. Existing preview/demo Workers are frozen; preview-first is paused. Lane C owns the new VPS; code agents have no server access. Source configuration does not prove deployment.
 - **Mock gap:** many screen contracts still use the typed mock layer and browser storage, including firm settings. Production must not fall back to mocks. Lane 2 builds backend contracts and Lane 1 wires them; see [frontend inventory](frontend-inventory.md) and [build plan](BUILD-PLAN.md).
 - **Gates:** G1 requires every Stage 1 acceptance item with evidence; G2 requires the Stage 2 security audit and Abdullah's written sign-off; G3 starts the engine only after G2. Real client data additionally requires all 45 readiness items and Abdullah's written authorization.

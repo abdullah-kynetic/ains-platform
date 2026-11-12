@@ -1,5 +1,7 @@
 # Kien build plan v2: staged (Foundation, then Security audit, then AML engine)
 
+> **Superseded in part (2026-11-11):** [PROJECT-BRIEF.md](PROJECT-BRIEF.md) is the source of truth. Since then the engine/adapter freeze is lifted for authorized Stage 3 work, Stage 2-style security review of AI code is done by an independent Claude reviewer thread, and agents merge on the brief's five conditions but never deploy without Abdullah's "go". Where this plan disagrees, the brief wins.
+
 Revised 2026-11-09, 3:25 PM PST (Codex lanes + new VPS details). Supersedes [PLAN.md](PLAN.md) (v1, kept for reference) on **sequencing and scope**. Repo facts were read read-only from GitHub at `main` = `9043e24` (merge of #89). Public URLs were fetched the same day. **[unverified]** marks anything not checked.
 
 ---
@@ -122,7 +124,7 @@ Unchanged from v1 Part 2(a):
 | `app/**`, `migrations/**`, `tests/**` (all others), `tests/route_inventory.txt`, `scripts/e2e_seed.py`, `app/pilot_seed.py` | read | **owns** | — |
 | `web/src/components/tenant/**`, `web/src/lib/tenant*.ts`, `web/src/lib/audience*.ts` (#45 web side) | read | **owns** | — |
 | `docs/STATUS.md`, `docs/BUILD-PLAN.md`, `docs/readiness/**`, `CLAUDE.md`, `AGENTS.md`, `docs/kb/**`, `docs/frontend-inventory.md`, `docs/multi-tenant-portals.md` | `BUILD-PLAN.md` (first PR) and `docs/kb/10`, `docs/kb/13` | **owns the rest** | — |
-| `audit_engine/**`, `ai_adapter/**` | **frozen until G3** | **frozen until G3** (a bug fix to `ai_adapter` only if a security scan requires it) | — |
+| `audit_engine/**`, `ai_adapter/**` | freeze lifted for authorized Stage 3 work (2026-11-11, see PROJECT-BRIEF) | same | — |
 | The VPS | never | never | **owns** |
 | Old server 40.160.150.91 | never | never | never (refuse if the target matches) |
 
@@ -294,8 +296,8 @@ Required e2e-live specs, all run against the real backend via `scripts/e2e_backe
 9. **Humans approve findings and sign reports.**
 10. Spell it **Quentin**. Leave rubric criteria empty for Quentin.
 11. Git: merge commits only. No rebase, squash or force-push. Never claim a test passed unless it ran.
-12. Code lanes have **no VPS access**. Only Slave Kien operates servers.
-13. **No engine work before G3.** `claude/engine-core` stays parked. `audit_engine/**` and `ai_adapter/**` are frozen except for a fix a security scan requires.
+12. Code agents never deploy or SSH on their own; a deploy needs Abdullah's "go" (PROJECT-BRIEF, merge-and-deploy rules).
+13. ~~No engine work before G3.~~ Superseded 2026-11-11: the `audit_engine/**` and `ai_adapter/**` freeze is lifted for authorized Stage 3 work; changes need an independent Claude security review. See [PROJECT-BRIEF.md](PROJECT-BRIEF.md).
 14. **No mock data in production builds** (enforced by L1-6).
 
 ---

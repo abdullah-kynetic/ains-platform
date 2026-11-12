@@ -6,7 +6,7 @@ Never deploy, migrate production or delete data without authorization for that t
 
 ## Backend (OVH, `/opt/kien`, compose project `kien`)
 Historical delivery pattern (unverified against current runtime):
-1. SSH to `ubuntu@40.160.150.91` with the Kien deploy key (never print keys). Work only in `/opt/kien`.
+1. Only after Abdullah says "go", and never by an agent on its own: connect to the Kien VPS (135.148.219.175; connection details are not kept in the repo; never print keys). Never use the old shared server 40.160.150.91. Work only in `/opt/kien`.
 2. **Back up the DB first** (even with no migration):
    `docker exec <kien postgres container> pg_dump -U kien -d kien -Fc > /opt/kien/kien-db-<tag>-$(date +%Y%m%d%H%M%S).dump` then `pg_restore --list` on it to validate. Files are mode 600.
 3. Record current image tag (e.g. `kien-api:pre-<tag>`), build the new image: `docker build -t kien-api:<tag> ...` from the pushed commit (source kept under `/opt/kien/src`, `DEPLOYED_COMMIT` file).
