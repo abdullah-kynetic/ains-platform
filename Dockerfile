@@ -5,7 +5,8 @@ RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export PIP_CERT=/run/secrets/proxy_ca; fi; \
     apk add --no-cache --upgrade 'krb5-libs>=1.22.3-r0' && \
     pip install --no-cache-dir uv==0.13.5 && \
-    addgroup -S ains && adduser -S -G ains -h /app ains
+    addgroup -S ains && adduser -S -G ains -h /app ains && \
+    mkdir -p /var/lib/kien-ai && chown ains:ains /var/lib/kien-ai
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=secret,id=proxy_ca \

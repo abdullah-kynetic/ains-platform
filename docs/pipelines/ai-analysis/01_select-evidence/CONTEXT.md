@@ -14,6 +14,7 @@ Do NOT load: real documents, other firms' data, `../../../../web/`.
 2. Query documents and links filtered by `firm_id` and `engagement_id`.
 3. A file linked to a restricted item (AML-BD-017, AML-BD-025) is never read from storage.
 4. Order files with a draft rubric first; the engine caps the run at 8 files.
+5. Only one run per engagement at a time; a second request while one is running gets 409 and makes no model call.
 
 ## Outputs
 - A list of `DocInput` handed to stage 02 (in memory; nothing is written).

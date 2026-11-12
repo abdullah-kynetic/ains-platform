@@ -23,7 +23,7 @@ Accept only copies the draft into an ordinary *draft* finding (internal). It sti
 2. Content scan (`ai_adapter/guards.sar_content_reason`): blocks any mention of SAR, suspicious activity report/filing/narrative, suspicious transaction report, FinCEN Form 111. Handles case, punctuation, spacing, full-width letters and zero-width characters. Runs on the file name and the extracted text (PDF text included), in the engine and again inside the adapter. Blocked files are skipped and the auditor sees why. This is deliberately aggressive: a policy that merely names its SAR procedure is skipped too, and a person reads it.
 3. Scope and ownership: every adapter call carries firm, engagement and user. The adapter verifies the document belongs to that engagement and firm, or refuses.
 4. Models: only exact `:free` IDs on `ai_adapter/allowlist.json`, price-checked to exactly zero on each call, no routers, no `:online`, no paid fallback, provider data collection denied. The second model is tried only after an upstream failure, never after a policy refusal.
-5. Outbound: the adapter refuses to start unless the model base URL host is in `AI_ALLOWED_HOSTS` (default `openrouter.ai` only). Firewall egress for the AI service host should allow only that name.
+5. Outbound: the adapter refuses to start unless the model base URL host is in `AI_ALLOWED_HOSTS` (default `openrouter.ai` only). The compose overlay puts the service on its own `ai_egress` network (172.31.40.0/24) and `deploy/ai/egress-firewall.sh` limits that subnet to `openrouter.ai` on 443 plus DNS. The rule matches the IPs the name resolves to when it is run, so re-run it after any DNS change.
 6. Output is re-validated: fixed JSON, three draft kinds, cited document must be the one sent, page must exist, no status/sign/approve fields (extra fields discard the whole reply).
 
 ## Audit trail
@@ -34,7 +34,8 @@ Accept only copies the draft into an ordinary *draft* finding (internal). It sti
 `audit_engine/rubric_draft.yaml` is marked **DRAFT, needs Quentin's approval** and covers CIP (AML-BD-009), CTR/large cash (AML-BD-012), monitoring (AML-BD-004), training (AML-BD-003) and independent testing (AML-BD-021). It is prompt context for drafting only. The canonical checklist's rubric placeholders are untouched.
 
 ## Not done / for later
-- No compose service for the AI service yet (deploy step; no memory-limit changes). Until it exists, `POST .../run` returns 503.
+- The AI service is **prepared, not deployed**: `deploy/docker-compose.ai.yml` (additive overlay), `deploy/ai/` (env names, read-only role, egress rule) and the entry point `ai_adapter/main.py`. Until it runs, `POST .../run` returns 503. Deploy steps and the synthetic smoke test: `docs/demo/AI-SMOKE-TEST.md`.
+- One run per engagement at a time: a second click or tab gets 409. This guard is in-process, so the API must stay a single process (it is, today).
 - Runs are synchronous (up to 8 files); a background job is better if free models are slow.
 - Images and scanned PDFs are skipped (no OCR). XLSX/DOC/XLS are skipped.
 - Live OpenRouter was never called; the two model IDs were taken from OpenRouter's free-model collection page on 2026-11-11 and are re-checked by the price guard at call time. Output quality is unmeasured.

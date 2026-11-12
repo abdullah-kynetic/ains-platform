@@ -12,6 +12,9 @@ Order of checks: session (401), auditor role (403), switch (404), engagement sco
 from __future__ import annotations
 
 import asyncio
+import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import PurePath
 from typing import Annotated, Literal, Protocol
@@ -146,6 +149,26 @@ def get_model_client(settings: Annotated[Settings, Depends(get_settings)]) -> Mo
 Reader = Annotated[DocumentReader, Depends(get_document_reader)]
 Models = Annotated["ModelClient | None", Depends(get_model_client)]
 AppSettings = Annotated[Settings, Depends(get_settings)]
+
+
+# One run per engagement at a time. A double-click (or a second tab) would otherwise start two
+# runs, double the model calls against the free daily quota and create duplicate drafts. The API
+# runs as a single process, so an in-process set is enough; docs/AI-ANALYSIS.md records this.
+_RUNNING: set[str] = set()
+_RUNNING_LOCK = threading.Lock()
+
+
+@contextmanager
+def _one_run_at_a_time(engagement_id: str) -> Iterator[None]:
+    with _RUNNING_LOCK:
+        if engagement_id in _RUNNING:
+            raise HTTPException(409, "An AI analysis is already running for this engagement")
+        _RUNNING.add(engagement_id)
+    try:
+        yield
+    finally:
+        with _RUNNING_LOCK:
+            _RUNNING.discard(engagement_id)
 
 
 def _gate(user: User, settings: Settings) -> None:
@@ -313,10 +336,11 @@ def run_ai_analysis(
     engagement = _get_engagement(db, user, engagement_id)
     if client is None:
         raise HTTPException(503, "The AI service is not configured")
-    docs = _doc_inputs(db, engagement, read)
-    result = run_analysis(
-        docs, client, firm_id=engagement.firm_id, engagement_id=engagement.id, user_id=user.id
-    )
+    with _one_run_at_a_time(engagement.id):
+        docs = _doc_inputs(db, engagement, read)
+        result = run_analysis(
+            docs, client, firm_id=engagement.firm_id, engagement_id=engagement.id, user_id=user.id
+        )
     run = AiRun(
         firm_id=engagement.firm_id,
         engagement_id=engagement.id,

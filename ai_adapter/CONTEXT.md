@@ -7,7 +7,8 @@ One job: the only place a model is called. A separate service from `app/`; off b
 - Reference (every run): `../docs/AI-ANALYSIS.md`
 - Reference (every run): `../docs/kb/17-model-policy.md`
 - Reference (every run): `allowlist.json`
-- Working (this task): `guards.py`, `service.py`, `schemas.py` and `../tests/test_ai_adapter.py`
+- Working (this task): `guards.py`, `service.py`, `main.py`, `schemas.py` and `../tests/test_ai_adapter.py`
+- Deploy files (additive, never overwrite the server's deploy folder): `../deploy/docker-compose.ai.yml`, `../deploy/ai/`
 
 Do NOT load: `../app/`, `../web/`, real documents.
 
@@ -21,4 +22,4 @@ Do NOT load: `../app/`, `../web/`, real documents.
 - Code and tests only. Any change needs an independent security review before merge (see the brief).
 
 ## Check
-`uv run pytest -q tests/test_ai_adapter.py tests/test_ai_review_137.py` plus the full suite, all green; a reviewer who is not the builder signs off.
+`uv run pytest -q tests/test_ai_adapter.py tests/test_ai_review_137.py tests/test_ai_deploy.py` plus the full suite, all green; a reviewer who is not the builder signs off.
