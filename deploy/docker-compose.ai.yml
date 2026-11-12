@@ -17,7 +17,12 @@ services:
     image: ${AI_IMAGE:-${KIEN_IMAGE:?set AI_IMAGE (or KIEN_IMAGE) to the same image the api service runs}}
     restart: unless-stopped
     # Only the AI settings, never the API's or Postgres's secrets.
-    env_file: /etc/kien/ai.env
+    env_file: !override
+      - /etc/kien/ai.env
+    # Compose appends/merges these from a same-named base service; clear them so nothing is inherited.
+    ports: !reset []
+    dns: !reset []
+    depends_on: !reset {}
     environment: !override
       AI_STATE_DATABASE_URL: sqlite:////var/lib/kien-ai/state.db
       AI_BREAKER_PATH: /var/lib/kien-ai/breaker.json

@@ -34,7 +34,7 @@ def test_overlay_only_adds_the_ai_service():
 
 
 def test_service_is_locked_down_and_not_published():
-    assert "ports" not in service  # reachable only from the private network
+    assert not service.get("ports")  # reachable only from the private network
     assert service["expose"] == ["8100"]
     assert service["read_only"] is True
     assert service["cap_drop"] == ["ALL"]
@@ -45,7 +45,7 @@ def test_service_is_locked_down_and_not_published():
 
 
 def test_service_gets_only_the_ai_env_file_and_no_secret_values():
-    assert service["env_file"] == "/etc/kien/ai.env"
+    assert service["env_file"] == ["/etc/kien/ai.env"]
     text = OVERLAY.read_text()
     for env in service["environment"].values():
         assert "sk-" not in env and "@" not in env  # no key, no credentialed URL
