@@ -1,6 +1,6 @@
 # ICM plan: what Interpretable Context Methodology means for Kien
 
-Status: plan, 2026-11-12. PR 1 (#139) and PR 2 are open; PR 3 follows. Requested by Abdullah ("do it first, ASAP"). Behaviour of the product does not change in any step.
+Status: plan, 2026-11-12. PR 1 (#139), PR 2 (#140) and PR 3 are open as a stack. Requested by Abdullah ("do it first, ASAP"). Behaviour of the product does not change in any step.
 
 ## What ICM is (read from the two source repos, including `SKILL.md` and the templates)
 ICM ([RinDig/Interpretable-Context-Methodology](https://github.com/RinDig/Interpretable-Context-Methodology), [RinDig/icm-architect](https://github.com/RinDig/icm-architect), MIT) is a way to lay out a **workspace that AI agents read**. Folders carry the structure instead of orchestration code:

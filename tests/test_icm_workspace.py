@@ -10,6 +10,8 @@ FILES = [
     ROOT / "docs" / "ICM-PLAN.md",
     ROOT / "docs" / "RULES.md",
     *ROOT.glob("*/CONTEXT.md"),
+    *ROOT.glob("docs/pipelines/*/CONTEXT.md"),
+    *ROOT.glob("docs/pipelines/*/*/CONTEXT.md"),
 ]
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 TICK = re.compile(r"`([^`\s]+)`")
@@ -54,7 +56,8 @@ def test_contracts_stay_small_and_have_a_check() -> None:
         if f.name == "CONTEXT.md" and f.parent != ROOT:
             text = f.read_text()
             assert len(text.splitlines()) <= 80, f
-            assert "## Check" in text and "## Inputs" in text, f
+            if f.parent.parent not in (ROOT / "docs" / "pipelines",):  # pipeline root is a catalog
+                assert "## Check" in text and "## Inputs" in text, f
 
 
 def test_entry_file_is_short_and_claude_md_is_a_pointer() -> None:
@@ -81,3 +84,16 @@ def test_rules_home_keeps_every_hard_rule() -> None:
         "AI_ANALYSIS_ENABLED",
     ):
         assert phrase in rules, phrase
+
+
+def test_ai_pipeline_stages_are_numbered_and_complete() -> None:
+    stages = sorted(p.name for p in (ROOT / "docs/pipelines/ai-analysis").iterdir() if p.is_dir())
+    assert stages == [
+        "01_select-evidence",
+        "02_sar-prescreen",
+        "03_draft",
+        "04_validate",
+        "05_auditor_review",
+    ]
+    for s in stages:
+        assert (ROOT / "docs/pipelines/ai-analysis" / s / "CONTEXT.md").is_file()
