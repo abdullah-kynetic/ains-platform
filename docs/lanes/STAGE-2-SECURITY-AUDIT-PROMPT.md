@@ -1,5 +1,7 @@
 # Stage 2 prompt: security-skill audit in Claude Code
 
+> **Historical (superseded 2026-11-11):** kept for context only. Freezes, SSH/server and Stage 2 rules here are replaced by [PROJECT-BRIEF.md](../PROJECT-BRIEF.md). The brief wins.
+
 Paste this into Claude Code, opened on a fresh clone of `abdullah-kynetic/ains-platform` at `main`. **Use it only after Stage 1 (G1) is reported green.** Stage 1 code lanes ran in OpenAI Codex cloud; Slave Kien operates the VPS at `135.148.219.175`. You still have no SSH access.
 
 ```

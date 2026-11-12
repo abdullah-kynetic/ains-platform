@@ -1,5 +1,7 @@
 # Lane 1 handoff: wiring the web app to the real backend
 
+> **Historical (superseded 2026-11-11):** kept for context only. Freezes, SSH/server and Stage 2 rules here are replaced by [PROJECT-BRIEF.md](../PROJECT-BRIEF.md). The brief wins.
+
 Written Nov 10, 2026 (Pacific) for the Friday Nov 13 goal: one complete synthetic audit runs end
 to end in the browser on the real backend in 5 to 15 minutes, with a firm-isolation proof and the
 audit log. Update **Status** in every PR.

@@ -1,7 +1,7 @@
 # Ops runbook (current OVH setup)
 
 ## Where things are
-- Server: OVH VPS `40.160.150.91`, user `ubuntu`. Kien in `/opt/kien`, Docker compose project `kien` (API container `kien-api-1`, Postgres container, Caddy). **Shared**: n8n, Twenty, client portal also run here — never touch them.
+- Server: OVH VPS `135.148.219.175` (the old shared server 40.160.150.91 is off limits). Kien in `/opt/kien`, Docker compose project `kien` (API container `kien-api-1`, Postgres container, Caddy). The old shared server also hosts n8n, Twenty and the client portal — never touch them.
 - Frontend: Cloudflare Workers (see `04-tech-stack-and-vendors.md`).
 - Files: R2 `kien-dev-documents`. Email: Resend.
 

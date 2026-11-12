@@ -19,23 +19,22 @@ Repo: `abdullah-kynetic/ains-platform`. Stack: Next.js 16 / React 19 / Tailwind 
 4. **No secrets in chat, code, commits, logs or screenshots.** Refer to environment variable names only. Never read or print `.env`.
 5. **Shared OVH server:** never touch n8n, Twenty CRM or the client portal. Kien lives only in `/opt/kien`, compose project `kien`.
 6. **Git:** commit as `abdullah-kynetic <211030198+abdullah-kynetic@users.noreply.github.com>`. Real merge commits only. No rebase, no squash, no force-push.
-7. **Preview-first paused (Abdullah, 2026-11-09).** Use one production Worker and one API until pilot-ready. Existing preview/demo Workers are frozen. Code agents may SSH to the Kien VPS (135.148.219.175, host alias `kien`) to deploy, when Abdullah asks. Never touch 40.160.150.91. Never print secrets or the contents of /etc/kien/*.env.
+7. **Preview-first paused (Abdullah, 2026-11-09).** Use one production Worker and one API until pilot-ready. Existing preview/demo Workers are frozen. Agents do not SSH to or deploy to any server on their own; a deploy happens only after Abdullah says "go" (see the brief). The Kien VPS is 135.148.219.175. Never touch 40.160.150.91. Never print secrets or the contents of /etc/kien/*.env.
 8. **Keep the approved look.** Clean neutral black-and-white SaaS style (see `DESIGN.md`): white and `#F7F7F8` surfaces, near-black text, ink blue `#33405C` only for logo, primary buttons, active nav and focus, ochre `#B8924A` only for deadlines, status colours only as small pills, `#0A0A0A` dark. No gradients, glass or cream. No generic "AI slop".
 9. **Costs as low as possible.** Prefer free tiers and existing infrastructure.
 10. AI is core and built alongside the workflow (intake file sorting, FINRA chatbot). No vendor lock-in; pick the cheapest model that benchmarks well from an approved vendor. Anthropic and OpenAI are approved, directly or via OpenRouter, under the attorney's written sign-off, which covers real client data. Free-model trial and SAR rules still apply.
 11. Never claim AWS's certifications (SOC 2, etc.) as Kien's. Kien's SOC 2 is only groundwork.
 12. Never claim a test or check passed unless it was actually run.
 
-## Current stage gates (Abdullah, 2026-11-09)
+## Source of truth and current gates (Abdullah, 2026-11-11)
 
-The build plan supersedes earlier scheduling: Stage 1 completes the workflow and
-security proofs; G1 requires all Stage 1 evidence. Stage 2 is the security audit;
-Abdullah's written sign-off is G2. Only then may G3 start engine work.
-`audit_engine/**`, `ai_adapter/**` and `claude/engine-core` are frozen until then.
-No model calls in Stage 1. Rule 10's vendor approval statement conflicts with
-readiness item 41; the unresolved conflict is recorded in
-[open questions](docs/kb/19-open-questions.md). Synthetic data only until all 45
-readiness items, G1, G2 and Abdullah's written authorization are complete.
+Read [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) first: vision, scope, Friday 13 November demo, what is live, Stage 3 status, standing rules, the merge-and-deploy rules and the real-document conditions. It overrides older gate wording elsewhere.
+
+- The `audit_engine/**`, `ai_adapter/**` and `claude/engine-core` freeze is lifted for authorized Stage 3 work (PR #137 and follow-ups). Those changes still follow the merge rule in the brief.
+- Merge: agents may merge their own PR with a merge commit when CI is green, an independent reviewer (never the builder) gave PASS on every required security item plus "Safe to merge", no secrets are present, tests and lint pass, and the PR does not deploy, change DNS, enable `AI_ANALYSIS_ENABLED` in production or SSH.
+- Deploy: agents never deploy. They stop with a deploy brief and wait for Abdullah's "go".
+- Security review of AI code is done by an independent Claude reviewer thread, not by Slave Kien alone.
+- Synthetic data only until the real-document conditions in the brief, all 45 readiness items, G1, G2 and Abdullah's written authorization are complete. Rule 10 versus readiness item 41 is recorded in [open questions](docs/kb/19-open-questions.md).
 
 ## How to respond
 - Short, plain, direct. Lead with the answer. Use bullets for steps.

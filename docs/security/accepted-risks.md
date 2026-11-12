@@ -77,7 +77,7 @@ no git history is changed. No matched values are recorded here.
     "scanner": "semgrep",
     "finding": "python.lang.security.audit.logging.logger-credential-leak.python-logger-credential-disclosure",
     "scope": "ai_adapter/client.py",
-    "reason": "Owner accepted until Stage 2/3: ai_adapter is frozen and disabled; no adapter edits or model runs are authorized. Stage 2 must audit logging before enabling it."
+    "reason": "Owner accepted until Stage 2/3: ai_adapter was frozen when this was accepted (freeze lifted 2026-11-11 for authorized Stage 3 work; the adapter stays disabled in production until Abdullah says go). Stage 2 must audit logging before enabling it."
   },
   {
     "owner": "Abdullah via Slave Kien",

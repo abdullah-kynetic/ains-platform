@@ -46,13 +46,13 @@ Last updated 2026-11-11. Synthetic data only until items 1, 2, 7, 31, 32, 37 and
 | 36 | Quentin, Abdullah | Open | Depends on 1, 8, 37. |
 | 37 | Abdullah | Open | Needs VPS, backups and monitoring first. |
 | 38 | Abdullah, Quentin | Open | After 36. |
-| 39 | Claude | Partial | `tests/test_workflow_boundary.py` passes; adapter lives in frozen `ai_adapter/**`. Logging of model, tokens and cost is Stage 3 work. |
-| 40 | Claude | Open | SAR detection before model calls not evidenced in `app/`. Engine work is frozen until G2. AML-BD-017 and 025 are metadata-only, human-only. |
+| 39 | Claude | Partial | `tests/test_workflow_boundary.py` passes; adapter lives in `ai_adapter/**` (freeze lifted 2026-11-11). Logging of model, tokens and cost is Stage 3 work. |
+| 40 | Claude | Open | SAR detection before model calls not evidenced in `app/`. Engine freeze lifted for authorized Stage 3 work (PROJECT-BRIEF); SAR pre-screen is in PR #137. AML-BD-017 and 025 are metadata-only, human-only. |
 | 41 | Attorney | Blocked | Vendor approval conflicts with CLAUDE.md rule 10. Recorded in [`kb/19`](../kb/19-open-questions.md). Not invented here. |
 | 42 | Quentin | Open | Gold set not provided. |
-| 43 | Claude | Open | Frozen until G2. Free hosted models only for the trial. |
+| 43 | Claude | Open | Freeze lifted for authorized Stage 3 work. Free hosted models only for the trial. |
 | 44 | Claude, Quentin | Partial | Findings need a page citation to be accepted (`app/api/auditor.py`, 422 otherwise); only an auditor action approves findings and signs ([`kb/28`](../kb/28-signoff-api.md)). No AI suggestions exist yet. |
-| 45 | Claude | Open | Not built. Frozen until G2. |
+| 45 | Claude | Open | Not built. Freeze lifted for authorized Stage 3 work. |
 
 ## Counts
 
