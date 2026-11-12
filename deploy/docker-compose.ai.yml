@@ -43,7 +43,7 @@ networks:
     # A separate bridge with a fixed subnet so the firewall rule can name it. Only ai-adapter joins it.
     ipam:
       config:
-        - subnet: 172.31.40.0/24
+        - subnet: 10.77.40.0/24
 
 volumes:
   ai_state:

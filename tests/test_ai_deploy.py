@@ -39,7 +39,7 @@ def test_service_gets_only_the_ai_env_file_and_no_secret_values():
 def test_only_ai_service_joins_the_egress_network():
     assert "ai_egress" in service["networks"] and "backend" in service["networks"]
     assert "services" not in compose["networks"]["ai_egress"]
-    assert compose["networks"]["ai_egress"]["ipam"]["config"][0]["subnet"] == "172.31.40.0/24"
+    assert compose["networks"]["ai_egress"]["ipam"]["config"][0]["subnet"] == "10.77.40.0/24"
     assert not compose["networks"]["ai_egress"].get("internal")  # it is the one way out
 
 
