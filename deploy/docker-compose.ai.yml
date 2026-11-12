@@ -1,0 +1,49 @@
+# OPTIONAL overlay: adds the AI service to the Kien stack. Nothing here changes an existing service.
+# It does NOT replace the server's own compose files, memory limits or deploy/ folder: copy this one
+# new file next to them (it adds a file, it overwrites nothing) and run, for example:
+#   docker compose -p kien --env-file /etc/kien/compose.env -f <server base compose> -f deploy/docker-compose.ai.yml config   # check first
+#   docker compose -p kien --env-file /etc/kien/compose.env -f <server base compose> -f deploy/docker-compose.ai.yml up -d ai-adapter
+# Variable NAMES only (deploy/ai/ai.env.example). Values live in /etc/kien/ai.env (root, mode 600).
+# The switch stays OFF until AI_ENABLED=true is set there AND AI_ANALYSIS_ENABLED=true is set for the API.
+# Assumes the base stack has a "backend" network that Postgres and the API share (as in
+# deploy/docker-compose.prod.yml); check with `config` before `up`.
+
+services:
+  ai-adapter:
+    image: ${AI_IMAGE:?set AI_IMAGE to the same image the api service runs}
+    restart: unless-stopped
+    # Only the AI settings, never the API's or Postgres's secrets.
+    env_file: /etc/kien/ai.env
+    environment:
+      AI_STATE_DATABASE_URL: sqlite:////var/lib/kien-ai/state.db
+      AI_BREAKER_PATH: /var/lib/kien-ai/breaker.json
+    # One process on purpose: the daily request counter and circuit breaker live in this process.
+    command: ["uvicorn", "ai_adapter.main:app", "--host", "0.0.0.0", "--port", "8100", "--no-proxy-headers"]
+    expose: ["8100"]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 300m
+    volumes:
+      - ai_state:/var/lib/kien-ai
+    networks:
+      - backend # reached by the API; read-only database role for the ownership check
+      - ai_egress # the only route to the internet; see deploy/ai/egress-firewall.sh
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=4).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+networks:
+  backend: {}
+  ai_egress:
+    # A separate bridge with a fixed subnet so the firewall rule can name it. Only ai-adapter joins it.
+    ipam:
+      config:
+        - subnet: 172.31.40.0/24
+
+volumes:
+  ai_state:

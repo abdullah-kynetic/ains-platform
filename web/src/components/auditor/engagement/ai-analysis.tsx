@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,7 @@ function EditDialog({ draft, onClose, onSaved }: { draft: AiDraft; onClose: () =
 export function AiAnalysisPanel({ engagementId, onAccepted }: { engagementId: string; onAccepted: () => void }) {
   const { data: loaded, error, reload, setData } = useAsync(async () => ({ value: await getAiAnalysis(engagementId) }), [engagementId]);
   const [busy, setBusy] = useState(false);
+  const running = useRef(false); // blocks a second click before React re-renders the disabled button
   const [problem, setProblem] = useState("");
   const [editing, setEditing] = useState<AiDraft | null>(null);
 
@@ -58,7 +59,7 @@ export function AiAnalysisPanel({ engagementId, onAccepted }: { engagementId: st
           <CardTitle>AI analysis</CardTitle>
           <p className="mt-1 text-xs text-muted">Drafts only, for you alone. Nothing reaches the client unless you accept a draft and release it yourself. SAR material is never read.</p>
         </div>
-        <Button size="sm" disabled={busy} onClick={async () => { setBusy(true); await act(() => runAiAnalysis(engagementId).then((next) => setData({ value: next }))); setBusy(false); }}>
+        <Button size="sm" disabled={busy} onClick={async () => { if (running.current) return; running.current = true; setBusy(true); try { await act(() => runAiAnalysis(engagementId).then((next) => setData({ value: next }))); } finally { running.current = false; setBusy(false); } }}>
           <Sparkles aria-hidden />{busy ? "Analysing…" : "Run AI analysis"}
         </Button>
       </CardHeader>

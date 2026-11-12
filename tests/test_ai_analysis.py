@@ -663,3 +663,37 @@ def test_ordinary_aml_text_including_ctr_and_monitoring_is_not_blocked():
         "Currency transaction reports (CTR) cover large cash.",
     ):
         assert sar_content_reason(text) is None, text
+
+
+# --- one run at a time ------------------------------------------------------------------
+
+
+def test_a_second_run_while_one_is_in_flight_is_refused_not_doubled(ai):
+    import threading
+
+    client, _, ids, model, add_document, *_ = ai
+    add_document("alerts.txt", BODY_MARK.encode())
+    sign_in_auditor(client)
+    entered, release = threading.Event(), threading.Event()
+    original = model.analyze
+    calls: list[str] = []
+
+    def slow(req, model_id):
+        calls.append(req.document_id)
+        entered.set()
+        assert release.wait(10)
+        return original(req, model_id)
+
+    model.analyze = slow  # type: ignore[method-assign]
+    first: dict = {}
+    worker = threading.Thread(target=lambda: first.update(r=client.post(url(ids, "/run"))))
+    worker.start()
+    assert entered.wait(10)
+    second = client.post(url(ids, "/run"))
+    release.set()
+    worker.join(10)
+    assert second.status_code == 409
+    assert first["r"].status_code == 200
+    assert len(calls) == 1  # the refused click made no model call
+    again = client.post(url(ids, "/run"))
+    assert again.status_code == 200  # the lock is released afterwards
