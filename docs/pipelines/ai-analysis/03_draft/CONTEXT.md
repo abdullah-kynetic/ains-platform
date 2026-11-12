@@ -12,7 +12,7 @@ Do NOT load: `../../../../app/` internals; the `app/` package never imports the 
 
 ## Process
 1. Call only exact `:free` IDs from the allowlist; price-check to zero on each call; no routers, no paid fallback.
-2. Try the second model only after an upstream failure, never after a policy refusal.
+2. Try the second model only after an upstream error, a bad reply (`bad_output`) or a failed post-check (`post_check_failed`); never after a policy refusal.
 3. The rubric is a DRAFT until Quentin approves it; use it as drafting context only.
 4. Log metadata only (firm, engagement, user, model, outcome), never text.
 
