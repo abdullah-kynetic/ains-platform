@@ -4,7 +4,13 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FILES = [ROOT / "CONTEXT.md", ROOT / "docs" / "ICM-PLAN.md", *ROOT.glob("*/CONTEXT.md")]
+FILES = [
+    ROOT / "CONTEXT.md",
+    ROOT / "AGENTS.md",
+    ROOT / "docs" / "ICM-PLAN.md",
+    ROOT / "docs" / "RULES.md",
+    *ROOT.glob("*/CONTEXT.md"),
+]
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 TICK = re.compile(r"`([^`\s]+)`")
 PENDING: set[str] = set()  # paths that exist only after another open PR merges
@@ -49,3 +55,29 @@ def test_contracts_stay_small_and_have_a_check() -> None:
             text = f.read_text()
             assert len(text.splitlines()) <= 80, f
             assert "## Check" in text and "## Inputs" in text, f
+
+
+def test_entry_file_is_short_and_claude_md_is_a_pointer() -> None:
+    assert len((ROOT / "AGENTS.md").read_text().splitlines()) <= 60
+    claude = (ROOT / "CLAUDE.md").read_text()
+    assert "@AGENTS.md" in claude and "@docs/RULES.md" in claude
+    assert len(claude.splitlines()) <= 10
+
+
+def test_rules_home_keeps_every_hard_rule() -> None:
+    rules = (ROOT / "docs" / "RULES.md").read_text()
+    for n in range(1, 13):
+        assert f"\n{n}. " in rules, n
+    for phrase in (
+        "SAR material never goes to any AI model",
+        "40.160.150.91",
+        "Real merge commits only",
+        "no force-push",
+        "cross-tenant denial test",
+        "tests/test_workflow_boundary.py",
+        "Never claim a test or check passed unless it was actually run",
+        "Quentin",
+        "deploy brief",
+        "AI_ANALYSIS_ENABLED",
+    ):
+        assert phrase in rules, phrase

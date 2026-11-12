@@ -1,6 +1,6 @@
 # Kien workspace map
 
-Kien is AML independent-testing workflow software. This file routes you to the folder that owns a task; each folder's own `CONTEXT.md` holds its contract. Rules: `AGENTS.md` and `CLAUDE.md`. Plan for this layout: [docs/ICM-PLAN.md](docs/ICM-PLAN.md).
+Kien is AML independent-testing workflow software. This file routes you to the folder that owns a task; each folder's own `CONTEXT.md` holds its contract. Rules: [docs/RULES.md](docs/RULES.md). Plan for this layout: [docs/ICM-PLAN.md](docs/ICM-PLAN.md).
 
 ## The flow, in order
 | Step | What happens | Owner folder |
