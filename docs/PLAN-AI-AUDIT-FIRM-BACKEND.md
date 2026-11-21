@@ -65,6 +65,23 @@ Open risks the model raises (need advice, not code):
 - **"Same pricing" assumes** clients accept an AI-assisted audit at the normal price and that quality holds. Measure in the partner stage before relying on it **[inferred]**.
 - Quentin's capacity as signing partner limits volume until more credentialed auditors join **[inferred]**.
 
+## 1c. Vertical path (Abdullah, 2026-11-20)
+
+Start with AML auditing, grow into the wider financial vertical, and keep options open for other verticals. AML independent testing is really **compliance auditing**, so the nearest steps are other compliance audits for the same kinds of clients.
+
+| Step | Examples [inferred; each needs a credentialed lead to confirm] | Why it is near | Watch out |
+|---|---|---|---|
+| 1. AML (now) | FINRA 3310 independent test for broker-dealers | Built | Quentin signs |
+| 2. Financial compliance (next) | AML testing for other financial firms (RIAs, money services businesses, banks/credit unions), broker-dealer compliance reviews, investment adviser annual compliance reviews | Same clients or same kind of client, same evidence-checklist-report shape | Each has its own rules and checklist; reviewer must be qualified for it |
+| 3. Investment auditing (option) | Fund and adviser reviews, custody and controls reviews | Same financial clients | Some work may be reserved for licensed CPA firms **[inferred; needs legal check]** |
+| 4. Broader compliance auditing (option) | Privacy, cybersecurity, vendor or SOC-readiness reviews | Same workflow: request list, evidence, findings, report | Different expertise and liability |
+| Not assumed | Financial statement audits (CPA licence, PCAOB for broker-dealers) | Biggest revenue pool | Needs a licensed CPA firm structure; a separate legal and licensing decision |
+
+What this means for the build:
+- **The audit-type engine (Phase 3) must be generic**: request catalog, procedures, rubric, report template, who may sign, independence rules, and restricted-item rules (like AML's SAR block) are all data per audit type. AML stays audit type #1 with no behaviour change.
+- **Each new audit type needs** a named credentialed lead, their approved checklist and rubric, their report template and a legal check of who may perform and sign it. Software never fills these in.
+- **Pick step 2 by client overlap**: whichever compliance review Quentin's and partners' existing broker-dealer and adviser clients already buy is the cheapest to add **[inferred]**.
+
 ## 2. What exists today vs. gaps
 
 Source: `app/database/models.py`, `docs/kb/*`, `docs/readiness/STATUS.md`, migrations through `a130_ai_analysis`. Merged source is not proof of deployment.
@@ -178,7 +195,7 @@ SAR never to any model. Mock data only until Quentin's written OK plus readiness
 5. Stripe: account/entity and when to start test mode.
 6. Retention period, legal hold and backup targets (needs attorney).
 7. SOC 2: start groundwork now? Choose a tool or auditor later.
-8. First second audit type, and who is the credentialed lead.
+8. Second audit type inside financial compliance (section 1c), and who is its credentialed lead. Direction decided 2026-11-20: AML, then financial vertical, options open for compliance and investment auditing.
 9. ~~Partner path vs own practice first~~ DECIDED 2026-11-20: partners first, then own firm with 2 or 3 hired auditors (section 1b). Still needed: partner agreement terms with the attorney (channel conflict, data and IP).
 
 Needs Quentin: rubric, report template and sign-off type, 30 chatbot questions, blind-test engagement. Needs attorney: retention, model approval scope, partner data/IP terms.
