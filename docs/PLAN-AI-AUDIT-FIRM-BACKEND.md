@@ -10,6 +10,22 @@ Status: PLAN ONLY (2026-11-21). No code, deploy, DNS or server change. It author
 - **Cost stays near today's level** (about $0 to $60 a month of new spend through the first three phases) if we stay on the existing VPS, Cloudflare free tiers, R2 free tier, Resend free tier and `:free` models. The first real costs are a bigger VPS and paid models, and both are your decisions.
 - **Nine decisions for you are in section 9.** The most important: approve the plan order, approve the "audit type" design spike, and decide when paid AI models may be used.
 
+## 1a. More than audit software: five layers (Abdullah, 2026-11-20)
+
+Abdullah wants Kien to be more than auditing software. Kien is the system the firm runs on, plus a product clients use all year. The five layers below are the frame for the rest of this plan:
+
+| Layer | What it means | Today | Where in this plan |
+|---|---|---|---|
+| 1. Firm operating system | Sales pipeline, proposals and engagement letters, scheduling and staffing, time, billing and payments, auditor credential tracking | Invoices, tasks, assignment, client profiles | Phase 2 |
+| 2. Audit delivery | Engagements for many audit types | AML end to end | Phases 1 and 3 |
+| 3. AI workforce | Staged AI agents doing prep at each step; humans approve and sign | AI analysis slice (off) | Section 4, Phase 4 |
+| 4. Year-round client compliance hub | AML program health, policy templates, training tracking, regulatory change alerts, FINRA chatbot; subscription revenue between annual tests | Not built | New Phase 4b (below) |
+| 5. Platform for other firms | Partner firms under their own brand; credentialed experts per specialty; each firm's data stays its own | Practice layer only | Phase 5 |
+
+**Phase 4b, year-round client hub [inferred scope; needs Abdullah's pick and Quentin's input]:** client-side compliance calendar and reminders, policy and procedure template library (Quentin-approved), training completion log, regulatory change feed from public sources (FINRA, SEC, FinCEN), and the chatbot. No client document goes to a model without the same SAR screen and human gates. Independence check needed: an auditor that also sells compliance tools to the same client may face independence limits under the audit rules; Quentin and the attorney must confirm before this is sold to audit clients **[inferred risk]**.
+
+Build order after AML is solid is Abdullah's decision (section 9, item 1). The recommendation is the firm operating system first, because running Kien's own practice on it proves every layer on real work.
+
 ## 2. What exists today vs. gaps
 
 Source: `app/database/models.py`, `docs/kb/*`, `docs/readiness/STATUS.md`, migrations through `a130_ai_analysis`. Merged source is not proof of deployment.
@@ -116,7 +132,7 @@ SAR never to any model. Mock data only until Quentin's written OK plus readiness
 - Partners will adopt Kien, AI saves time, and Quentin has capacity: unproven.
 
 ## 9. Decisions for Abdullah (I have not decided any)
-1. Approve this order: finish AML first, then firm-ops, then audit types (or reverse).
+1. After AML is solid, which layer leads: firm operating system (recommended), year-round client hub, AI workforce, or platform for other firms.
 2. Approve a design-only spike for the audit-type engine (no code until you OK it).
 3. When may paid models be used, and with what monthly cap?
 4. VPS size-up: when, and budget.
