@@ -24,7 +24,19 @@ Abdullah wants Kien to be more than auditing software. Kien is the system the fi
 
 **Phase 4b, year-round client hub [inferred scope; needs Abdullah's pick and Quentin's input]:** client-side compliance calendar and reminders, policy and procedure template library (Quentin-approved), training completion log, regulatory change feed from public sources (FINRA, SEC, FinCEN), and the chatbot. No client document goes to a model without the same SAR screen and human gates. Independence check needed: an auditor that also sells compliance tools to the same client may face independence limits under the audit rules; Quentin and the attorney must confirm before this is sold to audit clients **[inferred risk]**.
 
-Build order after AML is solid is Abdullah's decision (section 9, item 1). The recommendation is the firm operating system first, because running Kien's own practice on it proves every layer on real work.
+**DECIDED (Abdullah, 2026-11-20): the firm operating system is the next layer after AML is solid.** The other layers follow later in the order in section 5.
+
+### Firm operating system: scope (Phase 2)
+Each module is a small set of tables and routes in `app/ops/`, with the usual `practice_id` / `firm_id` checks, a denial test per route and audit-log entries. Ship in this order:
+1. **Clients and pipeline:** prospect, proposal sent, engaged, active, renewal due, lost. Extends `ClientProfileDetails` and `ClientContact`. Contact log for calls, emails and notes.
+2. **Proposals and engagement letters:** fee quote from a practice price list, engagement letter from a template, client e-acceptance recorded in the audit log. Template wording comes from Quentin and the attorney, not invented.
+3. **Staffing and scheduling:** auditor capacity per week, assignment with independence check (no conflicts recorded), engagement calendar with fieldwork and due dates.
+4. **Time and budget:** time entries per engagement and stage, budget versus actual, and rework flag. This is also the measurement the vision needs.
+5. **Billing and payments:** invoice from time or fixed fee, reminders by email (Resend), Stripe test mode behind a flag, then live only after Abdullah picks the account.
+6. **People and credentials:** auditor licences and CPE expiry dates, alerts before expiry, and who may sign which audit type.
+7. **Firm dashboard:** pipeline value, utilization, cycle time, overdue invoices. Practice-scoped; partner and admin only.
+
+AI assist in the firm OS (drafting proposals, follow-ups, reminders) comes after the modules work and never sends anything on its own. Estimated new spend: $0 (Resend and Stripe test mode are free; Stripe live charges per transaction).
 
 ## 2. What exists today vs. gaps
 
@@ -132,7 +144,7 @@ SAR never to any model. Mock data only until Quentin's written OK plus readiness
 - Partners will adopt Kien, AI saves time, and Quentin has capacity: unproven.
 
 ## 9. Decisions for Abdullah (I have not decided any)
-1. After AML is solid, which layer leads: firm operating system (recommended), year-round client hub, AI workforce, or platform for other firms.
+1. ~~Which layer leads after AML~~ DECIDED 2026-11-20: firm operating system.
 2. Approve a design-only spike for the audit-type engine (no code until you OK it).
 3. When may paid models be used, and with what monthly cap?
 4. VPS size-up: when, and budget.
