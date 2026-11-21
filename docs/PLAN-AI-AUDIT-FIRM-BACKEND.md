@@ -27,7 +27,7 @@ Abdullah wants Kien to be more than auditing software. Kien is the system the fi
 **DECIDED (Abdullah, 2026-11-20): the firm operating system is the next layer after AML is solid.** The other layers follow later in the order in section 5.
 
 ### Firm operating system: scope (Phase 2)
-Each module is a small set of tables and routes in `app/ops/`, with the usual `practice_id` / `firm_id` checks, a denial test per route and audit-log entries. Ship in this order:
+Each module is a small set of tables and routes in `app/ops/`, with the usual `practice_id` / `firm_id` checks, a denial test per route and audit-log entries. Ship time and budget (item 4) first, because the partner stage must measure time saved (section 1b); then the rest in this order:
 1. **Clients and pipeline:** prospect, proposal sent, engaged, active, renewal due, lost. Extends `ClientProfileDetails` and `ClientContact`. Contact log for calls, emails and notes.
 2. **Proposals and engagement letters:** fee quote from a practice price list, engagement letter from a template, client e-acceptance recorded in the audit log. Template wording comes from Quentin and the attorney, not invented.
 3. **Staffing and scheduling:** auditor capacity per week, assignment with independence check (no conflicts recorded), engagement calendar with fieldwork and due dates.
@@ -37,6 +37,33 @@ Each module is a small set of tables and routes in `app/ops/`, with the usual `p
 7. **Firm dashboard:** pipeline value, utilization, cycle time, overdue invoices. Practice-scoped; partner and admin only.
 
 AI assist in the firm OS (drafting proposals, follow-ups, reminders) comes after the modules work and never sends anything on its own. Estimated new spend: $0 (Resend and Stripe test mode are free; Stripe live charges per transaction).
+
+## 1b. Business model: AI-native service firm (Abdullah, 2026-11-20)
+
+Abdullah's model, in his order:
+1. **Partner stage.** Put Kien into existing audit firms and AML consultants. They run real engagements on it; Kien learns, fixes and improves from their use.
+2. **Own firm.** Kien Solutions starts its own auditing practice.
+3. **Hire 2 or 3 auditors** who run the same Kien workflow.
+4. **Sell audits at market price.** Clients pay what they pay today. Because AI does much of the prep and the firm OS runs the business, each auditor completes more engagements with less overhead. That margin is the AI-native service business.
+
+What each stage needs from the product:
+
+| Stage | Product must have | Plan phase | Proof to move on |
+|---|---|---|---|
+| Partner | AML end to end, practice-vs-practice isolation proven on Postgres, partner branding, onboarding of a partner's own templates, feedback capture, and time and cycle measurement | Phases 1, 2 (time module first) and part of 5 | Two partners finish real engagements; their data is provably separate; measured hours per engagement |
+| Own firm | Firm OS complete (pipeline, proposals, staffing, time, billing, credentials), signing-firm and signer stored per engagement, independence and QC records | Phase 2, then 5 | Quentin signs Kien's own engagements; firm runs without spreadsheets |
+| Hire 2 or 3 auditors | Capacity view, assignment, reviewer-differs rule, credential tracking, training on the workflow | Phase 2 | New auditor completes an engagement in Kien with partner review |
+| Market pricing | Price list per practice, time and margin per engagement, AI measured against human time | Phases 2 and 4 | Margin per engagement known from real data, not assumed |
+
+Build consequences:
+- **Time tracking and measurement move to the front of the firm OS** (Phase 2, item 4 first), because the partner stage is where the "AI saves time" claim gets tested.
+- **Practice isolation must be proven before partner #1 touches real data** (readiness 23).
+- **Partner data and IP stay the partner's.** Partner work must not seed Kien's own practice (templates, clients, eval sets) without written permission.
+
+Open risks the model raises (need advice, not code):
+- **Channel conflict:** once Kien runs its own firm it competes with its partner firms for clients. This needs partner agreements written with the attorney before the first partner signs ([VISION.md](VISION.md)).
+- **"Same pricing" assumes** clients accept an AI-assisted audit at the normal price and that quality holds. Measure in the partner stage before relying on it **[inferred]**.
+- Quentin's capacity as signing partner limits volume until more credentialed auditors join **[inferred]**.
 
 ## 2. What exists today vs. gaps
 
@@ -152,6 +179,6 @@ SAR never to any model. Mock data only until Quentin's written OK plus readiness
 6. Retention period, legal hold and backup targets (needs attorney).
 7. SOC 2: start groundwork now? Choose a tool or auditor later.
 8. First second audit type, and who is the credentialed lead.
-9. Partner-firm path vs own practice first (the conflict question).
+9. ~~Partner path vs own practice first~~ DECIDED 2026-11-20: partners first, then own firm with 2 or 3 hired auditors (section 1b). Still needed: partner agreement terms with the attorney (channel conflict, data and IP).
 
 Needs Quentin: rubric, report template and sign-off type, 30 chatbot questions, blind-test engagement. Needs attorney: retention, model approval scope, partner data/IP terms.
